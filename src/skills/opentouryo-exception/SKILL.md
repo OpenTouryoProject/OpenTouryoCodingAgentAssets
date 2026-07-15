@@ -14,7 +14,7 @@ metadata:
 OpenTouryo の全層に共通する例外処理の規約。例外の型の選択、スローの仕方、B層フレームワークが
 自動で行う処理、呼び出し側での受け取り方を扱う。
 
-ログ出力・認証・構成ファイルは扱わない（`opentouryo-common` を参照）。
+ログ出力は `opentouryo-logging`、構成ファイルは `opentouryo-config` を参照。
 
 ## 最重要：業務例外はリスローされない
 
