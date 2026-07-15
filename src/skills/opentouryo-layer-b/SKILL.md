@@ -198,15 +198,46 @@ finally
 | --- | --- |
 | `NotConnect` | **コネクションしない**（DB を使わない業務処理） |
 | `NoTransaction` | 接続するがトランザクションを開始しない |
-| `DefaultTransaction` | 既定の分離レベルで開始 |
+| `DefaultTransaction` | **DBMS の既定**の分離レベルで開始 |
 | `ReadUncommitted` | 非コミット読み取りで開始 |
 | `ReadCommitted` | コミット済み読み取りで開始 |
 | `RepeatableRead` | 反復可能読み取りで開始 |
 | `Serializable` | 直列化可能で開始 |
 | `Snapshot` | スナップショットで開始 |
-| `User` | <!-- TODO: 用途を確認して記述する --> |
+| `User` | **プロジェクトの既定**に委ねる（親クラス2 が振り替える） |
 
 DBMS ごとに分離レベルの意味が異なるため、理解して設定する。
+
+### `User` と `DefaultTransaction` の違い
+
+どちらも「既定に任せる」だが、**誰の既定か**が違う。
+
+| 値 | 誰の既定か | 決まる場所 |
+| --- | --- | --- |
+| `DefaultTransaction` | DBMS / データプロバイダ | Dam が引数なしの `BeginTransaction()` を呼ぶ |
+| `User` | **プロジェクト** | 親クラス2（`MyFcBaseLogic`）が実際の分離レベルへ振り替える |
+
+`User` は親クラス2 で消費されるマーカーで、Dam までは到達しない。
+
+```csharp
+// MyFcBaseLogic.UOC_ConnectionOpen の実装
+if (iso == DbEnum.IsolationLevelEnum.User)
+{
+    // 自動トランザクション（規定の分離レベル）
+    dam.BeginTransaction(DbEnum.IsolationLevelEnum.ReadCommitted);
+}
+else
+{
+    // 自動トランザクション（指定の分離レベル）
+    dam.BeginTransaction(iso);
+}
+```
+
+振替先はテンプレートでは `ReadCommitted`。**親クラス2 は纏め者がカスタマイズする層なので、
+プロジェクトごとに変えられる。** 「このプロジェクトの標準の分離レベル」を一箇所で決め、
+呼び出し側にはそれを意識させたくないときに `User` を使う。
+
+`User` を Dam へ直接渡すと `ArgumentException`（無効な分離レベル）になる。`NotConnect` も同じ。
 
 複数 DB を扱う場合は `SetDam(key, dam)` / `GetDam(key)` でキー付きの Dam を使う。
 コミット・ロールバックは登録された全 Dam に対して実行される。

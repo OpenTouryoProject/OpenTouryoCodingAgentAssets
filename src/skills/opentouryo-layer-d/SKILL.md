@@ -1,6 +1,6 @@
 ---
 name: opentouryo-layer-d
-description: "OpenTouryo の D層（データアクセス層）を実装する。Dao 3系統（個別Dao / 共通Dao=CmnDao / D層自動生成ツールが生成する自動生成Dao）の使い分け、MyBaseDao の継承、SetSqlByFile2 / SQLFileName / SQLText による SQL の指定、SetParameter によるパラメタ設定、ExecSelectScalar / ExecSelectFill_DT / ExecSelectFill_DS / ExecSelect_DR / ExecInsUpDel_NonQuery の実行、自動生成Dao の S1_Insert / D2_Select / S3_Update / D4_Delete 等の命名体系と PK_ / Set_x_forUPD / x_Like プロパティ、タイムスタンプによる楽観排他を扱う。D層 / Dao / Dam / DB アクセス / SQL / CRUD / 楽観排他 を伴う作業のときに使う。"
+description: "OpenTouryo の D層（データアクセス層）を実装する。Dao 3系統（個別Dao / 共通Dao=CmnDao / D層自動生成ツールが生成する自動生成Dao）の使い分けと、Dao集約クラス（BaseConsolidateDao）、MyBaseDao の継承、SetSqlByFile2 / SQLFileName / SQLText による SQL の指定、SetParameter によるパラメタ設定、ExecSelectScalar / ExecSelectFill_DT / ExecSelectFill_DS / ExecSelect_DR / ExecInsUpDel_NonQuery の実行、自動生成Dao の S1_Insert / D2_Select / S3_Update / D4_Delete 等の命名体系と PK_ / Set_x_forUPD / x_Like プロパティ、タイムスタンプによる楽観排他を扱う。D層 / Dao / Dam / DB アクセス / SQL / CRUD / 楽観排他 を伴う作業のときに使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -14,7 +14,7 @@ metadata:
 Dao の実装と、3系統（個別 / 共通 / 自動生成）の使い分けを扱う。
 
 B層からの呼び出しと Dam の取得は `opentouryo-layer-b`、例外は `opentouryo-exception` を参照。
-動的パラメタライズドクエリ（`.xml`）のタグ仕様は扱わない。
+**SQL 定義ファイル（`.sql` / `.xml`）の中身の書き方は `opentouryo-query-definition`** を参照。
 
 ## 実装場所（誰がどこに書くか）
 
@@ -55,6 +55,9 @@ protected void SetParameter(string parameterName, object obj)
 3. **上記で表せないか**（複数クエリ、業務ロジックを伴う） → **個別Dao**
 
 自動生成Dao は手で書き換えない。テーブル定義が変わったらツールで再生成する。
+
+なお、プロジェクトによっては自動生成Dao を**Dao集約クラス**でまとめ、B層から直接呼ばせない方針を
+とる（後述）。既存コードがその作りなら、それに合わせる。
 
 ## 個別Dao
 
@@ -106,7 +109,8 @@ DataTable dt = new DataTable();
 cmnDao.ExecSelectFill_DT(dt);
 ```
 
-`SQLFileName` に `.sql` を渡せば静的 SQL、`.xml` を渡せば動的パラメタライズドクエリになる。
+`SQLFileName` に `.sql` を渡せば静的パラメタライズドクエリ、`.xml` を渡せば動的パラメタライズド
+クエリになる（`opentouryo-query-definition` 参照）。
 
 `SQLFileName` と `SQLText` は**排他**。片方を設定すると、もう片方は内部でクリアされる。
 
@@ -245,15 +249,67 @@ cmnDao.SetUserParameter("COLUMN", " " + orderColumn + " ");
 
 ## Dao集約クラス
 
-複数の Dao をまとめて扱うためのベースクラスの例として `BaseConsolidateDao`
-（`Touryo.Infrastructure.Business.Dao`）がある。`Dam` を保持するだけの `abstract` クラス。
+**テーブル単位の自動生成Dao の呼び出しを集約するレイヤ。** 採用するかはプロジェクト基準による。
+
+### 何のためにあるか
+
+自動生成Dao はテーブル単位なので、B層から直接使うと**B層が DB スキーマを知ることになる**。
+テーブル構成が変わるたびに B層が影響を受ける。
+
+集約クラスを間に挟むと、B層は業務的な単位のメソッドを呼ぶだけになり、
+どのテーブルをどう更新するかは集約クラスに閉じる。
+
+```
+【集約クラスなし】 B層 ──→ DaoShippers, DaoOrders …（B層がスキーマを知る）
+【集約クラスあり】 B層 ──→ 集約クラス ──→ DaoShippers, DaoOrders …
+```
+
+### 書き方
+
+`BaseConsolidateDao`（`Touryo.Infrastructure.Business.Dao`）を継承する。
+**このクラスは `BaseDao` を継承していない。** Dao 自身ではなく、`Dam` を保持して
+配るだけの `abstract` クラス。保持した `Dam` は `protected BaseDam Dam` で取得する。
+
+```csharp
+public class ShippingConsolidateDao : BaseConsolidateDao
+{
+    public ShippingConsolidateDao(BaseDam dam) : base(dam) { }
+
+    /// <summary>業務的な単位のメソッドを公開する</summary>
+    public void RegisterShipping(TestParameterValue param)
+    {
+        // 保持している Dam を各 Dao へ配る
+        DaoShippers daoShippers = new DaoShippers(this.Dam);
+        DaoOrders   daoOrders   = new DaoOrders(this.Dam);
+
+        // 複数テーブルへの更新をここに閉じ込める
+        daoShippers.PK_ShipperID = param.Shipper.ShipperID;
+        daoShippers.Set_CompanyName_forUPD = param.Shipper.CompanyName;
+        daoShippers.S3_Update();
+
+        // ...
+    }
+}
+```
+
+B層からは他の Dao と同じく `this.GetDam()` を渡して生成する。
+
+```csharp
+ShippingConsolidateDao dao = new ShippingConsolidateDao(this.GetDam());
+dao.RegisterShipping(testParameter);
+```
 
 <!--
-  TODO: 位置づけを確認する。
-  「Dao集約クラスのベースクラスの例」というコメントのみで、
-  Samples / Samples4NetCore に利用実例が1件も無い。
-  推奨パターンなのか、歴史的な残置なのかを判断して、記述を残すか削除するか決める。
+  補足: BaseConsolidateDao は「Dao集約クラスのベースクラスの例」というコメントのみで、
+  Samples / Samples4NetCore に利用実例が無い。上記コード例は、クラス定義（Dam を保持する
+  abstract クラス）と設計意図から起こしたもの。
+  実プロジェクトの実装例が手に入ったら、そちらに差し替えるのが望ましい。
 -->
+
+### 採用しているプロジェクトでの注意
+
+集約クラスを使う方針のプロジェクトでは、**B層から自動生成Dao を直接呼ばない**。
+既存コードが集約クラス経由になっているなら、それに合わせる。
 
 ## やってはいけないこと
 

@@ -11,11 +11,14 @@ Assets used by coding agents utilizing OpenTouryo
 src/
   instructions/AGENTS.md        概要・規約（常時コンテキストに載る / これが原本）
   skills/
-    opentouryo-layer-p/         P層（プレゼンテーション層）の実装
-    opentouryo-layer-b/         B層（業務ロジック層）の実装
-    opentouryo-layer-d/         D層（データアクセス層）の実装
-    opentouryo-exception/       例外処理方式
-    opentouryo-common/          共通基盤（ログ・認証・設定）
+    opentouryo-layer-p/          P層（プレゼンテーション層）の実装
+    opentouryo-layer-b/          B層（業務ロジック層）の実装
+    opentouryo-layer-d/          D層（データアクセス層）の実装
+    opentouryo-query-definition/ SQL定義ファイル（静的 .sql / 動的 .xml）
+    opentouryo-exception/        例外処理方式
+    opentouryo-logging/          ログ出力
+    opentouryo-config/           構成ファイル
+    opentouryo-auth/             認証・ユーザ情報
 install/
   install.ps1                   対象リポジトリへのインストーラ
 docs/

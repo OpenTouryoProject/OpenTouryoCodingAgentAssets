@@ -161,10 +161,13 @@ TODO
 | スキル | 使いどころ |
 | --- | --- |
 | `opentouryo-layer-p` | TODO（処理方式別に `-winforms` / `-webforms` / `-mvc` へ分割予定） |
-| `opentouryo-layer-b` | TODO |
-| `opentouryo-layer-d` | TODO |
+| `opentouryo-layer-b` | 業務ロジックを実装するとき |
+| `opentouryo-layer-d` | Dao を実装するとき |
+| `opentouryo-query-definition` | SQL 定義ファイル（`.sql` / `.xml`）を書くとき |
 | `opentouryo-exception` | 例外を扱うとき。層を問わず参照する |
-| `opentouryo-common` | TODO（ログ・認証・構成ファイル） |
+| `opentouryo-logging` | ログを出力するとき |
+| `opentouryo-config` | 設定値を読むとき、構成ファイルを書くとき |
+| `opentouryo-auth` | 認証・ユーザ情報を扱うとき |
 
 ## 参考資料
 
