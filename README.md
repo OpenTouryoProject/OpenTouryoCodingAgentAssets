@@ -17,6 +17,7 @@ src/
     opentouryo-layer-b/          B層（業務ロジック層）の実装
     opentouryo-layer-d/          D層（データアクセス層）の実装
     opentouryo-query-definition/ SQL定義ファイル（静的 .sql / 動的 .xml）
+    opentouryo-xml-definition/   XML定義ファイル（メッセージ・共有情報・画面遷移ほか）
     opentouryo-exception/        例外処理方式
     opentouryo-logging/          ログ出力
     opentouryo-config/           構成ファイル

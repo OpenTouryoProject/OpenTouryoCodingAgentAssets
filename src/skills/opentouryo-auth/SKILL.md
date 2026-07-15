@@ -226,14 +226,44 @@ net48 と .NET 10.0 の差をそちらに記述している。
 パスワード照合でも、外部 IdP から受け取った情報でも、最後に `MyUserInfo` を作って
 セッションへ入れれば、以降のフレームワークの仕組みは同じように動く。
 
+### セッションの破棄は「ログイン画面に入るとき」
+
+**ログアウト処理はセッションを消さない。** 3方式とも `Logout` は .NET 側のサインアウトだけで、
+`UserInfoHandle.DeleteUserInformation()` を呼んでいない。
+
+代わりに**ログイン画面に入る時点で `FxSessionAbandon()` を呼んでセッションごと消す**設計。
+セッションが消えればユーザ情報も消えるため、`DeleteUserInformation()` は通常不要。
+
+```csharp
+// Web Forms: login.aspx.cs
+protected override void UOC_FormInit()
+{
+    this.FxSessionAbandon();   // セッション消去
+}
+
+// net48 MVC: HomeController.Login（GET）
+public ActionResult Login()
+{
+    this.FxSessionAbandon();
+    ...
+}
+```
+
+`FxSessionAbandon()` は3方式すべての親クラス1 が提供する。
+**セッション タイムアウト検出用 Cookie の削除とセッションの消去**をまとめて行う。
+
+| | 実装 |
+| --- | --- |
+| Web Forms / net48 MVC | Cookie 削除 + **`Session.Abandon()`**（セッションを破棄） |
+| ASP.NET Core MVC | Cookie 削除 + **`Session.Clear()`**（中身を消すがセッションは残る） |
+
+Core だけ `Clear()` なのは、`ISession` に `Abandon()` が無いため。
+
 <!--
-  TODO: ログアウト時のユーザ情報の破棄を確認して確定する。
-  3方式とも、Logout は .NET 側のサインアウト（FormsAuthentication.SignOut() /
-  SignOutAsync()）のみで、UserInfoHandle.DeleteUserInformation() を呼んでいない。
-  - Web Forms の login.aspx 側は UOC_FormInit で FxSessionAbandon() を呼んでおり、
-    「ログイン画面に来た時点でセッションを消す」設計に見える。
-  - MVC / Core MVC には該当する処理が見当たらない。
-  セッションを別途破棄しているのか、サンプルの漏れなのかが読み取れなかった。
+  注意: Core のサンプル（Samples4NetCore の HomeController.Login）では
+  FxSessionAbandon() の呼び出しが**コメントアウトされている**（98行目・152行目）。
+  net48 MVC のサンプルでは有効（95行目・142行目）。
+  Core で意図的に外しているのか、移植時の漏れなのかは不明。
 -->
 
 ## OAuth2 / OIDC / SAML2 について

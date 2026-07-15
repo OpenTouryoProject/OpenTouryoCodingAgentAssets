@@ -137,7 +137,9 @@ this.ActionName = "SelectCount"
 Core の `MyBaseMVControllerCore` には `[MyMVCCoreFilter()]` 属性が付いており、例外処理は
 そちらへ分離されている。
 
-<!-- TODO: net48 の View() オーバーライド（MyBaseMVController:210, 244）の役割を確認して追記する。 -->
+net48 の `MyBaseMVController` は `View()` も `override` している。**アクセスログ
+（`----->>` = ビューへ入る）を出すためで、ビューの動作自体は変えていない**（`base.View()` の
+結果をそのまま返す）。**Core にはこのオーバーライドが無い。**
 
 ## 認証
 

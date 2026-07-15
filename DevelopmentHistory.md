@@ -79,6 +79,7 @@ import する `CLAUDE.md` を生成する。Windows では symlink に管理者�
 | `opentouryo-common` | `-logging` / `-config` / `-auth` | 認証だけで6,201行。3つ混ぜると500行を超える。descriptionの焦点 |
 | `opentouryo-common`（当初案） | `opentouryo-exception` を独立 | 単独で250行。層をまたいで参照される中核 |
 | `opentouryo-layer-d` | `opentouryo-query-definition` を独立 | `.sql` と `.xml` は「SQL定義ファイルの書き方」という同じ関心事。Dao実装とは別軸 |
+| `opentouryo-config` | `opentouryo-xml-definition` を独立 | 6種の XML 定義ファイルは「定義ファイルの書式」という同じ関心事。config はパスの設定だけを扱う |
 | `opentouryo-layer-p` | `-mvc` / `-webforms` / `-winforms`（**完了**） | 実装モデルが根本的に違う（MVC は UOC を持たない）。WPF は P層フレームワークが無く対象外 |
 
 `opentouryo-layer-d/references/` は削除した。D層が316行で収まり、溢れなかったため。
@@ -96,23 +97,24 @@ Claude Code は**ブロックレベルの HTML コメントを読み込み時に
 ## 3. 成果物の現状
 
 ```
-opentouryo-layer-p-mvc      295L  実効tok~4400  完了
-opentouryo-layer-p-webforms 273L  実効tok~3898  完了
-opentouryo-layer-p-winforms 242L  実効tok~3387  完了
-opentouryo-layer-b          274L  実効tok~3749  完了
-opentouryo-layer-d          320L  実効tok~4274  完了
-opentouryo-query-definition 270L  実効tok~2904  完了
-opentouryo-exception        282L  実効tok~3893  完了
-opentouryo-logging          157L  実効tok~1731  完了
-opentouryo-config           174L  実効tok~2750  完了
-opentouryo-auth             285L  実効tok~4096  完了
+opentouryo-layer-p-mvc      実効tok~4474  完了
+opentouryo-layer-p-webforms 実効tok~3987  完了
+opentouryo-layer-p-winforms 実効tok~4147  完了
+opentouryo-layer-b          実効tok~3749  完了
+opentouryo-layer-d          実効tok~4274  完了
+opentouryo-query-definition 実効tok~2904  完了
+opentouryo-xml-definition   実効tok~3196  完了
+opentouryo-exception        実効tok~3975  完了
+opentouryo-logging          実効tok~1731  完了
+opentouryo-config           実効tok~2947  完了
+opentouryo-auth             実効tok~4463  完了
 ```
 
-**全10スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全11スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効tok」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 
 相互リンクしている（B層 → D層 → クエリ定義、全層 → 例外、P層3種 → auth、など）。
-`AGENTS.md` は約200行（実効約100行）。
+`AGENTS.md` は約215行（実効約100行）。目安200行を少し超えている。
 
 **残るのは各スキル内の TODO（プロジェクト固有の値・未確認の論点）と AGENTS.md の TODO。**
 
@@ -179,7 +181,11 @@ opentouryo-auth             285L  実効tok~4096  完了
 | 認証の方式差 | **Web Forms と MVC（net48）は Forms 認証で、`web.config` の記述も同一**。断層は net48 と Core の間（Core は Cookie 認証、`web.config` が無い） |
 | P層の実装モデル | **Web Forms / Windows Forms は UOC メソッド方式、MVC は UOC を持たない**（MVC 標準のフィルタに乗る）。親クラス1 の UOC 定義数は 15 / 12 / **0** |
 | コントロール名の接頭辞 | **命名規約ではなく機能。** 設定（`FxPrefixOfButton` = `btn` 等14種）から接頭辞を読み、コントロールツリーを走査してイベントを自動結線する。規約から外れると**発火しない**（`.aspx` に `OnClick` を書かない） |
-| 2層C/S のトランザクション | **`BaseLogic2CS` は `BaseLogic` と別物。** コネクションが `static` でグローバル、**正常系のコミットは手動**（`CommitAndClose()`）、**業務例外ではロールバックしない**（`★★業務例外時のロールバックは自動にしない。`）、`UOC_AfterTransaction` も呼ばれない |
+| 2層C/S のトランザクション | **`BaseLogic2CS` は `BaseLogic` と別物。** コネクションが `static` でグローバル、**正常系のコミットは手動**（`CommitAndClose()`）、**業務例外ではロールバックしない**（`★★業務例外時のロールバックは自動にしない。`）、`UOC_AfterTransaction` も呼ばれない。**設計意図は 4.4 を参照**（実装だけ見ても理由には到達できない） |
+| 2層C/S の B層 | **書き方は Web/MVC と同じ。** 自動振り分け・`this.ReturnValue`・UOC のシグネチャ・直呼びガードまで一致。**違うのは継承元（`MyFcBaseLogic2CS`）とトランザクション制御の2点だけ** |
+| 接頭辞の結線箇所 | **親クラス1 と親クラス2 の2箇所に分かれる。** `PREFIX_OF_CHECK_BOX` だけ `MyLiteral`（親クラス2 の層）にあり親クラス2 で結線。有効な接頭辞は Web Forms が14種、WinForms が**6種だけ**（`TextBox` / `GridView` 等は WinForms で結線されない）。`FxPrefixOfCommand` は未使用（Mobile Web の名残） |
+| XML定義ファイル | **6種とも DTD 埋め込み・`id` の先頭に数字不可（XML の `ID` 型）・`Fx*` キーでパス指定**という共通枠組み。`MSGDefinition` の `%1`/`%2` は **`GetMessage` ではなく P層の親クラス2 が置換**（しかも `MyBaseController`＝Web Forms にしか実装が無い。実装コメントに `方式は、プロジェクト毎に検討のこと。`）。`SCDefinition` の `mode` 属性は **DTD と定数だけあって読む実装が無い**（機能していない） |
+| セッション破棄のタイミング | **ログアウトではなく「ログイン画面に入るとき」に `FxSessionAbandon()` で消す**設計。`DeleteUserInformation()` は通常不要。**Core だけ `Session.Clear()`**（他は `Session.Abandon()`。`ISession` に `Abandon()` が無いため） |
 | 親クラス2 の abstract 差 | **Web Forms の `MyBaseController` は `abstract`**（`UOC_FormInit` が実装必須）だが、**`MyBaseControllerWin` は具象**（空実装済みで override 任意） |
 | net48 MVC の認可 | **`web.config` の `<authorization>` と `[Authorize]` の二段構え**。属性だけではない（Web Forms の `<location>` に相当するのが属性） |
 | Core の必須構成 | `Startup` で `services._AddHttpContextAccessor()` / `app._UseHttpContextAccessor()` を呼ばないと `UserInfoHandle` が動かない（`MyHttpContext.Current.Session` に依存）。**忘れてもコンパイルは通る**。先頭の `_` は誤記ではない |
@@ -197,6 +203,15 @@ opentouryo-auth             285L  実効tok~4096  完了
   それを行うのはこれらを整備する側であって、ユーザプログラム開発プロジェクトではない。
   → 各スキルには「親クラス2 に `UOC_ABEND` を実装する」等の記述がある。これは挙動を理解する
   ためのもの。矛盾に見えるため、`AGENTS.md` と各スキルの「実装場所」節に注記を入れてある
+- **2層C/S（`BaseLogic2CS`）は「アプリごとのグローバルな1トランザクション」という設計。**
+  アプリケーションが Desktop 上のインスタンスとして動作するため。Web が「1リクエスト =
+  1トランザクション」なのに対し、2層C/S は「**1アプリケーション インスタンス =
+  1トランザクション**」。1プロセス = 1利用者なので分ける必要がない。
+  → **この1点から、実装の特徴がすべて導かれる**（コネクションが `static`、コミットが手動、
+  業務例外で自動ロールバックしない）。個別の仕様に見えるが、1つの設計判断の帰結。
+  → 当初「複数の B層呼び出しを1トランザクションにまとめられるため」と推測していたが、
+  **因果が逆**だった。「まとめられる」のではなく「アプリ = 1トランザクションなので、
+  そもそも分ける概念が無い」。実装を読むだけでは前者にしか到達できない
 - **WPF は P層フレームワークを持たない。** B層・D層のみを利用し、画面は素の WPF として実装する。
   → `MyBaseControllerWin` が `Form` を継承しているため構造的にも使えず、サンプル
   （`2CSClientWPF_sample`）も `Window1 : Window` で、UOC が出てくるのは `Business/LayerB.cs`
@@ -222,6 +237,51 @@ opentouryo-auth             285L  実効tok~4096  完了
 
 ---
 
+### 4.5 実装漏れの可能性がある箇所（推測。スキルには書かない）
+
+**確証が無いためスキルには書いていない。** スキルに推測を書くと、エージェントが仕様として
+扱ってしまうため。ここに記録だけ残す。**確認が取れたら扱いを決めること。**
+
+#### ASP.NET Core MVC のアクセスログ出力点が net48 より大幅に少ない
+
+| | ログ出力点 |
+| --- | --- |
+| net48（`MyBaseMVController`） | **7つ**。`OnActionExecuting`(`----->`) / `OnActionExecuted`(`<-----`) / `View(IView, object)`(`----->>`) / `View(string, string, object)`(`----->>`) / `OnResultExecuting`(`----->`, Debug) / `OnResultExecuted`(`<-----`, Debug) / `OnException`(`<-----`, Error) |
+| Core（`MyBaseMVControllerCore`） | **3つ**。`OnActionExecutionAsync` の前後（`----->` / `<-----`）と、`MyMVCCoreFilterAttribute.OnException` |
+
+**Core では `View()` / `OnResultExecuting` / `OnResultExecuted` の出力点が存在しない。**
+実害はビューのレンダリング区間がアクセスログに出ないこと（性能測定の粒度が粗くなる）。
+
+**推測：移植で落ちた可能性が高い。** 根拠は以下。
+
+1. **シグネチャが1対1で対応しない（これは事実）。** net48 が override しているのは
+   `View(IView view, object model)` と `View(string viewName, string masterName, object model)`。
+   これは `System.Web.Mvc` の「漏斗」で、全ての `View()` 呼び出しがここへ集まる。
+   ASP.NET Core には **`masterName` も `IView` オーバーロードも無い**（マスタページの概念が無い）。
+   Core で同じことをするなら漏斗が `View(string viewName, object model)` に変わり、
+   移植ではなく書き直しになる。→ 対応先が無いメソッドは機械的な移植では落ちる。
+2. **判断した形跡が無い。** 同じ Core 版で `OnActionExecuting` / `OnActionExecuted` は
+   コメントアウトのうえ `// OnActionExecutionAsyncに移行` と理由まで明記されている。
+   一方 `View()` / `OnResultExecuting` / `OnResultExecuted` は**跡形もない**。
+   ヘッダのイベント順コメントには `-- View` / `- OnResultExecuting` / `- OnResultExecuted` が
+   列挙されているのに、実装だけが無い。
+3. **開発経緯が「積み上げ」vs「新規作成」。** net48 は 2015〜2017 に12件の更新履歴があり、
+   `OnResultExecuting/Executed` の性能測定追加、View での ViewName 表示、ログフォーマットの
+   全面見直しと**段階的にログ出力点が増えている**。Core は **2018/04/19 に新規作成**され、
+   その積み上げを引き継いでいない。
+
+**対抗仮説（弱い）：** 「Core は `IActionResult`（Json / File / Redirect）が普通なので、
+`View()` だけ拾っても片手落ち」。筋は通るが、それなら全 Result を拾える `OnResultExecuting` を
+実装するはず。`MyMVCCoreFilterAttribute` は `ActionFilterAttribute` を継承しており
+**実装できる状態にありながら、していない**。代替手段を実装した痕跡が無い。
+
+<!--
+  スキル（opentouryo-layer-p-mvc）には「net48 は View() を override してアクセスログを出す。
+  Core にはこのオーバーライドが無い」という**事実だけ**を書いてある。理由づけはしていない。
+-->
+
+---
+
 ## 5. 未解決の TODO
 
 ### 5.1 スキル本体
@@ -236,9 +296,8 @@ opentouryo-auth             285L  実効tok~4096  完了
 - [ ] **`opentouryo-layer-b` と 2CS 系（`MyFcBaseLogic2CS`）の差の整理。**
       layer-b は `BaseLogic` / `MyFcBaseLogic`（Web/MVC）前提で書いてある。
       注記は入れたが、UOC のシグネチャ・`this.ReturnValue`・自動振り分けの差は未確認
-- [ ] **2CS で「業務例外時のロールバックを自動にしない」設計意図の確認。**
-      コネクションがグローバルで複数の B層呼び出しを1トランザクションにまとめられるため、
-      という理解だが未確認
+- [x] **2CS で「業務例外時のロールバックを自動にしない」設計意図** — **確認済み**（4.4 参照）。
+      「アプリ = 1トランザクション」という設計の帰結だった
 - [ ] **リッチクライアントで有効な接頭辞の全一覧と既定値**（`FxPrefixOfCommand` /
       `FxPrefixOfPictureBox` / `FxPrefixOfComboBox` ほか）を app.config から採取する
 - [ ] `opentouryo-auth`: `MyUserInfo` にプロジェクト固有で足している項目
@@ -248,7 +307,7 @@ opentouryo-auth             285L  実効tok~4096  完了
 - [ ] `opentouryo-auth`: 外部 IdP 連携の手順（プロジェクト方針次第）
 - [ ] `opentouryo-logging`: `OPERATION` ログの書式（フレームワークが出さないため標準が不明）
 - [ ] `opentouryo-logging`: イベントログ（`CustomEventLog`/`SecurityEventLog`）の使いどころ
-- [ ] `opentouryo-config`: XML定義ファイルの中身の書き方（分量次第で専用スキルへ）
+- [x] `opentouryo-config`: XML定義ファイルの中身の書き方 — **完了**。`opentouryo-xml-definition` として独立させた（6種で263行）
 
 ### 5.2 AGENTS.md（導入プロジェクトが埋める欄）
 
@@ -266,6 +325,14 @@ opentouryo-auth             285L  実効tok~4096  完了
 
 - [ ] **非推奨クラス一覧の網羅範囲**。現在は C# の `Frameworks/Infrastructure` 配下のみ。
       VB 版と `Tools` 配下は未調査
+
+### 5.4 作者に確認したいこと
+
+**推測のままスキルに書けない事項。** 確認が取れたら、スキルに反映するか判断する。
+
+- [ ] **Core MVC のアクセスログ出力点が net48 より少ないのは意図的か、移植漏れか**（4.5 参照）。
+      移植漏れなら、スキルには何も足さず本体側の修正課題。意図的な簡素化なら、
+      `opentouryo-layer-p-mvc` に「Core はログの粒度が粗い」と書く価値がある
 
 ---
 

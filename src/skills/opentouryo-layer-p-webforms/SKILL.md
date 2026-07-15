@@ -92,9 +92,16 @@ public partial class sampleScreen : MyBaseController
 
 **値はプロジェクトごとに変えられる。** 上記はサンプルの値。既存コードと設定ファイルを確認する。
 
+`FxPrefixOfComboBox` / `FxPrefixOfPictureBox` はリッチクライアント専用で、**Web Forms では
+結線されない**（`opentouryo-layer-p-winforms` 参照）。`FxPrefixOfCommand` は定数が定義されて
+いるだけで、実装では使われていない（ASP.NET Mobile Web の名残と見られる）。
+
 <!--
-  TODO: FxPrefixOfCommand / FxPrefixOfPictureBox / FxPrefixOfComboBox は
-  リッチクライアント（BaseControllerWin）側で使われている。Web Forms では未使用と見られるが要確認。
+  結線箇所は2つに分かれている（実装で確認済み）:
+    BaseController（親クラス1）  … 上表のうち CheckBox 以外の13種
+    MyBaseController（親クラス2）… CHECK_BOX（MyLiteral.PREFIX_OF_CHECK_BOX）
+  親クラス2 で接頭辞を追加できる作りだが、バイナリ提供のため利用側では変更できない。
+  PREFIX_OF_COMMAND は FxCmnFunction.cs:218,486 にコメントアウトで残っているのみ。
 -->
 
 ## イベントハンドラの命名規約

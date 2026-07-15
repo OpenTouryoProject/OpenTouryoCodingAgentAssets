@@ -154,20 +154,34 @@ XML で、パスを設定に書く。
 "FxXMLMSGDefinition": "C:/root/files/resource/XML/MSGDefinition.xml"
 ```
 
-<!-- TODO: 各 XML 定義ファイルの中身の書き方。分量が増えるようなら専用スキルへ分ける。 -->
+**中身の書き方は `opentouryo-xml-definition` を参照。** ここで扱うのはパスの設定だけ。
 
 ### P層の設定キー
 
-画面遷移、ダイアログ、二重送信抑止、セッション タイムアウト検出などの `Fx` キーは P層 の機能。
-`FxScreenTransitionCheck` / `FxDoubleTransmissionCheck` / `FxSessionTimeOutCheck` /
-`FxErrorScreenPath` など。**使っている P層フレームワークのスキルを参照する。**
+**P層の `Fx` キーは処理方式ごとに有効・無効が違う。** 使っている P層フレームワークのスキルを
+参照する。
 
-**`FxPrefixOf*`（`FxPrefixOfButton` = `btn` など14種）は Web Forms とリッチクライアントで
-機能に直結する設定。** コントロール名の接頭辞でイベントを自動結線する仕組みに使われ、
-**未設定だとそのコントロール種別が結線されない**（設定ミスがコンパイルエラーにならず、
-イベントが発火しないという形で現れる）。詳細は `opentouryo-layer-p-webforms` を参照。
+| キー | Web Forms | MVC | Windows Forms |
+| --- | --- | --- | --- |
+| `FxPrefixOf*`（接頭辞） | ○ 14種 | — | ○ 6種 |
+| `FxErrorScreenPath` | ○ | ○ | — |
+| `FxSessionTimeOutCheck` | ○ | ○ | — |
+| `FxScreenTransitionCheck` / `FxScreenTransitionMode` | ○ | — | — |
+| `FxDoubleTransmissionCheck` | ○ | — | — |
+| `FxOKMessageDialogPath` / `FxYesNoMessageDialogPath` / `FxDialogFramePath` | ○ | — | — |
+| `FxCacheControl` | ○ | ○ | — |
 
-<!-- TODO: P層の設定キーの一覧を各 P層スキルへ分配する（-winforms が未整備のため保留）。 -->
+画面遷移・ダイアログ・二重送信抑止は **Web Forms 専用**。Windows Forms が使う P層キーは
+接頭辞だけ。
+
+### FxPrefixOf* は機能に直結する
+
+**コントロール名の接頭辞でイベントを自動結線する仕組みに使われる。**
+未設定だとそのコントロール種別が結線されず、**イベントが発火しない**
+（コンパイルエラーにならないので気付きにくい）。
+
+有効な接頭辞は処理方式で違う。詳細は `opentouryo-layer-p-webforms`（14種）/
+`opentouryo-layer-p-winforms`（6種）を参照。MVC は接頭辞の仕組みを使わない。
 
 ## やってはいけないこと
 

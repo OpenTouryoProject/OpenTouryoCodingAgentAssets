@@ -73,10 +73,30 @@ public partial class Form1 : MyBaseControllerWin
 **接頭辞は命名規約ではなく機能。** 規約から外れた名前を付けるとイベントが発火しない。
 設定は `app.config` の `appSettings`（`opentouryo-config` 参照）。
 
-リッチクライアント固有の接頭辞として `FxPrefixOfCommand` / `FxPrefixOfPictureBox` /
-`FxPrefixOfComboBox` がある（Web Forms では未使用）。
+### 有効な接頭辞は6種だけ
 
-<!-- TODO: リッチクライアントで有効な接頭辞の全一覧と既定値を app.config から採取して表にする。 -->
+**Web Forms（14種）より大幅に少ない。** 対応していないコントロールは自動結線されない。
+
+| 設定キー | サンプルでの値 | コントロール |
+| --- | --- | --- |
+| `FxPrefixOfButton` | `btn` | ボタン |
+| `FxPrefixOfComboBox` | `cbb` | コンボボックス |
+| `FxPrefixOfListBox` | `lbx` | リストボックス |
+| `FxPrefixOfRadioButton` | `rbn` | ラジオボタン |
+| `FxPrefixOfPictureBox` | `pbx` | ピクチャボックス |
+| `FxPrefixOfCheckBox` | `cbx` | チェックボックス |
+
+`FxPrefixOfComboBox` / `FxPrefixOfPictureBox` はリッチクライアント固有（Web Forms では未使用）。
+逆に **`FxPrefixOfTextBox` / `FxPrefixOfGridView` などは結線されない**（Web Forms 専用）。
+
+**値はプロジェクトごとに変えられる。** 上記はサンプルの値。既存コードと `app.config` を確認する。
+
+<!--
+  結線箇所は2つに分かれている（実装で確認済み）:
+    BaseControllerWin（親クラス1）  … BUTTON / COMBO_BOX / LIST_BOX / RADIO_BUTTON / PICTURE_BOX
+    MyBaseControllerWin（親クラス2）… CHECK_BOX（MyLiteral.PREFIX_OF_CHECK_BOX）
+  親クラス2 で接頭辞を追加できる作りだが、バイナリ提供のため利用側では変更できない。
+-->
 
 ## イベントハンドラのシグネチャ
 
@@ -133,6 +153,23 @@ public partial class Login : MyBaseControllerWin
 ## トランザクション制御が Web 系と違う
 
 **ここが最大の違い。B層が `BaseLogic2CS` 系（2層C/S用）で、トランザクション方式が別物。**
+
+### なぜ違うのか
+
+**アプリケーションが Desktop 上のインスタンスとして動作するため、アプリごとの
+グローバルな1トランザクションを使う設計。**
+
+| | Web / MVC | 2層C/S |
+| --- | --- | --- |
+| 動作単位 | 1リクエスト | **1アプリケーション インスタンス** |
+| トランザクションの単位 | **リクエストごと** | **アプリ全体で1つ** |
+| なぜ | 複数の利用者・リクエストが同居するので分離が要る | 1プロセス = 1利用者。分ける必要がない |
+
+この前提から、以下がすべて導かれる。**個別の仕様ではなく、1つの設計判断の帰結。**
+
+- コネクションが `static`（グローバル）→ アプリ全体で1つだから
+- コミットが手動 → いつ確定するかはアプリの操作単位が決めることだから
+- 業務例外で自動ロールバックしない → **勝手に巻き戻すと、それまでの処理まで消えるから**
 
 | | Web / MVC（`BaseLogic`） | **Windows Forms（`BaseLogic2CS`）** |
 | --- | --- | --- |
@@ -200,22 +237,23 @@ catch (BusinessApplicationException baEx)// 業務例外
 }
 ```
 
-**業務例外のときは自分でロールバックを判断する。** 業務例外を検知したら、
-続行するのかロールバックするのかを決めて `RollbackAndClose()` を呼ぶ。
+**アプリ全体で1トランザクションなので、フレームワークが勝手にロールバックできない。**
+業務例外は「利用者がやり直せるエラー」なので、そこで巻き戻すと、それまでに積み上げた
+処理まで消えてしまう。
+
+**業務例外を検知したら、続行するのかロールバックするのかを自分で判断する。**
 
 ```csharp
 if (testReturnValue.ErrorFlag)
 {
-    // 業務例外。ロールバックするかは業務次第
+    // 業務例外。入力し直させて続行するなら、ロールバックしない
+    // 取り消すなら明示的に呼ぶ
     LayerB.RollbackAndClose();
 }
 ```
 
-<!--
-  TODO: 「業務例外時のロールバックを自動にしない」設計意図を確認する。
-  2層C/S ではコネクションがグローバルで、複数の B層呼び出しを1トランザクションに
-  まとめられるため、業務例外＝即ロールバックにできない、という理解だが未確認。
--->
+システム例外・その他の例外で自動ロールバックするのは、**業務を続行できないため**
+（`opentouryo-exception` の型の選択基準を参照）。ここは判断の余地がない。
 
 ## B層の呼び出し
 
@@ -229,11 +267,22 @@ if (testReturnValue.ErrorFlag)
 B層のクラスは `MyFcBaseLogic2CS` を継承する（`MyFcBaseLogic` ではない）。
 **`MyBaseLogic2CS` は非推奨。**
 
-<!--
-  TODO: opentouryo-layer-b は BaseLogic / MyFcBaseLogic（Web/MVC）系を前提に書いてある。
-  2CS 系との差（UOCメソッドのシグネチャ、this.ReturnValue、自動振り分け）を確認し、
-  layer-b 側に注記を入れるか、このスキルに書くかを決める。
--->
+### B層の書き方そのものは Web / MVC と同じ
+
+**違うのはトランザクション制御だけ。** 業務コードクラスの書き方は `opentouryo-layer-b` が
+そのまま通用する。
+
+| | Web / MVC | 2層C/S | |
+| --- | --- | --- | --- |
+| 継承元 | `MyFcBaseLogic` | `MyFcBaseLogic2CS` | **違う** |
+| 自動振り分け | `Latebind.InvokeMethod(this, "UOC_" + MethodName, ...)` | 同じ | 同じ |
+| UOC のシグネチャ | `private void UOC_XXX(パラメータ値クラス)` | 同じ | 同じ |
+| 戻り値 | `this.ReturnValue` に事前設定 | 同じ | 同じ |
+| 直呼びガード | `WasCalledFromDoBusinessLogic` | 同じ | 同じ |
+| トランザクション | フレームワークが自動 | **手動**（前述） | **違う** |
+
+したがって `opentouryo-layer-b` を読むときは、**継承元とトランザクションの2点だけ
+読み替える**。それ以外はそのまま当てはまる。
 
 ## やってはいけないこと
 

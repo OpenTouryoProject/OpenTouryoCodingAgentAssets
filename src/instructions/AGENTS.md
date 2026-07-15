@@ -198,11 +198,12 @@ TODO
 | スキル | 使いどころ |
 | --- | --- |
 | `opentouryo-layer-p-mvc` | ASP.NET MVC / ASP.NET Core MVC のコントローラを実装するとき |
-| `opentouryo-layer-p-webforms` | Web Forms の画面を実装するとき（**未整備**） |
-| `opentouryo-layer-p-winforms` | Windows Forms の画面を実装するとき（**未整備**） |
+| `opentouryo-layer-p-webforms` | Web Forms の画面を実装するとき |
+| `opentouryo-layer-p-winforms` | Windows Forms の画面を実装するとき |
 | `opentouryo-layer-b` | 業務ロジックを実装するとき |
 | `opentouryo-layer-d` | Dao を実装するとき |
 | `opentouryo-query-definition` | SQL 定義ファイル（`.sql` / `.xml`）を書くとき |
+| `opentouryo-xml-definition` | XML 定義ファイル（メッセージ・共有情報・画面遷移・トランザクション・通信）を書くとき |
 | `opentouryo-exception` | 例外を扱うとき。層を問わず参照する |
 | `opentouryo-logging` | ログを出力するとき |
 | `opentouryo-config` | 設定値を読むとき、構成ファイルを書くとき |
