@@ -94,19 +94,20 @@ new FrameworkException(string messageID, string message, Exception innerExceptio
 
 `BaseLogic.DoBusinessLogic()` が型ごとに異なる処理を行う。**業務コード側で書く必要はない。**
 
-| スローした型 | ロールバック | 呼ばれる `UOC_ABEND` | 呼び出し側への到達形 |
-| --- | --- | --- | --- |
-| `BusinessApplicationException` | する | `(pv, rv, baEx)` | **正常系の戻り値**（`ErrorFlag = true`） |
-| `BusinessSystemException` | する | `(pv, rv, bsEx)` | 例外 |
-| その他すべて | する | `(pv, ref rv, ex)` | 例外（振り替えれば戻り値やシステム例外） |
+| スローした型 | 呼ばれる `UOC_ABEND` | 呼び出し側への到達形 |
+| --- | --- | --- |
+| 業務例外型 `BusinessApplicationException` | `(pv, rv, baEx)` | **正常系の戻り値**（`ErrorFlag = true`） |
+| システム例外型 `BusinessSystemException` | `(pv, rv, bsEx)` | システム例外型 |
+| その他すべての例外型 | `(pv, ref rv, ex)` | その他すべての例外型（振り替えれば[正常系の戻り値]や[システム例外型]） |
 
-コネクションの切断は `finally` で行われる。これも業務コード側で書かない。
+**ロールバックは、どの型の例外でも B層ルートを通過する際にフレームワークが自動的に行う。**
+コネクションの切断も `finally` で行われる。いずれも業務コード側で書かない。
 
 ### リスローする場所が型によって違う
 
 **「到達形」は同じでも、誰がリスローするかが違う。** 親クラス2 をカスタマイズするときに効いてくる。
 
-| スローした型 | `BaseLogic` のリスロー | `UOC_ABEND`（既定テンプレート）のリスロー |
+| スローした型 | `BaseLogic`（親クラス1）のリスロー | `MyFcBaseLogic`（親クラス2）の `UOC_ABEND`（既定テンプレート）のリスロー |
 | --- | --- | --- |
 | `BusinessApplicationException` | しない（戻り値へ変換する） | しない |
 | `BusinessSystemException` | **する**（`throw;`） | しない |
@@ -145,10 +146,14 @@ returnValue.ErrorInfo      = baEx.Information;
 | 業務コード親クラス2 | `MyFcBaseLogic`（`Touryo.Infrastructure.Business.Business`） | 纏め者 | `UOC_ABEND` を `override` し、ログ出力・例外振替などの**共通処理**を実装 |
 | 業務コードクラス | `MyFcBaseLogic` を継承した業務クラス | 開発者 | `UOC_DoAction` / `UOC_（メソッド名）` に**業務処理**を実装。例外は**スローするだけ** |
 
+**親クラス1・2 はビルド後のバイナリで提供されるため、ユーザプログラム開発プロジェクトでは
+修正できない。** 以下の親クラス2 に関する記述は、**挙動を理解するためのもの**であって、
+書き換えるためではない。実装するのは業務コードクラスだけ。
+
 <!--
   この分界は 利用ガイド の「纏め者編／開発者編」の切り分けに対応する。
-  親クラス2 は Touryo.Infrastructure.Business（業務フレームワーク＝プロジェクト固有・
-  カスタマイズ可能な層）に属するテンプレートで、纏め者が中身を編集する前提。
+  親クラス2 はカスタマイズ可能な層として設計されているが、それを行うのは整備する側であって、
+  ユーザプログラム開発プロジェクトではない（バイナリで提供されるため）。
 -->
 
 `UOC_ABEND` は**親クラス2で一度だけ共通実装する**もの。業務コードクラス側で `override` してはならない。
@@ -226,9 +231,11 @@ catch (BusinessSystemException bsEx)
 }
 ```
 
-## 例外振替（纏め者）
+## 例外振替（参考）
 
-**親クラス2（`MyFcBaseLogic`）の `UOC_ABEND` に実装する共通処理。** 業務コードクラスには書かない。
+**親クラス2（`MyFcBaseLogic`）の `UOC_ABEND` に実装される共通処理。**
+親クラス2 はバイナリで提供されるため、**ユーザプログラム開発プロジェクトでは書き換えられない。**
+以下は既定テンプレートの挙動を理解するための参考。業務コードクラスには書かない。
 
 一般例外を業務例外・システム例外へ振り替える場合は `UOC_ABEND(pv, ref rv, ex)` を使う。
 このオーバーロードだけ `returnValue` が `ref` なのは、振替によって戻り値を差し替えるため。

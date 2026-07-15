@@ -25,7 +25,7 @@ OpenTouryo を使う全アプリケーションが対象。
 | 階層 | クラス | 担当 | 中身 |
 | --- | --- | --- | --- |
 | ユーザ情報親クラス1 | `UserInfo`（`Touryo.Infrastructure.Framework.Util`） | フレームワーク | **空のクラス**。マーカーとしてのみ存在 |
-| ユーザ情報親クラス2 | `MyUserInfo`（`Touryo.Infrastructure.Business.Util`） | 纏め者 | `UserName` / `IPAddress`。**ここに項目を足す** |
+| ユーザ情報親クラス2 | `MyUserInfo`（`Touryo.Infrastructure.Business.Util`） | 纏め者 | `UserName` / `IPAddress` + プロジェクト固有の項目 |
 
 `UserInfo` は本当に `public class UserInfo { }` で中身がない。実体は `MyUserInfo` にある。
 
@@ -38,15 +38,22 @@ public class MyUserInfo : UserInfo
 }
 ```
 
-### カスタマイズ
+### 項目は提供済み。増やせない
 
-`MyUserInfo` はテンプレート。**プロジェクト固有の項目（所属、権限、ロールなど）はここに足す。**
-足した項目は P層・B層のどこからでも参照できる。
+`MyUserInfo` はプロジェクト固有の項目（所属、権限、ロールなど）を持てる設計だが、
+**親クラス2 はビルド後のバイナリで提供されるため、ユーザプログラム開発プロジェクトでは
+項目を足せない。** 既に定義されている項目を使う。
 
-<!-- TODO: このプロジェクトで MyUserInfo に足している項目があれば列挙する。 -->
+`MyUserInfo` が持つ項目は P層・B層のどこからでも参照できる。
 
-**core 系ではセッションへ JSON でシリアライズされる**（後述）。足す項目は
-JSON シリアライズ可能な型にすること。
+<!--
+  TODO: このプロジェクトに提供されている MyUserInfo が持つ項目を列挙する。
+  エージェントはバイナリの中身を読めないため、ここに書いておかないと
+  UserName / IPAddress しか無いものとして扱う。
+-->
+
+新しい項目が必要に見える場合は、引数クラス（`MyParameterValue` の派生）で渡せないかを
+先に検討し、それでも必要なら人に相談すること。
 
 ## UserInfoHandle（セッションへの出し入れ）
 
@@ -178,14 +185,15 @@ P層フレームワークを使う場合、セッションは必須。
 
 - **セッションから直接ユーザ情報を読む** — `UserInfoHandle` を経由する。
   ランタイム差（JSON シリアライズの有無）を吸収している
-- **`MyUserInfo` にシリアライズできない型の項目を足す** — core 系はセッションへ
-  JSON シリアライズするため、格納時か取得時に壊れる
+- **`MyUserInfo` に項目を足そうとする** — 親クラス2 はバイナリで提供される。
+  既存の項目を使うか、引数クラスで渡す
 - **net48 向けコードで `GetUserInformation<T>()` を使う** — core 系専用。逆も同様
 - **B層で `UserInfoHandle` からユーザ情報を取る** — 引数クラス経由で受け取る。
   B層がセッション（＝ P層の関心事）に依存してはならない
 - **P層で毎回 `UserInfoHandle.GetUserInformation()` を呼ぶ** — 親クラス2 が取得済み。
   コントローラの `this.UserInfo` を使う
-- **`UserInfo`（親クラス1）に項目を足す** — フレームワークの層。`MyUserInfo` に足す
+- **`UserInfo` / `MyUserInfo` を編集しようとする** — どちらもバイナリで提供される親クラス。
+  ソースが無い
 - **ログインで `SignInAsync` だけ、または `SetUserInformation` だけを書く** — 両方必要。
   片方だけだと、認証は通るがユーザ情報が無い（または逆）状態になる
 - **OpenTouryo が認証機構そのものを提供すると考える** — 認証状態の維持は .NET の仕組みを使う。
