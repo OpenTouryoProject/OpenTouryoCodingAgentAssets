@@ -94,13 +94,30 @@ new FrameworkException(string messageID, string message, Exception innerExceptio
 
 `BaseLogic.DoBusinessLogic()` が型ごとに異なる処理を行う。**業務コード側で書く必要はない。**
 
-| スローした型 | ロールバック | 呼ばれる `UOC_ABEND` | リスロー | 呼び出し側への到達形 |
-| --- | --- | --- | --- | --- |
-| `BusinessApplicationException` | する | `(pv, rv, baEx)` | **しない** | 正常系の戻り値（`ErrorFlag = true`） |
-| `BusinessSystemException` | する | `(pv, rv, bsEx)` | **する** | 例外 |
-| その他すべて | する | `(pv, ref rv, ex)` | **しない** | `UOC_ABEND` の実装次第 |
+| スローした型 | ロールバック | 呼ばれる `UOC_ABEND` | 呼び出し側への到達形 |
+| --- | --- | --- | --- |
+| `BusinessApplicationException` | する | `(pv, rv, baEx)` | **正常系の戻り値**（`ErrorFlag = true`） |
+| `BusinessSystemException` | する | `(pv, rv, bsEx)` | 例外 |
+| その他すべて | する | `(pv, ref rv, ex)` | 例外（振り替えれば戻り値やシステム例外） |
 
 コネクションの切断は `finally` で行われる。これも業務コード側で書かない。
+
+### リスローする場所が型によって違う
+
+**「到達形」は同じでも、誰がリスローするかが違う。** 親クラス2 をカスタマイズするときに効いてくる。
+
+| スローした型 | `BaseLogic` のリスロー | `UOC_ABEND`（既定テンプレート）のリスロー |
+| --- | --- | --- |
+| `BusinessApplicationException` | しない（戻り値へ変換する） | しない |
+| `BusinessSystemException` | **する**（`throw;`） | しない |
+| その他すべて | しない | **する**（`ExceptionDispatchInfo.Capture(ex).Throw()`） |
+
+その他の例外だけ、**リスローの判断が `UOC_ABEND` に委譲されている**。`BaseLogic` のコードには
+`// リスローしない（上記のUOC_ABENDで必要に応じてリスロー）` とあり、`throw;` が
+コメントアウトされている。
+
+つまり**その他の例外の最終的な挙動は親クラス2 の実装で決まる**。既定のテンプレートは
+リスローするので、カスタマイズしていなければ呼び出し側には例外が飛ぶ。
 
 ### 注意：FrameworkException は個別に捕捉されない
 
