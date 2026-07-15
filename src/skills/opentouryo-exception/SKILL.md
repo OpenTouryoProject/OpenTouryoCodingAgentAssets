@@ -70,7 +70,7 @@ new FrameworkException(string messageID, string message, Exception innerExceptio
 
 `messageID` は `MSGDefinition.xml` に定義したメッセージID と対応する。メッセージの雛形に
 `%1` / `%2` を置き、`Message` / `Information` を可変部分として埋める方式もある
-（`opentouryo-xml-definition` 参照）。**採るかどうかは親クラス2 の実装次第。**
+（`opentouryo-message` 参照）。**採るかどうかは親クラス2 の実装次第。**
 
 ### 型を増やさない
 

@@ -79,7 +79,8 @@ import する `CLAUDE.md` を生成する。Windows では symlink に管理者�
 | `opentouryo-common` | `-logging` / `-config` / `-auth` | 認証だけで6,201行。3つ混ぜると500行を超える。descriptionの焦点 |
 | `opentouryo-common`（当初案） | `opentouryo-exception` を独立 | 単独で250行。層をまたいで参照される中核 |
 | `opentouryo-layer-d` | `opentouryo-query-definition` を独立 | `.sql` と `.xml` は「SQL定義ファイルの書き方」という同じ関心事。Dao実装とは別軸 |
-| `opentouryo-config` | `opentouryo-xml-definition` を独立 | 6種の XML 定義ファイルは「定義ファイルの書式」という同じ関心事。config はパスの設定だけを扱う |
+| `opentouryo-config` | `opentouryo-xml-definition` を独立（後に解体） | 6種の XML 定義ファイルを「定義ファイルの書式」という関心事でまとめた。config はパスの設定だけを扱う |
+| `opentouryo-xml-definition` | `-message` / `-shared-property` / `-screen-transition` / `-transaction-control` / `-transmission` の**5つへ解体** | **書式だけでなく「それを使う機能」を書いたら別物になった。** 6種は書式こそ似ているが、機能としては共有情報・メッセージ・画面遷移・トランザクション・通信でまったく別。**粒度が小さくなっても、適切なスキルを選択して実装できることを優先**（起動は description だけで判定されるため）。共通の書式制約（DTD 埋め込み・`id` の先頭に数字不可・`Fx` キーでパス指定）は**各スキルに複製**し、1スキルで自己完結させた |
 | `opentouryo-layer-p` | `-mvc` / `-webforms` / `-winforms`（**完了**） | 実装モデルが根本的に違う（MVC は UOC を持たない）。WPF は P層フレームワークが無く対象外 |
 
 `opentouryo-layer-d/references/` は削除した。D層が316行で収まり、溢れなかったため。
@@ -97,20 +98,24 @@ Claude Code は**ブロックレベルの HTML コメントを読み込み時に
 ## 3. 成果物の現状
 
 ```
-opentouryo-layer-p-mvc      実効tok~4474  完了
-opentouryo-layer-p-webforms 実効tok~3987  完了
-opentouryo-layer-p-winforms 実効tok~4147  完了
-opentouryo-layer-b          実効tok~3749  完了
-opentouryo-layer-d          実効tok~4274  完了
-opentouryo-query-definition 実効tok~2904  完了
-opentouryo-xml-definition   実効tok~3196  完了
-opentouryo-exception        実効tok~3975  完了
-opentouryo-logging          実効tok~1731  完了
-opentouryo-config           実効tok~2947  完了
-opentouryo-auth             実効tok~4463  完了
+opentouryo-layer-p-mvc         実効tok~4474  完了
+opentouryo-layer-p-webforms    実効tok~3987  完了
+opentouryo-layer-p-winforms    実効tok~4147  完了
+opentouryo-layer-b             実効tok~3749  完了
+opentouryo-layer-d             実効tok~4274  完了
+opentouryo-query-definition    実効tok~2904  完了
+opentouryo-message             実効tok~1489  完了
+opentouryo-shared-property     実効tok~ 859  完了
+opentouryo-screen-transition   実効tok~1529  完了
+opentouryo-transaction-control 実効tok~1782  完了
+opentouryo-transmission        実効tok~1699  完了
+opentouryo-exception           実効tok~3972  完了
+opentouryo-logging             実効tok~1731  完了
+opentouryo-config              実効tok~2999  完了
+opentouryo-auth                実効tok~4463  完了
 ```
 
-**全11スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全15スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効tok」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 
 相互リンクしている（B層 → D層 → クエリ定義、全層 → 例外、P層3種 → auth、など）。

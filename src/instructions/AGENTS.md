@@ -203,7 +203,11 @@ TODO
 | `opentouryo-layer-b` | 業務ロジックを実装するとき |
 | `opentouryo-layer-d` | Dao を実装するとき |
 | `opentouryo-query-definition` | SQL 定義ファイル（`.sql` / `.xml`）を書くとき |
-| `opentouryo-xml-definition` | XML 定義ファイル（メッセージ・共有情報・画面遷移・トランザクション・通信）を書くとき |
+| `opentouryo-message` | メッセージを定義・取得するとき（`MSGDefinition.xml`） |
+| `opentouryo-shared-property` | 共有情報を定義・取得するとき（`SPDefinition.xml`） |
+| `opentouryo-transaction-control` | トランザクション パターンを定義するとき（`TCDefinition.xml`） |
+| `opentouryo-screen-transition` | 画面遷移制御を定義するとき（`SCDefinition.xml`。Web Forms 専用） |
+| `opentouryo-transmission` | 通信制御（サービス論理名で B層を呼ぶ）を扱うとき |
 | `opentouryo-exception` | 例外を扱うとき。層を問わず参照する |
 | `opentouryo-logging` | ログを出力するとき |
 | `opentouryo-config` | 設定値を読むとき、構成ファイルを書くとき |

@@ -141,20 +141,19 @@ GetConfigParameter.GetConfigValue("SomeKey", false);   // 環境変数を見な�
 **ランタイムによらず XML のまま。** `appsettings.json` になっても、これらの定義ファイル自体は
 XML で、パスを設定に書く。
 
-| キー | 定義ファイル | 用途 |
-| --- | --- | --- |
-| `FxXMLSPDefinition` | `SPDefinition.xml` | 共有情報 |
-| `FxXMLMSGDefinition` | `MSGDefinition.xml` | メッセージ |
-| `FxXMLSCDefinition` | `SCDefinition.xml` | 画面遷移制御 |
-| `FxXMLTCDefinition` | `TCDefinition.xml` | トランザクション制御 |
-| `FxXMLTMProtocolDefinition` | `TMProtocolDefinition.xml` | 通信制御（プロトコルの名前解決） |
-| `FxXMLTMInProcessDefinition` | `TMInProcessDefinition.xml` | 通信制御（インプロセス呼び出しの名前解決） |
+**ここで扱うのはパスの設定だけ。** 中身の書き方と使い方は、機能ごとのスキルを参照。
+
+| キー | 定義ファイル | 機能 | スキル |
+| --- | --- | --- | --- |
+| `FxXMLSPDefinition` | `SPDefinition.xml` | 共有情報取得 | `opentouryo-shared-property` |
+| `FxXMLMSGDefinition` | `MSGDefinition.xml` | メッセージ取得 | `opentouryo-message` |
+| `FxXMLSCDefinition` | `SCDefinition.xml` | 画面遷移制御 | `opentouryo-screen-transition` |
+| `FxXMLTCDefinition` | `TCDefinition.xml` | トランザクション制御 | `opentouryo-transaction-control` |
+| `FxXMLTMProtocolDefinition`<br>`FxXMLTMInProcessDefinition` | `TMProtocolDefinition.xml`<br>`TMInProcessDefinition.xml` | 通信制御 | `opentouryo-transmission` |
 
 ```json
 "FxXMLMSGDefinition": "C:/root/files/resource/XML/MSGDefinition.xml"
 ```
-
-**中身の書き方は `opentouryo-xml-definition` を参照。** ここで扱うのはパスの設定だけ。
 
 ### P層の設定キー
 
