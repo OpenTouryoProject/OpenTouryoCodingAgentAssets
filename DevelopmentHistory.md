@@ -170,7 +170,10 @@ opentouryo-auth             184L  完了
 | ロガー名 | **定数がなく文字列直書き**。タイポしてもコンパイル・実行時チェックを通らずログが消える |
 | `GetConfigParameter` | **core系は`InitConfiguration()`必須**。呼ばないと`ArgumentException`。`GetAnyConfigValue`/`GetAnyConfigSection`は**core専用** |
 | `UserInfoHandle` | **`GetUserInformation<T>()`はcore専用、`GetUserInformation()`はnet48専用**。同名でシグネチャが違う |
-| 認証 | **.NETの認証（`SignInAsync`）とOpenTouryoのユーザ情報（`SetUserInformation`）の両方が必要** |
+| 認証 | **.NETの認証とOpenTouryoのユーザ情報（`SetUserInformation`）の両方が必要**。片方だけだと認証は通るがユーザ情報が無い（または逆） |
+| 認証の方式差 | **Web Forms と MVC（net48）は Forms 認証で、`web.config` の記述も同一**。断層は net48 と Core の間（Core は Cookie 認証、`web.config` が無い） |
+| net48 MVC の認可 | **`web.config` の `<authorization>` と `[Authorize]` の二段構え**。属性だけではない（Web Forms の `<location>` に相当するのが属性） |
+| Core の必須構成 | `Startup` で `services._AddHttpContextAccessor()` / `app._UseHttpContextAccessor()` を呼ばないと `UserInfoHandle` が動かない（`MyHttpContext.Current.Session` に依存）。**忘れてもコンパイルは通る**。先頭の `_` は誤記ではない |
 
 ### 4.4 作者から得た情報（コードからは読めない）
 
@@ -210,6 +213,16 @@ opentouryo-auth             184L  完了
 
 - [ ] **P層の3分割**（`-winforms` / `-webforms` / `-mvc`）。`opentouryo-layer-p` は
       スケルトンのまま。方針は「(b) 一旦保留にして B/D/共通から埋める」で合意済み
+- [ ] **`opentouryo-auth` の「P層フレームワークごとの差異」節を P層スキルへ分配する。**
+      3方式の認証実装を比較した結果、`opentouryo-auth` が **約5,800トークンで目安5,000を超過**
+      している。P層3分割まで一時的な超過として許容する合意済み。分配先は以下。
+      - ① Web Forms（net48）の詳細 → `opentouryo-layer-p-webforms`
+      - ② MVC（net48）／③ ASP.NET Core MVC の詳細 → `opentouryo-layer-p-mvc`
+        （ランタイム差として1スキルに収める）
+      - `opentouryo-auth` には共通部分（`MyUserInfo` / `UserInfoHandle` / ユーザ情報の流れ /
+        「.NET の認証と両方必要」の原則 / 比較表）だけ残す
+- [ ] **リッチクライアント（`-winforms`）の認証の扱いが未調査。** `MyBaseControllerWin` /
+      `BaseLogic2CS` 系。3方式の比較には含まれていない
 - [ ] `opentouryo-auth`: `MyUserInfo` にプロジェクト固有で足している項目
 - [ ] `opentouryo-auth`: **ログアウト時のユーザ情報の破棄**。
       `UserInfoHandle.DeleteUserInformation()` があるのに MVC_Sample の `Logout` が呼んでいない。
@@ -295,5 +308,10 @@ skills-ref validate ./src/skills/opentouryo-layer-d
 
 1. **P層の3分割**（`opentouryo-layer-p-winforms` / `-webforms` / `-mvc`）。
    `opentouryo-layer-p` は削除するか、共通部分を残すか要判断
-2. 上記に伴い `opentouryo-config` の「P層の設定キー」節を P層スキルへ移す
+2. 上記に伴い、以下を P層スキルへ移す
+   - `opentouryo-auth` の「P層フレームワークごとの差異」節（**目安超過の解消**。5.1 参照）
+   - `opentouryo-config` の「P層の設定キー」節
 3. `AGENTS.md` の TODO を埋める（導入プロジェクト側で埋める欄との切り分けが必要）
+
+**1 が他の課題のボトルネックになっている。** 目安超過の解消も、設定キーの整理も、
+P層スキルが無いと置き場所が決まらない。
