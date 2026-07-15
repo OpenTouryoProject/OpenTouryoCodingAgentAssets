@@ -103,6 +103,14 @@ new FrameworkException(string messageID, string message, Exception innerExceptio
 **ロールバックは、どの型の例外でも B層ルートを通過する際にフレームワークが自動的に行う。**
 コネクションの切断も `finally` で行われる。いずれも業務コード側で書かない。
 
+### 2層クライアントサーバ（Windows Forms）は違う
+
+上記は `BaseLogic`（Web / MVC）の話。**リッチクライアント用の `BaseLogic2CS` は、
+業務例外のときロールバックしない**（実装に `★★業務例外時のロールバックは自動にしない。`
+とある）。正常系のコミットも自動ではなく `CommitAndClose()` を明示的に呼ぶ。
+
+Windows Forms で実装する場合は `opentouryo-layer-p-winforms` を参照。
+
 ### リスローする場所が型によって違う
 
 **「到達形」は同じでも、誰がリスローするかが違う。** 親クラス2 をカスタマイズするときに効いてくる。

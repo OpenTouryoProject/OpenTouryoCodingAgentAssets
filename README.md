@@ -11,7 +11,9 @@ Assets used by coding agents utilizing OpenTouryo
 src/
   instructions/AGENTS.md        概要・規約（常時コンテキストに載る / これが原本）
   skills/
-    opentouryo-layer-p/          P層（プレゼンテーション層）の実装
+    opentouryo-layer-p-mvc/      P層：ASP.NET MVC / ASP.NET Core MVC
+    opentouryo-layer-p-webforms/ P層：Web Forms
+    opentouryo-layer-p-winforms/ P層：Windows Forms
     opentouryo-layer-b/          B層（業務ロジック層）の実装
     opentouryo-layer-d/          D層（データアクセス層）の実装
     opentouryo-query-definition/ SQL定義ファイル（静的 .sql / 動的 .xml）

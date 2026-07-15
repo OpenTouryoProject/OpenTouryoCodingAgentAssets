@@ -3,7 +3,7 @@
 作業を再開するための記録。**アセットの内容ではなく、アセットを作る側の記録。**
 配布されるのは `src/` 配下のみで、このファイルは配布されない。
 
-最終更新: 2026-07-15
+最終更新: 2026-07-16
 
 ---
 
@@ -79,7 +79,7 @@ import する `CLAUDE.md` を生成する。Windows では symlink に管理者�
 | `opentouryo-common` | `-logging` / `-config` / `-auth` | 認証だけで6,201行。3つ混ぜると500行を超える。descriptionの焦点 |
 | `opentouryo-common`（当初案） | `opentouryo-exception` を独立 | 単独で250行。層をまたいで参照される中核 |
 | `opentouryo-layer-d` | `opentouryo-query-definition` を独立 | `.sql` と `.xml` は「SQL定義ファイルの書き方」という同じ関心事。Dao実装とは別軸 |
-| `opentouryo-layer-p` | `-winforms` / `-webforms` / `-mvc`（**未着手**） | 処理方式ごとに規約が全く違う |
+| `opentouryo-layer-p` | `-mvc` / `-webforms` / `-winforms`（**完了**） | 実装モデルが根本的に違う（MVC は UOC を持たない）。WPF は P層フレームワークが無く対象外 |
 
 `opentouryo-layer-d/references/` は削除した。D層が316行で収まり、溢れなかったため。
 「D層は溢れるだろう」という当初の推測が外れた。
@@ -96,20 +96,25 @@ Claude Code は**ブロックレベルの HTML コメントを読み込み時に
 ## 3. 成果物の現状
 
 ```
-opentouryo-layer-p           64L  スケルトンのまま（3分割待ち）
-opentouryo-layer-b          261L  完了
-opentouryo-layer-d          316L  完了
-opentouryo-query-definition 270L  完了
-opentouryo-exception        250L  完了
-opentouryo-logging          156L  完了
-opentouryo-config           169L  完了
-opentouryo-auth             184L  完了
+opentouryo-layer-p-mvc      295L  実効tok~4400  完了
+opentouryo-layer-p-webforms 273L  実効tok~3898  完了
+opentouryo-layer-p-winforms 242L  実効tok~3387  完了
+opentouryo-layer-b          274L  実効tok~3749  完了
+opentouryo-layer-d          320L  実効tok~4274  完了
+opentouryo-query-definition 270L  実効tok~2904  完了
+opentouryo-exception        282L  実効tok~3893  完了
+opentouryo-logging          157L  実効tok~1731  完了
+opentouryo-config           174L  実効tok~2750  完了
+opentouryo-auth             285L  実効tok~4096  完了
 ```
 
-7本が相互リンクしている（B層 → D層 → クエリ定義、全層 → 例外、など）。
-`AGENTS.md` は173行（実効78行）。
+**全10スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+「実効tok」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 
-**P層以外は書き終えている。**
+相互リンクしている（B層 → D層 → クエリ定義、全層 → 例外、P層3種 → auth、など）。
+`AGENTS.md` は約200行（実効約100行）。
+
+**残るのは各スキル内の TODO（プロジェクト固有の値・未確認の論点）と AGENTS.md の TODO。**
 
 ---
 
@@ -172,6 +177,10 @@ opentouryo-auth             184L  完了
 | `UserInfoHandle` | **`GetUserInformation<T>()`はcore専用、`GetUserInformation()`はnet48専用**。同名でシグネチャが違う |
 | 認証 | **.NETの認証とOpenTouryoのユーザ情報（`SetUserInformation`）の両方が必要**。片方だけだと認証は通るがユーザ情報が無い（または逆） |
 | 認証の方式差 | **Web Forms と MVC（net48）は Forms 認証で、`web.config` の記述も同一**。断層は net48 と Core の間（Core は Cookie 認証、`web.config` が無い） |
+| P層の実装モデル | **Web Forms / Windows Forms は UOC メソッド方式、MVC は UOC を持たない**（MVC 標準のフィルタに乗る）。親クラス1 の UOC 定義数は 15 / 12 / **0** |
+| コントロール名の接頭辞 | **命名規約ではなく機能。** 設定（`FxPrefixOfButton` = `btn` 等14種）から接頭辞を読み、コントロールツリーを走査してイベントを自動結線する。規約から外れると**発火しない**（`.aspx` に `OnClick` を書かない） |
+| 2層C/S のトランザクション | **`BaseLogic2CS` は `BaseLogic` と別物。** コネクションが `static` でグローバル、**正常系のコミットは手動**（`CommitAndClose()`）、**業務例外ではロールバックしない**（`★★業務例外時のロールバックは自動にしない。`）、`UOC_AfterTransaction` も呼ばれない |
+| 親クラス2 の abstract 差 | **Web Forms の `MyBaseController` は `abstract`**（`UOC_FormInit` が実装必須）だが、**`MyBaseControllerWin` は具象**（空実装済みで override 任意） |
 | net48 MVC の認可 | **`web.config` の `<authorization>` と `[Authorize]` の二段構え**。属性だけではない（Web Forms の `<location>` に相当するのが属性） |
 | Core の必須構成 | `Startup` で `services._AddHttpContextAccessor()` / `app._UseHttpContextAccessor()` を呼ばないと `UserInfoHandle` が動かない（`MyHttpContext.Current.Session` に依存）。**忘れてもコンパイルは通る**。先頭の `_` は誤記ではない |
 
@@ -188,6 +197,12 @@ opentouryo-auth             184L  完了
   それを行うのはこれらを整備する側であって、ユーザプログラム開発プロジェクトではない。
   → 各スキルには「親クラス2 に `UOC_ABEND` を実装する」等の記述がある。これは挙動を理解する
   ためのもの。矛盾に見えるため、`AGENTS.md` と各スキルの「実装場所」節に注記を入れてある
+- **WPF は P層フレームワークを持たない。** B層・D層のみを利用し、画面は素の WPF として実装する。
+  → `MyBaseControllerWin` が `Form` を継承しているため構造的にも使えず、サンプル
+  （`2CSClientWPF_sample`）も `Window1 : Window` で、UOC が出てくるのは `Business/LayerB.cs`
+  だけ。**それでも一度誤認した**（`grep "class \w* : MyBaseControllerWin"` の4件を
+  「Win と WPF の両方」と読んだが、実際は2つのサンプルツリー × WinForms の2ファイル）。
+  P層スキルは **`-mvc` / `-webforms` / `-winforms` の3つで、WPF は対象外**
 - **対象ランタイムは .NET Framework 4.8 と .NET 10.0**（`Business_netcore100.csproj` で裏付け済み）
 - **構成ファイル**: XML定義ファイルは共通。`app.config` は core 系で `appsettings.json` になる
 - **静的クエリ=`.sql`、動的パラメタライズドクエリ=`.xml`**
@@ -211,18 +226,21 @@ opentouryo-auth             184L  完了
 
 ### 5.1 スキル本体
 
-- [ ] **P層の3分割**（`-winforms` / `-webforms` / `-mvc`）。`opentouryo-layer-p` は
-      スケルトンのまま。方針は「(b) 一旦保留にして B/D/共通から埋める」で合意済み
-- [ ] **`opentouryo-auth` の「P層フレームワークごとの差異」節を P層スキルへ分配する。**
-      3方式の認証実装を比較した結果、`opentouryo-auth` が **約5,800トークンで目安5,000を超過**
-      している。P層3分割まで一時的な超過として許容する合意済み。分配先は以下。
-      - ① Web Forms（net48）の詳細 → `opentouryo-layer-p-webforms`
-      - ② MVC（net48）／③ ASP.NET Core MVC の詳細 → `opentouryo-layer-p-mvc`
-        （ランタイム差として1スキルに収める）
-      - `opentouryo-auth` には共通部分（`MyUserInfo` / `UserInfoHandle` / ユーザ情報の流れ /
-        「.NET の認証と両方必要」の原則 / 比較表）だけ残す
-- [ ] **リッチクライアント（`-winforms`）の認証の扱いが未調査。** `MyBaseControllerWin` /
-      `BaseLogic2CS` 系。3方式の比較には含まれていない
+- [x] **P層の3分割**（`-mvc` / `-webforms` / `-winforms`）— **完了**。
+      `opentouryo-layer-p` は削除。WPF は P層フレームワークを持たないため対象外
+- [x] **`opentouryo-auth` の「P層フレームワークごとの差異」節を P層スキルへ分配** — **完了**。
+      目安超過は解消（5,800 → 約4,100トークン）
+- [x] **リッチクライアント（`-winforms`）の認証の扱い** — **調査完了**。
+      `UserInfoHandle` もセッションも使わず `static` な `MyBaseControllerWin.UserInfo` で保持。
+      .NET の認証機構も使わない
+- [ ] **`opentouryo-layer-b` と 2CS 系（`MyFcBaseLogic2CS`）の差の整理。**
+      layer-b は `BaseLogic` / `MyFcBaseLogic`（Web/MVC）前提で書いてある。
+      注記は入れたが、UOC のシグネチャ・`this.ReturnValue`・自動振り分けの差は未確認
+- [ ] **2CS で「業務例外時のロールバックを自動にしない」設計意図の確認。**
+      コネクションがグローバルで複数の B層呼び出しを1トランザクションにまとめられるため、
+      という理解だが未確認
+- [ ] **リッチクライアントで有効な接頭辞の全一覧と既定値**（`FxPrefixOfCommand` /
+      `FxPrefixOfPictureBox` / `FxPrefixOfComboBox` ほか）を app.config から採取する
 - [ ] `opentouryo-auth`: `MyUserInfo` にプロジェクト固有で足している項目
 - [ ] `opentouryo-auth`: **ログアウト時のユーザ情報の破棄**。
       `UserInfoHandle.DeleteUserInformation()` があるのに MVC_Sample の `Logout` が呼んでいない。

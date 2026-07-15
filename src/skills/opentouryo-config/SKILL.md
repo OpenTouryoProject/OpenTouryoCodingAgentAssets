@@ -160,9 +160,14 @@ XML で、パスを設定に書く。
 
 画面遷移、ダイアログ、二重送信抑止、セッション タイムアウト検出などの `Fx` キーは P層 の機能。
 `FxScreenTransitionCheck` / `FxDoubleTransmissionCheck` / `FxSessionTimeOutCheck` /
-`FxErrorScreenPath` など。
+`FxErrorScreenPath` など。**使っている P層フレームワークのスキルを参照する。**
 
-<!-- TODO: P層スキル（-webforms / -mvc など）を起こす際に、そちらへ記述する。 -->
+**`FxPrefixOf*`（`FxPrefixOfButton` = `btn` など14種）は Web Forms とリッチクライアントで
+機能に直結する設定。** コントロール名の接頭辞でイベントを自動結線する仕組みに使われ、
+**未設定だとそのコントロール種別が結線されない**（設定ミスがコンパイルエラーにならず、
+イベントが発火しないという形で現れる）。詳細は `opentouryo-layer-p-webforms` を参照。
+
+<!-- TODO: P層の設定キーの一覧を各 P層スキルへ分配する（-winforms が未整備のため保留）。 -->
 
 ## やってはいけないこと
 

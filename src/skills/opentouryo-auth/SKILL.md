@@ -119,8 +119,37 @@ MyUserInfo ui = (MyUserInfo)UserInfoHandle.GetUserInformation();
 **この2つは別物。** ① は「認証済みかどうか」、② は「フレームワークが使うユーザ情報」。
 OpenTouryo は ① を提供しないので、.NET の仕組みを使う。
 
-- ① だけ → `[Authorize]` は通るが `this.UserInfo` が null になり、B層へ渡すユーザ情報がない
+- ① だけ → 認証は通り、`this.UserInfo` も**認証チケットから復元される**。ただし
+  **`UserName` と `IPAddress` しか埋まらない**（後述）
 - ② だけ → 認証状態が維持されない
+
+### ユーザ情報は認証チケットから復元される
+
+P層の親クラス2 は、リクエストごとに以下を行う。**3方式とも同じ。**
+
+```
+Session が無効 → 何もしない
+Session が有効
+  UserInfoHandle.GetUserInformation() を試みる
+    取れた   → それを使う
+    null だった
+      認証チケットからユーザ名を取る
+        net48 : System.Threading.Thread.CurrentPrincipal.Identity.Name
+        Core   : AuthenticateAsync(...).Principal?.Identity?.Name
+      ユーザ名が空 → new MyUserInfo("未認証", IP)   ※セッションには入れない
+      ユーザ名あり → new MyUserInfo(ユーザ名, IP) + SetUserInformation() で復元
+```
+
+**したがって `this.UserInfo` が null になることはない**（セッションが有効なら）。
+未認証なら `UserName` が `"未認証"` になる。
+
+**それでもログイン時に `SetUserInformation()` を呼ぶ理由は、復元では `UserName` と
+`IPAddress` しか埋まらないため。** プロジェクト固有の項目（所属、権限など）を持たせるには、
+ログイン時に完全な `MyUserInfo` を作ってセッションへ入れる必要がある。
+
+親クラス2 の復元処理には「★ 必要であれば、他の業務共通引継ぎ情報などをロードする」という
+拡張ポイントがあるが、既定のテンプレートでは実装されていない。**ここを実装するかは
+親クラス2 を整備する側の判断**で、ユーザプログラム開発プロジェクトからは変えられない。
 
 ### P層フレームワークごとの差異
 
@@ -164,197 +193,33 @@ OpenTouryo は ① を提供しないので、.NET の仕組みを使う。
 
 ### ① Web Forms（net48）
 
-```csharp
-public partial class login : MyBaseController
-{
-    public login()
-    {
-        this.IsNoSession = true;   // この画面ではセッションIDを返さない
-    }
+**詳細は `opentouryo-layer-p-webforms` を参照。** ログイン画面の実装例、`web.config` の構成を
+そちらに記述している。
 
-    protected override void UOC_FormInit()
-    {
-        this.FxSessionAbandon();   // セッション消去
-    }
+要点だけ再掲する。
 
-    protected string UOC_btnButton1_Click(FxEventArgs fxEventArgs)
-    {
-        if (!string.IsNullOrEmpty(this.txtUserID.Text))
-        {
-            // ① .NET 側：Forms 認証のチケットを生成
-            FormsAuthentication.RedirectFromLoginPage(this.txtUserID.Text, false);
+- **Forms 認証**。`web.config` の `<authentication mode="Forms">` + `<authorization>` で設定する
+- ログイン画面は `IsNoSession = true` をコンストラクタで設定し、`UOC_FormInit` で
+  `FxSessionAbandon()` を呼ぶ
+- サインインは `FormsAuthentication.RedirectFromLoginPage(userName, false)`
+- 認可はサイト全体が `<authorization><deny users="?" /></authorization>`、
+  パス単位の例外は `<location path="...">`
 
-            // ② OpenTouryo 側：ユーザ情報を保持
-            MyUserInfo ui = new MyUserInfo(this.txtUserID.Text, Request.UserHostAddress);
-            UserInfoHandle.SetUserInformation(ui);
-        }
-        return string.Empty;   // 画面遷移はしない（基盤に任せる）
-    }
-}
-```
+### ② MVC（net48）／③ ASP.NET Core MVC（.NET 10.0）
 
-ログアウトは専用画面（`logout.aspx`）の `UOC_FormInit` で `FormsAuthentication.SignOut()`。
+**詳細は `opentouryo-layer-p-mvc` を参照。** 実装例、`web.config` と `Startup.cs` の構成、
+net48 と .NET 10.0 の差をそちらに記述している。
 
-`RedirectFromLoginPage` の第2引数は Cookie を永続化するかどうか。**セキュリティを考慮して
-`false` を推奨。**
+要点だけ再掲する。
 
-認可は `web.config` で行う。サイト全体を拒否し、`<location>` で例外を開ける。
+- **net48 MVC は Forms 認証**。`web.config` の記述は Web Forms と同一。認可は
+  `<authorization>` と `[Authorize]` の二段構え
+- **Core MVC は Cookie 認証**。`FormsAuthentication` は存在しない。`ClaimsPrincipal` を作って
+  `SignInAsync()` する。`web.config` が無いので認可は属性のみ
+- **Core だけ `Startup.cs` での構成が必須**。`services._AddHttpContextAccessor()` /
+  `app._UseHttpContextAccessor()` を呼ばないと `UserInfoHandle` が動かない（コンパイルは通る）
+- **Core に `Request.UserHostAddress` は無い**。`GetClientIpAddress` を使う
 
-```xml
-<system.web>
-  <authentication mode="Forms">
-    <forms name="formauth" loginUrl="Aspx/Start/login.aspx" defaultUrl="Aspx/Start/menu.aspx"
-           timeout="10" protection="All" ... />
-  </authentication>
-  <authorization>
-    <deny users="?" />          <!-- 未認証ユーザを全体で拒否 -->
-  </authorization>
-</system.web>
-
-<!-- パス単位で例外を開ける -->
-<location path="Aspx/OAuth2">
-  <system.web>
-    <authorization><allow users="*" /></authorization>
-  </system.web>
-</location>
-```
-
-ログイン画面自体は `loginUrl` に指定されているため、Forms 認証が自動的に許可する。
-
-### ② MVC（net48）
-
-コントローラの基底は `MyBaseMVController`。**認証の仕組みは Web Forms とまったく同じ Forms 認証で、
-`web.config` の記述も同一。**
-
-```csharp
-[HttpPost]
-[AllowAnonymous]
-[ValidateAntiForgeryToken]
-public ActionResult Login(LoginViewModel model)
-{
-    // ① .NET 側：Forms 認証のチケットを生成
-    FormsAuthentication.RedirectFromLoginPage(model.UserName, false);
-
-    // ② OpenTouryo 側：ユーザ情報を保持
-    MyUserInfo ui = new MyUserInfo(model.UserName, Request.UserHostAddress);
-    UserInfoHandle.SetUserInformation(ui);
-
-    return new EmptyResult();   // 基盤に任せるのでリダイレクトしない
-}
-
-[HttpGet]
-public ActionResult Logout()
-{
-    FormsAuthentication.SignOut();
-    return this.Redirect(Url.Action("Index", "Home"));
-}
-```
-
-認可は **`web.config`（①と同一）に加えて、属性でも指定できる。** コントローラ全体や特定の
-アクションメソッドに `[Authorize]` を適用して、認証されていないユーザのアクセスを拒否する。
-
-```csharp
-[Authorize]                       // コントローラ全体を認証必須にする
-public class HomeController : MyBaseMVController
-{
-    [AllowAnonymous]              // このアクションだけ認証不要にする
-    public ActionResult Login() { ... }
-}
-```
-
-`web.config` の `<authorization>` がサイト全体に効き、属性でコントローラ・アクション単位に
-制御する、という二段構え。Web Forms の `<location>` に相当するのがこの属性。
-
-### ③ ASP.NET Core MVC（.NET 10.0）
-
-コントローラの基底は `MyBaseMVControllerCore`。**Forms 認証は無いので Cookie 認証を使う。**
-
-```csharp
-[HttpPost]
-[AllowAnonymous]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> Login(LoginViewModel model)
-{
-    // ① .NET 側：ClaimsPrincipal を作ってサインイン
-    List<Claim> claims = new List<Claim>();
-    claims.Add(new Claim(ClaimTypes.Name, model.UserName));
-
-    ClaimsIdentity userIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-    ClaimsPrincipal userPrincipal = new ClaimsPrincipal(userIdentity);
-
-    await AuthenticationHttpContextExtensions.SignInAsync(
-        this.HttpContext, CookieAuthenticationDefaults.AuthenticationScheme, userPrincipal);
-
-    // ② OpenTouryo 側：ユーザ情報を保持
-    MyUserInfo ui = new MyUserInfo(model.UserName, (new GetClientIpAddress()).GetAddress());
-    UserInfoHandle.SetUserInformation(ui);
-
-    return View(model);   // 基盤に任せるのでリダイレクトしない
-}
-
-[HttpGet]
-public async Task<IActionResult> Logout()
-{
-    await AuthenticationHttpContextExtensions.SignOutAsync(
-        this.HttpContext, CookieAuthenticationDefaults.AuthenticationScheme);
-    return this.Redirect(Url.Action("Index", "Home"));
-}
-```
-
-`Request.UserHostAddress` は存在しない。**IP アドレスは `GetClientIpAddress` で取る。**
-
-認可は属性のみ。**`web.config` が無いので、サイト全体を一括で拒否する手段がない。**
-`[Authorize]` には `AuthenticationSchemes` の指定が要る。
-
-```csharp
-[Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
-public class HomeController : MyBaseMVControllerCore
-{
-    [AllowAnonymous]
-    public IActionResult Login() { ... }
-}
-```
-
-未認証時の遷移先は `web.config` の `loginUrl` ではなく、`AddCookie` の `LoginPath` で指定する。
-
-#### Core だけ Startup での構成が要る
-
-net48 は `web.config` に書けば済むが、**Core は `Startup.cs` での構成が必須**。
-これを忘れると認証もセッションも `UserInfoHandle` も動かない。
-
-```csharp
-public void ConfigureServices(IServiceCollection services)
-{
-    services._AddHttpContextAccessor();   // UserInfoHandle が依存する MyHttpContext 用
-    services.AddSession();
-
-    services.AddAuthentication(options =>
-    {
-        options.DefaultChallengeScheme    = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultSignInScheme       = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    })
-    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
-    {
-        options.LoginPath        = new PathString("/Home/Login");
-        options.AccessDeniedPath = new PathString(GetConfigParameter.GetConfigValue("FxErrorScreenPath"));
-        options.ReturnUrlParameter = "ReturnUrl";
-    });
-}
-
-public void Configure(IApplicationBuilder app, ...)
-{
-    app._UseHttpContextAccessor();   // MyHttpContext を初期化する
-    app.UseSession(new SessionOptions() { ... });
-    app.UseAuthentication();
-    app.UseAuthorization();
-}
-```
-
-**`_AddHttpContextAccessor()` / `_UseHttpContextAccessor()` は OpenTouryo の拡張メソッド**
-（`Touryo.Infrastructure.Framework.StdMigration`）。`UserInfoHandle` は内部で
-`MyHttpContext.Current.Session` を見るため、これらを呼ばないと `UserInfoHandle` が動かない。
-先頭の `_`（アンダースコア）は誤記ではない。
 
 ### 認証方式そのものは問わない
 
@@ -384,10 +249,20 @@ OpenTouryo でアプリケーションを作る際の標準的な認証手段で
 
 <!-- TODO: 外部 IdP と連携する方針のプロジェクトでは、その手順をここに追記する。 -->
 
-## セッションが前提
+## セッションが前提（Web のみ）
 
 `UserInfoHandle` はセッションに依存する。**セッションを使わない構成では成立しない。**
-P層フレームワークを使う場合、セッションは必須。
+Web の P層フレームワーク（Web Forms / MVC / ASP.NET Core MVC）を使う場合、セッションは必須。
+
+### リッチクライアントは別（このスキルの対象外）
+
+**Windows Forms（リッチクライアント）は `UserInfoHandle` もセッションも使わない。**
+`MyBaseControllerWin.UserInfo`（`static` フィールド）でユーザ情報を保持し、
+.NET の認証機構も使わない。詳細は `opentouryo-layer-p-winforms` を参照。
+
+WPF は P層フレームワークを持たないため、ユーザ情報の保持方法もアプリケーション側で決める。
+
+このスキルの記述は **Web 系（Web Forms / MVC / ASP.NET Core MVC）が対象**。
 
 ## やってはいけないこと
 
@@ -403,7 +278,10 @@ P層フレームワークを使う場合、セッションは必須。
 - **`UserInfo` / `MyUserInfo` を編集しようとする** — どちらもバイナリで提供される親クラス。
   ソースが無い
 - **ログインで .NET 側のサインインだけ、または `SetUserInformation` だけを書く** — 両方必要。
-  片方だけだと、認証は通るがユーザ情報が無い（または逆）状態になる
+  サインインだけだと `UserName` / `IPAddress` しか復元されず、プロジェクト固有の項目が欠ける。
+  `SetUserInformation` だけだと認証状態が維持されない
+- **`this.UserInfo` の null チェックを書く** — 親クラス2 が必ず埋める。
+  未認証時は `UserName` が `"未認証"` になる（null ではない）
 - **P層フレームワークを取り違える** — Web Forms / MVC（net48）は **Forms 認証**、
   ASP.NET Core MVC は **Cookie 認証**。`FormsAuthentication` は Core に存在しない
 - **net48 MVC で `web.config` の `<authorization>` を消して `[Authorize]` だけにする** —

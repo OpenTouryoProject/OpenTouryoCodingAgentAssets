@@ -13,6 +13,11 @@ metadata:
 
 業務コードクラスに業務処理を実装する方法と、B層フレームワークの処理フローを扱う。
 
+**対象は `BaseLogic` / `MyFcBaseLogic` 系（Web / MVC）。** リッチクライアント（Windows Forms）は
+`BaseLogic2CS` / `MyFcBaseLogic2CS` 系で、**トランザクション制御が別物**
+（コネクションがグローバル、コミットは手動、業務例外でロールバックしない）。
+Windows Forms の場合は `opentouryo-layer-p-winforms` を参照。
+
 例外の型と処理方式は `opentouryo-exception`、Dao の実装は `opentouryo-layer-d` を参照。
 
 ## 実装場所（誰がどこに書くか）
@@ -188,6 +193,9 @@ finally
 ```
 
 コミット・ロールバック・切断はすべてフレームワークが行う。**業務コードクラスに書かない。**
+
+**これは `BaseLogic`（Web / MVC）の話。** `BaseLogic2CS`（Windows Forms）は自動コミットせず、
+業務例外でロールバックもしない（`opentouryo-layer-p-winforms` 参照）。
 
 ## トランザクション制御
 

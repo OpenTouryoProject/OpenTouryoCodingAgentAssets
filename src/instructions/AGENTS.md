@@ -79,9 +79,21 @@ OpenTouryo は **P層 / B層 / D層** の3層構造をとる。各層の責務�
 
 | 層 | 責務 | 主な基底クラス | スキル |
 | --- | --- | --- | --- |
-| P層（画面 / API） | TODO | TODO | `opentouryo-layer-p` |
+| P層（画面 / API） | TODO | 処理方式による（下表） | `opentouryo-layer-p-*` |
 | B層（業務ロジック） | TODO | TODO | `opentouryo-layer-b` |
 | D層（データアクセス） | TODO | TODO | `opentouryo-layer-d` |
+
+**P層は処理方式ごとに実装モデルが違う。** 使っている方式のスキルを読むこと。
+
+| 処理方式 | 画面コード親クラス1 / 2 | 実装モデル | スキル |
+| --- | --- | --- | --- |
+| ASP.NET MVC / ASP.NET Core MVC | `BaseMVController` / `MyBaseMVController`<br>`BaseMVControllerCore` / `MyBaseMVControllerCore` | アクションメソッド（**UOC メソッドは無い**） | `opentouryo-layer-p-mvc` |
+| ASP.NET Web Forms | `BaseController` / `MyBaseController` | UOC メソッド | `opentouryo-layer-p-webforms` |
+| Windows Forms | `BaseControllerWin` / `MyBaseControllerWin` | UOC メソッド | `opentouryo-layer-p-winforms` |
+
+**WPF は P層フレームワークを持たない。** B層・D層のみを利用し、画面は素の WPF として実装する
+（`Window` を継承する。`MyBaseControllerWin` は `Form` を継承しているため使えない）。
+WPF で使えるのは `opentouryo-layer-b` / `opentouryo-layer-d` など P層以外のスキル。
 
 <!-- TODO: 層間の呼び出し経路を1〜2文で。「P層はB層をXX経由で呼ぶ」「D層は必ずB層から呼ぶ」等。 -->
 
@@ -185,7 +197,9 @@ TODO
 
 | スキル | 使いどころ |
 | --- | --- |
-| `opentouryo-layer-p` | TODO（処理方式別に `-winforms` / `-webforms` / `-mvc` へ分割予定） |
+| `opentouryo-layer-p-mvc` | ASP.NET MVC / ASP.NET Core MVC のコントローラを実装するとき |
+| `opentouryo-layer-p-webforms` | Web Forms の画面を実装するとき（**未整備**） |
+| `opentouryo-layer-p-winforms` | Windows Forms の画面を実装するとき（**未整備**） |
 | `opentouryo-layer-b` | 業務ロジックを実装するとき |
 | `opentouryo-layer-d` | Dao を実装するとき |
 | `opentouryo-query-definition` | SQL 定義ファイル（`.sql` / `.xml`）を書くとき |
