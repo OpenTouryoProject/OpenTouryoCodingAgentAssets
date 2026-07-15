@@ -1,73 +1,238 @@
 ---
 name: opentouryo-layer-b
-description: "TODO: このスキルが何をするか + いつ使うかを書く。エージェントはこの description だけを見て起動を判断するため、実際のクラス名・メソッド名・用語をキーワードとして含めること。記述例: OpenTouryo の B層（業務ロジック層）を実装する。業務ロジッククラス、パラメータ値/リターン値クラス、トランザクション制御、例外処理を扱う。業務ロジック / B層 / トランザクション を伴う作業のときに使う。"
+description: "OpenTouryo の B層（業務ロジック層）を実装する。業務コードクラス（MyFcBaseLogic の派生）、UOC_ メソッドへの業務処理の実装、レイトバインドによる自動振り分け、this.ReturnValue による戻り値の返し方、引数クラス（MyParameterValue の派生）と戻り値クラス（MyReturnValue の派生）、DoBusinessLogic / DoBusinessLogicAsync による呼び出し、UOC_ConnectionOpen での Dam 生成とトランザクション制御・分離レベルを扱う。B層 / 業務ロジック / LayerB / 業務コードクラス / トランザクション / 分離レベル を伴う作業のときに使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
   version: "0.1.0"
 ---
 
-<!--
-  ■ スキル執筆の要点
-    - 本文は起動時に全文ロードされる。500 行以内、5000 トークン以内が目安。
-    - 詳細は references/ へ切り出し、必要になったときだけ読ませる（Progressive Disclosure）。
-    - 「TODO:」を検索して埋める。埋まっていない節は削除してよい。
-    - 詳細な書き方は docs/authoring.md を参照。
--->
-
 # B層（業務ロジック層）の実装
 
 ## このスキルの適用範囲
 
-<!-- TODO: 何を対象とし、何を対象としないかを1〜3行で。境界を明示すると誤起動が減る。 -->
+業務コードクラスに業務処理を実装する方法と、B層フレームワークの処理フローを扱う。
 
-TODO
+例外の型と処理方式は `opentouryo-exception`、Dao の実装は `opentouryo-layer-d` を参照。
 
-## 前提
+## 実装場所（誰がどこに書くか）
 
-<!-- TODO: 層の責務境界。B層が「やってよいこと / やってはいけないこと」。 -->
+| 階層 | クラス | 担当 | 書くもの |
+| --- | --- | --- | --- |
+| 業務コード親クラス1 | `BaseLogic`（`Touryo.Infrastructure.Framework.Business`） | フレームワーク | **触らない** |
+| 業務コード親クラス2 | `MyFcBaseLogic`（`Touryo.Infrastructure.Business.Business`） | 纏め者 | 全業務共通の前後処理（`UOC_ConnectionOpen` / `UOC_PreAction` / `UOC_AfterAction` / `UOC_AfterTransaction` / `UOC_ABEND`） |
+| 業務コードクラス | `MyFcBaseLogic` を継承した業務クラス | 開発者 | **`UOC_（メソッド名）` に業務処理のみ** |
 
-TODO
+通常の作業は業務コードクラスの追加・修正。親クラス2 は一度作ったら基本的に触らない。
 
-## 実装手順
+`MyBaseLogic` は非推奨。`MyFcBaseLogic` を継承する。
 
-<!-- TODO: エージェントがそのまま辿れる手順。判断が必要な箇所は分岐条件を明示する。 -->
+## 業務コードクラスの書き方
 
-1. TODO
-2. TODO
-3. TODO
-
-## コード例
-
-<!--
-  TODO: 実際にビルドが通るコードを貼る。
-  エージェントはここを最も強く模倣するため、断片ではなく完結した例が望ましい。
--->
+`MyFcBaseLogic` を継承する。クラス名はサンプルでは `LayerB` が多いが、機能名を付けたクラス
+（`GetMasterData` など）も存在する。既存コードの命名に合わせる。
 
 ```csharp
-// TODO
+using Touryo.Infrastructure.Business.Business;
+using Touryo.Infrastructure.Business.Dao;
+
+namespace MyApp.Logic.Business
+{
+    public class LayerB : MyFcBaseLogic
+    {
+        /// <summary>業務処理を実装</summary>
+        private void UOC_SelectShipper(TestParameterValue testParameter)
+        {
+            // 戻り値クラスを生成して、事前に戻り値に設定しておく
+            TestReturnValue testReturn = new TestReturnValue();
+            this.ReturnValue = testReturn;
+
+            // ↓業務処理
+
+            // 個別Dao（this.GetDam() を渡す）
+            LayerD myDao = new LayerD(this.GetDam());
+            myDao.Select(testParameter, testReturn);
+
+            // ↑業務処理
+        }
+    }
+}
 ```
 
-## 命名規約
+### UOC メソッドのシグネチャ
 
-<!-- TODO: クラス名・メソッド名の規則。 -->
+**この形以外は動かない。** 一般的な C# の感覚で書くと必ず外す。
 
-- TODO
+```csharp
+private void UOC_（メソッド名）(（BaseParameterValue の派生型） 引数)
+```
+
+| 要素 | 決まり | 理由 |
+| --- | --- | --- |
+| アクセス修飾子 | `private` で良い | レイトバインドで呼ばれるため。`public` にすると直呼びの危険がある |
+| 戻り値の型 | **`void`** | 戻り値は `this.ReturnValue` で返す |
+| 引数 | **1つだけ** | フレームワークが `object[] { parameterValue }` で渡す |
+| 引数の型 | `BaseParameterValue` の派生型を指定可 | レイトバインドなので基底型である必要がない |
+| メソッド名 | `UOC_` + 呼び出し側が渡す `MethodName` | 完全一致。ここがズレると実行時に見つからない |
+
+### 戻り値は `this.ReturnValue` で返す
+
+**メソッドの冒頭で、業務処理を書く前に設定する。** 順序が重要。
+
+```csharp
+TestReturnValue testReturn = new TestReturnValue();
+this.ReturnValue = testReturn;   // ← 先に設定する
+// 以降、testReturn に結果を詰めていく
+```
+
+理由：フレームワークは `finally` で `returnValue = this.ReturnValue;` を実行する。冒頭で設定して
+おけば、**業務処理の途中で例外がスローされても戻り値が呼び出し側へ届く**。後で設定すると、
+例外時に戻り値が失われる。
+
+業務例外を投げても戻り値が返る（`opentouryo-exception` 参照）のは、この仕組みによる。
+
+## 自動振り分け
+
+`MyFcBaseLogic` が `UOC_DoAction` をオーバーライドし、レイトバインドで振り分ける。
+
+```
+呼び出し側が MethodName = "SelectShipper" を渡す
+  → "UOC_" + MethodName = "UOC_SelectShipper"
+  → Latebind.InvokeMethod(this, "UOC_SelectShipper", new object[]{ parameterValue })
+  → finally で returnValue = this.ReturnValue
+```
+
+**振り分けはメソッド名の文字列一致**。コンパイラは検出しないので、`MethodName` と `UOC_` 以降の
+綴りが一致しているかを目視で確認する。
+
+ASP.NET Core MVC のサンプルでは、コントローラの `this.ActionName` を `MethodName` に渡している。
+つまり **アクション名と `UOC_` メソッド名が対応する**。
+
+## 引数クラス・戻り値クラス
+
+```csharp
+// 引数クラス：MyParameterValue を継承
+public class TestParameterValue : MyParameterValue
+{
+    public ShipperViewModel Shipper { get; set; }
+
+    // Base のコンストラクタに引数を渡すために必要
+    public TestParameterValue(
+        string screenId, string controlId, string methodName, string actionType, MyUserInfo user)
+        : base(screenId, controlId, methodName, actionType, user) { }
+}
+
+// 戻り値クラス：MyReturnValue を継承
+public class TestReturnValue : MyReturnValue
+{
+    public object Obj;
+}
+```
+
+継承関係は `BaseParameterValue`（親1）← `MyParameterValue`（親2）← 業務用、
+`BaseReturnValue`（親1）← `MyReturnValue`（親2）← 業務用。
+名前空間は親2 が `Touryo.Infrastructure.Business.Common`。
+
+`BaseParameterValue` が持つ `ScreenId` / `ControlId` / `MethodName` / `ActionType` は**読み取り専用**。
+コンストラクタで渡す。
+
+エラー系（`ErrorFlag` / `ErrorMessageID` / `ErrorMessage` / `ErrorInfo`）は `BaseReturnValue` が
+持っているので、業務用の戻り値クラスに定義し直さない。
+
+## 呼び出す（P層から）
+
+```csharp
+TestParameterValue pv = new TestParameterValue(
+    this.ControllerName, "-", this.ActionName, actionType, this.UserInfo);
+
+LayerB layerB = new LayerB();
+TestReturnValue rv = (TestReturnValue)await layerB.DoBusinessLogicAsync(
+    pv, DbEnum.IsolationLevelEnum.ReadCommitted);
+
+if (rv.ErrorFlag)
+{
+    // 業務例外が発生していた（opentouryo-exception 参照）
+}
+```
+
+エントリポイントは4つ。同期版と非同期版があり、それぞれ分離レベル指定の有無で2種類。
+
+| メソッド | 用途 |
+| --- | --- |
+| `DoBusinessLogic(pv)` | 同期・既定の分離レベル |
+| `DoBusinessLogic(pv, iso)` | 同期・分離レベル指定 |
+| `DoBusinessLogicAsync(pv)` | 非同期・既定の分離レベル |
+| `DoBusinessLogicAsync(pv, iso)` | 非同期・分離レベル指定 |
+
+**`UOC_` メソッドを直接呼んではならない。** `DoBusinessLogic` を経由しないと `this.ReturnValue` の
+setter が `FrameworkException` をスローする（不正呼び出しとして検出される）。
+
+## 処理フロー
+
+`DoBusinessLogic` が以下の順で呼ぶ。**業務コードクラス側でこれらを書く必要はない。**
+
+```
+UOC_ConnectionOpen   … Dam 生成・接続・トランザクション開始（親クラス2）
+try
+  UOC_PreAction      … 前処理（親クラス2）
+  UOC_DoAction       … 自動振り分け → UOC_（メソッド名）（業務コードクラス）
+  UOC_AfterAction    … 後処理（親クラス2）
+  Commit
+  UOC_AfterTransaction … コミット後の後処理（親クラス2）
+catch
+  Rollback → UOC_ABEND（親クラス2）
+finally
+  コネクション切断
+```
+
+コミット・ロールバック・切断はすべてフレームワークが行う。**業務コードクラスに書かない。**
 
 ## トランザクション制御
 
-<!-- TODO: 開始・コミット・ロールバックの責務がどこにあるか。エージェントが最も間違えやすい箇所。 -->
+`UOC_ConnectionOpen`（親クラス2）で Dam を生成し、`this.SetDam(dam)` で設定する。
+業務コードクラスからは `this.GetDam()` で取得して Dao に渡す。
 
-TODO
+分離レベルは呼び出し側が `DbEnum.IsolationLevelEnum` で指定する。
 
-## 例外処理
+| 値 | 意味 |
+| --- | --- |
+| `NotConnect` | **コネクションしない**（DB を使わない業務処理） |
+| `NoTransaction` | 接続するがトランザクションを開始しない |
+| `DefaultTransaction` | 既定の分離レベルで開始 |
+| `ReadUncommitted` | 非コミット読み取りで開始 |
+| `ReadCommitted` | コミット済み読み取りで開始 |
+| `RepeatableRead` | 反復可能読み取りで開始 |
+| `Serializable` | 直列化可能で開始 |
+| `Snapshot` | スナップショットで開始 |
+| `User` | <!-- TODO: 用途を確認して記述する --> |
 
-<!-- TODO: 業務例外とシステム例外の区別、送出と捕捉の規約。 -->
+DBMS ごとに分離レベルの意味が異なるため、理解して設定する。
 
-TODO
+複数 DB を扱う場合は `SetDam(key, dam)` / `GetDam(key)` でキー付きの Dam を使う。
+コミット・ロールバックは登録された全 Dam に対して実行される。
+
+## Dao の使い分け
+
+業務コードクラスから使う Dao は3系統。詳細は `opentouryo-layer-d` を参照。
+
+| 種類 | 生成 | 使う場面 |
+| --- | --- | --- |
+| 個別Dao | `new LayerD(this.GetDam())` | 業務固有のデータアクセス |
+| 共通Dao | `new CmnDao(this.GetDam())` | SQL ファイル / SQL 文を指定して実行 |
+| 自動生成Dao | `new DaoShippers(this.GetDam())` | テーブル単位の CRUD |
+
+いずれも**コンストラクタに `this.GetDam()` を渡す**。Dao 側で接続を張らない。
 
 ## やってはいけないこと
 
-<!-- TODO: 実際に起きた/起きうる誤りを具体的に。理由も添える。 -->
-
-- TODO
+- **`UOC_` メソッドに戻り値の型を付ける** — `void` にして `this.ReturnValue` で返す。
+  レイトバインドなので戻り値は拾われない
+- **`UOC_` メソッドの引数を2つ以上にする** — フレームワークは引数1つで呼ぶ。実行時に失敗する
+- **`this.ReturnValue` の設定を業務処理の後に書く** — 例外時に戻り値が失われる。冒頭で設定する
+- **`UOC_` メソッドを直接呼び出す** — `FrameworkException`（不正呼び出し）になる。
+  `DoBusinessLogic` を経由する
+- **業務コードクラスで `try`/`catch` してロールバックやコミットを書く** — フレームワークが行う
+- **業務コードクラスで `UOC_ABEND` などの前後処理を `override` する** — 親クラス2 の共通処理を潰す
+- **`MyBaseLogic` を継承する** — 非推奨。`MyFcBaseLogic` を使う
+- **Dao の中で接続を張る** — `this.GetDam()` を渡す
+- **戻り値クラスにエラー系フィールドを定義し直す** — `BaseReturnValue` が持っている

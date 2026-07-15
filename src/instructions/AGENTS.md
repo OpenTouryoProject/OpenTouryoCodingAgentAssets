@@ -74,6 +74,39 @@ TODO
   `catch` してはならない（飛んでこない）。詳細は `opentouryo-exception` を参照。
 - TODO
 
+## 非推奨クラス・メソッド
+
+以下は `[Obsolete]` が付いている。**新規に書くコードで使ってはならない。**
+`[Obsolete]` はビルド警告にしかならず、そのままビルドが通ってしまうため、ここで明示する。
+
+<!--
+  更新方法（Infrastructure 配下を対象に採取する）:
+    grep -rn -A2 "\[Obsolete" --include=*.cs root/programs/CS/Frameworks/Infrastructure
+  private メンバは呼び出せないため一覧から除外している
+  （例: EmbeddedResourceLoader.GetEntryAssembly()）。
+-->
+
+### クラス
+
+| 非推奨 | 代替 | 用途 |
+| --- | --- | --- |
+| `MyBaseLogic` | `MyFcBaseLogic` | B層 業務コード親クラス2 |
+| `MyBaseLogic2CS` | `MyFcBaseLogic2CS` | 同上（リッチクライアント用） |
+| `DamOraClient` | `DamManagedOdp` | Oracle 用 Dam |
+| `GetPasswordHashV1` | `GetPasswordHashV2` | パスワード ハッシュ |
+
+### メソッド
+
+`PubCmnFunction` のユーティリティ系メソッドは別クラスへ移動している。**メソッド名は同じ**なので、
+クラス名だけ差し替える。
+
+| 非推奨 | 代替 |
+| --- | --- |
+| `PubCmnFunction.GetPropsFromPropString()`<br>`PubCmnFunction.GetCommandArgs()`<br>`PubCmnFunction.BuiltStringIntoEnvironmentVariable()` | `StringVariableOperator` の同名メソッド |
+| `PubCmnFunction.GetCurrentMethodName()`<br>`PubCmnFunction.GetCurrentPropertyName()`<br>`PubCmnFunction.GetCurrentCodeInfo()` | `StackFrameOperator` の同名メソッド |
+| `PubCmnFunction.CopyArray()`<br>`PubCmnFunction.CombineArray()`<br>`PubCmnFunction.ShortenByteArray()`<br>`PubCmnFunction.GetLongFromByte()` | `ArrayOperator` の同名メソッド |
+| `BaseController.CMN_Event_Handler(FxEventArgs)`<br>`BaseController.CMN_Event_Handler(FxEventArgs, EventArgs)` | 他のオーバーロード |
+
 ## ビルドと実行
 
 <!-- TODO: 具体的なコマンド。「テストする」ではなく「`XXX` を実行する」。 -->

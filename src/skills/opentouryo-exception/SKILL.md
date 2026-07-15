@@ -118,9 +118,34 @@ returnValue.ErrorInfo      = baEx.Information;
 
 `returnValue` が `null` の場合は `BaseReturnValue` が生成される。
 
-## スローする
+## 実装場所（誰がどこに書くか）
 
-B層の業務ロジック（`UOC_` メソッド）内で、そのままスローする。try/catch もロールバックも書かない。
+例外処理は3階層に分かれる。**書く場所を間違えると動かない、または共通処理を壊す。**
+
+| 階層 | クラス | 担当 | 例外処理で書くこと |
+| --- | --- | --- | --- |
+| 業務コード親クラス1 | `BaseLogic`（`Touryo.Infrastructure.Framework.Business`） | フレームワーク | **触らない**。`UOC_ABEND` は `virtual` の空実装 |
+| 業務コード親クラス2 | `MyFcBaseLogic`（`Touryo.Infrastructure.Business.Business`） | 纏め者 | `UOC_ABEND` を `override` し、ログ出力・例外振替などの**共通処理**を実装 |
+| 業務コードクラス | `MyFcBaseLogic` を継承した業務クラス | 開発者 | `UOC_DoAction` / `UOC_（メソッド名）` に**業務処理**を実装。例外は**スローするだけ** |
+
+<!--
+  この分界は 利用ガイド の「纏め者編／開発者編」の切り分けに対応する。
+  親クラス2 は Touryo.Infrastructure.Business（業務フレームワーク＝プロジェクト固有・
+  カスタマイズ可能な層）に属するテンプレートで、纏め者が中身を編集する前提。
+-->
+
+`UOC_ABEND` は**親クラス2で一度だけ共通実装する**もの。業務コードクラス側で `override` してはならない。
+
+### 親クラス2 は `MyFcBaseLogic` を使う
+
+`MyBaseLogic` は非推奨。`[Obsolete("MyBaseLogic is deprecated, please use MyFcBaseLogic instead.")]`
+が付いている。新規に書くコードで `MyBaseLogic` を継承してはならない。
+
+リッチクライアント用も同様に、`MyBaseLogic2CS` は非推奨で `MyFcBaseLogic2CS` を使う。
+
+## スローする（開発者）
+
+業務コードクラスの `UOC_` メソッド内で、そのままスローする。try/catch もロールバックも書かない。
 
 ```csharp
 using Touryo.Infrastructure.Framework.Exceptions;
@@ -156,7 +181,7 @@ if (isSystemBlocked)
 `Information` には入力チェック結果などの付随情報を入れる。`string` なので、複雑な情報を返す
 場合は戻り値クラス（`BaseReturnValue` の派生）を使う。
 
-## 受け取る
+## 受け取る（開発者）
 
 ### 業務例外 — 戻り値を判定する
 
@@ -184,12 +209,15 @@ catch (BusinessSystemException bsEx)
 }
 ```
 
-## 例外振替（UOC_ABEND）
+## 例外振替（纏め者）
 
-一般例外を業務例外・システム例外へ振り替える場合は `UOC_ABEND(pv, ref rv, ex)` に実装する。
-`returnValue` が `ref` なのはこのため。
+**親クラス2（`MyFcBaseLogic`）の `UOC_ABEND` に実装する共通処理。** 業務コードクラスには書かない。
+
+一般例外を業務例外・システム例外へ振り替える場合は `UOC_ABEND(pv, ref rv, ex)` を使う。
+このオーバーロードだけ `returnValue` が `ref` なのは、振替によって戻り値を差し替えるため。
 
 ```csharp
+// 親クラス2（MyFcBaseLogic を継承したプロジェクトのテンプレート）に実装する
 protected override void UOC_ABEND(
     BaseParameterValue parameterValue, ref BaseReturnValue returnValue, Exception ex)
 {
@@ -221,6 +249,9 @@ protected override void UOC_ABEND(
 - **業務例外をリスローする** — フレームワークが戻り値へ変換する前提が崩れる
 - **呼び出し側で業務例外を `catch` する** — 業務例外は伝播しないので、その `catch` は永久に実行されない
 - **B層の `UOC_` メソッド内で `try`/`catch` してロールバックを書く** — `BaseLogic` が行うため二重になる
+- **業務コードクラスで `UOC_ABEND` を `override` する** — 親クラス2 の共通処理を潰す。
+  `UOC_ABEND` は纏め者が親クラス2 に一度だけ実装する
+- **`MyBaseLogic` / `MyBaseLogic2CS` を継承する** — 非推奨。`MyFcBaseLogic` / `MyFcBaseLogic2CS` を使う
 - **`MessageID` と書く** — 正しくは `messageID`（小文字始まり）
 - **ユーザ定義エラー用の例外の型を新設する** — `messageID` で識別する
 - **`throw ex;` で再スローする** — スタックトレースが失われる。`ExceptionDispatchInfo` を使う
