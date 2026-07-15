@@ -15,7 +15,10 @@ src/
     opentouryo-layer-p-webforms/ P層：Web Forms
     opentouryo-layer-p-winforms/ P層：Windows Forms
     opentouryo-layer-b/          B層（業務ロジック層）の実装
-    opentouryo-layer-d/          D層（データアクセス層）の実装
+    opentouryo-layer-d/          D層の全体像と Dao 3系統の使い分け
+    opentouryo-dao-custom/       個別Dao
+    opentouryo-dao-common/       共通Dao（CmnDao）
+    opentouryo-dao-generated/    自動生成Dao
     opentouryo-query-definition/ SQL定義ファイル（静的 .sql / 動的 .xml）
     opentouryo-message/          メッセージ（MSGDefinition.xml）
     opentouryo-shared-property/  共有情報（SPDefinition.xml）

@@ -201,7 +201,10 @@ TODO
 | `opentouryo-layer-p-webforms` | Web Forms の画面を実装するとき |
 | `opentouryo-layer-p-winforms` | Windows Forms の画面を実装するとき |
 | `opentouryo-layer-b` | 業務ロジックを実装するとき |
-| `opentouryo-layer-d` | Dao を実装するとき |
+| `opentouryo-layer-d` | D層の全体像と Dao 3系統の使い分け |
+| `opentouryo-dao-custom` | 個別Dao（業務固有のデータアクセス）を実装するとき |
+| `opentouryo-dao-common` | 共通Dao（`CmnDao`）で単発の SQL を実行するとき |
+| `opentouryo-dao-generated` | 自動生成Dao（テーブル単位の CRUD・楽観排他）を使うとき |
 | `opentouryo-query-definition` | SQL 定義ファイル（`.sql` / `.xml`）を書くとき |
 | `opentouryo-message` | メッセージを定義・取得するとき（`MSGDefinition.xml`） |
 | `opentouryo-shared-property` | 共有情報を定義・取得するとき（`SPDefinition.xml`） |

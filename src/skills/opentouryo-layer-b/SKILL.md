@@ -18,7 +18,7 @@ metadata:
 （コネクションがグローバル、コミットは手動、業務例外でロールバックしない）。
 Windows Forms の場合は `opentouryo-layer-p-winforms` を参照。
 
-例外の型と処理方式は `opentouryo-exception`、Dao の実装は `opentouryo-layer-d` を参照。
+例外の型と処理方式は `opentouryo-exception`、Dao の実装は `opentouryo-layer-d`（3系統の使い分け）を参照。
 
 ## 実装場所（誰がどこに書くか）
 
@@ -257,13 +257,14 @@ else
 
 ## Dao の使い分け
 
-業務コードクラスから使う Dao は3系統。詳細は `opentouryo-layer-d` を参照。
+業務コードクラスから使う Dao は3系統。**選び方は `opentouryo-layer-d`**、
+実装の詳細は系統ごとのスキルを参照。
 
-| 種類 | 生成 | 使う場面 |
-| --- | --- | --- |
-| 個別Dao | `new LayerD(this.GetDam())` | 業務固有のデータアクセス |
-| 共通Dao | `new CmnDao(this.GetDam())` | SQL ファイル / SQL 文を指定して実行 |
-| 自動生成Dao | `new DaoShippers(this.GetDam())` | テーブル単位の CRUD |
+| 種類 | 生成 | 使う場面 | スキル |
+| --- | --- | --- | --- |
+| 個別Dao | `new LayerD(this.GetDam())` | 業務固有のデータアクセス | `opentouryo-dao-custom` |
+| 共通Dao | `new CmnDao(this.GetDam())` | SQL ファイル / SQL 文を指定して実行 | `opentouryo-dao-common` |
+| 自動生成Dao | `new DaoShippers(this.GetDam())` | テーブル単位の CRUD | `opentouryo-dao-generated` |
 
 いずれも**コンストラクタに `this.GetDam()` を渡す**。Dao 側で接続を張らない。
 

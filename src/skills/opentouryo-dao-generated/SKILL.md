@@ -1,0 +1,149 @@
+---
+name: opentouryo-dao-generated
+description: "OpenTouryo の自動生成Dao（D層自動生成ツール「墨壺」がテーブル単位で生成する Dao）を使う。S1_Insert / D1_Insert / S2_Select / D2_Select / S3_Update / D3_Update / S4_Delete / D4_Delete / D5_SelCnt のメソッド命名体系（S=主キー固定 / D=任意条件）、PK_列名 / 列名 / Set_列名_forUPD / 列名_Like のプロパティ命名体系、タイムスタンプによる楽観排他と更新件数0件チェックを扱う。自動生成Dao / 墨壺 / DaoShippers / テーブル単位のCRUD / 楽観排他 / タイムスタンプ を伴う作業のときに使う。個別Dao は opentouryo-dao-custom、共通Dao は opentouryo-dao-common、系統の選び方は opentouryo-layer-d を使う。"
+license: MIT
+metadata:
+  author: OpenTouryoProject
+  version: "0.1.0"
+---
+
+# 自動生成Dao
+
+## このスキルの適用範囲
+
+**D層自動生成ツール（墨壺）がテーブル単位で生成する Dao** の使い方。
+
+| 系統 | スキル |
+| --- | --- |
+| 個別Dao | `opentouryo-dao-custom` |
+| 共通Dao（`CmnDao`） | `opentouryo-dao-common` |
+| **自動生成Dao** | **このスキル** |
+| 3系統の選び方 | `opentouryo-layer-d` |
+
+B層からの呼び出しは `opentouryo-layer-b`、例外は `opentouryo-exception` を参照。
+
+## 使う場面
+
+**テーブル単位の CRUD。** タイムスタンプ列があれば**楽観排他が組み込まれる**ので、
+更新系は特にこれを使う。
+
+**手で書き換えない。** テーブル定義が変わったらツールで再生成する。
+
+## 書き方
+
+クラス名は `Dao<テーブル名>`。B層から `this.GetDam()` を渡して生成する。
+
+```csharp
+DaoShippers genDao = new DaoShippers(this.GetDam());
+
+// 参照（主キー指定）
+genDao.PK_ShipperID = testParameter.Shipper.ShipperID;
+DataTable dt = new DataTable();
+genDao.S2_Select(dt);
+
+// 更新（WHERE = 主キー、SET = Set_x_forUPD）
+genDao.PK_ShipperID           = testParameter.Shipper.ShipperID;
+genDao.Set_CompanyName_forUPD = testParameter.Shipper.CompanyName;
+genDao.Set_Phone_forUPD       = testParameter.Shipper.Phone;
+int count = genDao.S3_Update();
+
+// 挿入（列の値をそのまま設定）
+genDao.CompanyName = testParameter.Shipper.CompanyName;
+genDao.Phone       = testParameter.Shipper.Phone;
+genDao.D1_Insert();
+```
+
+## メソッドの命名体系
+
+**`S` = 主キー指定（WHERE が主キー固定）／`D` = 任意の検索条件（WHERE も動的）。**
+静的 / 動的 SQL の意味ではない。
+
+| メソッド | 意味 |
+| --- | --- |
+| `S1_Insert()` | 全列を指定して1レコード挿入（静的SQL `.sql`） |
+| `D1_Insert()` | **パラメタで指定した列のみ**挿入（動的SQL `.xml`） |
+| `S2_Select(dt)` | 主キーを指定し、1レコード参照 |
+| `D2_Select(dt)` | 検索条件を指定し、結果セットを参照 |
+| `S3_Update()` | 主キーを指定し、1レコード更新 |
+| `D3_Update()` | 任意の検索条件で更新 |
+| `S4_Delete()` | 主キーを指定し、1レコード削除 |
+| `D4_Delete()` | 任意の検索条件で削除 |
+| `D5_SelCnt()` | レコード件数を取得 |
+
+Insert だけは主キー条件がないため、`S1` = 全列固定、`D1` = 指定列のみ、という区別になる。
+
+<!--
+  S1_Insert だけ .sql（静的）で他は全て .xml（動的）なので、
+  「S=静的 / D=動的」と誤読しやすい。実際は WHERE が主キー固定か動的かの区別。
+  DevelopmentHistory.md 4.3 参照。
+-->
+
+## プロパティの命名体系
+
+**値の設定はプロパティで行う。** 用途ごとに接頭辞・接尾辞が決まっている。
+
+| プロパティ | 用途 |
+| --- | --- |
+| `PK_<列名>` | 主キーの値。**WHERE 句**に使われる |
+| `<列名>` | 一般列の値。INSERT の値、D系の WHERE 条件に使われる |
+| `Set_<列名>_forUPD` | **UPDATE の SET 句**の値 |
+| `<列名>_Like` | LIKE 検索の条件 |
+
+UPDATE では **WHERE 用（`PK_`）と SET 用（`Set_..._forUPD`）を必ず使い分ける**。
+混同すると更新対象が変わる。
+
+その他に `SetParameteToHt()` / `SetUserParameteToHt()` / `ClearParametersFromHt()` /
+`ExecGenerateSQL()`（静的SQL の生成。バッチ更新用）がある。
+
+**`SetUserParameteToHt()` は SQL 文字列への置換。** ユーザ入力を渡すと SQL インジェクションに
+なる（`opentouryo-dao-custom` の該当節を参照）。
+
+## 楽観排他（タイムスタンプ）
+
+タイムスタンプ列を持つテーブルの自動生成Dao には、**楽観排他が自動的に組み込まれる**。
+生成される UPDATE 文が次の形になる。
+
+```xml
+SET
+  <DELCMA>
+    <IF>[val] = @Set_val_forUPD,</IF>
+    [ts] = RAND(),          <!-- タイムスタンプ列は無条件に更新 -->
+  </DELCMA>
+<WHERE>
+  WHERE
+    <IF>AND [id] = @id<ELSE>AND [id] IS NULL</ELSE></IF>
+    <IF>AND [ts] = @ts<ELSE>AND [ts] IS NULL</ELSE></IF>   <!-- 取得時の値と一致するか -->
+</WHERE>
+```
+
+他者が先に更新していればタイムスタンプが一致せず、**更新件数が 0 になる**。
+
+したがって**更新件数の 0 件チェックが楽観排他の判定そのもの**。0 件だったら業務例外
+（タイムスタンプ アンマッチ）をスローする。詳細は `opentouryo-exception` を参照。
+
+```csharp
+int count = genDao.S3_Update();
+if (count == 0)
+{
+    // 楽観排他の失敗。リトライ可能なので業務例外
+    throw new BusinessApplicationException(
+        "W0002", GetMessage.GetMessageDescription("W0002"), "");
+}
+```
+
+## Dao集約クラスでまとめる方針のプロジェクト
+
+プロジェクトによっては、Dao の呼び出しを**Dao集約クラス**でまとめ、B層から直接呼ばせない
+方針をとる。**その場合は自動生成Dao も集約クラス経由で使う。**
+
+集約クラスは系統を問わず使える仕組みなので、詳細は `opentouryo-layer-d` を参照。
+既存コードが集約クラス経由になっているなら、それに合わせる。
+
+## やってはいけないこと
+
+- **自動生成Dao を手で書き換える** — 再生成で消える。ツールで生成し直す
+- **`S` / `D` を「静的 / 動的」の意味だと考える** — `S`=WHERE が主キー固定、`D`=WHERE も動的
+- **UPDATE で `Set_<列名>_forUPD` ではなく `<列名>` に値を入れる** — SET 句ではなく WHERE 条件になる
+- **更新系メソッドの戻り値（更新件数）を捨てる** — **0 件チェックが楽観排他の判定そのもの**
+- **`SetUserParameteToHt()` にユーザ入力を渡す** — 文字列置換のため SQL インジェクションになる
+- **Dao の中で接続を張る / コミットする** — `this.GetDam()` を渡す。トランザクションは B層が制御する

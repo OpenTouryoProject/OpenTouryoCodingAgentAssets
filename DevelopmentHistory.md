@@ -81,6 +81,7 @@ import する `CLAUDE.md` を生成する。Windows では symlink に管理者�
 | `opentouryo-layer-d` | `opentouryo-query-definition` を独立 | `.sql` と `.xml` は「SQL定義ファイルの書き方」という同じ関心事。Dao実装とは別軸 |
 | `opentouryo-config` | `opentouryo-xml-definition` を独立（後に解体） | 6種の XML 定義ファイルを「定義ファイルの書式」という関心事でまとめた。config はパスの設定だけを扱う |
 | `opentouryo-xml-definition` | `-message` / `-shared-property` / `-screen-transition` / `-transaction-control` / `-transmission` の**5つへ解体** | **書式だけでなく「それを使う機能」を書いたら別物になった。** 6種は書式こそ似ているが、機能としては共有情報・メッセージ・画面遷移・トランザクション・通信でまったく別。**粒度が小さくなっても、適切なスキルを選択して実装できることを優先**（起動は description だけで判定されるため）。共通の書式制約（DTD 埋め込み・`id` の先頭に数字不可・`Fx` キーでパス指定）は**各スキルに複製**し、1スキルで自己完結させた |
+| `opentouryo-layer-d` | `-dao-custom` / `-dao-common` / `-dao-generated` の3つを独立。**`layer-d` は使い分けの入口として残す** | Dao 3系統は書き方も命名体系もまったく別（個別Dao は `SetSqlByFile2`、共通Dao は `SQLFileName` プロパティ、自動生成Dao は `S1_Insert` / `PK_` 体系）。**ただし XML 定義と違い「3系統のどれを使うか」という判断そのものがコンテンツ**なので、親スキルを薄く残した（75行 / 実効1,207トークン）。系統が決まっているなら直行してよい旨を明記 |
 | `opentouryo-layer-p` | `-mvc` / `-webforms` / `-winforms`（**完了**） | 実装モデルが根本的に違う（MVC は UOC を持たない）。WPF は P層フレームワークが無く対象外 |
 
 `opentouryo-layer-d/references/` は削除した。D層が316行で収まり、溢れなかったため。
@@ -100,10 +101,13 @@ Claude Code は**ブロックレベルの HTML コメントを読み込み時に
 ```
 opentouryo-layer-p-mvc         実効tok~4474  完了
 opentouryo-layer-p-webforms    実効tok~3987  完了
-opentouryo-layer-p-winforms    実効tok~4147  完了
-opentouryo-layer-b             実効tok~3749  完了
-opentouryo-layer-d             実効tok~4274  完了
-opentouryo-query-definition    実効tok~2904  完了
+opentouryo-layer-p-winforms    実効tok~4153  完了
+opentouryo-layer-b             実効tok~3804  完了
+opentouryo-layer-d             実効tok~1207  完了（Dao 3系統の使い分け・入口）
+opentouryo-dao-custom          実効tok~1990  完了
+opentouryo-dao-common          実効tok~1739  完了
+opentouryo-dao-generated       実効tok~2326  完了
+opentouryo-query-definition    実効tok~2923  完了
 opentouryo-message             実効tok~1489  完了
 opentouryo-shared-property     実効tok~ 859  完了
 opentouryo-screen-transition   実効tok~1529  完了
@@ -115,7 +119,7 @@ opentouryo-config              実効tok~2999  完了
 opentouryo-auth                実効tok~4463  完了
 ```
 
-**全15スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全18スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効tok」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 
 相互リンクしている（B層 → D層 → クエリ定義、全層 → 例外、P層3種 → auth、など）。

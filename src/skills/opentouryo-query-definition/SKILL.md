@@ -1,6 +1,6 @@
 ---
 name: opentouryo-query-definition
-description: "OpenTouryo の SQL 定義ファイルを書く。静的パラメタライズドクエリ（.sql）と動的パラメタライズドクエリ（.xml）の両方を扱う。@パラメタとユーザパラメタ（静的の %名前% / 動的の VAL タグ）の違い、動的SQLのタグ（ROOT / IF / ELSE / WHERE / DELCMA / INSCOL / VAL / LIST / SELECT / CASE / DEFAULT / JOIN / SUB / PARAM / DIV）の意味と書き方、DPQuery_Tool 用の PARAM タグを扱う。SQL 定義ファイル / .sql / .xml / 静的SQL / 動的SQL / パラメタライズドクエリ / ORDER BY の動的化 / 検索条件の動的化 を伴う作業のときに使う。Dao 側の実装は opentouryo-layer-d を使う。"
+description: "OpenTouryo の SQL 定義ファイルを書く。静的パラメタライズドクエリ（.sql）と動的パラメタライズドクエリ（.xml）の両方を扱う。@パラメタとユーザパラメタ（静的の %名前% / 動的の VAL タグ）の違い、動的SQLのタグ（ROOT / IF / ELSE / WHERE / DELCMA / INSCOL / VAL / LIST / SELECT / CASE / DEFAULT / JOIN / SUB / PARAM / DIV）の意味と書き方、DPQuery_Tool 用の PARAM タグを扱う。SQL 定義ファイル / .sql / .xml / 静的SQL / 動的SQL / パラメタライズドクエリ / ORDER BY の動的化 / 検索条件の動的化 を伴う作業のときに使う。Dao 側の実装は opentouryo-dao-custom / opentouryo-dao-common / opentouryo-dao-generated を使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -11,8 +11,8 @@ metadata:
 
 ## このスキルの適用範囲
 
-Dao から実行する SQL 定義ファイルの書き方。ファイルの配置と読み込みは Dao 側の責務なので
-`opentouryo-layer-d` を参照。
+Dao から実行する SQL 定義ファイルの書き方。ファイルの指定は Dao 側の責務なので
+`opentouryo-layer-d`（3系統の使い分け）と系統ごとのスキルを参照。
 
 ## 2種類の定義ファイル
 
@@ -46,7 +46,7 @@ Dao から実行する SQL 定義ファイルの書き方。ファイルの配�
 | ユーザ入力 | **渡してよい** | **渡してはならない**（SQL インジェクション） |
 
 ユーザパラメタは文字列置換なので、値をそのまま SQL に埋め込む。**入力値はコード側で安全な値に
-変換してから渡す**（`opentouryo-layer-d` 参照）。
+変換してから渡す**（`opentouryo-dao-custom` / `opentouryo-dao-common` 参照）。
 
 ## 静的パラメタライズドクエリ（.sql）
 

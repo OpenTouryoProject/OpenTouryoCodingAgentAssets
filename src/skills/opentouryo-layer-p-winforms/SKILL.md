@@ -15,7 +15,7 @@ metadata:
 
 - **WPF は対象外。** P層フレームワークを持たない（後述）
 - Web Forms → `opentouryo-layer-p-webforms`、MVC → `opentouryo-layer-p-mvc`
-- 例外 → `opentouryo-exception`、D層 → `opentouryo-layer-d`
+- 例外 → `opentouryo-exception`、D層 → `opentouryo-layer-d`（Dao 3系統の使い分け）
 
 **このスキルは Web 系と前提が大きく違う。** Web 系のスキルの記述をそのまま持ち込まないこと。
 
