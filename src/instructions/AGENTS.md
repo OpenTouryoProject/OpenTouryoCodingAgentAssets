@@ -235,6 +235,7 @@ TODO
 | `opentouryo-layer-p-mvc` | ASP.NET MVC / ASP.NET Core MVC のコントローラを実装するとき |
 | `opentouryo-layer-p-webforms-screen` | Web Forms の画面を新規作成するとき |
 | `opentouryo-layer-p-webforms-event` | Web Forms のコントロールのイベントを実装するとき |
+| `opentouryo-webforms-dialog` | Web Forms で子画面（ダイアログ・モーダル/モードレス）を表示するとき |
 | `opentouryo-layer-p-winforms-screen` | Windows Forms の画面を新規作成するとき |
 | `opentouryo-layer-p-winforms-event` | Windows Forms のコントロールのイベントを実装するとき |
 | `opentouryo-p-call-business` | P層から B層を呼ぶとき（引数クラス・`DoBusinessLogic`・`ErrorFlag`） |

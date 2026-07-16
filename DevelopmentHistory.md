@@ -105,6 +105,7 @@ Claude Code は**ブロックレベルの HTML コメントを読み込み時に
 opentouryo-layer-p-mvc            実効300L tok~3710  完了
 opentouryo-layer-p-webforms-screen 実効144L tok~1904  完了（画面の新規作成）
 opentouryo-layer-p-webforms-event  実効174L tok~2935  完了（イベント実装）
+opentouryo-webforms-dialog         実効165L tok~2193  完了（子画面表示・ダイアログ）
 opentouryo-layer-p-winforms-screen 実効116L tok~1812  完了（画面の新規作成）
 opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実装）
 opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
@@ -127,7 +128,7 @@ opentouryo-oauth2-client       実効263L tok~2851  完了
 opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の挙動・運用ルールの確認手順）
 ```
 
-**全23スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全24スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 計測は `scratchpad/measure.py` 相当のスクリプトで行う（見積り式：ASCII 1/4字 + 非ASCII 1/1.1字）。
 
@@ -153,6 +154,23 @@ auth → oauth2-client、など）。
 前提が VS2010-2015 / .NET 3.5sp1-4.6 / IE11 で、P層の記述はほぼ全て Web Forms 前提。
 
 **版が古いのは事実だが、設計の記述そのものは信頼できる。** 実装と突き合わせて確認すること。
+
+#### 各機能編（doc 6）で判明した「ドキュメントが古い」実例（2026-07-16）
+
+`6_User_Guide(Each_Function_Editing).doc` を確認。ch.3〜6（共有情報/メッセージ・画面遷移・
+トランザクション・通信制御）は既存スキルと一致。**新規は子画面表示機能（ch.2）**を
+`opentouryo-webforms-dialog` として起こした。この機能で**ドキュメントが実装から乖離**していた：
+
+- ドキュメントの制限事項（ch.8）は「業務モーダルはモダンブラウザで表示できない（IE専用）」
+  とするが、**最新版は IE 以外で擬似ダイアログを使う**（作者に確認）。
+  OK・YES/NO＝**Floating div**、業務モーダル＝**`window.open`**。
+- **`CloseModalScreen_WithAllParent` はサポートされなくなった**（メソッドは残存・`[Obsolete]`無し）。
+- `FxEnum.IconType` の値は **`Information` / `Exclamation` / `StopMark`**。
+  ドキュメントの `INFORMATION` 等の綴りは古い（実装で確認）。
+
+**教訓：制限事項・API 綴り・サポート状況はドキュメントを鵜呑みにせず実装と作者に当たる。**
+Ajax連携（ch.7＝.NET 2.0 世代）と共通APIユーティリティ（ch.1）はスキル化せず（レガシー／
+APIリファレンスで足りる）。
 
 #### 「相違を発見した」と誤認した件（教訓）
 

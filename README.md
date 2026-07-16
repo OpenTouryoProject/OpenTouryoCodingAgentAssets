@@ -14,6 +14,7 @@ src/
     opentouryo-layer-p-mvc/      P層：ASP.NET MVC / ASP.NET Core MVC
     opentouryo-layer-p-webforms-screen/ P層：Web Forms 画面の新規作成
     opentouryo-layer-p-webforms-event/  P層：Web Forms イベント実装
+    opentouryo-webforms-dialog/  P層：Web Forms 子画面（ダイアログ）表示
     opentouryo-layer-p-winforms-screen/ P層：Windows Forms 画面の新規作成
     opentouryo-layer-p-winforms-event/  P層：Windows Forms イベント実装
     opentouryo-p-call-business/  P層から B層を呼び出す（横断）

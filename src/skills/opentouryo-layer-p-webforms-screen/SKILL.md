@@ -43,8 +43,8 @@ public partial class sampleScreen : MyBaseController
 | **`UOC_FormInit`** | **画面コードクラス** | 初回ロード時の初期処理。**実装必須** |
 | **`UOC_FormInit_PostBack`** | **画面コードクラス** | ポストバック時の初期処理。**実装必須** |
 | **`UOC_（コントロール名）_（イベント名）`** | **画面コードクラス** | 各コントロールのイベント処理（→ `opentouryo-layer-p-webforms-event`） |
-| `UOC_YesNoDialog_Yes_Click` / `_No_Click` / `_X_Click` | 画面コードクラス | Yes/No ダイアログの応答（必要なら） |
-| `UOC_ModalDialog_End` | 画面コードクラス | モーダルダイアログの終了（必要なら） |
+| `UOC_YesNoDialog_Yes_Click` / `_No_Click` / `_X_Click` | 画面コードクラス | Yes/No ダイアログの応答（→ `opentouryo-webforms-dialog`） |
+| `UOC_ModalDialog_End` | 画面コードクラス | モーダルダイアログの終了（→ `opentouryo-webforms-dialog`） |
 
 ## ページロード処理（実装必須）
 
