@@ -3,7 +3,7 @@
 作業を再開するための記録。**アセットの内容ではなく、アセットを作る側の記録。**
 配布されるのは `src/` 配下のみで、このファイルは配布されない。
 
-最終更新: 2026-07-16
+最終更新: 2026-07-16（全19スキル完了。`AGENTS.md` のアーキテクチャ節を記述）
 
 ---
 
@@ -83,6 +83,7 @@ import する `CLAUDE.md` を生成する。Windows では symlink に管理者�
 | `opentouryo-xml-definition` | `-message` / `-shared-property` / `-screen-transition` / `-transaction-control` / `-transmission` の**5つへ解体** | **書式だけでなく「それを使う機能」を書いたら別物になった。** 6種は書式こそ似ているが、機能としては共有情報・メッセージ・画面遷移・トランザクション・通信でまったく別。**粒度が小さくなっても、適切なスキルを選択して実装できることを優先**（起動は description だけで判定されるため）。共通の書式制約（DTD 埋め込み・`id` の先頭に数字不可・`Fx` キーでパス指定）は**各スキルに複製**し、1スキルで自己完結させた |
 | `opentouryo-layer-d` | `-dao-custom` / `-dao-common` / `-dao-generated` の3つを独立。**`layer-d` は使い分けの入口として残す** | Dao 3系統は書き方も命名体系もまったく別（個別Dao は `SetSqlByFile2`、共通Dao は `SQLFileName` プロパティ、自動生成Dao は `S1_Insert` / `PK_` 体系）。**ただし XML 定義と違い「3系統のどれを使うか」という判断そのものがコンテンツ**なので、親スキルを薄く残した（75行 / 実効1,207トークン）。系統が決まっているなら直行してよい旨を明記 |
 | `opentouryo-layer-p` | `-mvc` / `-webforms` / `-winforms`（**完了**） | 実装モデルが根本的に違う（MVC は UOC を持たない）。WPF は P層フレームワークが無く対象外 |
+| `opentouryo-auth` | `opentouryo-oauth2-client` を独立 | auth が 4,463トークンで加筆余地が無かったのが発端だが、**本質は「外部 IdP と連携したい」が独立したタスクで、語彙（OAuth2 / 認可コード / id_token / state / nonce）も別に立つ**こと。auth は「ユーザ情報の保持」に専念させた。**最後にやることは通常のログインと同じ**（.NET 側の認証 + `MyUserInfo`）なので、両スキルは相互リンクしている |
 
 `opentouryo-layer-d/references/` は削除した。D層が316行で収まり、溢れなかったため。
 「D層は溢れるだろう」という当初の推測が外れた。
@@ -99,31 +100,38 @@ Claude Code は**ブロックレベルの HTML コメントを読み込み時に
 ## 3. 成果物の現状
 
 ```
-opentouryo-layer-p-mvc         実効tok~4474  完了
-opentouryo-layer-p-webforms    実効tok~3987  完了
-opentouryo-layer-p-winforms    実効tok~4153  完了
-opentouryo-layer-b             実効tok~3804  完了
-opentouryo-layer-d             実効tok~1207  完了（Dao 3系統の使い分け・入口）
-opentouryo-dao-custom          実効tok~1990  完了
-opentouryo-dao-common          実効tok~1739  完了
-opentouryo-dao-generated       実効tok~2326  完了
-opentouryo-query-definition    実効tok~2923  完了
-opentouryo-message             実効tok~1489  完了
-opentouryo-shared-property     実効tok~ 859  完了
-opentouryo-screen-transition   実効tok~1529  完了
-opentouryo-transaction-control 実効tok~1782  完了
-opentouryo-transmission        実効tok~1699  完了
-opentouryo-exception           実効tok~3972  完了
-opentouryo-logging             実効tok~1731  完了
-opentouryo-config              実効tok~2999  完了
-opentouryo-auth                実効tok~4463  完了
+opentouryo-layer-p-mvc         実効298L tok~3642  完了
+opentouryo-layer-p-webforms    実効279L tok~3752  完了
+opentouryo-layer-p-winforms    実効293L tok~4229  完了
+opentouryo-layer-b             実効283L tok~3896  完了
+opentouryo-layer-d             実効149L tok~2216  完了（Dao 3系統の使い分け・入口）
+opentouryo-dao-custom          実効151L tok~2015  完了
+opentouryo-dao-common          実効128L tok~1775  完了
+opentouryo-dao-generated       実効144L tok~1885  完了
+opentouryo-query-definition    実効278L tok~2895  完了
+opentouryo-message             実効125L tok~1526  完了
+opentouryo-shared-property     実効 73L tok~ 779  完了
+opentouryo-screen-transition   実効116L tok~1473  完了
+opentouryo-transaction-control 実効125L tok~1651  完了
+opentouryo-transmission        実効120L tok~1572  完了
+opentouryo-exception           実効289L tok~4264  完了
+opentouryo-logging             実効159L tok~1895  完了
+opentouryo-config              実効195L tok~2631  完了
+opentouryo-auth                実効313L tok~4991  完了 ★上限に貼り付いている
+opentouryo-oauth2-client       実効263L tok~2851  完了
 ```
 
-**全18スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
-「実効tok」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
+**全19スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+「実効」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
+計測は `scratchpad/measure.py` 相当のスクリプトで行う（見積り式：ASCII 1/4字 + 非ASCII 1/1.1字）。
 
-相互リンクしている（B層 → D層 → クエリ定義、全層 → 例外、P層3種 → auth、など）。
-`AGENTS.md` は約215行（実効約100行）。目安200行を少し超えている。
+**`opentouryo-auth` は 4,991トークンで上限 5,000 に接している。**
+これ以上の加筆は分割とセットで考えること。外部 IdP 連携を `opentouryo-oauth2-client` として
+独立させたのもこれが一因（2.5 参照）。
+
+相互リンクしている（B層 → D層 → クエリ定義、全層 → 例外、P層3種 → auth、
+auth → oauth2-client、など）。
+`AGENTS.md` は224行（実効176行 / 約2,578トークン）。目安200行を実効では下回っている。
 
 **残るのは各スキル内の TODO（プロジェクト固有の値・未確認の論点）と AGENTS.md の TODO。**
 
@@ -293,47 +301,66 @@ opentouryo-auth                実効tok~4463  完了
 
 ## 5. 未解決の TODO
 
-### 5.1 スキル本体
+**分類が肝。** 「このリポジトリで埋められる（＝OpenTouryo 共通の事実）」のか
+「導入プロジェクトにしか決められない（＝プロジェクト固有の値）」のかで、扱いが正反対になる。
+後者は**空欄のまま配布するのが正しい**。
 
-- [x] **P層の3分割**（`-mvc` / `-webforms` / `-winforms`）— **完了**。
-      `opentouryo-layer-p` は削除。WPF は P層フレームワークを持たないため対象外
-- [x] **`opentouryo-auth` の「P層フレームワークごとの差異」節を P層スキルへ分配** — **完了**。
-      目安超過は解消（5,800 → 約4,100トークン）
-- [x] **リッチクライアント（`-winforms`）の認証の扱い** — **調査完了**。
-      `UserInfoHandle` もセッションも使わず `static` な `MyBaseControllerWin.UserInfo` で保持。
-      .NET の認証機構も使わない
+### 5.1 このリポジトリで埋められる
+
 - [ ] **`opentouryo-layer-b` と 2CS 系（`MyFcBaseLogic2CS`）の差の整理。**
       layer-b は `BaseLogic` / `MyFcBaseLogic`（Web/MVC）前提で書いてある。
       注記は入れたが、UOC のシグネチャ・`this.ReturnValue`・自動振り分けの差は未確認
-- [x] **2CS で「業務例外時のロールバックを自動にしない」設計意図** — **確認済み**（4.4 参照）。
-      「アプリ = 1トランザクション」という設計の帰結だった
-- [ ] **リッチクライアントで有効な接頭辞の全一覧と既定値**（`FxPrefixOfCommand` /
-      `FxPrefixOfPictureBox` / `FxPrefixOfComboBox` ほか）を app.config から採取する
-- [ ] `opentouryo-auth`: `MyUserInfo` にプロジェクト固有で足している項目
-- [ ] `opentouryo-auth`: **ログアウト時のユーザ情報の破棄**。
-      `UserInfoHandle.DeleteUserInformation()` があるのに MVC_Sample の `Logout` が呼んでいない。
-      セッションを別途破棄しているのか、サンプルの漏れなのか不明
-- [ ] `opentouryo-auth`: 外部 IdP 連携の手順（プロジェクト方針次第）
-- [ ] `opentouryo-logging`: `OPERATION` ログの書式（フレームワークが出さないため標準が不明）
-- [ ] `opentouryo-logging`: イベントログ（`CustomEventLog`/`SecurityEventLog`）の使いどころ
-- [x] `opentouryo-config`: XML定義ファイルの中身の書き方 — **完了**。`opentouryo-xml-definition` として独立させた（6種で263行）
-
-### 5.2 AGENTS.md（導入プロジェクトが埋める欄）
-
-`src/instructions/AGENTS.md` の TODO。**これらは導入プロジェクト固有なので、
-このリポジトリ側では埋めきれない可能性がある。**
-
-- [ ] OpenTouryo 本体のバージョン、IDE
-- [ ] アーキテクチャ表の各層の責務・基底クラス、層間の呼び出し規約
-- [ ] ディレクトリ構成、命名規約
-- [ ] 実装時の必須ルール（1件のみ記述済み：業務例外はリスローされない）
-- [ ] ビルドと実行のコマンド
-- [ ] プロジェクト ポリシーのその他の項目
-
-### 5.3 調査範囲
-
+- [x] **`AGENTS.md` のアーキテクチャ節**（各層の責務・基底クラス・層間の呼び出し規約）— **完了**。
+      5.2 に「導入プロジェクトが埋める欄」として分類していたが**誤りだった**。
+      層の責務も呼び出し経路も OpenTouryo 共通の事実で、プロジェクトごとに変わらない
 - [ ] **非推奨クラス一覧の網羅範囲**。現在は C# の `Frameworks/Infrastructure` 配下のみ。
       VB 版と `Tools` 配下は未調査
+
+#### 完了済み（再調査しないこと）
+
+- [x] **P層の3分割**（`-mvc` / `-webforms` / `-winforms`）。
+      `opentouryo-layer-p` は削除。WPF は P層フレームワークを持たないため対象外
+- [x] **`opentouryo-auth` の「P層フレームワークごとの差異」節を P層スキルへ分配。**
+      目安超過は解消（5,800 → 約4,100トークン）
+- [x] **リッチクライアント（`-winforms`）の認証の扱い。**
+      `UserInfoHandle` もセッションも使わず `static` な `MyBaseControllerWin.UserInfo` で保持。
+      .NET の認証機構も使わない
+- [x] **2CS で「業務例外時のロールバックを自動にしない」設計意図**（4.4 参照）。
+      「アプリ = 1トランザクション」という設計の帰結だった
+- [x] **リッチクライアントで有効な接頭辞の全一覧と既定値。**
+      **6種のみ**（`btn` / `cbb` / `lbx` / `rbn` / `pbx` / `cbx`）。`-winforms` に記述済み
+- [x] **ログアウト時のユーザ情報の破棄。** `DeleteUserInformation()` を `Logout` が呼ばないのは
+      サンプルの漏れではなく設計。**ログイン画面に入る時点で `FxSessionAbandon()` を呼び、
+      セッションごと消す**。`-auth` に記述済み
+- [x] **外部 IdP 連携。** `opentouryo-oauth2-client` として独立させた
+- [x] `opentouryo-config`: XML定義ファイルの中身の書き方。`opentouryo-xml-definition` として
+      独立させた後、機能単位の5スキルへ解体（2.5 参照）
+
+### 5.2 導入プロジェクトにしか決められない（空欄のまま配布する）
+
+**このリポジトリ側では埋めきれない。** 埋めるのはアセットを導入する側。
+
+スキル内：
+
+- [ ] `opentouryo-auth`: このプロジェクトの `MyUserInfo` が既定の2項目に**追加**している項目
+- [ ] `opentouryo-logging`: `OPERATION` ログの書式（フレームワークが出さないため標準が存在しない）
+- [ ] `opentouryo-logging`: イベントログ（`CustomEventLog`/`SecurityEventLog`）の使いどころ
+- [ ] `opentouryo-message`: このプロジェクトの親クラス2 が `%1`/`%2` の置換を行うか
+
+`src/instructions/AGENTS.md` の TODO：
+
+- [ ] OpenTouryo 本体のバージョン、IDE
+- [ ] ディレクトリ構成、命名規約
+- [ ] 実装時の必須ルール（2件記述済み：親クラス1・2 を修正しない / 業務例外はリスローされない）
+- [ ] ビルドと実行のコマンド
+- [ ] プロジェクト ポリシーのその他の項目（Git 操作の1件は既定で記述済み）
+
+### 5.3 方針が決まったら起こす
+
+- [ ] `opentouryo-oauth2-client`: **SAML2 クライアント機能**（`SAML2Client` / `SAML2Bindings`）。
+      作者から「現時点でスキル化する必要はない」と明示されている。連携する方針になったら別スキルへ
+- [ ] `opentouryo-oauth2-client`: 認可コードグラント以外のグラント
+      （`ClientCredentialsGrantAsync` / PKCE / CIBA ほか。存在は本文に列挙済み）
 
 ### 5.4 作者に確認したいこと
 
@@ -400,12 +427,18 @@ skills-ref validate ./src/skills/opentouryo-layer-d
 
 ## 7. 次にやること
 
-1. **P層の3分割**（`opentouryo-layer-p-winforms` / `-webforms` / `-mvc`）。
-   `opentouryo-layer-p` は削除するか、共通部分を残すか要判断
-2. 上記に伴い、以下を P層スキルへ移す
-   - `opentouryo-auth` の「P層フレームワークごとの差異」節（**目安超過の解消**。5.1 参照）
-   - `opentouryo-config` の「P層の設定キー」節
-3. `AGENTS.md` の TODO を埋める（導入プロジェクト側で埋める欄との切り分けが必要）
+**全19スキルと `AGENTS.md` のアーキテクチャ節は書き終えている。**
+残るこのリポジトリ側の作業は2件のみ（5.1 参照）。
 
-**1 が他の課題のボトルネックになっている。** 目安超過の解消も、設定キーの整理も、
-P層スキルが無いと置き場所が決まらない。
+1. **`opentouryo-layer-b` と 2CS 系（`MyFcBaseLogic2CS`）の差の整理。**
+   UOC のシグネチャ・`this.ReturnValue`・自動振り分けの差が未確認。
+   `MyFcBaseLogic2CS` と `BaseLogic2CS` を読んで `MyFcBaseLogic` / `BaseLogic` と突き合わせる。
+   **「アプリ = 1トランザクション」という設計（4.4）から演繹できる差**のはずなので、
+   まずその観点で当たりを付ける
+2. **非推奨クラス一覧の網羅範囲を広げる。** VB 版と `Tools` 配下が未調査（5.3 の採取コマンド参照）
+
+それ以外の TODO は**導入プロジェクトか作者にしか決められない**（5.2 / 5.3 / 5.4）。
+特に 5.2 は**空欄のまま配布するのが正しい**ので、埋めようとしないこと。
+
+なお `opentouryo-auth` は 4,991トークンで上限に接している（3 参照）。
+加筆が必要になったら分割とセットで考える。

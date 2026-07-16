@@ -77,11 +77,11 @@ Git 操作は人が手動で行う。
 OpenTouryo は **P層 / B層 / D層** の3層構造をとる。各層の責務は厳格に分離されており、
 層をまたぐ呼び出しは規定の経路以外を通してはならない。
 
-| 層 | 責務 | 主な基底クラス | スキル |
+| 層 | 責務 | 基底クラス（親クラス1 / 2） | スキル |
 | --- | --- | --- | --- |
-| P層（画面 / API） | TODO | 処理方式による（下表） | `opentouryo-layer-p-*` |
-| B層（業務ロジック） | TODO | TODO | `opentouryo-layer-b` |
-| D層（データアクセス） | TODO | TODO | `opentouryo-layer-d` |
+| P層（画面 / API） | 画面の入出力とイベント処理。**業務ロジックを書かない** | 処理方式による（下表） | `opentouryo-layer-p-*` |
+| B層（業務ロジック） | 業務処理。**トランザクション境界**でもある | `BaseLogic` / `MyFcBaseLogic` | `opentouryo-layer-b` |
+| D層（データアクセス） | SQL の実行。**業務判断をしない** | `BaseDao` / `MyBaseDao` | `opentouryo-layer-d` |
 
 **P層は処理方式ごとに実装モデルが違う。** 使っている方式のスキルを読むこと。
 
@@ -95,9 +95,23 @@ OpenTouryo は **P層 / B層 / D層** の3層構造をとる。各層の責務�
 （`Window` を継承する。`MyBaseControllerWin` は `Form` を継承しているため使えない）。
 WPF で使えるのは `opentouryo-layer-b` / `opentouryo-layer-d` など P層以外のスキル。
 
-<!-- TODO: 層間の呼び出し経路を1〜2文で。「P層はB層をXX経由で呼ぶ」「D層は必ずB層から呼ぶ」等。 -->
+### 層間の呼び出し規約
 
-TODO: 層間の呼び出し規約
+**経路は固定されている。層を直接 `new` して呼んではならない。**
+
+```
+P層  --CallController.Invoke(サービス論理名, パラメータ値)-->  B層
+B層  --new LayerD(this.GetDam()) / new CmnDao(this.GetDam())-->  D層
+```
+
+- **P層 → B層は `CallController.Invoke()`。** B層のクラスを直接 `new` しない。
+  渡すのは**サービス論理名**であって、URL やクラス名ではない。実体の解決は定義ファイルが行い、
+  インプロセス呼び出しと Web サービス呼び出しを**コードを変えずに切り替えられる**
+  （`opentouryo-transmission`）
+- **B層 → D層は `this.GetDam()` を渡して Dao を生成する。** 接続とトランザクションは
+  B層（親クラス2）が持っているため、D層が自前で接続を開くことはない
+- **P層から D層を直接呼ばない。** トランザクション境界は B層にある
+- 層をまたぐ引数・戻り値は **`BaseParameterValue` / `BaseReturnValue` の派生型**で受け渡す
 
 ### クラスの階層と修正可否
 
