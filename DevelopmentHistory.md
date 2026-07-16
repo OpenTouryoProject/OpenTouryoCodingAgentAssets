@@ -83,6 +83,7 @@ import する `CLAUDE.md` を生成する。Windows では symlink に管理者�
 | `opentouryo-xml-definition` | `-message` / `-shared-property` / `-screen-transition` / `-transaction-control` / `-transmission` の**5つへ解体** | **書式だけでなく「それを使う機能」を書いたら別物になった。** 6種は書式こそ似ているが、機能としては共有情報・メッセージ・画面遷移・トランザクション・通信でまったく別。**粒度が小さくなっても、適切なスキルを選択して実装できることを優先**（起動は description だけで判定されるため）。共通の書式制約（DTD 埋め込み・`id` の先頭に数字不可・`Fx` キーでパス指定）は**各スキルに複製**し、1スキルで自己完結させた |
 | `opentouryo-layer-d` | `-dao-custom` / `-dao-common` / `-dao-generated` の3つを独立。**`layer-d` は使い分けの入口として残す** | Dao 3系統は書き方も命名体系もまったく別（個別Dao は `SetSqlByFile2`、共通Dao は `SQLFileName` プロパティ、自動生成Dao は `S1_Insert` / `PK_` 体系）。**ただし XML 定義と違い「3系統のどれを使うか」という判断そのものがコンテンツ**なので、親スキルを薄く残した（75行 / 実効1,207トークン）。系統が決まっているなら直行してよい旨を明記 |
 | `opentouryo-layer-p` | `-mvc` / `-webforms` / `-winforms`（**完了**） | 実装モデルが根本的に違う（MVC は UOC を持たない）。WPF は P層フレームワークが無く対象外 |
+| （新規） | `opentouryo-project-policy` | **分割ではなく、穴を埋めるために追加**（作者の提案）。「親クラス2 の実装で決まる仕様は確認せよ」と各スキルに書いたが、**何を・どこを見て・見られなければ誰に何を聞くのかがどこにも無かった**。確認手順は `message` 固有ではなく親クラス2 依存の事項すべてに効く一般則なので、各スキルへ複製せず1本にまとめ、`AGENTS.md` と各スキルからここを指した |
 | `opentouryo-auth` | `opentouryo-oauth2-client` を独立 | auth が 4,463トークンで加筆余地が無かったのが発端だが、**本質は「外部 IdP と連携したい」が独立したタスクで、語彙（OAuth2 / 認可コード / id_token / state / nonce）も別に立つ**こと。auth は「ユーザ情報の保持」に専念させた。**最後にやることは通常のログインと同じ**（.NET 側の認証 + `MyUserInfo`）なので、両スキルは相互リンクしている |
 
 `opentouryo-layer-d/references/` は削除した。D層が316行で収まり、溢れなかったため。
@@ -103,25 +104,26 @@ Claude Code は**ブロックレベルの HTML コメントを読み込み時に
 opentouryo-layer-p-mvc         実効298L tok~3642  完了
 opentouryo-layer-p-webforms    実効279L tok~3752  完了
 opentouryo-layer-p-winforms    実効293L tok~4229  完了
-opentouryo-layer-b             実効283L tok~3896  完了
+opentouryo-layer-b             実効292L tok~4134  完了
 opentouryo-layer-d             実効149L tok~2216  完了（Dao 3系統の使い分け・入口）
 opentouryo-dao-custom          実効151L tok~2015  完了
 opentouryo-dao-common          実効128L tok~1775  完了
 opentouryo-dao-generated       実効144L tok~1885  完了
 opentouryo-query-definition    実効278L tok~2895  完了
-opentouryo-message             実効125L tok~1526  完了
+opentouryo-message             実効127L tok~1585  完了
 opentouryo-shared-property     実効 73L tok~ 779  完了
 opentouryo-screen-transition   実効116L tok~1473  完了
 opentouryo-transaction-control 実効125L tok~1651  完了
 opentouryo-transmission        実効120L tok~1572  完了
 opentouryo-exception           実効289L tok~4264  完了
-opentouryo-logging             実効159L tok~1895  完了
+opentouryo-logging             実効162L tok~1990  完了
 opentouryo-config              実効195L tok~2631  完了
-opentouryo-auth                実効313L tok~4991  完了 ★上限に貼り付いている
+opentouryo-auth                実効309L tok~4953  完了 ★上限に貼り付いている
 opentouryo-oauth2-client       実効263L tok~2851  完了
+opentouryo-project-policy      実効129L tok~2247  完了（親クラス2 の挙動の確認手順）
 ```
 
-**全19スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全20スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 計測は `scratchpad/measure.py` 相当のスクリプトで行う（見積り式：ASCII 1/4字 + 非ASCII 1/1.1字）。
 
@@ -131,7 +133,7 @@ opentouryo-oauth2-client       実効263L tok~2851  完了
 
 相互リンクしている（B層 → D層 → クエリ定義、全層 → 例外、P層3種 → auth、
 auth → oauth2-client、など）。
-`AGENTS.md` は224行（実効176行 / 約2,578トークン）。目安200行を実効では下回っている。
+`AGENTS.md` は257行（実効201行 / 約3,220トークン）。目安200行をわずかに超えている。
 
 **残るのは各スキル内の TODO（プロジェクト固有の値・未確認の論点）と AGENTS.md の TODO。**
 
@@ -351,10 +353,69 @@ auth → oauth2-client、など）。
 
 スキル内：
 
-- [ ] `opentouryo-auth`: このプロジェクトの `MyUserInfo` が既定の2項目に**追加**している項目
-- [ ] `opentouryo-logging`: `OPERATION` ログの書式（フレームワークが出さないため標準が存在しない）
 - [ ] `opentouryo-logging`: イベントログ（`CustomEventLog`/`SecurityEventLog`）の使いどころ
-- [ ] `opentouryo-message`: このプロジェクトの親クラス2 が `%1`/`%2` の置換を行うか
+
+#### 「纏め者の領分」は TODO にしない（2026-07-16・作者の指摘）
+
+**当初ここに4件あったが、3件は削除した。** 作者の指摘：
+
+> `opentouryo-auth:62`、`opentouryo-logging:62`、`opentouryo-message:102` は
+> 全てベースクラス２依存で使用者側のスキルは意識しなくて良い
+
+| 削除した TODO | なぜ不要か |
+| --- | --- |
+| `auth`: `MyUserInfo` の追加項目 | 項目を足すのは親クラス2 を整備する側。使用者は**あるものを使うだけ** |
+| `logging`: `OPERATION` の書式 | 標準を決めるとしたら纏め者。そもそもフレームワークが出力しないので**決まりが無いのが答え** |
+| `message`: `%1`/`%2` の置換 | 置換するのは親クラス2。使用者は `GetMessage` / 例外スローを書くだけ |
+
+**教訓：「親クラス2 に依存して決まること」＝「使用者側スキルの TODO」ではない。**
+親クラス2 はバイナリで提供され、使用者は**その挙動に合わせるだけ**。
+アセットの読者は使用者であって纏め者ではないので、纏め者の判断事項を欄として置くと、
+永遠に埋まらない TODO になる。
+
+**削除して終わりにはせず、「確認せよ」という指示に置き換えた。**
+決めさせるのではなく、現物に**合わせさせる**。
+
+#### 確認方法は「既存コードからの推測」ではない（作者の指摘）
+
+当初は「既存の `MSGDefinition.xml` とスロー箇所を見て確認する」と書いたが、**これは誤り。**
+作者から示された確認方法：
+
+> ベースクラス２を読むこと、若しくは、提供されていればコードから読み取るか、
+> 纏め者に確認しプロンプトで指示する。
+
+つまり **① ソースが参照できるなら読む → ② 読めないなら纏め者に確認し、人がプロンプトで指示する**。
+既存コードでの使われ方は手掛かりに過ぎず、**「使われていない」は「できない」の根拠にならない**
+（既存エントリに `%1` が無いだけかもしれない）。
+
+**あわせて「親クラス1・2 は必ずバイナリ」という認識も誤りだった。**
+「提供されていればコードから読み取る」＝**ソースが提供されることもある**。
+バイナリ提供は原則であって絶対ではない。`AGENTS.md` の「ソースが無いため修正できず」という
+断定を改め、**修正不可の根拠を「整備するのは纏め者だから」という役割分担に寄せた**
+（ソースが読めても修正してよいことにはならない）。
+
+この確認方法は `message` 固有ではなく**親クラス2 依存の事項すべてに効く一般則**なので、
+当初 `AGENTS.md` に置いたが、**後に `opentouryo-project-policy` として独立させた**（下記）。
+
+#### `opentouryo-project-policy` の追加（2026-07-16・作者の提案）
+
+> プロジェクト方針を確認するというスキルを作成するのはどうでしょうか？
+> 「…Frameworks/Infrastructure/Business」のようなものが提供されればコードから確認でき、
+> 提供されなければまとめ者向けのQ&Aにする。
+
+**上記の「確認せよ」には穴があった。** `AGENTS.md` に「読めなければ纏め者に確認する」とは
+書いたが、**何を・どこを見て・見られなければ誰に何を聞くのかがどこにも無く**、実質
+「詰まったら人に聞け」で終わっていた。スキル化して手順を与えた。
+
+内容：① 親クラス2 のソースを探す（**パスではなくファイル名で**。配置はプロジェクトによる）
+→ ② 確認地図（事項 → ファイル → 見どころ。全て実装で裏取り済み）
+→ ③ 読めなければ**纏め者への質問テンプレート**（既定値を示して差分だけ聞く形にした）。
+
+`AGENTS.md` 側は「親クラス2 の挙動はプロジェクトごとに違う。推測で書かない。
+確認方法は `opentouryo-project-policy`」まで削り、入口だけを残した。
+
+残った `logging` の1件は、`CustomEventLog` / `SecurityEventLog` を**業務コードが直接呼ぶ**ため
+性質が違う。使いどころは使用者側のポリシー。
 
 `src/instructions/AGENTS.md` の TODO：
 

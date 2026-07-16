@@ -30,6 +30,7 @@ src/
     opentouryo-config/           構成ファイル
     opentouryo-auth/             認証・ユーザ情報
     opentouryo-oauth2-client/    外部IdP連携（OAuth2 / OIDC クライアント）
+    opentouryo-project-policy/   プロジェクト方針（親クラス2 の挙動）の確認
 install/
   install.ps1                   対象リポジトリへのインストーラ
 docs/

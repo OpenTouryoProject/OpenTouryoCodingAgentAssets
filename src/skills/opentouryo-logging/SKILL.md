@@ -58,11 +58,9 @@ LogIF.InfoLog("OPERATION", "受注を登録した。受注ID=" + orderId);
 LogIF.InfoLog("OPERATION", "受注を登録した。受注ID=" + orderId);
 ```
 
-<!--
-  TODO: OPERATION ログの書式（項目と区切り）にプロジェクト標準があれば追記する。
-  フレームワーク側は OPERATION を出力しておらず、書式が定まっていない。
-  ACCESS / SQLTRACE はカンマ区切り（後述）なので、揃えるかどうかは纏め者の判断。
--->
+**`OPERATION` の書式に決まりは無い。** フレームワークは `OPERATION` を出力しないため、
+揃えるべき雛形が存在しない。`ACCESS` / `SQLTRACE` はカンマ区切り（後述）なので、
+それに倣うかは任意。**既存の `OPERATION` 出力があれば、それに合わせる。**
 
 ## フレームワークが自動出力するログ
 
