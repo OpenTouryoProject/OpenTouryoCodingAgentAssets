@@ -129,11 +129,16 @@ B層  --new LayerD(this.GetDam()) / new CmnDao(this.GetDam())-->  D層
 
 各層は「親クラス1 → 親クラス2 → 業務コード（画面コード）クラス」の3階層で構成される。
 
-| 階層 | 位置づけ | 例 | このプロジェクトでの修正 |
+| 階層 | 例 | 名前空間（アセンブリ） | 提供 | 修正 |
 | --- | --- | --- | --- |
-| 親クラス1 | フレームワーク本体 | `BaseLogic` / `BaseDao` / `BaseController` | **不可** |
-| 親クラス2 | 業務フレームワーク（プロジェクト共通部品） | `MyFcBaseLogic` / `MyBaseDao` / `MyBaseController` | **不可** |
-| 業務コードクラス | 業務個別の実装 | `LayerB` / `LayerD` / 各画面のコード | 可 |
+| 親クラス1 | `BaseLogic` / `BaseDao` / `BaseController` | `Touryo.Infrastructure.Framework.*` | バイナリ提供 | 修正不可 |
+| 親クラス2 | `MyFcBaseLogic` / `MyBaseDao` / `MyBaseController` | `Touryo.Infrastructure.Business.*` | 纏め者が開発・改修 | **このプロジェクトでは修正不可** |
+| 業務コードクラス | 各画面 / B層 / D層 クラス | プロジェクトの名前空間 | ここに実装する。 | **可** |
+
+汎用の基盤部品は `Touryo.Infrastructure.Public.*`（`Db` / `Log` / `Util` 等。バイナリ提供・修正不可）。
+
+**依存は一方向：ユーザプログラム → `Business` → `Framework` → `Public`。** 間飛ばし
+（`Business` → `Public`）はよいが、逆向き（`Framework` → `Business` 等）は循環参照になり禁止。
 
 **親クラス1・親クラス2 は、ユーザプログラム開発プロジェクトには基本的にビルド後のバイナリ
 （アセンブリ）で提供される。特別に強い指示がある場合を除き修正対象にならない。ソースが
@@ -178,7 +183,7 @@ TODO
 -->
 
 - **親クラス1・親クラス2 を修正しない。** バイナリで提供されておりソースが無い。
-  実装するのは業務コードクラス（`LayerB` / `LayerD` / 各画面のコード）だけ。
+  実装するのは業務コードクラス（各画面 / B層 / D層 クラス）だけ。
   詳細は「アーキテクチャ」の「クラスの階層と修正可否」を参照。
 - **業務例外（`BusinessApplicationException`）はリスローされない。** B層でスローすると
   フレームワークが捕捉し、正常系の戻り値（`ErrorFlag = true`）に変換する。呼び出し側で

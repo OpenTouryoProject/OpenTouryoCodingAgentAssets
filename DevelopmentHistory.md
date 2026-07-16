@@ -267,6 +267,13 @@ APIリファレンスで足りる）。
   だけ。**それでも一度誤認した**（`grep "class \w* : MyBaseControllerWin"` の4件を
   「Win と WPF の両方」と読んだが、実際は2つのサンプルツリー × WinForms の2ファイル）。
   P層スキルは **`-mvc` / `-webforms` / `-winforms` の3つで、WPF は対象外**
+- **名前空間と依存関係（作者提供 → 実装で検証）。** フレームワークは3つのアセンブリに分かれる：
+  `Touryo.Infrastructure.Business`（親クラス2・**纏め者が開発**）→ `.Framework`（親クラス1・
+  **NuGet**）→ `.Public`（汎用基盤部品・**NuGet**）。**参照は一方向**（実装で確認：`Framework` は
+  `Business` を、`Public` は両方を `using` していない＝0件。逆は多数）。間飛ばし（`Business` →
+  `Public`）はOK、逆向きは循環参照。作者提供テキストの `Touryo.Infrastructure.Business.Framework`
+  等は表記の乱れで、実体は `.Framework` / `.Public`（grep で確認）。`AGENTS.md` の
+  「クラスの階層と修正可否」表に名前空間・提供（NuGet/纏め者）列を統合
 - **対象ランタイムは .NET Framework 4.8 と .NET 10.0**（`Business_netcore100.csproj` で裏付け済み）
 - **構成ファイル**: XML定義ファイルは共通。`app.config` は core 系で `appsettings.json` になる
 - **静的クエリ=`.sql`、動的パラメタライズドクエリ=`.xml`**

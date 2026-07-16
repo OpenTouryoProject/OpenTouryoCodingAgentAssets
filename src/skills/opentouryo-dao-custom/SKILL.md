@@ -1,6 +1,6 @@
 ---
 name: opentouryo-dao-custom
-description: "OpenTouryo の個別Dao（業務固有のデータアクセスクラス）を実装する。MyBaseDao を継承した LayerD クラスの書き方、コンストラクタでの BaseDam の受け取り、SetSqlByFile2 / SetSqlByCommand による SQL の指定、SetParameter によるパラメタ設定（型・サイズ・ParameterDirection のオーバーロードを含む）、ExecSelectScalar / ExecSelectFill_DT / ExecSelectFill_DS / ExecSelect_DR / ExecInsUpDel_NonQuery による実行、GetParameter とストアドプロシージャ（戻り値・出力パラメタ）の実行、SetUserParameter の SQL インジェクション リスクを扱う。個別Dao / LayerD / 独自Dao / 業務固有のデータアクセス / 複雑なSQL / ストアドプロシージャ を伴う作業のときに使う。共通Dao は opentouryo-dao-common、自動生成Dao は opentouryo-dao-generated、系統の選び方は opentouryo-layer-d を使う。"
+description: "OpenTouryo の個別Dao（業務固有のデータアクセスクラス）を実装する。MyBaseDao を継承した 個別Daoクラスの書き方、コンストラクタでの BaseDam の受け取り、SetSqlByFile2 / SetSqlByCommand による SQL の指定、SetParameter によるパラメタ設定（型・サイズ・ParameterDirection のオーバーロードを含む）、ExecSelectScalar / ExecSelectFill_DT / ExecSelectFill_DS / ExecSelect_DR / ExecInsUpDel_NonQuery による実行、GetParameter とストアドプロシージャ（戻り値・出力パラメタ）の実行、SetUserParameter の SQL インジェクション リスクを扱う。個別Dao / LayerD / 業務固有のデータアクセス / 複雑なSQL / ストアドプロシージャ を伴う作業のときに使う。共通Dao は opentouryo-dao-common、自動生成Dao は opentouryo-dao-generated、系統の選び方は opentouryo-layer-d を使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -59,7 +59,7 @@ protected void SetParameter(string parameterName, object obj)
 using Touryo.Infrastructure.Business.Dao;
 using Touryo.Infrastructure.Public.Db;
 
-// クラス名はプロジェクト依存（LayerD はサンプル名。機能ごとに複数作る）
+// クラス名はプロジェクト依存（LayerD は個別Daoクラスのサンプル名。機能ごとに複数作る）
 public class LayerD : MyBaseDao
 {
     public LayerD(BaseDam dam) : base(dam) { }
@@ -85,8 +85,8 @@ public class LayerD : MyBaseDao
 
 - コンストラクタで `BaseDam` を受け取り `base(dam)` に渡す。**Dao 側で接続を張らない**
 - メソッドは `public`。引数クラス・戻り値クラスを引数に取るのが慣例
-- **クラス名はプロジェクト依存。`LayerD` はサンプルの名前で、`LayerD` になるとは限らない。**
-  個別Dao は**機能ごとに複数**作られる（テーブルや業務単位など）。名称付与規則は
+- **個別Daoクラス名はプロジェクト依存。`LayerD` はサンプルの名前で、`LayerD` になるとは限らない。**
+  個別Daoクラスは**機能ごとに複数**作られる（テーブルや業務単位など）。名称付与規則は
   プロジェクトごとに決まるので、既存コードの命名に合わせる
 
 ### SQL の指定
