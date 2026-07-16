@@ -199,7 +199,7 @@ auth → oauth2-client、など）。
 | P層の実装モデル | **Web Forms / Windows Forms は UOC メソッド方式、MVC は UOC を持たない**（MVC 標準のフィルタに乗る）。親クラス1 の UOC 定義数は 15 / 12 / **0** |
 | コントロール名の接頭辞 | **命名規約ではなく機能。** 設定（`FxPrefixOfButton` = `btn` 等14種）から接頭辞を読み、コントロールツリーを走査してイベントを自動結線する。規約から外れると**発火しない**（`.aspx` に `OnClick` を書かない） |
 | 2層C/S のトランザクション | **`BaseLogic2CS` は `BaseLogic` と別物。** コネクションが `static` でグローバル、**正常系のコミットは手動**（`CommitAndClose()`）、**業務例外ではロールバックしない**（`★★業務例外時のロールバックは自動にしない。`）、`UOC_AfterTransaction` も呼ばれない。**設計意図は 4.4 を参照**（実装だけ見ても理由には到達できない） |
-| 2層C/S の B層 | **書き方は Web/MVC と同じ。** 自動振り分け・`this.ReturnValue`・UOC のシグネチャ・直呼びガードまで一致。**違うのは継承元（`MyFcBaseLogic2CS`）とトランザクション制御の2点だけ** |
+| 2層C/S の B層 | **書き方は Web/MVC と同じ。** 自動振り分け（`Latebind.InvokeMethod`）・`this.ReturnValue`・UOC のシグネチャ・直呼びガード（`WasCalledFromDoBusinessLogic`）まで一致。**違うのは継承元（`MyFcBaseLogic2CS`）とトランザクション制御の2点だけ**（2026-07-16 に実装で再確認）。ただし API には差がある：**`DoBusinessLogicAsync` が無い**（同期版2つのみ）／**キー付き Dam（`SetDam(key,dam)` / `GetDam(key)`）が無い**（Dam はアプリで1つ）。`User` の振替先が `ReadCommitted` なのは `MyFcBaseLogic` と同じ |
 | 接頭辞の結線箇所 | **親クラス1 と親クラス2 の2箇所に分かれる。** `PREFIX_OF_CHECK_BOX` だけ `MyLiteral`（親クラス2 の層）にあり親クラス2 で結線。有効な接頭辞は Web Forms が14種、WinForms が**6種だけ**（`TextBox` / `GridView` 等は WinForms で結線されない）。`FxPrefixOfCommand` は未使用（Mobile Web の名残） |
 | XML定義ファイル | **6種とも DTD 埋め込み・`id` の先頭に数字不可（XML の `ID` 型）・`Fx*` キーでパス指定**という共通枠組み。`MSGDefinition` の `%1`/`%2` は **`GetMessage` ではなく P層の親クラス2 が置換**（しかも `MyBaseController`＝Web Forms にしか実装が無い。実装コメントに `方式は、プロジェクト毎に検討のこと。`）。`SCDefinition` の `mode` 属性は **DTD と定数だけあって読む実装が無い**（機能していない） |
 | セッション破棄のタイミング | **ログアウトではなく「ログイン画面に入るとき」に `FxSessionAbandon()` で消す**設計。`DeleteUserInformation()` は通常不要。**Core だけ `Session.Clear()`**（他は `Session.Abandon()`。`ISession` に `Abandon()` が無いため） |
@@ -307,17 +307,26 @@ auth → oauth2-client、など）。
 
 ### 5.1 このリポジトリで埋められる
 
-- [ ] **`opentouryo-layer-b` と 2CS 系（`MyFcBaseLogic2CS`）の差の整理。**
-      layer-b は `BaseLogic` / `MyFcBaseLogic`（Web/MVC）前提で書いてある。
-      注記は入れたが、UOC のシグネチャ・`this.ReturnValue`・自動振り分けの差は未確認
-- [x] **`AGENTS.md` のアーキテクチャ節**（各層の責務・基底クラス・層間の呼び出し規約）— **完了**。
-      5.2 に「導入プロジェクトが埋める欄」として分類していたが**誤りだった**。
-      層の責務も呼び出し経路も OpenTouryo 共通の事実で、プロジェクトごとに変わらない
-- [ ] **非推奨クラス一覧の網羅範囲**。現在は C# の `Frameworks/Infrastructure` 配下のみ。
-      VB 版と `Tools` 配下は未調査
+**残っていない。** 以下はすべて完了した。
 
 #### 完了済み（再調査しないこと）
 
+- [x] **`AGENTS.md` のアーキテクチャ節**（各層の責務・基底クラス・層間の呼び出し規約）。
+      5.2 に「導入プロジェクトが埋める欄」として分類していたが**誤りだった**。
+      層の責務も呼び出し経路も OpenTouryo 共通の事実で、プロジェクトごとに変わらない
+- [x] **`opentouryo-layer-b` と 2CS 系（`MyFcBaseLogic2CS`）の差の整理。**
+      **未確認としていた3点は、すべて「同じ」だと実装で確認した**
+      （UOC のシグネチャ / `this.ReturnValue` / 自動振り分け。`MyFcBaseLogic2CS` も
+      `Latebind.InvokeMethod(this, "UOC_" + MethodName, ...)`、`WasCalledFromDoBusinessLogic`
+      による直呼びガードも同じ）。
+      **そして、この結論は既に `-winforms` に表として書かれていた**（この TODO 自体が陳腐化していた）。
+      layer-b には**差分だけ**を足した（非同期版が無い / キー付き Dam が無い）。
+      詳細は 4.3 の表を参照
+- [x] **非推奨クラス一覧の網羅範囲。** **一覧は言語非依存で、VB を採取し直す必要は無い**と判明。
+      VB には Framework（親クラス1）が無く CS のアセンブリを流用する
+      （`VB/1_GetLibrariesFromCS.bat`）。VB の Business（親クラス2）は CS のミラーで、
+      `MyBaseLogic` / `MyBaseLogic2CS` に同じく `<Obsolete>` が付く（実物で確認）。
+      `Tools` 配下に `[Obsolete]` は無い。根拠は `AGENTS.md` の当該節の HTML コメントに記録
 - [x] **P層の3分割**（`-mvc` / `-webforms` / `-winforms`）。
       `opentouryo-layer-p` は削除。WPF は P層フレームワークを持たないため対象外
 - [x] **`opentouryo-auth` の「P層フレームワークごとの差異」節を P層スキルへ分配。**
@@ -427,18 +436,17 @@ skills-ref validate ./src/skills/opentouryo-layer-d
 
 ## 7. 次にやること
 
-**全19スキルと `AGENTS.md` のアーキテクチャ節は書き終えている。**
-残るこのリポジトリ側の作業は2件のみ（5.1 参照）。
+**このリポジトリ側の作業は残っていない。** 全19スキル、`AGENTS.md`（アーキテクチャ節を含む）、
+インストーラまで書き終えた。
 
-1. **`opentouryo-layer-b` と 2CS 系（`MyFcBaseLogic2CS`）の差の整理。**
-   UOC のシグネチャ・`this.ReturnValue`・自動振り分けの差が未確認。
-   `MyFcBaseLogic2CS` と `BaseLogic2CS` を読んで `MyFcBaseLogic` / `BaseLogic` と突き合わせる。
-   **「アプリ = 1トランザクション」という設計（4.4）から演繹できる差**のはずなので、
-   まずその観点で当たりを付ける
-2. **非推奨クラス一覧の網羅範囲を広げる。** VB 版と `Tools` 配下が未調査（5.3 の採取コマンド参照）
-
-それ以外の TODO は**導入プロジェクトか作者にしか決められない**（5.2 / 5.3 / 5.4）。
+残る TODO は**導入プロジェクトか作者にしか決められない**（5.2 / 5.3 / 5.4）。
 特に 5.2 は**空欄のまま配布するのが正しい**ので、埋めようとしないこと。
 
-なお `opentouryo-auth` は 4,991トークンで上限に接している（3 参照）。
-加筆が必要になったら分割とセットで考える。
+再開する場合、着手する前に：
+
+1. **5.1 の「完了済み」を読む。** TODO が陳腐化していた事例が複数ある。
+   2CS の差（5.1）は `-winforms` と 4.3 に答えが書いてあるのに TODO が残っていた。
+   **書いた本人が忘れるので、まず現物を検索してから調査を始めること**
+2. **`opentouryo-auth` は 4,991トークンで上限に接している**（3 参照）。
+   加筆が必要になったら分割とセットで考える
+3. 作者に確認できる機会があれば 5.4（Core MVC のアクセスログ）を聞く

@@ -1,6 +1,6 @@
 ---
 name: opentouryo-layer-b
-description: "OpenTouryo の B層（業務ロジック層）を実装する。業務コードクラス（MyFcBaseLogic の派生）、UOC_ メソッドへの業務処理の実装、レイトバインドによる自動振り分け、this.ReturnValue による戻り値の返し方、引数クラス（MyParameterValue の派生）と戻り値クラス（MyReturnValue の派生）、DoBusinessLogic / DoBusinessLogicAsync による呼び出し、UOC_ConnectionOpen での Dam 生成とトランザクション制御・分離レベルを扱う。B層 / 業務ロジック / LayerB / 業務コードクラス / トランザクション / 分離レベル を伴う作業のときに使う。"
+description: "OpenTouryo の B層（業務ロジック層）を実装する。業務コードクラス（MyFcBaseLogic の派生）、UOC_ メソッドへの業務処理の実装、レイトバインドによる自動振り分け、this.ReturnValue による戻り値の返し方、引数クラス（MyParameterValue の派生）と戻り値クラス（MyReturnValue の派生）、DoBusinessLogic / DoBusinessLogicAsync による呼び出し、UOC_ConnectionOpen での Dam 生成とトランザクション制御・分離レベルを扱う。リッチクライアント（2層C/S）用の MyFcBaseLogic2CS 系でも業務コードクラスの書き方は同じなので、その場合もこのスキルを使う（ただしトランザクション制御だけは別物なので opentouryo-layer-p-winforms を併せて読む）。B層 / 業務ロジック / LayerB / 業務コードクラス / トランザクション / 分離レベル / 2CS / 2層C/S を伴う作業のときに使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -13,10 +13,14 @@ metadata:
 
 業務コードクラスに業務処理を実装する方法と、B層フレームワークの処理フローを扱う。
 
-**対象は `BaseLogic` / `MyFcBaseLogic` 系（Web / MVC）。** リッチクライアント（Windows Forms）は
-`BaseLogic2CS` / `MyFcBaseLogic2CS` 系で、**トランザクション制御が別物**
-（コネクションがグローバル、コミットは手動、業務例外でロールバックしない）。
-Windows Forms の場合は `opentouryo-layer-p-winforms` を参照。
+**対象は `BaseLogic` / `MyFcBaseLogic` 系（Web / MVC）。**
+
+リッチクライアント（Windows Forms）は `BaseLogic2CS` / `MyFcBaseLogic2CS` 系だが、
+**業務コードクラスの書き方はこのスキルがそのまま通用する。**
+UOC のシグネチャ・自動振り分け・`this.ReturnValue`・直呼びガードはすべて同じ。
+**読み替えるのは「継承元」と「トランザクション制御」の2点だけ**で、
+どちらも `opentouryo-layer-p-winforms` に書いてある（コネクションがグローバル、
+コミットは手動、業務例外でロールバックしない）。
 
 例外の型と処理方式は `opentouryo-exception`、Dao の実装は `opentouryo-layer-d`（3系統の使い分け）を参照。
 
@@ -171,6 +175,8 @@ if (rv.ErrorFlag)
 | `DoBusinessLogicAsync(pv)` | 非同期・既定の分離レベル |
 | `DoBusinessLogicAsync(pv, iso)` | 非同期・分離レベル指定 |
 
+**非同期版は `BaseLogic2CS`（2層C/S）には無い。** 同期版の2つだけ。
+
 **`UOC_` メソッドを直接呼んではならない。** `DoBusinessLogic` を経由しないと `this.ReturnValue` の
 setter が `FrameworkException` をスローする（不正呼び出しとして検出される）。
 
@@ -194,8 +200,8 @@ finally
 
 コミット・ロールバック・切断はすべてフレームワークが行う。**業務コードクラスに書かない。**
 
-**これは `BaseLogic`（Web / MVC）の話。** `BaseLogic2CS`（Windows Forms）は自動コミットせず、
-業務例外でロールバックもしない（`opentouryo-layer-p-winforms` 参照）。
+**これは `BaseLogic`（Web / MVC）の話。** `BaseLogic2CS`（Windows Forms）はコミットも切断も
+自動で行わない（→「リッチクライアント（2CS）との差」）。
 
 ## トランザクション制御
 
@@ -255,6 +261,8 @@ else
 複数 DB を扱う場合は `SetDam(key, dam)` / `GetDam(key)` でキー付きの Dam を使う。
 コミット・ロールバックは登録された全 Dam に対して実行される。
 
+**キー付きの Dam は `BaseLogic2CS`（2層C/S）には無い。** Dam はアプリ全体で1つだけ。
+
 ## Dao の使い分け
 
 業務コードクラスから使う Dao は3系統。**選び方は `opentouryo-layer-d`**、
@@ -277,6 +285,7 @@ else
 - **`UOC_` メソッドを直接呼び出す** — `FrameworkException`（不正呼び出し）になる。
   `DoBusinessLogic` を経由する
 - **業務コードクラスで `try`/`catch` してロールバックやコミットを書く** — フレームワークが行う
+  （**2CS を除く**。`opentouryo-layer-p-winforms` を参照）
 - **業務コードクラスで `UOC_ABEND` などの前後処理を `override` する** — 親クラス2 の共通処理を潰す
 - **`MyBaseLogic` を継承する** — 非推奨。`MyFcBaseLogic` を使う
 - **Dao の中で接続を張る** — `this.GetDam()` を渡す

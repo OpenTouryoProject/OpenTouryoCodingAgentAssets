@@ -174,6 +174,15 @@ TODO
     grep -rn -A2 "\[Obsolete" --include=*.cs root/programs/CS/Frameworks/Infrastructure
   private メンバは呼び出せないため一覧から除外している
   （例: EmbeddedResourceLoader.GetEntryAssembly()）。
+
+  網羅範囲の調査結果（2026-07-16）:
+  - この一覧は CS / VB のどちらでも通用する（言語非依存）。VB を採取し直す必要はない。
+    - root/programs/VB には Framework（親クラス1）が無い。CS のアセンブリを流用する
+      （VB/1_GetLibrariesFromCS.bat）。よって親クラス1 の非推奨は CS の調査で網羅済み。
+    - VB の Business（親クラス2）は CS のミラー。MyBaseLogic / MyBaseLogic2CS に
+      同じく <Obsolete("... please use MyFcBaseLogic ...")> が付いている（実物で確認）。
+    - VB での属性構文は <Obsolete(...)>。ビルド警告止まりなのは C# と同じ。
+  - root/programs/CS/Frameworks/Tools 配下に [Obsolete] は無い。
 -->
 
 ### クラス
