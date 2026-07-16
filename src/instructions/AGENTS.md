@@ -119,7 +119,8 @@ B層  --new LayerD(this.GetDam()) / new CmnDao(this.GetDam())-->  D層
 - **P層 → B層は `CallController.Invoke()`。** B層のクラスを直接 `new` しない。
   渡すのは**サービス論理名**であって、URL やクラス名ではない。実体の解決は定義ファイルが行い、
   インプロセス呼び出しと Web サービス呼び出しを**コードを変えずに切り替えられる**
-  （`opentouryo-transmission`）
+  （`opentouryo-transmission`）。**ただしリモート（Web サービス）呼び出しは net48 専用。**
+  `.NET 10.0` ではインプロセスのみ（`BinarySerialize` が core に無いため）
 - **B層 → D層は `this.GetDam()` を渡して Dao を生成する。** 接続とトランザクションは
   B層（親クラス2）が持っているため、D層が自前で接続を開くことはない
 - **P層から D層を直接呼ばない。** トランザクション境界は B層にある
@@ -271,6 +272,7 @@ TODO
 | `opentouryo-auth` | 認証・ユーザ情報を扱うとき |
 | `opentouryo-oauth2-client` | 外部 IdP と連携するとき（OAuth2 / OIDC のクライアント＝RP） |
 | `opentouryo-project-policy` | 「このプロジェクトではどうなっているか」（親クラス2 の実装で決まる仕様）が分からないとき |
+| `opentouryo-common-parts` | ユーティリティ（文字列チェック・エンコード・ハッシュ・圧縮など）を自作する前に、既存の共通部品を探すとき |
 
 ## 参考資料
 

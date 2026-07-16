@@ -97,6 +97,25 @@ Claude Code は**ブロックレベルの HTML コメントを読み込み時に
 
 `<!-- TODO: ... -->` を執筆者への指示、`TODO` の素文字列を埋めるべき箇所として使い分けている。
 
+### 2.7 GUI ツールの CLI 化：基準は「エージェントが直接できるか」（作者判断）
+
+**判断基準：そのツールが、エージェントが直接できない処理を含むか。**
+含まないなら CLI 化しない。含むなら CLI 化する価値がある（2026-07・作者判断）。
+
+| ツール | CLI 化 | 理由 |
+| --- | --- | --- |
+| `DPQuery_Tool`（動的クエリ分析ツール） | **しない** | エージェントは `.sql` / `.xml` を**直接書けて Dao 経由で実行・テストできる**。ツールの価値は「人が GUI で試験実行する」ことで、エージェントの作業フローとは前提が違う |
+| **D層自動生成ツール（墨壺）** | **する予定** | **ランタイムから実行できない処理**（DB スキーマの読み取り → Dao / DTO / SQL のコード生成）を含む。エージェントが直接できないので、CLI 化すれば呼べるようになる |
+| データ・メンテナンス画面自動生成（ASP.NET） | **未検討・スコープ外** | doc0（Index）で存在を確認した既知の GUI ツール。墨壺同様「エージェントが直接できない生成処理」を含むので将来 CLI 化の候補ではあるが、画面生成は現状スコープ外。スキル化もしていない |
+
+**教訓：人間向け GUI ツールを機械的にエージェント向けへ移植しない。**
+エージェントが**元の成果物（コード）を直接扱えるなら**ツールは不要（`DPQuery_Tool`）。
+逆に**ツールが手作業では再現しにくい処理を持つなら** CLI 化の価値がある（自動生成ツール）。
+
+`DPQuery_Tool` はツール化ではなく `opentouryo-query-definition` の充実で対応した。
+D層自動生成ツールの CLI ができたら、`opentouryo-dao-generated` から呼び出し方を案内できる
+（現状スキルは「生成物の使い方」を扱い、生成そのものはツール前提。§5 / §7 参照）。
+
 ---
 
 ## 3. 成果物の現状
@@ -110,6 +129,7 @@ opentouryo-layer-p-winforms-screen 実効116L tok~1812  完了（画面の新規
 opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実装）
 opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
 opentouryo-richclient-async       実効145L tok~2031  完了（リッチクライアントの非同期呼び出し）
+opentouryo-common-parts           実効118L tok~2047  完了（用途→共通部品のインデックス）
 opentouryo-layer-b               実効292L tok~4134  完了
 opentouryo-layer-d             実効149L tok~2216  完了（Dao 3系統の使い分け・入口）
 opentouryo-dao-custom          実効151L tok~2015  完了
@@ -129,7 +149,7 @@ opentouryo-oauth2-client       実効263L tok~2851  完了
 opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の挙動・運用ルールの確認手順）
 ```
 
-**全25スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全26スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 計測は `scratchpad/measure.py` 相当のスクリプトで行う（見積り式：ASCII 1/4字 + 非ASCII 1/1.1字）。
 
@@ -212,6 +232,8 @@ APIリファレンスで足りる）。
 | 自動生成Dao の `S` / `D` | **`S`=WHEREが主キー固定 / `D`=WHEREも動的**。静的/動的の意味ではない（`S1_Insert`だけ`.sql`なので誤読しやすい） |
 | 楽観排他 | `[ts] = RAND()` + `WHERE [ts] = @ts` → **更新件数0チェックが判定そのもの** |
 | `SetUserParameter` | **SQL文字列への置換**。ユーザ入力を渡すとSQLインジェクション（`SetParameter`とは別物） |
+| ランタイムで使えない共通部品（csproj で確認・作者指摘） | **net48 専用**（core の csproj で `Compile Remove`）：`Public.IO` の `Zipper` / `UnZipper` / `ZipBase` / `BinarySerialize`、`Public.Win32` / `WinProc`、`Db\DamOLEDB` / `DamOraClient`。**`Public.Security` は「除外」ではなく独立アセンブリ**で両対応（core は `IdentityImpersonation` と CNG系ECDHのみ除外）。**リモート呼び出し（通信制御 `protocol="2"`＝Web サービス/WCF）も net48 専用**：`CallController` は core でもビルドされるが `#if NETCOREAPP` でリモート系は `return null`（`BinarySerialize` のドロップが原因）。core はインプロセス（`protocol="1"`）のみ。`common-parts` / `transmission` / `richclient-async` / `AGENTS.md` に反映 |
+| 動的クエリの補完（doc4 で整合性確認） | 13タグは既に網羅。**穴3点を追記**：①テキスト内パラメタ（`@p`、処理後残る・全タグに作用）と タグ内パラメタ（`name`属性、消える・最初の1タグのみ）の区別。②XML 中の `<`/`>` は `&lt;`/`&gt;` か CDATA。③`DBNull`（DB の NULL 値・INSERT/UPDATE 用・WHERE 不可）と `null`（タグ無効化）は別物。`query-definition` に追記 |
 | 暗黙の型変換（doc7 4.2） | `string`→`nvarchar`。列が`varchar`だと不一致で**列側が変換されインデックス不使用**（性能劣化）。既定は型を指定せず、劣化確認後にSQL側キャストで対処。`LIST`タグはSQL内キャストが効かない（自動展開のため）。`query-definition`に追記 |
 | `SetParameter`のオーバーロード（doc7 4.4） | 値のみ／`+dbTypeInfo`／`+size`／`+ParameterDirection`。ストアドは`ParameterDirection.ReturnValue/Output`で宣言し`GetParameter`で取得。`dao-custom`に追記 |
 | パラメタ名の接頭辞 | **コードの`SetParameter`名は接頭辞なし**（`"P1"`。`@`/`:`を付けない。接頭辞は DBMS 別 Dam が付ける）。当初ストアド例で`"@P1"`と書いたのは誤りで修正。サンプルは全て`SetParameter("P1", ...)` |
@@ -489,6 +511,9 @@ APIリファレンスで足りる）。
       作者から「現時点でスキル化する必要はない」と明示されている。連携する方針になったら別スキルへ
 - [ ] `opentouryo-oauth2-client`: 認可コードグラント以外のグラント
       （`ClientCredentialsGrantAsync` / PKCE / CIBA ほか。存在は本文に列挙済み）
+- [ ] **D層自動生成ツール（墨壺）の CLI 化待ち**（作者が CLI 化を予定。2.7 参照）。
+      CLI ができたら `opentouryo-dao-generated` に「生成の呼び出し方」を追記できる。
+      現状スキルは「生成物の使い方」だけを扱う（生成そのものはツール前提）
 
 ### 5.4 作者に確認したいこと
 

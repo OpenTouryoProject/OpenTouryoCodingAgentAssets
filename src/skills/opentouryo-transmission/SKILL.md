@@ -1,6 +1,6 @@
 ---
 name: opentouryo-transmission
-description: "OpenTouryo の通信制御機能を実装する。CallController.Invoke / InvokeAsync にサービス論理名を渡して B層を呼び出し、インプロセス呼び出しと Web サービス呼び出しを定義ファイルだけで切り替える仕組みを扱う。TMProtocolDefinition.xml（protocol / url / url_ref / timeout / prop_ref / Url / Prop）と TMInProcessDefinition.xml（assemblyName / className）の書式、ProtocolNameService / InProcessNameService による名前解決を扱う。通信制御 / サービス論理名 / CallController / インプロセス呼び出し / Web サービス呼び出し / 分散呼び出し / TMProtocolDefinition / TMInProcessDefinition を伴う作業のときに使う。他の XML 定義ファイルは opentouryo-message / opentouryo-shared-property / opentouryo-screen-transition / opentouryo-transaction-control を使う。"
+description: "OpenTouryo の通信制御機能を実装する。CallController.Invoke / InvokeAsync にサービス論理名を渡して B層を呼び出し、インプロセス呼び出しと Web サービス呼び出しを定義ファイルだけで切り替える仕組みを扱う。TMProtocolDefinition.xml（protocol / url / url_ref / timeout / prop_ref / Url / Prop）と TMInProcessDefinition.xml（assemblyName / className）の書式、ProtocolNameService / InProcessNameService による名前解決を扱う。リモート呼び出し（protocol=2、Web サービス / WCF）は BinarySerialize のドロップにより net48 専用で、.NET 10.0（core）ではインプロセス（protocol=1）しか動かない点も扱う。通信制御 / サービス論理名 / CallController / インプロセス呼び出し / Web サービス呼び出し / 分散呼び出し / TMProtocolDefinition / TMInProcessDefinition を伴う作業のときに使う。他の XML 定義ファイルは opentouryo-message / opentouryo-shared-property / opentouryo-screen-transition / opentouryo-transaction-control を使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -53,6 +53,17 @@ TestReturnValue rv = (TestReturnValue)cctrl.Invoke("testWebService", parameterVa
 これがこの機能の目的。
 
 `Invoke` の非同期版として `InvokeAsync(serviceName, parameterValue)` もある。
+
+### リモート呼び出し（`protocol="2"`）は net48 専用
+
+**`.NET 10.0`（core）では、インプロセス（`protocol="1"`）しか動かない。**
+Web サービス / WCF などのリモート呼び出し（`protocol="2"` 系）は**net48 のみ**。
+
+理由：リモート呼び出しは `.NET` オブジェクトのバイナリ シリアライズ（`BinarySerialize`）で
+引数・戻り値を転送するが、**`BinarySerialize` は core でドロップされた**（`opentouryo-common-parts`）。
+`CallController` は core でもビルドされるが、リモート系プロトコルは**未実装（`Invoke` が `null` を返す）**。
+
+core で物理3層が必要なら、別の通信手段（REST / gRPC など）を独自に実装する。
 
 ## TMInProcessDefinition.xml（インプロセス呼び出しの名前解決）
 
@@ -120,3 +131,5 @@ TestReturnValue rv = (TestReturnValue)cctrl.Invoke("testWebService", parameterVa
 - **`prop_ref` で参照する `Prop` に `value` 属性を書かない** — `FrameworkException` になる
 - **呼び出し側のコードでインプロセスか Web サービスかを分岐する** — 隠すのがこの機能の目的。
   切り替えは定義ファイルで行う
+- **`.NET 10.0`（core）でリモート呼び出し（`protocol="2"`）を使う** — 未実装で `Invoke` が
+  `null` を返す。core で使えるのはインプロセス（`protocol="1"`）だけ

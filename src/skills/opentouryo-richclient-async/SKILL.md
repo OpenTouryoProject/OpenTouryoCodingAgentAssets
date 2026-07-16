@@ -86,7 +86,9 @@ protected void UOC_btnButton1_Click(RcFxEventArgs rcFxEventArgs)
 
 `using Touryo.Infrastructure.Business.RichClient.Asynchronous;`（`MyBaseAsyncFunc`）。
 B層呼び出しはローカルなら `DoBusinessLogic`、3層（Web サービス越し）なら
-`CallController.Invoke`（`opentouryo-transmission`）。
+`CallController.Invoke`（`opentouryo-transmission`）。上の例は 3層（`CallController.Invoke`）。
+**リモート呼び出しは net48 専用**（`.NET 10.0` では未実装。`opentouryo-transmission` 参照）なので、
+core のデスクトップでは非同期処理の中身をローカルの `DoBusinessLogic` にする。
 
 ## 結果と例外の受け取り
 

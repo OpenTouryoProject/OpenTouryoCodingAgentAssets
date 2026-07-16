@@ -134,7 +134,7 @@ GetConfigParameter.GetConfigValue("SomeKey", false);   // 環境変数を見な�
 | `FxSqlCacheSwitch` | SQL キャッシュ機能の ON / OFF |
 | `FxSqlEncoding` | SQL ファイルのエンコーディング |
 | `FxSqlCommandTimeout` | `CommandTimeout` 値 |
-| `FxSqlDotnetTypeInfo` | SQL の型指定方法 |
+| `FxSqlDotnetTypeInfo` | パラメタの型推測。`OFF`（既定）＝データプロバイダ固有型 / `ON`＝.NET 汎用型（型・暗黙の型変換は `opentouryo-query-definition`） |
 | `FxLog4NetConfFile` | log4net の設定ファイルへのパス |
 | `FxExceptionMessageCulture` | 例外メッセージの国際化 |
 | `FxContainerization` | コンテナ・モードの ON / OFF |
