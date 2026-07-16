@@ -95,7 +95,7 @@ DBMS 選択も含め、親クラス2 は纏め者がカスタマイズできる�
 | --- | --- |
 | `DoBusinessLogic(pv)` | 同期・既定の分離レベル |
 | `DoBusinessLogic(pv, iso)` | 同期・分離レベル指定 |
-| `DoBusinessLogicAsync(pv)` / `(pv, iso)` | 非同期（**2CS には無い**） |
+| `DoBusinessLogicAsync(pv)` / `(pv, iso)` | 非同期（**2CS には無い**。リッチクライアントで非同期にしたいなら `opentouryo-richclient-async`） |
 
 `iso` は `DbEnum.IsolationLevelEnum`。既定に委ねるなら `User`。値と意味は `opentouryo-layer-b`。
 

@@ -109,6 +109,7 @@ opentouryo-webforms-dialog         実効165L tok~2193  完了（子画面表示
 opentouryo-layer-p-winforms-screen 実効116L tok~1812  完了（画面の新規作成）
 opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実装）
 opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
+opentouryo-richclient-async       実効145L tok~2031  完了（リッチクライアントの非同期呼び出し）
 opentouryo-layer-b               実効292L tok~4134  完了
 opentouryo-layer-d             実効149L tok~2216  完了（Dao 3系統の使い分け・入口）
 opentouryo-dao-custom          実効151L tok~2015  完了
@@ -128,7 +129,7 @@ opentouryo-oauth2-client       実効263L tok~2851  完了
 opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の挙動・運用ルールの確認手順）
 ```
 
-**全24スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全25スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 計測は `scratchpad/measure.py` 相当のスクリプトで行う（見積り式：ASCII 1/4字 + 非ASCII 1/1.1字）。
 

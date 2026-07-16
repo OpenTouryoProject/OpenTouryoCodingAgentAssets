@@ -253,6 +253,7 @@ TODO
 | `opentouryo-layer-p-winforms-screen` | Windows Forms の画面を新規作成するとき |
 | `opentouryo-layer-p-winforms-event` | Windows Forms のコントロールのイベントを実装するとき |
 | `opentouryo-p-call-business` | P層から B層を呼ぶとき（引数クラス・`DoBusinessLogic`・`ErrorFlag`） |
+| `opentouryo-richclient-async` | リッチクライアント（WinForms / WPF）で B層を非同期に呼ぶとき |
 | `opentouryo-layer-b` | 業務ロジックを実装するとき |
 | `opentouryo-layer-d` | D層の全体像と Dao 3系統の使い分け |
 | `opentouryo-dao-custom` | 個別Dao（業務固有のデータアクセス）を実装するとき |
