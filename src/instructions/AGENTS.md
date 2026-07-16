@@ -215,6 +215,7 @@ TODO
 | `opentouryo-logging` | ログを出力するとき |
 | `opentouryo-config` | 設定値を読むとき、構成ファイルを書くとき |
 | `opentouryo-auth` | 認証・ユーザ情報を扱うとき |
+| `opentouryo-oauth2-client` | 外部 IdP と連携するとき（OAuth2 / OIDC のクライアント＝RP） |
 
 ## 参考資料
 

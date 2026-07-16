@@ -25,20 +25,32 @@ OpenTouryo を使う全アプリケーションが対象。
 | 階層 | クラス | 担当 | 中身 |
 | --- | --- | --- | --- |
 | ユーザ情報親クラス1 | `UserInfo`（`Touryo.Infrastructure.Framework.Util`） | フレームワーク | **空のクラス**。マーカーとしてのみ存在 |
-| ユーザ情報親クラス2 | `MyUserInfo`（`Touryo.Infrastructure.Business.Util`） | 纏め者 | `UserName` / `IPAddress` + プロジェクト固有の項目 |
+| ユーザ情報親クラス2 | `MyUserInfo`（`Touryo.Infrastructure.Business.Util`） | 纏め者 | **テンプレートは `UserName` / `IPAddress` の2つだけ**。プロジェクトが項目を追加する |
 
 `UserInfo` は本当に `public class UserInfo { }` で中身がない。実体は `MyUserInfo` にある。
 
+### 既定のテンプレートが持つ項目は2つだけ
+
+フレームワークが配る `MyUserInfo` のテンプレートは、**`UserName` と `IPAddress` しか持たない**。
+
 ```csharp
+[Serializable()]
 public class MyUserInfo : UserInfo
 {
     public MyUserInfo(string userName, string ipAddress)
-    public string UserName { get; }
-    public string IPAddress { get; }
+
+    public string UserName  { get; set; }   // ← setter がある
+    public string IPAddress { get; set; }   // ← setter がある
 }
 ```
 
-### 項目は提供済み。増やせない
+**どちらも setter を持つ。** 生成後に代入できる（Windows Forms のログインはこれを使う。
+`opentouryo-layer-p-winforms` 参照）。
+
+クラス名の注記は「ユーザ情報クラス（必要なコンテキスト情報を**追加**）（テンプレート）」で、
+`<remarks>` にも「自由に（**拡張して**）利用できる。」とある。**項目を足す前提のテンプレート。**
+
+### ただし足すのは整備する側
 
 `MyUserInfo` はプロジェクト固有の項目（所属、権限、ロールなど）を持てる設計だが、
 **親クラス2 はビルド後のバイナリで提供されるため、ユーザプログラム開発プロジェクトでは
@@ -47,13 +59,17 @@ public class MyUserInfo : UserInfo
 `MyUserInfo` が持つ項目は P層・B層のどこからでも参照できる。
 
 <!--
-  TODO: このプロジェクトに提供されている MyUserInfo が持つ項目を列挙する。
-  エージェントはバイナリの中身を読めないため、ここに書いておかないと
-  UserName / IPAddress しか無いものとして扱う。
+  TODO: このプロジェクトに提供されている MyUserInfo が「追加」している項目を列挙する。
+  上記2つはフレームワークのテンプレートの既定値（実装で確認済み）。
+  プロジェクトが拡張していても、エージェントはバイナリの中身を読めないため、
+  ここに書いておかないと UserName / IPAddress しか無いものとして扱う。
 -->
 
 新しい項目が必要に見える場合は、引数クラス（`MyParameterValue` の派生）で渡せないかを
 先に検討し、それでも必要なら人に相談すること。
+
+**`[Serializable()]` が付いている。** core 系ではセッションへ JSON シリアライズされるため
+（後述）、拡張する側もシリアライズ可能な型に限る。
 
 ## UserInfoHandle（セッションへの出し入れ）
 
@@ -274,10 +290,13 @@ Core だけ `Clear()` なのは、`ISession` に `Abandon()` が無いため。
 **これらはサブプロダクトの汎用認証サイト（MultiPurposeAuthSite）用に開発されたもので、
 OpenTouryo でアプリケーションを作る際の標準的な認証手段ではない。**
 
-アプリケーション側で外部 IdP と連携する場合も、最後にやることは同じ
-（`MyUserInfo` を作ってセッションへ入れる）。
+ただし**アプリケーション側から外部 IdP と連携する（クライアント＝RP になる）用途には使える。**
+サンプルにも実装がある。→ **`opentouryo-oauth2-client`**
 
-<!-- TODO: 外部 IdP と連携する方針のプロジェクトでは、その手順をここに追記する。 -->
+その場合も**最後にやることは同じ**（.NET 側の認証 + `MyUserInfo` をセッションへ）。
+外部 IdP から受け取った `sub` がユーザ名になるだけ。
+
+SAML2 クライアント機能（`SAML2Client` / `SAML2Bindings`）もあるが、スキル化していない。
 
 ## セッションが前提（Web のみ）
 

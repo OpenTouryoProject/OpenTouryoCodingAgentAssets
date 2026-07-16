@@ -29,6 +29,7 @@ src/
     opentouryo-logging/          ログ出力
     opentouryo-config/           構成ファイル
     opentouryo-auth/             認証・ユーザ情報
+    opentouryo-oauth2-client/    外部IdP連携（OAuth2 / OIDC クライアント）
 install/
   install.ps1                   対象リポジトリへのインストーラ
 docs/
