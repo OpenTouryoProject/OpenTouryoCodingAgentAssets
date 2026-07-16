@@ -94,6 +94,10 @@ cmnDao.ExecSelectFill_DT(dt);
 - 既定は基本形 `SetParameter(名前, 値)`。**型・サイズの指定は暗黙の型変換の性能劣化が
   顕在化してから**（先回りしない）
 - 使い方の詳細（オーバーロードの一覧、ストアドの実装例）は `opentouryo-dao-custom` を参照
+- **ただし呼び出し元が違う。** 個別Dao は Dao クラス自身なので `this.SetParameter(...)` /
+  `this.GetParameter(...)`、**共通Dao は保持しているインスタンス**なので
+  `cmnDao.SetParameter(...)` / `cmnDao.GetParameter(...)`。dao-custom の例の `this.` を
+  `cmnDao.` に読み替える
 
 ## SetUserParameter にユーザ入力を渡さない
 
