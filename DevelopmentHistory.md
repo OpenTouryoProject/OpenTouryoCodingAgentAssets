@@ -116,11 +116,11 @@ opentouryo-screen-transition   実効116L tok~1473  完了
 opentouryo-transaction-control 実効125L tok~1651  完了
 opentouryo-transmission        実効120L tok~1572  完了
 opentouryo-exception           実効289L tok~4264  完了
-opentouryo-logging             実効162L tok~1990  完了
+opentouryo-logging             実効166L tok~2114  完了
 opentouryo-config              実効195L tok~2631  完了
 opentouryo-auth                実効309L tok~4953  完了 ★上限に貼り付いている
 opentouryo-oauth2-client       実効263L tok~2851  完了
-opentouryo-project-policy      実効129L tok~2247  完了（親クラス2 の挙動の確認手順）
+opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の挙動・運用ルールの確認手順）
 ```
 
 **全20スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
@@ -351,13 +351,12 @@ auth → oauth2-client、など）。
 
 **このリポジトリ側では埋めきれない。** 埋めるのはアセットを導入する側。
 
-スキル内：
-
-- [ ] `opentouryo-logging`: イベントログ（`CustomEventLog`/`SecurityEventLog`）の使いどころ
+**スキル内の TODO は全滅した（0件）。** すべて `opentouryo-project-policy`（纏め者への確認）
+へ寄せたため。残るのは `AGENTS.md` の欄だけ。
 
 #### 「纏め者の領分」は TODO にしない（2026-07-16・作者の指摘）
 
-**当初ここに4件あったが、3件は削除した。** 作者の指摘：
+**当初ここに4件あった。まず3件が削除された。** 作者の指摘：
 
 > `opentouryo-auth:62`、`opentouryo-logging:62`、`opentouryo-message:102` は
 > 全てベースクラス２依存で使用者側のスキルは意識しなくて良い
@@ -414,8 +413,29 @@ auth → oauth2-client、など）。
 `AGENTS.md` 側は「親クラス2 の挙動はプロジェクトごとに違う。推測で書かない。
 確認方法は `opentouryo-project-policy`」まで削り、入口だけを残した。
 
-残った `logging` の1件は、`CustomEventLog` / `SecurityEventLog` を**業務コードが直接呼ぶ**ため
-性質が違う。使いどころは使用者側のポリシー。
+#### 残った `logging` の2件も纏め者だった（作者の指摘）
+
+> `opentouryo-logging:62`、`opentouryo-logging:154` の対応は同じで纏め者に聞くことです。
+
+**`logging` の2件（`OPERATION` の書式 / イベントログの使いどころ）を、
+「業務コードが直接呼ぶから使用者側のポリシー」と判断したが誤りだった。**
+呼ぶのが業務コードでも、**書式や使いどころという「決めごと」は纏め者の領分**。
+
+**「誰が呼ぶか」ではなく「誰が決めるか」で分ける。** ここを取り違えていた。
+
+この2件で `opentouryo-project-policy` に**構造上の穴**が見つかった。当初の地図は
+「親クラス2 のコードで確認できる」ものだけを前提にしていたが、この2件は
+**フレームワークが出力も定義もしないので、読む対象が存在しない**。
+そこでプロジェクト依存の事項を2分類した。
+
+| 分類 | 確認方法 |
+| --- | --- |
+| **A. 親クラス2 の実装が決める** | ① ソースを探す → ② 地図で読む → 無ければ ③ 聞く |
+| **B. 運用ルール**（`OPERATION` の書式、イベントログの使いどころ） | **③ へ直行**（読む対象が無い） |
+
+**「決まりが無い」＝「自分で決めてよい」ではない**をアンチパターンに明記した。
+`OPERATION` の書式について当初「決まりが無いこと自体が答え」と書いていたが、
+これは**こちらが知らないだけ**だった。
 
 `src/instructions/AGENTS.md` の TODO：
 
