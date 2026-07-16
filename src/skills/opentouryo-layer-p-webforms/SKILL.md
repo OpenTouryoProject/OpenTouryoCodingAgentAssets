@@ -73,24 +73,41 @@ public partial class sampleScreen : MyBaseController
 **接頭辞は設定ファイル（`app.config` の `appSettings`）で定義する。**
 未設定の種類は**結線されない**（`if (!string.IsNullOrEmpty(prefix))` で分岐している）。
 
-| 設定キー | サンプルでの値 | コントロール |
-| --- | --- | --- |
-| `FxPrefixOfButton` | `btn` | ボタン |
-| `FxPrefixOfLinkButton` | `lbn` | リンクボタン |
-| `FxPrefixOfImageButton` | `ibn` | イメージボタン |
-| `FxPrefixOfImageMap` | `imp` | イメージマップ |
-| `FxPrefixOfTextBox` | `txt` | テキストボックス |
-| `FxPrefixOfDropDownList` | `ddl` | ドロップダウンリスト |
-| `FxPrefixOfListBox` | `lbx` | リストボックス |
-| `FxPrefixOfRadioButton` | `rbn` | ラジオボタン |
-| `FxPrefixOfRadioButtonList` | `rbl` | ラジオボタンリスト |
-| `FxPrefixOfCheckBox` | `cbx` | チェックボックス |
-| `FxPrefixOfCheckBoxList` | `cbl` | チェックボックスリスト |
-| `FxPrefixOfRepeater` | `rpt` | リピータ |
-| `FxPrefixOfGridView` | `gvw` | グリッドビュー |
-| `FxPrefixOfListView` | `lvw` | リストビュー |
+**ハンドラ名のイベント名は、コントロール種別ごとに決まっている**（右列）。
+`_Click` はボタン系だけ。他は種別ごとに違うので、間違えると結線されない。
+
+| 設定キー | サンプルでの値 | コントロール | ハンドラのイベント名 |
+| --- | --- | --- | --- |
+| `FxPrefixOfButton` | `btn` | ボタン | `Click` |
+| `FxPrefixOfLinkButton` | `lbn` | リンクボタン | `Click` |
+| `FxPrefixOfImageButton` | `ibn` | イメージボタン | `Click` |
+| `FxPrefixOfImageMap` | `imp` | イメージマップ | `Click` |
+| `FxPrefixOfTextBox` | `txt` | テキストボックス | `TextChanged` |
+| `FxPrefixOfDropDownList` | `ddl` | ドロップダウンリスト | `SelectedIndexChanged` |
+| `FxPrefixOfListBox` | `lbx` | リストボックス | `SelectedIndexChanged` |
+| `FxPrefixOfRadioButton` | `rbn` | ラジオボタン | `CheckedChanged` |
+| `FxPrefixOfRadioButtonList` | `rbl` | ラジオボタンリスト | `SelectedIndexChanged` |
+| `FxPrefixOfCheckBox` | `cbx` | チェックボックス | `CheckedChanged` |
+| `FxPrefixOfCheckBoxList` | `cbl` | チェックボックスリスト | `SelectedIndexChanged` |
+| `FxPrefixOfRepeater` | `rpt` | リピータ | `ItemCommand` |
+| `FxPrefixOfGridView` | `gvw` | グリッドビュー | `RowCommand` / `SelectedIndexChanged` / `RowUpdating` / `RowDeleting` / `PageIndexChanging` / `Sorting` |
+| `FxPrefixOfListView` | `lvw` | リストビュー | `OnItemCommand` / `SelectedIndexChanged` / `ItemUpdating` / `ItemDeleting` / `PagePropertiesChanged` / `Sorting` |
+
+例：`ddl` のドロップダウンリスト `ddlKind` なら `UOC_ddlKind_SelectedIndexChanged`。
+`txt` のテキストボックスなら `UOC_txtName_TextChanged`。
 
 **値はプロジェクトごとに変えられる。** 上記はサンプルの値。既存コードと設定ファイルを確認する。
+
+**一覧は「フレームワーク既定」であって、このプロジェクトの全部とは限らない。**
+対応コントロール・イベントは `MyBaseController`（親クラス2）の `addControlEvent` に実装を足せば
+拡張できる（`CheckBox` 自体がその方法で親クラス2 に追加された実例）。**拡張するのは纏め者**で、
+利用側は既存の対応を使う。このプロジェクトで何に対応しているかは、提供されていれば
+`MyBaseController` の `addControlEvent` を読んで確認する（`opentouryo-project-policy`）。
+
+**対応していないコントロール・イベントは、.NET 標準のイベント処理（`.aspx` の `OnClick`、
+コードビハインドの `+=`）でも書ける。ただしその場合、フレームワークの例外処理
+（`UOC_ABEND` による振替・共通エラー画面）とアクセスログ出力を通らない。**
+土台に載せたいなら、親クラス2 での拡張（纏め者）を検討する。
 
 `FxPrefixOfComboBox` / `FxPrefixOfPictureBox` はリッチクライアント専用で、**Web Forms では
 結線されない**（`opentouryo-layer-p-winforms` 参照）。`FxPrefixOfCommand` は定数が定義されて
@@ -113,6 +130,9 @@ public partial class sampleScreen : MyBaseController
 | コンテンツページ上 | `UOC_（コントロール名）_（イベント名）` |
 | マスタページ上 | `UOC_（マスタページのファイル名）_（コントロール名）_（イベント名）` |
 | Webユーザコントロール上 | `UOC_（ユーザコントロールのID）_（コントロール名）_（イベント名）` |
+
+`（イベント名）` はコントロール種別で決まる（上の接頭辞の表を参照）。ボタン系は `Click`、
+テキストボックスは `TextChanged`、ドロップダウンリストは `SelectedIndexChanged` など。
 
 ```csharp
 // コンテンツページ上の btnButton1
@@ -272,7 +292,9 @@ public partial class login : MyBaseController
 
 ## やってはいけないこと
 
-- **`.aspx` に `OnClick` などのイベントを結線する** — フレームワークが接頭辞で自動結線する
+- **対応済みのコントロールを `.aspx` の `OnClick` 等で結線する** — フレームワークが接頭辞で
+  自動結線する。標準結線するとフレームワークの例外処理・ログを通らない（未対応の場合のみ、
+  失うものを承知で使う）
 - **接頭辞の規約から外れたコントロール名を付ける** — 命名規約ではなく機能。
   結線されずイベントが発火しない
 - **イベントハンドラを `private` にする** — レイトバインドで呼ばれるため `protected` にする。

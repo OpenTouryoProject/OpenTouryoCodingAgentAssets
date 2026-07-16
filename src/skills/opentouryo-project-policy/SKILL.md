@@ -32,8 +32,10 @@ OpenTouryo には**フレームワークが決めず、親クラス2（業務フ
 | `User` 分離レベルの振替先 | `ReadCommitted` | `opentouryo-layer-b` |
 | 接続文字列のキー / 使う DBMS | `ConnectionString_SQL` ほか | `opentouryo-config` |
 | `UOC_ABEND` での例外の振替 | 振替の IF 文は雛形のみ。一般例外はリスロー | `opentouryo-exception` |
+| 事前定義された例外メッセージ | `SAMPLE_ERROR` のみ | `opentouryo-exception` / `opentouryo-message` |
 | `ACCESS` / `SQLTRACE` ログの書式 | カンマ区切り | `opentouryo-logging` |
 | 追加された接頭辞 | `PREFIX_OF_CHECK_BOX` のみ | `opentouryo-layer-p-webforms` |
+| P層イベント対応の拡張 | `CheckBox` のみ追加 | `opentouryo-layer-p-webforms` / `-winforms` |
 
 ### B. 運用ルール（コードに無い。聞くしかない）
 
@@ -86,8 +88,9 @@ MyFcBaseLogic.cs / MyUserInfo.cs / MyBaseController.cs をリポジトリ内で�
 | `ACCESS` ログの書式 | `Business/MyFcBaseLogic.cs` | `UOC_PreAction` / `UOC_AfterAction` / `UOC_ABEND` の `LogIF` 呼び出し |
 | `SQLTRACE` ログの書式 | `Dao/MyBaseDao.cs` | `UOC_PreQuery` / `UOC_AfterQuery` |
 | 追加された接頭辞 | `Util/MyLiteral.cs` | `PREFIX_OF_*` 定数 |
+| P層イベント対応の拡張<br>（対応コントロール・イベント） | `Presentation/MyBaseController.cs`<br>`RichClient/Presentation/MyBaseControllerWin.cs` | `addControlEvent()` に追加された結線（既定外があるか） |
 | 認証・ユーザ情報の復元 | `Presentation/MyBaseController.cs` | `GetUserInfo()` |
-| メッセージの取得 | `Exceptions/MyBusinessApplicationExceptionMessage.cs` | `GetMessage()` |
+| 事前定義された例外メッセージ | `Exceptions/MyBusinessApplicationExceptionMessage.cs`<br>`Exceptions/MyBusinessSystemExceptionMessage.cs` | 定義済みの `messageID` プロパティ（`.resx` 対応。纏め者が採番） |
 
 P層は処理方式ごとにファイルが違う。**使っている方式のものを読む。**
 

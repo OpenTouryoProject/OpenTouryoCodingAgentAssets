@@ -77,19 +77,29 @@ public partial class Form1 : MyBaseControllerWin
 
 **Web Forms（14種）より大幅に少ない。** 対応していないコントロールは自動結線されない。
 
-| 設定キー | サンプルでの値 | コントロール |
-| --- | --- | --- |
-| `FxPrefixOfButton` | `btn` | ボタン |
-| `FxPrefixOfComboBox` | `cbb` | コンボボックス |
-| `FxPrefixOfListBox` | `lbx` | リストボックス |
-| `FxPrefixOfRadioButton` | `rbn` | ラジオボタン |
-| `FxPrefixOfPictureBox` | `pbx` | ピクチャボックス |
-| `FxPrefixOfCheckBox` | `cbx` | チェックボックス |
+| 設定キー | サンプルでの値 | コントロール | ハンドラのイベント名 |
+| --- | --- | --- | --- |
+| `FxPrefixOfButton` | `btn` | ボタン | `Click` |
+| `FxPrefixOfComboBox` | `cbb` | コンボボックス | `SelectedIndexChanged` |
+| `FxPrefixOfListBox` | `lbx` | リストボックス | `SelectedIndexChanged` |
+| `FxPrefixOfRadioButton` | `rbn` | ラジオボタン | `CheckedChanged` |
+| `FxPrefixOfPictureBox` | `pbx` | ピクチャボックス | `Click` |
+| `FxPrefixOfCheckBox` | `cbx` | チェックボックス | `CheckedChanged` |
 
 `FxPrefixOfComboBox` / `FxPrefixOfPictureBox` はリッチクライアント固有（Web Forms では未使用）。
 逆に **`FxPrefixOfTextBox` / `FxPrefixOfGridView` などは結線されない**（Web Forms 専用）。
 
 **値はプロジェクトごとに変えられる。** 上記はサンプルの値。既存コードと `app.config` を確認する。
+
+**一覧は「フレームワーク既定」であって、このプロジェクトの全部とは限らない。**
+対応コントロール・イベントは `MyBaseControllerWin`（親クラス2）の `addControlEvent` に実装を
+足せば拡張できる（`CheckBox` 自体がその実例）。**拡張するのは纏め者**で、利用側は既存の対応を
+使う。何に対応しているかは、提供されていれば `MyBaseControllerWin` の `addControlEvent` を
+読んで確認する（`opentouryo-project-policy`）。
+
+**対応していないコントロール・イベントは、.NET 標準のイベント処理（デザイナ結線、`+=`）でも
+書ける。ただしその場合、フレームワークの例外処理（`UOC_ABEND`）とログ出力を通らない。**
+土台に載せたいなら、親クラス2 での拡張（纏め者）を検討する。
 
 <!--
   結線箇所は2つに分かれている（実装で確認済み）:
@@ -100,8 +110,13 @@ public partial class Form1 : MyBaseControllerWin
 
 ## イベントハンドラのシグネチャ
 
+**イベント名はコントロール種別で決まる**（上の接頭辞の表を参照）。ボタン／ピクチャボックスは
+`Click`、コンボボックス／リストボックスは `SelectedIndexChanged`、ラジオボタン／チェックボックスは
+`CheckedChanged`。
+
 ```csharp
 protected void UOC_btnButton1_Click(RcFxEventArgs rcFxEventArgs)
+// コンボボックス cbbKind なら UOC_cbbKind_SelectedIndexChanged
 ```
 
 | 要素 | Windows Forms | （参考）Web Forms |

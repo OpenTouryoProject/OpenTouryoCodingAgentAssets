@@ -21,6 +21,16 @@ metadata:
 例外の `messageID` と対応させることで、**例外の型を増やさずにエラーの種類を識別できる**
 （`opentouryo-exception` 参照）。
 
+### 例外メッセージには事前定義の系統もある
+
+`MSGDefinition.xml` は**開発者がプロジェクト進行中に採番していく**メッセージ。
+これとは別に、**纏め者が事前定義する** `MyBusinessApplicationExceptionMessage` /
+`MyBusinessSystemExceptionMessage`（`.resx` リソース。国際化対応）がある。
+
+**競合ではなく住み分け。** 基盤として先に用意されたものは再定義せず使い、
+新しいエラーは `MSGDefinition.xml` に採番する。事前定義に何があるかは
+`opentouryo-project-policy` で確認する。
+
 ## 定義ファイル
 
 パスは `appSettings` の **`FxXMLMSGDefinition`** で指定する（`opentouryo-config` 参照）。

@@ -68,9 +68,15 @@ new FrameworkException(string messageID, string message, Exception innerExceptio
 
 `messageID` は C# の命名規則に反して**小文字始まり**。`MessageID` と書くとコンパイルが通らない。
 
-`messageID` は `MSGDefinition.xml` に定義したメッセージID と対応する。メッセージの雛形に
-`%1` / `%2` を置き、`Message` / `Information` を可変部分として埋める方式もある
-（`opentouryo-message` 参照）。**採るかどうかは親クラス2 の実装次第。**
+`messageID` とメッセージの定義先は2系統ある。**どちらの messageID もそのまま使える。**
+
+- **纏め者が事前定義したもの** — `MyBusinessApplicationExceptionMessage` /
+  `MyBusinessSystemExceptionMessage`（`.resx` リソース。国際化対応）。基盤として先に用意される
+- **プロジェクト進行中に採番するもの** — `MSGDefinition.xml`（`opentouryo-message` 参照）
+
+新しいエラーは基本 `MSGDefinition.xml` に採番する。事前定義済みのものは再定義せず使う
+（何があるかは `opentouryo-project-policy`）。メッセージの雛形に `%1` / `%2` を置いて
+`Message` / `Information` を埋める方式もある（採るかは親クラス2 の実装次第）。
 
 ### 型を増やさない
 
