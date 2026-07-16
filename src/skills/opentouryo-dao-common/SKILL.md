@@ -1,6 +1,6 @@
 ---
 name: opentouryo-dao-common
-description: "OpenTouryo の共通Dao（CmnDao）を使う。フレームワークが提供する CmnDao で SQL ファイル名か SQL 文を指定して単発実行する方法、SQLFileName / SQLText プロパティによる SQL 指定（SetSqlByFile2 の直呼びは実行時エラー）、SetParameter によるパラメタ設定、ExecSelectScalar / ExecSelectFill_DT / ExecSelectFill_DS / ExecSelect_DR / ExecInsUpDel_NonQuery による実行、SetUserParameter の SQL インジェクション リスクを扱う。共通Dao / CmnDao / SQLFileName / SQLText / 単発のSQL実行 を伴う作業のときに使う。個別Dao は opentouryo-dao-custom、自動生成Dao は opentouryo-dao-generated、系統の選び方は opentouryo-layer-d を使う。"
+description: "OpenTouryo の共通Dao（CmnDao）を使う。フレームワークが提供する CmnDao で SQL ファイル名か SQL 文を指定して単発実行する方法、SQLFileName / SQLText プロパティによる SQL 指定（SetSqlByFile2 の直呼びは実行時エラー）、SetParameter によるパラメタ設定（型・サイズ・ParameterDirection のオーバーロードと GetParameter・ストアドプロシージャも CmnDao で利用可）、ExecSelectScalar / ExecSelectFill_DT / ExecSelectFill_DS / ExecSelect_DR / ExecInsUpDel_NonQuery による実行、SetUserParameter の SQL インジェクション リスクを扱う。共通Dao / CmnDao / SQLFileName / SQLText / 単発のSQL実行 / ストアドプロシージャ を伴う作業のときに使う。個別Dao は opentouryo-dao-custom、自動生成Dao は opentouryo-dao-generated、系統の選び方は opentouryo-layer-d を使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -84,6 +84,16 @@ cmnDao.ExecSelectFill_DT(dt);
 `ExecInsUpDel_NonQuery()` の戻り値（更新件数）は捨てない。0 件は楽観排他の失敗などを意味する。
 
 その他に `ClearParameters()`（パラメタの一括クリア）、`CommandTimeout` プロパティがある。
+
+## 型指定・ストアドも CmnDao で使える
+
+**`CmnDao` は `SetParameter` のオーバーロード（型・サイズ・`ParameterDirection`）と
+`GetParameter` を `public` で公開している。** 個別Dao と同じように、**ストアドプロシージャ**
+（戻り値・出力パラメタ）も実行できる。
+
+- 既定は基本形 `SetParameter(名前, 値)`。**型・サイズの指定は暗黙の型変換の性能劣化が
+  顕在化してから**（先回りしない）
+- 使い方の詳細（オーバーロードの一覧、ストアドの実装例）は `opentouryo-dao-custom` を参照
 
 ## SetUserParameter にユーザ入力を渡さない
 

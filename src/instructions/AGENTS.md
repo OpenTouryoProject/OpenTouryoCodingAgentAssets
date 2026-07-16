@@ -72,6 +72,15 @@ Git 操作は人が手動で行う。
 判明している主な差異：構成ファイルは XML 定義ファイルが共通、`app.config` は core 系で
 `appsettings.json` になる。
 
+### DBMS による差異（スキルの SQL 例は特記なければ SQL Server）
+
+対象 DBMS はプロジェクト依存（Oracle / DB2 / HiRDB / MySQL / PostgreSQL 等）。
+**SQL 定義ファイル（`.sql` / `.xml`）は DBMS 別**で、パラメタの接頭辞（SQL Server `@P1` /
+Oracle `:P1`）・`CAST`・関数の構文が違う。**型情報も DBMS 依存**
+（`SqlDbType.Int` / `OracleDbType.Int32`）。一方、**コードの `SetParameter("P1", ...)` は
+接頭辞なしで DBMS 中立**（接頭辞はフレームワークが付ける）。既存の SQL ファイルに合わせる。
+詳細は `opentouryo-query-definition` / `opentouryo-dao-custom`。
+
 ## アーキテクチャ
 
 OpenTouryo は **P層 / B層 / D層** の3層構造をとる。各層の責務は厳格に分離されており、

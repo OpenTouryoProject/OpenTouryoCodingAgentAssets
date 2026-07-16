@@ -83,7 +83,7 @@ MyFcBaseLogic.cs / MyUserInfo.cs / MyBaseController.cs をリポジトリ内で�
 | `MyUserInfo` の項目 | `Util/MyUserInfo.cs` | プロパティの一覧 |
 | `%1`/`%2` の置換 | `Presentation/MyBaseController.cs` | `UOC_ABEND(BusinessApplicationException, FxEventArgs)` の中の `Replace("%1", ...)` |
 | `User` の振替先 | `Business/MyFcBaseLogic.cs` | `UOC_ConnectionOpen` の `if (iso == DbEnum.IsolationLevelEnum.User)` |
-| 接続文字列 / DBMS | `Business/MyFcBaseLogic.cs` | `UOC_ConnectionOpen` の `GetConfigParameter.GetConnectionString("...")` |
+| DBMS 選択方式 / 接続文字列 | `Business/MyFcBaseLogic.cs` | `UOC_ConnectionOpen` の `actionType.Split('%')[0]` による Dam 選択と `GetConnectionString("...")` |
 | 例外の振替・リスロー | `Business/MyFcBaseLogic.cs` | `UOC_ABEND` の3つのオーバーロード |
 | `ACCESS` ログの書式 | `Business/MyFcBaseLogic.cs` | `UOC_PreAction` / `UOC_AfterAction` / `UOC_ABEND` の `LogIF` 呼び出し |
 | `SQLTRACE` ログの書式 | `Dao/MyBaseDao.cs` | `UOC_PreQuery` / `UOC_AfterQuery` |

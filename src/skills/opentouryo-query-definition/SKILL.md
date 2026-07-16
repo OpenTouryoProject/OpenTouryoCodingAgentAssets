@@ -48,6 +48,26 @@ Dao から実行する SQL 定義ファイルの書き方。ファイルの指�
 ユーザパラメタは文字列置換なので、値をそのまま SQL に埋め込む。**入力値はコード側で安全な値に
 変換してから渡す**（`opentouryo-dao-custom` / `opentouryo-dao-common` 参照）。
 
+## パラメタの接頭辞は DBMS で違う（このスキルの例は SQL Server）
+
+**SQL 定義ファイルは DBMS ごとに別物。** パラメタの接頭辞が違う。
+
+| DBMS | パラメタの書き方 |
+| --- | --- |
+| SQL Server | `@P1`（このスキルの例はこれ） |
+| Oracle | `:P1` |
+
+本体のリソースでも `sqlserver/` `oracle/` `db2/` `hirdb/` `mysql/` `pstgrs/` などに
+**同じクエリを DBMS 別に用意**している。複数 DBMS 対応や Oracle 案件では、**このスキルの例の
+`@` を対象 DBMS の接頭辞に読み替える**（既存の SQL ファイルの書き方に合わせる）。
+
+**コード側（`SetParameter("P1", ...)`）は接頭辞なしで DBMS 中立。** 接頭辞をフレームワークが
+DBMS ごとに付ける。型を明示するときの `dbTypeInfo` は DBMS 依存
+（`SqlDbType.Int` / `OracleDbType.Int32` など。`opentouryo-dao-custom`）。
+
+`CAST` や関数など SQL の構文そのものも DBMS で違う（後述の暗黙の型変換対策の `CAST` も
+SQL Server の例）。
+
 ## 静的パラメタライズドクエリ（.sql）
 
 SQL をそのまま書く。パラメタは `@名前`、ユーザパラメタは `%名前%`。
@@ -202,6 +222,29 @@ IN 句。1つのパラメタ名に複数の値を展開する。
 ```xml
 <LIST>AND SEX IN (@SEX)</LIST>
 ```
+
+`ArrayList` に入れた数だけパラメタが自動展開される。**このため後述の「暗黙の型変換」対策の
+SQL 内キャストが効かない**（展開後のパラメタに掛からない）。`LIST` で型変換が要るときは、
+API 側で型を明示する（`opentouryo-dao-custom`）か、`VAL` タグで必要な数だけ
+キャスト付きパラメタを埋め込む。
+
+## 暗黙の型変換による性能劣化に注意
+
+**`string`（.NET）で渡したパラメタは `nvarchar` になる。** 列が `varchar` だと型が不一致になり、
+**列側が丸ごと `varchar → nvarchar` に変換されてインデックスが使われない**（インデックス
+シークではなくスキャンになり、性能が大きく劣化する）。SQL Server での典型例。
+
+**対策は、SQL ファイル側でパラメタを列の型にキャストする**のを既定とする（以下は SQL Server の例。
+接頭辞 `@` や `CAST` 構文は DBMS で違う）。
+
+```sql
+-- @P1 は nvarchar で来るが、BBB 列は varchar。SQL 側でキャストして一致させる
+SELECT * FROM AAA WHERE BBB = CAST(@P1 AS varchar(10))
+```
+
+- **通常は型を明示せず、性能劣化が確認されてから対処する**（先回りしてキャストしない）
+- コード側で対処するなら `SetParameter` の型指定オーバーロード（`opentouryo-dao-custom`）
+- `LIST` タグ使用時は SQL 内キャストが効かない（上記参照）
 
 ### SELECT / CASE / DEFAULT
 

@@ -211,6 +211,12 @@ APIリファレンスで足りる）。
 | 自動生成Dao の `S` / `D` | **`S`=WHEREが主キー固定 / `D`=WHEREも動的**。静的/動的の意味ではない（`S1_Insert`だけ`.sql`なので誤読しやすい） |
 | 楽観排他 | `[ts] = RAND()` + `WHERE [ts] = @ts` → **更新件数0チェックが判定そのもの** |
 | `SetUserParameter` | **SQL文字列への置換**。ユーザ入力を渡すとSQLインジェクション（`SetParameter`とは別物） |
+| 暗黙の型変換（doc7 4.2） | `string`→`nvarchar`。列が`varchar`だと不一致で**列側が変換されインデックス不使用**（性能劣化）。既定は型を指定せず、劣化確認後にSQL側キャストで対処。`LIST`タグはSQL内キャストが効かない（自動展開のため）。`query-definition`に追記 |
+| `SetParameter`のオーバーロード（doc7 4.4） | 値のみ／`+dbTypeInfo`／`+size`／`+ParameterDirection`。ストアドは`ParameterDirection.ReturnValue/Output`で宣言し`GetParameter`で取得。`dao-custom`に追記 |
+| パラメタ名の接頭辞 | **コードの`SetParameter`名は接頭辞なし**（`"P1"`。`@`/`:`を付けない。接頭辞は DBMS 別 Dam が付ける）。当初ストアド例で`"@P1"`と書いたのは誤りで修正。サンプルは全て`SetParameter("P1", ...)` |
+| DBMS 依存（作者指摘） | **スキルの SQL 例は SQL Server 中心**。SQL 定義ファイルは DBMS 別（`sqlserver/`＝`@P1`、`oracle/`＝`:P1`、db2/hirdb/mysql/pstgrs…に同じクエリ）。型情報も DBMS 依存（`SqlDbType.Int`／`OracleDbType.Int32`）。**横断注意は AGENTS.md に一度だけ**（対象バージョン節）、詳細は`query-definition`／`dao-custom`。SQL 構文（`CAST`・関数）も DBMS で違う |
+| DBMS の選択箇所（作者指摘） | **親クラス2 `MyFcBaseLogic.UOC_ConnectionOpen` が `actionType.Split('%')[0]`（引数クラスの `actionType` の先頭）で Dam を選ぶ**。コード：`SQL`→`DamSqlSvr`／`ODP`→`DamManagedOdp`／`ODB`／`MCN`／`NPS`（Core）／`OLE`（net48）／既定は SQL Server。対応する `ConnectionString_<コード>` をロード。**既定テンプレートの挙動**（纏め者がカスタマイズ可） |
+| `actionType` は自由文字列＝サンプル規約（作者指摘） | **`actionType` の書式はフレームワーク仕様ではなく業務コードが解釈する自由文字列。** フレームワーク（既定テンプレート）が読むのは `[0]`（DBMS）だけ。サンプルの規約は `DAP%MODE1%MODE2%EXROLLBACK`：`[0]`=DBMS、`[1]`=Dao種別（`common`/`generate`/他）、`[2]`=クエリ種別（`static`/`dynamic`）、`[3]`=ロールバックテスト（`Business`/`System`/`Other`で例外スロー）。`[1]` 以降は WSServer_sample の `LayerB`/`LayerD` が `switch` で分岐（`ActionType.Split('%')[1..3]`）。当初「DBMS選択＝フレームワークの仕組み」と書きすぎたのを是正。`p-call-business` に記述 |
 | `CmnDao` の SQL 指定 | `SQLFileName`/`SQLText`プロパティ。`SetSqlByFile2()`を直呼びすると**実行時に`BusinessSystemException`** |
 | `DELCMA` | **前後**のカンマを削除（無くなるまで繰り返す）。末尾だけではない |
 | `.sql`/`.xml` のコメント | **コメント内に `@P1` と書くとエラー**。作者自身が全角`＠`で回避している |

@@ -15,7 +15,7 @@ metadata:
 
 | 系統 | 実体 | 出所 | スキル |
 | --- | --- | --- | --- |
-| 個別Dao | `LayerD : MyBaseDao` | 手書き | `opentouryo-dao-custom` |
+| 個別Dao | `（機能名）: MyBaseDao`（**機能ごとに複数**。命名はプロジェクト依存） | 手書き | `opentouryo-dao-custom` |
 | 共通Dao | `CmnDao : MyBaseDao` | フレームワーク提供。そのまま使う | `opentouryo-dao-common` |
 | 自動生成Dao | `DaoXxx : MyBaseDao` | D層自動生成ツール（墨壺）が生成 | `opentouryo-dao-generated` |
 

@@ -62,6 +62,33 @@ if (rv.ErrorFlag)
 
 引数クラス・戻り値クラスは `MyParameterValue` / `MyReturnValue` の派生として業務ごとに作る。
 
+### actionType の使い方（DBMS 選択を含む）
+
+`actionType`（コード例の第4引数）は**業務コードが自由に解釈する文字列**。
+もともとは、`MyFcBaseLogic`導入以前の `MyBaseLogic` の B層ルート・メソッドで振り分け処理を
+実装をするために使用していた。
+
+意味はプロジェクトが決める。フレームワークの固定仕様ではない。
+
+**ただし既定テンプレートの親クラス2（`MyFcBaseLogic.UOC_ConnectionOpen`）では、
+`actionType.Split('%')[0]`（`%` 区切りの先頭）を DBMS コードとして読み、Dam と
+接続文字列を選ぶ実装になっている。**
+
+既定テンプレートを使うなら、先頭は DBMS コードにする。
+
+| 先頭コード | DBMS / プロバイダ | 接続文字列キー |
+| --- | --- | --- |
+| `SQL` | SQL Server（既定） | `ConnectionString_SQL` |
+| `ODP` | Oracle（ODP.NET） | `ConnectionString_ODP` |
+| `ODB` / `MCN` / `NPS`(Core) / `OLE`(net48) | ODBC / MySQL / PostgreSQL / OLEDB | `ConnectionString_<コード>` |
+
+**先頭以降のセグメントの意味はプロジェクト定義。** 
+
+**`actionType.Split('%')[0]`（`%` 区切りの先頭）より後ろはサンプルの
+B層コードが `switch` で分岐しているだけで、フレームワークの仕様ではない。**
+実際のプロジェクトは独自の規約を定める（DBMS 単一なら `"SQL"` だけのことも多い）。
+DBMS 選択も含め、親クラス2 は纏め者がカスタマイズできる（`opentouryo-project-policy`）。
+
 ## ② DoBusinessLogic と分離レベル
 
 | メソッド | 用途 |

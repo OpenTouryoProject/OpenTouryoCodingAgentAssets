@@ -1,6 +1,6 @@
 ---
 name: opentouryo-dao-custom
-description: "OpenTouryo の個別Dao（業務固有のデータアクセスクラス）を実装する。MyBaseDao を継承した LayerD クラスの書き方、コンストラクタでの BaseDam の受け取り、SetSqlByFile2 / SetSqlByCommand による SQL の指定、SetParameter によるパラメタ設定、ExecSelectScalar / ExecSelectFill_DT / ExecSelectFill_DS / ExecSelect_DR / ExecInsUpDel_NonQuery による実行、SetUserParameter の SQL インジェクション リスクを扱う。個別Dao / LayerD / 独自Dao / 業務固有のデータアクセス / 複雑なSQL を伴う作業のときに使う。共通Dao は opentouryo-dao-common、自動生成Dao は opentouryo-dao-generated、系統の選び方は opentouryo-layer-d を使う。"
+description: "OpenTouryo の個別Dao（業務固有のデータアクセスクラス）を実装する。MyBaseDao を継承した LayerD クラスの書き方、コンストラクタでの BaseDam の受け取り、SetSqlByFile2 / SetSqlByCommand による SQL の指定、SetParameter によるパラメタ設定（型・サイズ・ParameterDirection のオーバーロードを含む）、ExecSelectScalar / ExecSelectFill_DT / ExecSelectFill_DS / ExecSelect_DR / ExecInsUpDel_NonQuery による実行、GetParameter とストアドプロシージャ（戻り値・出力パラメタ）の実行、SetUserParameter の SQL インジェクション リスクを扱う。個別Dao / LayerD / 独自Dao / 業務固有のデータアクセス / 複雑なSQL / ストアドプロシージャ を伴う作業のときに使う。共通Dao は opentouryo-dao-common、自動生成Dao は opentouryo-dao-generated、系統の選び方は opentouryo-layer-d を使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -59,6 +59,7 @@ protected void SetParameter(string parameterName, object obj)
 using Touryo.Infrastructure.Business.Dao;
 using Touryo.Infrastructure.Public.Db;
 
+// クラス名はプロジェクト依存（LayerD はサンプル名。機能ごとに複数作る）
 public class LayerD : MyBaseDao
 {
     public LayerD(BaseDam dam) : base(dam) { }
@@ -84,7 +85,9 @@ public class LayerD : MyBaseDao
 
 - コンストラクタで `BaseDam` を受け取り `base(dam)` に渡す。**Dao 側で接続を張らない**
 - メソッドは `public`。引数クラス・戻り値クラスを引数に取るのが慣例
-- クラス名は `LayerD` が慣例
+- **クラス名はプロジェクト依存。`LayerD` はサンプルの名前で、`LayerD` になるとは限らない。**
+  個別Dao は**機能ごとに複数**作られる（テーブルや業務単位など）。名称付与規則は
+  プロジェクトごとに決まるので、既存コードの命名に合わせる
 
 ### SQL の指定
 
@@ -109,6 +112,54 @@ public class LayerD : MyBaseDao
 | `ExecInsUpDel_NonQuery()` | `int` | INSERT / UPDATE / DELETE。**更新件数を返す** |
 
 `ExecInsUpDel_NonQuery()` の戻り値（更新件数）は捨てない。0 件は楽観排他の失敗などを意味する。
+
+## SetParameter のオーバーロード
+
+**既定は基本形 `SetParameter(名前, 値)` を使う。** 型・サイズを指定するオーバーロードもあるが、
+**指定する引数が増える**ので、むやみに使わない。
+
+```csharp
+protected void SetParameter(string name, object value);                                // 既定はこれ
+protected void SetParameter(string name, object value, object dbTypeInfo);
+protected void SetParameter(string name, object value, object dbTypeInfo, int size);
+protected void SetParameter(string name, object value, object dbTypeInfo, int size,
+    ParameterDirection paramDirection);
+```
+
+**型・サイズを明示するのは、暗黙の型変換による性能劣化が顕在化してから**
+（先回りして指定しない。`opentouryo-query-definition` の該当節を参照）。
+ただし `ParameterDirection`（下記ストアド）は出力を取るのに必要で、これは性能とは別。
+
+**パラメタ名は接頭辞なし**（`"P1"`。`@` や `:` を付けない。接頭辞は DBMS ごとに
+フレームワークが付ける）。**`dbTypeInfo` の型は DBMS 依存**：SQL Server は `SqlDbType.Int`、
+Oracle は `OracleDbType.Int32` など（引数は `object` なのでどちらも渡せる）。
+
+## ストアドプロシージャの実行
+
+**入出力方向を `ParameterDirection` で指定し、戻り値・出力は `GetParameter` で取る。**
+
+```csharp
+public void CallProc(TestParameterValue pv, TestReturnValue rv)
+{
+    this.SetSqlByCommand("プロシージャ名");   // プロシージャ名を指定
+
+    // 入力パラメタ（名前は接頭辞なし）
+    this.SetParameter("P1", pv.Id);
+
+    // 戻り値・出力パラメタは方向を指定して宣言する（型は DBMS 依存。下は SQL Server の例）
+    this.SetParameter("ret", null, SqlDbType.Int, 4, ParameterDirection.ReturnValue);
+    this.SetParameter("out", null, SqlDbType.Int, 4, ParameterDirection.Output);
+
+    this.ExecInsUpDel_NonQuery();   // 実行
+
+    // 実行後、GetParameter で取り出す
+    rv.Ret = (int)this.GetParameter("ret");
+    rv.Out = (int)this.GetParameter("out");
+}
+```
+
+`ParameterDirection` は `ReturnValue` / `Output` / `InputOutput` / `Input`。
+**出力系は `GetParameter(名前)` で取得する**（実行前は `null`、実行後に値が入る）。
 
 ## SetUserParameter にユーザ入力を渡さない
 
@@ -147,5 +198,7 @@ this.SetUserParameter("COLUMN", " " + orderColumn + " ");
 - **Dao の中でコミット・ロールバックする** — B層フレームワークが行う（`opentouryo-layer-b` 参照）
 - **`ExecInsUpDel_NonQuery()` の戻り値を捨てる** — 更新件数 0 は楽観排他の失敗を意味する
 - **`SetUserParameter()` にユーザ入力を渡す** — 文字列置換のため SQL インジェクションになる
+- **先回りして `SetParameter` で型・サイズを指定する** — 既定は基本形。型指定は暗黙の型変換の
+  性能劣化が顕在化してから（`ParameterDirection` はストアドの出力取得に必要で、これは別）
 - **`ExecSelect_DR()` の `IDataReader` を閉じない** — コネクションが解放されない
 - **`BaseDao` / `MyBaseDao` を修正しようとする** — バイナリで提供される

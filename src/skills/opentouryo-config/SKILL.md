@@ -91,6 +91,10 @@ ASP.NET Core アプリでは、ホストが構築した `IConfiguration` を渡�
 }
 ```
 
+**接続文字列は DBMS ごとに用意する**（`ConnectionString_SQL` / `_ODP` / `_MCN` など）。
+どれを使うかは B層呼び出し時の `actionType` の先頭コードで決まる
+（既定テンプレートの挙動。`opentouryo-p-call-business` 参照）。
+
 `Logging` のような他のセクションは `GetAnyConfigValue("Logging:LogLevel:Default")` で読む。
 
 ## コンテナ・モード
