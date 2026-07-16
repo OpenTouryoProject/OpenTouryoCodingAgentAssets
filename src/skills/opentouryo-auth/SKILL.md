@@ -160,20 +160,14 @@ Session が有効
 ### P層フレームワークごとの差異
 
 <!--
-  ■ 執筆者向け：この節は P層スキルへ分配する予定（現在このスキルは約5,800トークンで目安5,000を超過）
-
-  分配先（分配は完了。P層スキルは screen/event に分割済み）:
-    「① Web Forms（net48）」の詳細            → opentouryo-layer-p-webforms-screen
-    「② MVC（net48）」「③ ASP.NET Core MVC」の詳細 → opentouryo-layer-p-mvc
-                                                  （net48 / .NET 10.0 のランタイム差として1スキルに収める）
-    リッチクライアント（opentouryo-layer-p-winforms-screen）は static ユーザ情報。
-
-  このスキルに残すもの:
-    - MyUserInfo / UserInfoHandle（3方式で共通・全アプリが対象）
-    - ユーザ情報の流れ
-    - 「.NET 側の認証」と「OpenTouryo のユーザ情報」の両方が必要という原則
-    - 下の比較表（どのスキルを読めばよいかの地図として）
-  分配後、各方式の実装例は P層スキル側へ移し、ここからはリンクする。
+  ■ 執筆者向け：分配は完了済み（このスキルは約4,950トークンで目安5,000内）。
+    各方式の実装詳細は P層スキルへ分配した:
+      Web Forms  → opentouryo-layer-p-webforms-screen
+      MVC / Core → opentouryo-layer-p-mvc（net48 / .NET 10.0 のランタイム差として1スキル）
+      WinForms   → opentouryo-layer-p-winforms-screen（static ユーザ情報）
+    この節（下の比較表と ①②③ の要約）は「どのスキルを読めばよいか」の地図として意図的に残す。
+    MyUserInfo / UserInfoHandle・ユーザ情報の流れ・「.NET 認証＋OpenTouryo ユーザ情報の両方が必要」
+    という原則は3方式共通なのでこのスキルが本体。
 -->
 
 **② の `MyUserInfo` + `UserInfoHandle` は3方式で共通。① の .NET 側だけが違う。**
