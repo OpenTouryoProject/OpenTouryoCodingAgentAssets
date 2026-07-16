@@ -19,7 +19,7 @@ metadata:
 **業務コードクラスの書き方はこのスキルがそのまま通用する。**
 UOC のシグネチャ・自動振り分け・`this.ReturnValue`・直呼びガードはすべて同じ。
 **読み替えるのは「継承元」と「トランザクション制御」の2点だけ**で、
-どちらも `opentouryo-layer-p-winforms` に書いてある（コネクションがグローバル、
+どちらも `opentouryo-p-call-business` に書いてある（コネクションがグローバル、
 コミットは手動、業務例外でロールバックしない）。
 
 例外の型と処理方式は `opentouryo-exception`、Dao の実装は `opentouryo-layer-d`（3系統の使い分け）を参照。
@@ -285,7 +285,7 @@ else
 - **`UOC_` メソッドを直接呼び出す** — `FrameworkException`（不正呼び出し）になる。
   `DoBusinessLogic` を経由する
 - **業務コードクラスで `try`/`catch` してロールバックやコミットを書く** — フレームワークが行う
-  （**2CS を除く**。`opentouryo-layer-p-winforms` を参照）
+  （**2CS を除く**。`opentouryo-p-call-business` を参照）
 - **業務コードクラスで `UOC_ABEND` などの前後処理を `override` する** — 親クラス2 の共通処理を潰す
 - **`MyBaseLogic` を継承する** — 非推奨。`MyFcBaseLogic` を使う
 - **Dao の中で接続を張る** — `this.GetDam()` を渡す

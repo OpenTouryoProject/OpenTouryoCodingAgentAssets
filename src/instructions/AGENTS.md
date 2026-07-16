@@ -88,8 +88,11 @@ OpenTouryo は **P層 / B層 / D層** の3層構造をとる。各層の責務�
 | 処理方式 | 画面コード親クラス1 / 2 | 実装モデル | スキル |
 | --- | --- | --- | --- |
 | ASP.NET MVC / ASP.NET Core MVC | `BaseMVController` / `MyBaseMVController`<br>`BaseMVControllerCore` / `MyBaseMVControllerCore` | アクションメソッド（**UOC メソッドは無い**） | `opentouryo-layer-p-mvc` |
-| ASP.NET Web Forms | `BaseController` / `MyBaseController` | UOC メソッド | `opentouryo-layer-p-webforms` |
-| Windows Forms | `BaseControllerWin` / `MyBaseControllerWin` | UOC メソッド | `opentouryo-layer-p-winforms` |
+| ASP.NET Web Forms | `BaseController` / `MyBaseController` | UOC メソッド | `opentouryo-layer-p-webforms-screen`（作成）<br>`opentouryo-layer-p-webforms-event`（イベント） |
+| Windows Forms | `BaseControllerWin` / `MyBaseControllerWin` | UOC メソッド | `opentouryo-layer-p-winforms-screen`（作成）<br>`opentouryo-layer-p-winforms-event`（イベント） |
+
+P層から B層を呼ぶ共通手順（引数クラス・`DoBusinessLogic`・`ErrorFlag`・2CS の手動トランザクション）は
+`opentouryo-p-call-business`。
 
 **WPF は P層フレームワークを持たない。** B層・D層のみを利用し、画面は素の WPF として実装する
 （`Window` を継承する。`MyBaseControllerWin` は `Form` を継承しているため使えない）。
@@ -230,8 +233,11 @@ TODO
 | スキル | 使いどころ |
 | --- | --- |
 | `opentouryo-layer-p-mvc` | ASP.NET MVC / ASP.NET Core MVC のコントローラを実装するとき |
-| `opentouryo-layer-p-webforms` | Web Forms の画面を実装するとき |
-| `opentouryo-layer-p-winforms` | Windows Forms の画面を実装するとき |
+| `opentouryo-layer-p-webforms-screen` | Web Forms の画面を新規作成するとき |
+| `opentouryo-layer-p-webforms-event` | Web Forms のコントロールのイベントを実装するとき |
+| `opentouryo-layer-p-winforms-screen` | Windows Forms の画面を新規作成するとき |
+| `opentouryo-layer-p-winforms-event` | Windows Forms のコントロールのイベントを実装するとき |
+| `opentouryo-p-call-business` | P層から B層を呼ぶとき（引数クラス・`DoBusinessLogic`・`ErrorFlag`） |
 | `opentouryo-layer-b` | 業務ロジックを実装するとき |
 | `opentouryo-layer-d` | D層の全体像と Dao 3系統の使い分け |
 | `opentouryo-dao-custom` | 個別Dao（業務固有のデータアクセス）を実装するとき |

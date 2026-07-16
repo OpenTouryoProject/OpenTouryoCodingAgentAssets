@@ -43,7 +43,7 @@ public class MyUserInfo : UserInfo
 ```
 
 **どちらも setter を持つ。** 生成後に代入できる（Windows Forms のログインはこれを使う。
-`opentouryo-layer-p-winforms` 参照）。
+`opentouryo-layer-p-winforms-screen` 参照）。
 
 `<remarks>` に「自由に（**拡張して**）利用できる。」とあるとおり、
 **プロジェクト固有の項目（所属、権限、ロールなど）を足す前提のテンプレート。**
@@ -162,12 +162,11 @@ Session が有効
 <!--
   ■ 執筆者向け：この節は P層スキルへ分配する予定（現在このスキルは約5,800トークンで目安5,000を超過）
 
-  分配先:
-    「① Web Forms（net48）」の詳細            → opentouryo-layer-p-webforms
+  分配先（分配は完了。P層スキルは screen/event に分割済み）:
+    「① Web Forms（net48）」の詳細            → opentouryo-layer-p-webforms-screen
     「② MVC（net48）」「③ ASP.NET Core MVC」の詳細 → opentouryo-layer-p-mvc
                                                   （net48 / .NET 10.0 のランタイム差として1スキルに収める）
-    ※ リッチクライアント（opentouryo-layer-p-winforms）は未調査。
-      MyBaseControllerWin / BaseLogic2CS 系。認証の扱いを別途確認すること。
+    リッチクライアント（opentouryo-layer-p-winforms-screen）は static ユーザ情報。
 
   このスキルに残すもの:
     - MyUserInfo / UserInfoHandle（3方式で共通・全アプリが対象）
@@ -199,8 +198,8 @@ Session が有効
 
 ### ① Web Forms（net48）
 
-**詳細は `opentouryo-layer-p-webforms` を参照。** ログイン画面の実装例、`web.config` の構成を
-そちらに記述している。
+**詳細は `opentouryo-layer-p-webforms-screen` を参照。** ログイン画面の実装例、`web.config` の
+構成をそちらに記述している。
 
 要点だけ再掲する。
 
@@ -297,7 +296,7 @@ Web の P層フレームワーク（Web Forms / MVC / ASP.NET Core MVC）を使�
 
 **Windows Forms（リッチクライアント）は `UserInfoHandle` もセッションも使わない。**
 `MyBaseControllerWin.UserInfo`（`static` フィールド）でユーザ情報を保持し、
-.NET の認証機構も使わない。詳細は `opentouryo-layer-p-winforms` を参照。
+.NET の認証機構も使わない。詳細は `opentouryo-layer-p-winforms-screen` を参照。
 
 WPF は P層フレームワークを持たないため、ユーザ情報の保持方法もアプリケーション側で決める。
 

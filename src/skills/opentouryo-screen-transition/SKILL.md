@@ -14,7 +14,8 @@ metadata:
 `SCDefinition.xml` の書式と、画面遷移チェックの有効化。
 
 **ASP.NET Web Forms 専用。** MVC / Windows Forms にこの機能は無い。
-Web Forms の画面実装そのものは `opentouryo-layer-p-webforms` を参照。
+Web Forms の画面実装そのものは `opentouryo-layer-p-webforms-screen` /
+`opentouryo-layer-p-webforms-event` を参照。
 
 ## 何のための機能か
 

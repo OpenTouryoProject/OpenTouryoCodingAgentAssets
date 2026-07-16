@@ -83,6 +83,7 @@ import する `CLAUDE.md` を生成する。Windows では symlink に管理者�
 | `opentouryo-xml-definition` | `-message` / `-shared-property` / `-screen-transition` / `-transaction-control` / `-transmission` の**5つへ解体** | **書式だけでなく「それを使う機能」を書いたら別物になった。** 6種は書式こそ似ているが、機能としては共有情報・メッセージ・画面遷移・トランザクション・通信でまったく別。**粒度が小さくなっても、適切なスキルを選択して実装できることを優先**（起動は description だけで判定されるため）。共通の書式制約（DTD 埋め込み・`id` の先頭に数字不可・`Fx` キーでパス指定）は**各スキルに複製**し、1スキルで自己完結させた |
 | `opentouryo-layer-d` | `-dao-custom` / `-dao-common` / `-dao-generated` の3つを独立。**`layer-d` は使い分けの入口として残す** | Dao 3系統は書き方も命名体系もまったく別（個別Dao は `SetSqlByFile2`、共通Dao は `SQLFileName` プロパティ、自動生成Dao は `S1_Insert` / `PK_` 体系）。**ただし XML 定義と違い「3系統のどれを使うか」という判断そのものがコンテンツ**なので、親スキルを薄く残した（75行 / 実効1,207トークン）。系統が決まっているなら直行してよい旨を明記 |
 | `opentouryo-layer-p` | `-mvc` / `-webforms` / `-winforms`（**完了**） | 実装モデルが根本的に違う（MVC は UOC を持たない）。WPF は P層フレームワークが無く対象外 |
+| `-webforms` / `-winforms` | それぞれ `-screen`（作成）/ `-event`（イベント）に再分割 ＋ 横断 `opentouryo-p-call-business` を新設（**作者の提案**） | ①**サイズ圧**：両者とも 4,400／4,600トークンで上限に迫り加筆余地が無かった。②**タスクの分離**：Developers編4章が「作成→イベント→B層呼出し」の順で説明する別作業で、起動を description で分けたい。③**B層呼出しの集約**：webforms/winforms/mvc で重複していた「引数クラスの組み立て → `DoBusinessLogic` → `ErrorFlag`」と、winforms に埋もれていた**2CS の手動トランザクション**を1本に集約（重複排除）。引数クラスの方式差は表で吸収。MVC は UOC が無く上限にも遠いので**分割せず現状維持**（B層呼出しの共通手順だけ横断スキルへリンク）。分割後は各P層スキルが 1,800〜2,900トークンに収まった |
 | （新規） | `opentouryo-project-policy` | **分割ではなく、穴を埋めるために追加**（作者の提案）。「親クラス2 の実装で決まる仕様は確認せよ」と各スキルに書いたが、**何を・どこを見て・見られなければ誰に何を聞くのかがどこにも無かった**。確認手順は `message` 固有ではなく親クラス2 依存の事項すべてに効く一般則なので、各スキルへ複製せず1本にまとめ、`AGENTS.md` と各スキルからここを指した |
 | `opentouryo-auth` | `opentouryo-oauth2-client` を独立 | auth が 4,463トークンで加筆余地が無かったのが発端だが、**本質は「外部 IdP と連携したい」が独立したタスクで、語彙（OAuth2 / 認可コード / id_token / state / nonce）も別に立つ**こと。auth は「ユーザ情報の保持」に専念させた。**最後にやることは通常のログインと同じ**（.NET 側の認証 + `MyUserInfo`）なので、両スキルは相互リンクしている |
 
@@ -101,10 +102,13 @@ Claude Code は**ブロックレベルの HTML コメントを読み込み時に
 ## 3. 成果物の現状
 
 ```
-opentouryo-layer-p-mvc         実効298L tok~3642  完了
-opentouryo-layer-p-webforms    実効279L tok~3752  完了
-opentouryo-layer-p-winforms    実効293L tok~4229  完了
-opentouryo-layer-b             実効292L tok~4134  完了
+opentouryo-layer-p-mvc            実効300L tok~3710  完了
+opentouryo-layer-p-webforms-screen 実効144L tok~1904  完了（画面の新規作成）
+opentouryo-layer-p-webforms-event  実効174L tok~2935  完了（イベント実装）
+opentouryo-layer-p-winforms-screen 実効116L tok~1812  完了（画面の新規作成）
+opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実装）
+opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
+opentouryo-layer-b               実効292L tok~4134  完了
 opentouryo-layer-d             実効149L tok~2216  完了（Dao 3系統の使い分け・入口）
 opentouryo-dao-custom          実効151L tok~2015  完了
 opentouryo-dao-common          実効128L tok~1775  完了
@@ -123,7 +127,7 @@ opentouryo-oauth2-client       実効263L tok~2851  完了
 opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の挙動・運用ルールの確認手順）
 ```
 
-**全20スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全23スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 計測は `scratchpad/measure.py` 相当のスクリプトで行う（見積り式：ASCII 1/4字 + 非ASCII 1/1.1字）。
 

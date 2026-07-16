@@ -13,9 +13,10 @@ metadata:
 
 コントローラの実装。**ASP.NET MVC（net48）と ASP.NET Core MVC（.NET 10.0）の両方**を扱う。
 
-- Web Forms → `opentouryo-layer-p-webforms`
-- Windows Forms（リッチクライアント）→ `opentouryo-layer-p-winforms`
+- Web Forms → `opentouryo-layer-p-webforms-screen` / `-event`
+- Windows Forms（リッチクライアント）→ `opentouryo-layer-p-winforms-screen` / `-event`
   （WPF は P層フレームワークを持たない。B層・D層のみを利用する）
+- B層の呼び出しの共通手順 → `opentouryo-p-call-business`
 - B層の実装 → `opentouryo-layer-b`、例外 → `opentouryo-exception`
 - ユーザ情報の詳細 → `opentouryo-auth`
 
@@ -100,7 +101,8 @@ public class Crud1Controller : MyBaseMVControllerCore   // net48 は MyBaseMVCon
 
 ## B層の呼び出し
 
-**アクション名がそのまま B層の振り分けに使われる。**
+引数クラスの組み立て・`DoBusinessLogic`・`ErrorFlag` の共通手順は `opentouryo-p-call-business`。
+**MVC 固有なのは、アクション名がそのまま B層の振り分けに使われる点。**
 
 ```
 this.ActionName = "SelectCount"

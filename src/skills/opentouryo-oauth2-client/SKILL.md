@@ -15,7 +15,7 @@ metadata:
 認可コードグラントの実装を扱う。
 
 - ユーザ情報の保持（`MyUserInfo` / `UserInfoHandle`）→ `opentouryo-auth`
-- 画面の実装 → `opentouryo-layer-p-webforms` / `opentouryo-layer-p-mvc`
+- 画面の実装 → `opentouryo-layer-p-webforms-screen` / `opentouryo-layer-p-mvc`
 
 **SAML2 クライアント機能（`SAML2Client` / `SAML2Bindings`）もあるが、このスキルは扱わない。**
 

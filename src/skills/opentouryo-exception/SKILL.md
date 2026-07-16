@@ -119,7 +119,8 @@ new FrameworkException(string messageID, string message, Exception innerExceptio
 業務例外のときロールバックしない**（実装に `★★業務例外時のロールバックは自動にしない。`
 とある）。正常系のコミットも自動ではなく `CommitAndClose()` を明示的に呼ぶ。
 
-Windows Forms で実装する場合は `opentouryo-layer-p-winforms` を参照。
+2CS の手動トランザクション（`CommitAndClose` / `RollbackAndClose`）は
+`opentouryo-p-call-business` を参照。
 
 ### リスローする場所が型によって違う
 

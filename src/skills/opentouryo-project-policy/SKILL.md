@@ -34,8 +34,8 @@ OpenTouryo には**フレームワークが決めず、親クラス2（業務フ
 | `UOC_ABEND` での例外の振替 | 振替の IF 文は雛形のみ。一般例外はリスロー | `opentouryo-exception` |
 | 事前定義された例外メッセージ | `SAMPLE_ERROR` のみ | `opentouryo-exception` / `opentouryo-message` |
 | `ACCESS` / `SQLTRACE` ログの書式 | カンマ区切り | `opentouryo-logging` |
-| 追加された接頭辞 | `PREFIX_OF_CHECK_BOX` のみ | `opentouryo-layer-p-webforms` |
-| P層イベント対応の拡張 | `CheckBox` のみ追加 | `opentouryo-layer-p-webforms` / `-winforms` |
+| 追加された接頭辞 | `PREFIX_OF_CHECK_BOX` のみ | `opentouryo-layer-p-webforms-event` |
+| P層イベント対応の拡張 | `CheckBox` のみ追加 | `opentouryo-layer-p-webforms-event` / `-winforms-event` |
 
 ### B. 運用ルール（コードに無い。聞くしかない）
 

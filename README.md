@@ -12,8 +12,11 @@ src/
   instructions/AGENTS.md        概要・規約（常時コンテキストに載る / これが原本）
   skills/
     opentouryo-layer-p-mvc/      P層：ASP.NET MVC / ASP.NET Core MVC
-    opentouryo-layer-p-webforms/ P層：Web Forms
-    opentouryo-layer-p-winforms/ P層：Windows Forms
+    opentouryo-layer-p-webforms-screen/ P層：Web Forms 画面の新規作成
+    opentouryo-layer-p-webforms-event/  P層：Web Forms イベント実装
+    opentouryo-layer-p-winforms-screen/ P層：Windows Forms 画面の新規作成
+    opentouryo-layer-p-winforms-event/  P層：Windows Forms イベント実装
+    opentouryo-p-call-business/  P層から B層を呼び出す（横断）
     opentouryo-layer-b/          B層（業務ロジック層）の実装
     opentouryo-layer-d/          D層の全体像と Dao 3系統の使い分け
     opentouryo-dao-custom/       個別Dao

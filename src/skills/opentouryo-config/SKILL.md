@@ -179,8 +179,8 @@ XML で、パスを設定に書く。
 未設定だとそのコントロール種別が結線されず、**イベントが発火しない**
 （コンパイルエラーにならないので気付きにくい）。
 
-有効な接頭辞は処理方式で違う。詳細は `opentouryo-layer-p-webforms`（14種）/
-`opentouryo-layer-p-winforms`（6種）を参照。MVC は接頭辞の仕組みを使わない。
+有効な接頭辞は処理方式で違う。詳細は `opentouryo-layer-p-webforms-event`（14種）/
+`opentouryo-layer-p-winforms-event`（6種）を参照。MVC は接頭辞の仕組みを使わない。
 
 ## やってはいけないこと
 
