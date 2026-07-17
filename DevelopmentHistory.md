@@ -3,9 +3,9 @@
 作業を再開するための記録。**アセットの内容ではなく、アセットを作る側の記録。**
 配布されるのは `src/` 配下のみで、このファイルは配布されない。
 
-最終更新: 2026-07-17（全29スキル。利用ガイド doc 0〜8・設定一覧まで確認し、整合性補正と
-新規スキル追加、ランタイム差（net48 / .NET 10.0）の反映を実施。project-setup を実測フィードバックで
-補正し、変形の後工程 project-transform を分離）
+最終更新: 2026-07-18（全30スキル。利用ガイド doc 0〜8・設定一覧まで確認し、整合性補正と
+新規スキル追加、ランタイム差（net48 / .NET 10.0）の反映を実施。project-setup を実走フィードバックで
+補正し、③基盤ビルドを project-setup-build へ分離、変形の後工程 project-transform も分離）
 
 ---
 
@@ -148,8 +148,9 @@ opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実
 opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
 opentouryo-richclient-async       実効145L tok~2031  完了（リッチクライアントの非同期呼び出し）
 opentouryo-common-parts           実効118L tok~2047  完了（用途→共通部品のインデックス）
-opentouryo-project-setup          実効226L tok~4300  完了（立ち上げ。実測FB＋実機検証3点[pause/ASCII/.\\]を反映。③のスクリプト詳細を setup-script.md へ分離＝本体は目安内に回復）
-                                  └ setup-script.md 67L tok~1100  ③のスクリプト実装リファレンス（on-demand で読む補助ファイル）
+opentouryo-project-setup          実効235L tok~4600  完了（立ち上げ入口。①サンプル選択・②取得元・④⑤取り出し/参照張り替え・⑥⑦リソース/config/検証。③は project-setup-build へ委譲）
+                                  └ samples/webforms.md 28L tok~550  サンプル固有メモ（on-demand。WS/3層依存・config二段。育ったら独立スキルへ昇格）
+opentouryo-project-setup-build    実効109L tok~2200  完了（③を独立スキル化。ZIP取得→ランタイム別バッチ→ベンダ。footgun 5点＋PowerShell 既定推奨。タグ更新の焼き直しにも単独で使う）
 opentouryo-project-transform      実効 79L tok~1400  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消。Web.config endpoint は触らないに是正。実行は任意・選択式）
 opentouryo-layer-b               実効292L tok~4134  完了
 opentouryo-layer-d             実効149L tok~2216  完了（Dao 3系統の使い分け・入口）
@@ -171,7 +172,7 @@ opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の�
 opentouryo-base2-customize     実効124L tok~2820  完了（親クラス2 のカスタマイズ＝纏め者向け・作る側。オーバーレイ+固定タグ）
 ```
 
-**全29スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全30スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 計測は `scratchpad/measure.py` 相当のスクリプトで行う（見積り式：ASCII 1/4字 + 非ASCII 1/1.1字）。
 
@@ -296,13 +297,29 @@ APIリファレンスで足りる）。
 | 親クラス2 修正のバージョン管理＝オーバーレイ＋固定タグ（作者決定 2026-07-17） | 丸ごとではなく**修正ファイルだけ**を元パス保持で `base2-overlay/` に置きコミット（アプリ リポジトリ同居）。ビルドは固定タグ展開ツリーへ `xcopy base2-overlay\* → <extract>\root\programs\CS\` してから `3_Build_Business_*`。DLL は「固定タグ＋オーバーレイ」で再現可能。`develop` 不可（土台が動く）。複数アプリ共有時のみ纏め者専用リポジトリ。`base2-customize` / `project-setup` に反映 |
 | 生成スクリプトが実環境で3回失敗（**実機検証 2026-07-18**：VS2026 / .NET SDK 10.0.302 / コンソール CP65001） | 基盤ビルド バッチを非対話で回すと3点で嵌る。①**末尾 `pause`** で入力待ち停止 → `< nul` で標準入力を塞ぐ。②生成 `.bat` の**全角コメント／`echo`** が UTF-8（`chcp 65001`）コンソールで破損し直後の `%変数%` 展開ごと壊れる → **ASCII 限定**。③`NoDefaultCurrentDirectoryInExePath=1` 環境で `.\` 無しの `call` が「認識されない」で失敗 → `call .\<bat>` と明示。模範 `3_BuildLibsAtOtherRepos.bat` にも注記が無く踏む。`project-setup` ③ に3点を追記 |
 | WebForms_Sample の `Web.config` endpoint は3層固有でない（**実機検証 2026-07-18**・作者へ B 報告） | 当初 `project-transform` の「削る」に `Web.config` endpoint を挙げたが誤り。`system.serviceModel` の endpoint は 3層サンプル（`WSServer_sample`）用ではなく**フレームワークの Transmission WCF 設定**（`IWCFHTTPSvcForFx` / `IWCFTCPSvcForFx`）と `IJSONService`。`WSServer_sample` は DLL 参照でインプロセス呼び出しされ専用 endpoint を持たない。消すと2層化に不要かつ実行時構成を壊しかねない → **「触らない」に是正**。transform の他項（`using WSIFType_sample;`→`using MyType;` の罠、3層画面・`3TierTableAdapter`・`GetMasterData.cs`・menu リンク除去）は実機と完全一致で正確だった |
-| VS エディションによる msbuild 解決は**利用側で対処**（**実機検証 2026-07-18**・作者判断） | 本体の `z_Common.bat` は **VS18 系で `18\Community` しか見ない**（VS2022 までは Community/Professional/Enterprise 網羅）。VS18 の BuildTools/Professional/Enterprise だけだと `BUILDFILEPATH` が空になり基盤ビルドが失敗する。当初 C として本体報告候補にしたが、**本体はエージェント/CI・新しい VS エディションでの非対話ビルドを想定して作られていない**ため本体の不具合ではなく**利用側（このセットアップ）で対処する前提**とする（作者判断）→ **Issue 化しない**。対処＝ビルド前に msbuild が解決できることを確認し、駄目なら Community 導入／msbuild のパス通し／`z_Common.bat` へ自環境パス補正。注記は `setup-script.md` の「VS のエディション・バージョンによる msbuild 解決」節へ |
+| VS エディションによる msbuild 解決は**利用側で対処**（**実機検証 2026-07-18**・作者判断） | 本体の `z_Common.bat` は **VS18 系で `18\Community` しか見ない**（VS2022 までは Community/Professional/Enterprise 網羅）。VS18 の BuildTools/Professional/Enterprise だけだと `BUILDFILEPATH` が空になり基盤ビルドが失敗する。当初 C として本体報告候補にしたが、**本体はエージェント/CI・新しい VS エディションでの非対話ビルドを想定して作られていない**ため本体の不具合ではなく**利用側（このセットアップ）で対処する前提**とする（作者判断）→ **Issue 化しない**。対処＝ビルド前に msbuild が解決できることを確認し、駄目なら Community 導入／msbuild のパス通し／`z_Common.bat` へ自環境パス補正。注記は `opentouryo-project-setup-build`（旧 setup-script.md）の「VS のエディション・バージョンによる msbuild 解決」節へ |
 | 実機で追認できた既存指摘（**実機検証 2026-07-18**・D＝直さない確認） | 次はスキル記述どおりで正しかった：⑤3rd-party DLL 張り替え（`MySql.Data`/`Oracle.ManagedDataAccess` は NuGet 非復元でベンダ先へ）／⑥config 綴りの罠（`XML/test`→実体 `Xml/Test`）／⑥環境変数方式（`%OT_RESOURCE_ROOT%\...` を `ResourceLoader` が展開し IIS Express で解決）／⑦net48 は msbuild 前に `nuget restore <sln>` 必須・`nuget.exe` は ZIP の `root\programs\nuget.exe` 流用／「3層サンプルは as-is で通らないことがある・2層化は後工程」の切り分け。**変更不要** |
+| ①の表が WS/3層依存サンプルを明示していなかった（**実走 2026-07-18** Web Forms/net48/tag 03-20・A） | `WebForms_Sample` は取り出し直後に `sampleScreen_cc.aspx.cs` が `WSIFType_sample`/`WSServer_sample`（`WS_sample\Build` 出力）へ依存し **`CS0246` が必ず残る**。総論の「3層サンプルの扱い」節はあったが①の表に印が無く、利用者が「Web Forms を選んだのに as-is で通らない」と面食らう。→ ①表に **「WS/3層依存」列**を追加（`WebForms_Sample`＝確定該当・実測、他は未確認）。表直下に**到達点＝「ソリューションが開ける状態」で as-is クリーンビルドは保証しない**を再明示。削減は transform |
+| 非対話ビルドで追加2 footgun＋PowerShell ラッパ既定推奨（**実走 2026-07-18**・B） | 既知3注意は的中。実走で2つ追加：①`if(...)` ブロック内 `echo` の**未エスケープ `)`** でブロックが早期に閉じ後続 `goto :error` が無条件実行（ビルド成功でも Step 3 で失敗に見える）→ `^)` にエスケープ。②**Bash/MSYS 経由 `cmd //c ".\x.bat"`** は Windows 絶対パス引数が MSYS 変換され `if exist "D:\..."` が実在フォルダを MISSING 誤判定 → PowerShell の `cmd /c` から実行で正常。→ `opentouryo-project-setup-build`（旧 setup-script.md）の注意に2点追記＋**「エージェント/CI は PowerShell ラッパを既定推奨（子 .bat は `cmd /c`）」節**を新設 |
+| 4バッチ順次実行は単一ランタイム標的に過剰（**実走 2026-07-18**・C） | ①では Web Forms＝net48 のみで netcore100 の基盤ビルドは不要（無駄な時間と失敗面が増える）。今回は net48 の2バッチにスコープして問題なし → `project-setup` ③ と `opentouryo-project-setup-build`（旧 setup-script.md）を **「標的サンプルのランタイムのバッチだけ回す（両対応が要るときだけ4本）」** に是正 |
+| net48 Web Forms の config 二段構成（**実走 2026-07-18**・D 軽微） | 実効 config は `Web.config` だが、**パス系キーは `<appSettings file="app.config"/>` で読む `app.config` 側**、接続文字列は `Web.config` 直下、と分かれる。⑥の「app.config/appsettings.json のパス系キー」は結果的に正しいが初見だと `Web.config` を探して迷う → ⑥に一文追記 |
+| `project-setup` を分割（作者提案・**2026-07-18**） | 容量は分割前も目安内（③詳細は既に外部ファイル化済み）で、分割の狙いは**凝集度と再利用性**。作者案は3階層（build / pickout / pickout-webforms）だったが、per-sample スキルは現状 WebForms しか実測が無く空スキルの乱立になるため見送り、**2スキル＋参照ファイル**に落とす（合意）。①**③基盤ビルド＝サンプル非依存・一度作れば使い回す・単独起動可**なので `opentouryo-project-setup-build` へ昇格（`setup-script.md` を昇格して削除）。②`project-setup` は入口オーケストレータ（①②④⑤⑥⑦）として据え置き、③は build スキルへ委譲。③**サンプル固有の癖は `samples/<name>.md` 参照ファイル**先行（`samples/webforms.md`＝WS/3層依存・config二段。内容が育ったら `-sample-*` スキルへ昇格）。インストーラは `Copy-Item ...\*  -Recurse` でディレクトリ丸ごと拾うため `samples/` も自動同梱。全29→30スキル。AGENTS.md 表・README 一覧・§3 インベントリに反映 |
+| WS/3層依存の解消は「2層化」一択ではない＝**3層維持ルートを明文化**（作者指摘・**2026-07-18**。実ソースで確認済み） | それまで `webforms.md`／`project-setup` ①・③注記は `CS0246` の解消を **(B) 2層化＝transform** だけで書いていた。だが **`reference/csharp/` の実ソースで確認**：`WebForms_Sample.csproj` 252-256 は `WSIFType_sample` / `WSServer_sample` を `..\..\..\WS_sample\Build\*.dll` として参照し、`sampleScreen_cc.aspx.cs:21` が `using WSIFType_sample;`。**無いのはビルド出力だけで、`WS_sample\WSIFType_sample` / `WS_sample\WSServer_sample` のソースは実在**（`WSServer` は `..\WSIFType_sample` を ProjectReference。両者の参照は `OpenTouryo.Business/.Framework(/.Public)` のみで追加 3rd-party 無し）。**ビルド出力は `WS_sample\Build\`（`WSIFType_sample.dll`/`WSServer_sample.dll`）に落ちる**（作者確認。csproj の `OutputPath` は `bin\Release\` だが実出力先は外部ビルド スクリプトが決める＝`AfterBuild`/`PostBuildEvent` は空）。**WebForms 側の参照はそのまま `WS_sample\Build\*.dll` を指すので向け直し不要**。よって **(A) 3層のまま通す＝WS も取り出し⑤と同じ要領で `OpenTouryo.*` を張り替えてビルドするだけで `CS0246` が消える**（`Web.config` endpoint は Transmission 設定なので触らない）が正当で、**取り出し・参照張り替え＝セットアップの範囲で完結**する。→ `samples/webforms.md` を (A)/(B) 併記（(A) は実証済み具体手順）に、`project-setup` ①注記と「3層（WCF/WS）サンプルの扱い」節も両ルート併記に是正 |
+| **アセット repo に C# 実ソースのミラー `reference/csharp/` がある**（作者提示・**2026-07-18**） | `reference/csharp/Samples/...`・`reference/csharp/Frameworks/...` に OpenTouryo 本体の実ソースがミラーされている（例：`WS_sample/{WSIFType_sample,WSServer_sample,WSClient_sample,ASPNETWebService}`）。**スキルの主張（csproj の参照・HintPath・using・プロジェクト依存）はここで裏取りできる**。従来「files/ にビルド bat のミラーは無い／root/files は files/else/resource にミラー」とだけ記録していたが、`reference/csharp/` の全ソース ミラーはより広く、今後の grounding の一次情報。ビルド出力（`Build\` 等）は生成物なのでミラーには無い点に注意 |
+| ①表に**3層リッチクライアント（WS クライアント）**を追加（作者提示・**2026-07-18**。実ソース確認） | WS/3層依存サンプルは WebForms だけでなく **`Samples\WS_sample\WSClient_sample`** 一式（`WSClientWin_sample`/`WSClientWPF_sample`/`WSClientWin2_sample`/`WSClientWinCone_sample`。いずれも `OutputType=WinExe`・net48、`WSIFType_sample`/`WSServer_sample` を `..\..\Build\*.dll` 参照＝**構成上の 3層依存**）。**.NET Core 版**も `Samples4NetCore\Legacy\WS_sample\WSClient_sample\` にある。→ ①表に「3層リッチクライアント（WS/WCF 経由・WinForms/WPF）」行を net48／.NET10 で追加（WS/3層依存＝**あり・構成上必須**）、①注記の「確定該当」を **WebForms＋WSClient 2系統**に拡張。WSClient は 3層で使う前提なので **(A) が本筋・(B) 2層化は非該当**。P層リッチクライアントは `richclient-async`／`layer-p-winforms-screen` も参照 |
 
 ### 4.4 作者から得た情報（コードからは読めない）
 
 **これらは実装を読んでも分からない。** 失うと再取得できない。
 
+- **.NET Core 版の WS クライアント（`Samples4NetCore\Legacy\WS_sample\WSClient_sample\`）は実用性が無い**
+  （作者情報 2026-07-18）。**`BinaryFormatter`（バイナリシリアライズ）が .NET Core で廃止**されたため、
+  実質**インプロセス呼び出ししか動かず、本当の WS 越しの3層通信にならない**。コード／csproj を見ても
+  「動く WS クライアント サンプルの1つ」にしか見えず、この非実用性は実装から読めない。→ **3層リッチ
+  クライアントを実用するなら net48 側**（`Samples\WS_sample\WSClient_sample\`）を使う。`project-setup` ①表の
+  .NET10 行に「実用性なし ※」を付し、①注記に理由を明記。**`opentouryo-transmission` の
+  「リモート呼び出しは net48 専用」節にも、サンプル/ランタイム選択への含意（core 版 WSClient は起点として
+  勧めない・実用は net48）を1段落追記**（transmission は core のリモート不可＝`BinarySerialize` ドロップを既収録）
 - **親クラス1・親クラス2 は、ユーザプログラム開発プロジェクトにはビルド後のバイナリ
   （アセンブリ）で提供される。** ソースが無いため修正できず、特別に強い指示がある場合を除き
   修正対象にならない。
@@ -624,7 +641,7 @@ skills-ref validate ./src/skills/opentouryo-layer-d
 
 ## 7. 次にやること
 
-**このリポジトリ側の作業は残っていない。** 全29スキル、`AGENTS.md`（アーキテクチャ節を含む）、
+**このリポジトリ側の作業は残っていない。** 全30スキル、`AGENTS.md`（アーキテクチャ節を含む）、
 インストーラまで書き終えた。利用ガイド（doc 0〜8・動的クエリ・D層自動生成・設定一覧）も
 一通り確認し、整合性の補正と新規スキル（dialog / p-call-business / richclient-async /
 common-parts / project-policy ほか）への反映を済ませた。

@@ -65,6 +65,11 @@ Web サービス / WCF などのリモート呼び出し（`protocol="2"` 系）
 
 core で物理3層が必要なら、別の通信手段（REST / gRPC など）を独自に実装する。
 
+**サンプル/ランタイム選択への含意：`Samples4NetCore\Legacy\WS_sample\WSClient_sample\`（.NET Core 版の
+WS クライアント）は、この制約により実質インプロセス呼び出ししか動かず、実用的な物理3層にならない
+（起点として勧めない）。3層リッチクライアントを実用するなら net48 側**（`Samples\WS_sample\WSClient_sample\`）
+**を選ぶ**（新規立ち上げのサンプル選択は `opentouryo-project-setup` ①表を参照）。
+
 ## TMInProcessDefinition.xml（インプロセス呼び出しの名前解決）
 
 **サービス論理名から、呼び出すアセンブリとクラスを解決する。**

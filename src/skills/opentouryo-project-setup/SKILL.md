@@ -39,15 +39,36 @@ metadata:
 **作りたいものに合うサンプルが起点になる。** サンプルは OpenTouryo リポジトリの
 `root/programs/CS/`（net48 は `Samples\`、.NET 10.0 は `Samples4NetCore\`）配下。
 
-| 作りたいもの | サンプル | ランタイム |
-| --- | --- | --- |
-| ASP.NET MVC | `Samples\WebApp_sample\MVC_Sample` | net48 |
-| ASP.NET Core MVC | `Samples4NetCore\Backend\MVC_Sample` | .NET 10.0 |
-| Web Forms | `Samples\WebApp_sample\WebForms_Sample` | **net48 のみ** |
-| Windows Forms（2層C/S） | `Samples\2CS_sample\2CSClientWin_sample` | net48 |
-| Windows Forms（2層C/S） | `Samples4NetCore\Legacy\2CS_sample\2CSClientWin_sample` | .NET 10.0 |
-| バッチ / コンソール | `Samples\Bat_sample` / `Samples4NetCore\Legacy\Bat_sample` | net48 / .NET 10.0 |
-| CLI | `Samples4NetCore\Legacy\CLI_sample` | .NET 10.0 |
+| 作りたいもの | サンプル | ランタイム | WS/3層依存 |
+| --- | --- | --- | --- |
+| ASP.NET MVC | `Samples\WebApp_sample\MVC_Sample` | net48 | 未確認 |
+| ASP.NET Core MVC | `Samples4NetCore\Backend\MVC_Sample` | .NET 10.0 | 未確認 |
+| Web Forms | `Samples\WebApp_sample\WebForms_Sample` | **net48 のみ** | **あり（transform 前提）** |
+| Windows Forms（2層C/S） | `Samples\2CS_sample\2CSClientWin_sample` | net48 | 未確認 |
+| Windows Forms（2層C/S） | `Samples4NetCore\Legacy\2CS_sample\2CSClientWin_sample` | .NET 10.0 | 未確認 |
+| 3層リッチクライアント（WS/WCF 経由・WinForms/WPF） | `Samples\WS_sample\WSClient_sample\WSClientWin_sample`（WPF 等も同階層） | net48 | **あり（構成上必須）** |
+| 3層リッチクライアント（同上・**実用性なし** ※） | `Samples4NetCore\Legacy\WS_sample\WSClient_sample\...` | .NET 10.0 | あり（構成上必須） |
+| バッチ / コンソール | `Samples\Bat_sample` / `Samples4NetCore\Legacy\Bat_sample` | net48 / .NET 10.0 | 未確認 |
+| CLI | `Samples4NetCore\Legacy\CLI_sample` | .NET 10.0 | 未確認 |
+
+**「WS/3層依存あり」のサンプルは、取り出した直後は `CS0246` が残る**（他サンプル `WS_sample` の
+ビルド出力＝`WSIFType_sample` / `WSServer_sample` に依存。**依存元のソースはリポジトリに実在**する）。
+**確定該当は2系統**（実ソースで確認）：
+- **`WebForms_Sample`** — Web だが WS をインプロセス利用（2層化 (B) も選べる）。
+- **`WS_sample\WSClient_sample` 一式**（`WSClientWin_sample` / `WSClientWPF_sample` ほか。core は
+  `Samples4NetCore\Legacy\WS_sample\WSClient_sample\`）— **3層リッチクライアントで、WS/3層依存は構成上必須**。
+  これは「3層で使う」前提なので **(A)（`WSServer_sample` / `WSIFType_sample` も取り出してビルド）が本筋**（(B) 2層化は非該当）。
+  **※ .NET Core 版（`Samples4NetCore\Legacy\...`）は実用性が無い**：`BinaryFormatter`（バイナリシリアライズ）が
+  廃止され、**実質インプロセス呼び出ししか動かず、本当の WS 越しの3層にならない**。3層リッチクライアントを
+  実用するなら **net48 側**を使う（作者情報 → §4.4 相当）。
+
+表で「未確認」の行は、同様の依存があり得る前提で臨む。解消は用途で2通り：
+**(A) 3層維持＝依存元サンプルも取り出す**／**(B) 2層化＝`opentouryo-project-transform`**
+（詳細は下記「3層（WCF/WS）サンプルの扱い」）。**到達点は「ソリューションが開ける状態」**で、
+as-is のクリーンビルドは保証しない。
+
+**サンプル固有の癖は `samples/<サンプル>.md` に集約する**（取り出し前に確認する）。現状 `samples/webforms.md`
+（Web Forms の WS/3層依存・config 二段構成）。他サンプルは実測次第で追加する。
 
 **WPF は P層フレームワークを持たない**（`opentouryo-layer-p-winforms-screen` 参照）。
 `2CS_sample\2CSClientWPF_sample` を参考に、画面は素の WPF として実装する。
@@ -61,23 +82,21 @@ metadata:
 | 固定タグ | 例 `03-20` | **安定運用**（`3_BuildLibsAtOtherRepos.bat` 相当） |
 | develop | `develop` | 最新追従（`...InTimeOfDev.bat` 相当） |
 
-選んだ `<ref>` を③のスクリプト生成に渡す。
+選んだ `<ref>` を③（`opentouryo-project-setup-build`）に渡す。
 
-## ③ セットアップ スクリプトを生成して実行
+## ③ 基盤 DLL をビルドしてベンダする → `opentouryo-project-setup-build`
 
-**その場限りのコマンド羅列にせず、セットアップ スクリプトを1本生成して実行する**
-（再現・レビュー可能にする。生成物はリポジトリに残して再セットアップに使える）。3段構成：
+**このステップは独立スキル `opentouryo-project-setup-build` が担う。** ②で選んだ `<ref>` と、①で
+選んだサンプルの**標的ランタイム**（＋ `base2-overlay/` の有無）を渡して呼ぶ。3段構成：
 
 1. **ZIP 取得**（`git clone` ではない）— `<ref>` の archive を `Temp\OpenTouryo-<ref>\` へ展開
-2. **基盤ビルド** — 展開先の `root\programs\CS\` で `2_/3_Build_*_net48` と `..._netcore100` の**4バッチを順に実行**
+2. **基盤ビルド** — `root\programs\CS\` で `2_/3_Build_*` を**標的ランタイムのバッチだけ**実行
 3. **ベンダ** — 生成された `Build_net48\` / `Build_netcore100\` を `OpenTouryoAssemblies\` へコピー
 
-模範は MultiPurposeAuthSite の `3_BuildLibsAtOtherRepos.bat`（固定タグ）/ `...InTimeOfDev.bat`（develop）。
-
-> **実装の詳細は同梱の [`setup-script.md`](setup-script.md) を必ず参照して生成する。**
-> 正しいバッチ名、非対話実行の落とし穴（末尾 `pause` は `< nul` で塞ぐ・生成 `.bat` のコメントは
-> ASCII 限定・`call .\` を明示）、VS エディションによる msbuild 解決、ベンダ元パスの起点、
-> `base2-overlay/` の上書き手順をそこに集約している。**1回実行すれば DLL は再利用できる**。
+正しいバッチ名、非対話実行の落とし穴（`pause`・ASCII・`.\`・括弧・MSYS／PowerShell ラッパ推奨）、
+VS エディションによる msbuild 解決、ベンダ元パスの起点、`base2-overlay/` の上書きは、**すべて
+`opentouryo-project-setup-build` に集約**している。**1回実行すれば DLL は再利用できる**（タグ更新時の
+焼き直しにも同スキルを単独で使える）。
 
 ## ④⑤ サンプルの取り出しと参照の張り替え（このスキルの核心）
 
@@ -118,19 +137,25 @@ metadata:
 
 ### 3層（WCF/WS）サンプルの扱い
 
-一部サンプルは 3層構成で、**ZIP に含まれない他サンプルのビルド出力**（`WSServer_sample.dll` /
-`WSIFType_sample.dll` 等）や WCF エンドポイントに依存する。この場合、対象サンプル単体では
-as-is でビルドが通らないことがある。
+一部サンプルは 3層構成で、**他サンプルのビルド出力**（`WSServer_sample.dll` / `WSIFType_sample.dll` 等）
+や WCF エンドポイントに依存する。**無いのはその「ビルド出力」で、依存元サンプル（`WS_sample` 等）の
+ソースはリポジトリに実在する**。そのため対象サンプル単体では as-is でビルドが通らないことがあるが、
+解消は用途で2通り：**(A) 3層のまま通す**＝依存元サンプルも取り出して⑤と同じ要領で張り替えてビルドする
+（**取り出し・参照張り替えの範囲＝セットアップで完結**）／**(B) 2層で使う**＝WS 依存を切り離す
+（**後工程 `opentouryo-project-transform`**）。
 
-**不要な層の削減（2層化）や画面・参照の改変は、セットアップの範囲外**とする。セットアップの目的は
+**(A)/(B) の選択と、不要な層の削減・画面改変は、セットアップ中に判断を求めない。** セットアップの目的は
 サンプルを取り出し、参照・リソース・config を整えて**ソリューションを開ける状態にする**ところまで。
-どの層を残す／削るかは、利用者がソリューション全体を俯瞰したうえで**別途エージェントに依頼する
-後工程**に委ねる（セットアップ中に判断を求めない）。その後工程は `opentouryo-project-transform`。
+どちらに進めるかは、利用者がソリューション全体を俯瞰してから決めてよい。**サンプル別の具体手順は
+`samples/<サンプル>.md`**（Web Forms は `samples/webforms.md` に (A)/(B) 両方を記載）。
 
 ## ⑥ リソース（resource）の移設と config パスの張り替え
 
 **サンプルの config はリソースを絶対パス `C:\root\files\resource\...` で参照している。**
 そのままでは動かないので、移設して張り替える。
+
+**net48 Web Forms は config が二段構成**（パス系キーは `app.config`、接続文字列は `Web.config` 直下）。
+初見で迷いやすいので `samples/webforms.md` を参照。core はキーが `appsettings.json` に集約される。
 
 1. OpenTouryo の **`root/files/resource`** を導入リポジトリ**直下**へコピーする
    （＝リポジトリ直下に `resource\` ができる。中身は `Log` / `Sql` / `Xml` / `X509` / `Test`）。

@@ -38,7 +38,8 @@ src/
     opentouryo-project-policy/   プロジェクト方針（親クラス2 の挙動）の確認
     opentouryo-base2-customize/  親クラス2（基盤 Business 層）のカスタマイズ（纏め者向け）
     opentouryo-common-parts/     共通部品（ユーティリティ）を用途から探す
-    opentouryo-project-setup/    新規プロジェクトの立ち上げ（取得・ビルド・サンプルから構成）
+    opentouryo-project-setup/    新規プロジェクトの立ち上げ（入口。サンプル選択・取り出し・参照・config）
+    opentouryo-project-setup-build/ 基盤 DLL のビルドとベンダ（setup の ③。タグ更新の焼き直しにも単独で）
     opentouryo-project-transform/ セットアップ後の変形（2層化・サンプル整理・CS0246 解消）
 install/
   install.ps1                   対象リポジトリへのインストーラ

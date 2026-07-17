@@ -264,7 +264,8 @@ TODO
 | `opentouryo-project-policy` | 「このプロジェクトではどうなっているか」（親クラス2 の実装で決まる仕様）が分からないとき |
 | `opentouryo-base2-customize` | **纏め者が**親クラス2（基盤 Business 層 `Frameworks/Infrastructure/Business`）の共通処理をカスタマイズするとき（アプリ開発者は使わない） |
 | `opentouryo-common-parts` | ユーティリティ（文字列チェック・エンコード・ハッシュ・圧縮など）を自作する前に、既存の共通部品を探すとき |
-| `opentouryo-project-setup` | 新規プロジェクトをゼロから立ち上げるとき（OpenTouryo 取得・基盤ビルド・サンプルから構成） |
+| `opentouryo-project-setup` | 新規プロジェクトをゼロから立ち上げるとき（サンプル選択・取り出し・参照張り替え・config。入口） |
+| `opentouryo-project-setup-build` | 基盤（フレームワーク）DLL をローカルでビルドして `OpenTouryoAssemblies\` へベンダするとき（`project-setup` の ③。タグ更新時の焼き直しにも単独で使う） |
 | `opentouryo-project-transform` | セットアップ後、取り出したサンプルを用途へ合わせて変形するとき（不要な層の削減＝2層化・サンプル固有コードの整理・CS0246 の解消） |
 
 ## 参考資料
