@@ -60,15 +60,24 @@ Claude Code / GitHub Copilot / Cursor / Codex CLI / Gemini CLI など、標準�
 
 ## インストール
 
+このリポジトリを **git clone** し、**clone した場所からインストーラを実行する**。
+`install.ps1` は隣接する `src/`（`instructions` / `skills`）を読むため、**単体でコピーしても動かない**。
+導入先のアプリ リポジトリは `-TargetRoot` で指定する（既定はカレント ディレクトリ）。
+**Windows PowerShell 5.1 / PowerShell 7 のどちらでも動く。**
+
 ```powershell
-# Claude Code 向けに全スキルをインストール
+# ① このリポジトリを取得
+git clone https://github.com/OpenTouryoProject/OpenTouryoCodingAgentAssets.git
+cd OpenTouryoCodingAgentAssets
+
+# ② clone した場所から実行。導入先は -TargetRoot（Claude Code 向けに全スキル）
 ./install/install.ps1 -Product claude -TargetRoot C:\git\MyApp
 
 # 複数プロダクト・スキルを絞って
-./install/install.ps1 -Product claude,copilot -Skill opentouryo-layer-d
+./install/install.ps1 -Product claude,copilot -Skill opentouryo-layer-d -TargetRoot C:\git\MyApp
 
 # 実際には書き込まず、何が行われるか確認
-./install/install.ps1 -Product agents -WhatIf
+./install/install.ps1 -Product agents -WhatIf -TargetRoot C:\git\MyApp
 ```
 
 ### 配置先

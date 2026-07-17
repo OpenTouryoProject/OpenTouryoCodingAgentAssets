@@ -66,20 +66,27 @@ B（運用ルール）
 ### ① ソースを探す
 
 **バイナリ提供が原則だが、提供され方はプロジェクトによる。** まず探す。
+`opentouryo-project-setup` で構築したプロジェクトなら、置き場は同じレイアウトになる：
 
-```
-MyFcBaseLogic.cs / MyUserInfo.cs / MyBaseController.cs をリポジトリ内で検索する
-```
+| 見る場所 | 中身 |
+| --- | --- |
+| `base2-overlay/Frameworks/Infrastructure/Business/` | **このプロジェクトが実際に変えた親クラス2**（修正差分だけ・コミット済み。まず読む）。`opentouryo-base2-customize` |
+| `Temp/OpenTouryo-<ref>/root/programs/CS/Frameworks/Infrastructure/Business/` | 親クラス2 の**元ソース**（既定値の確認用）。`.gitignore` 対象で**ローカルにしか無い**（新規クローンには無い） |
+| `OpenTouryoAssemblies/Build_*/OpenTouryo.Business*.dll` | **ビルド済みバイナリ**（ソースではない。これしか読めなければ ③ へ） |
 
-アセンブリは `Touryo.Infrastructure.Business`、名前空間は `Touryo.Infrastructure.Business.*`。
-本家では `Frameworks/Infrastructure/Business/` に置かれているが、**配置はプロジェクトによる**
-ので、パスではなくファイル名で探す。
+**まず `base2-overlay/` を読む**（既定から何を変えたかが分かる）。そこに無い項目は既定のままなので、
+元ソース（Temp 側）で既定値を確認する。**Temp が無い（クローン直後など）なら、固定タグの本家ソースを
+見るか、③ で纏め者に聞く。**
 
-`.dll` しか無ければソースは提供されていない。→ ③ へ。
+上記レイアウトでないプロジェクトでは、ファイル名（`MyFcBaseLogic.cs` / `MyUserInfo.cs` /
+`MyBaseController.cs` 等）でリポジトリ内を検索する。アセンブリは `Touryo.Infrastructure.Business`、
+名前空間は `Touryo.Infrastructure.Business.*`（本家では `Frameworks/Infrastructure/Business/`）。
+
+`.dll` しか読めなければソースは提供されていない。→ ③ へ。
 
 ### ② 読む（確認地図）
 
-**ファイル名は本家の配置。** 見つけたファイルの中の「見どころ」を読む。
+**パスは ① で見つけた `Frameworks/Infrastructure/Business/` からの相対。** 見つけたファイルの中の「見どころ」を読む。
 
 | 確認したいこと | ファイル | 見どころ |
 | --- | --- | --- |

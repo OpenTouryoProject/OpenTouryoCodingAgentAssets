@@ -88,6 +88,11 @@ MultiPurposeAuthSite の `root/programs/3_BuildLibsAtOtherRepos.bat`（固定タ
    **.NET SDK**（core は `dotnet build`）。**このバッチ名（net48 / netcore100）が正**。
    本体の `99_BuildLibsAtOtherRepos*.bat` は陳腐化して `net45`〜`netcore30` を呼ぶので**参考にしない**。
 
+   **親クラス2 をカスタマイズしている場合**（リポジトリに `base2-overlay/` がある）は、
+   `3_Build_Business_*` の**前に**オーバーレイを展開ツリーへ上書きする
+   （`xcopy /Y /E base2-overlay\* <extract>\root\programs\CS\`）。この場合、取得元は**固定タグ**にする
+   （`opentouryo-base2-customize`）。カスタマイズが無ければ不要。
+
 3. **ベンダ** — 生成物を導入リポジトリへコピーする（`xcopy /Y /E`）。**コピー元の起点は
    展開先の `root\programs\CS\` 配下**（`Build_*` はここに生成される。起点を省くと存在しないパスになる）。
 
@@ -198,9 +203,10 @@ as-is でビルドが通らないことがある。
 ### `.gitignore` を置く
 
 リポジトリ直下に `.gitignore` を生成する。**まず作業ツリー `Temp/`（③の ZIP 展開・基盤ビルド）を除外する。**
-`Temp/` には**基盤ソース（`Frameworks/Infrastructure` ＝親クラス2 を含む）**が入るが、
-アプリ リポジトリはビルド済み DLL を参照するだけなので**取り込まない**のが正しい
-（親クラス2 のカスタマイズは纏め者が別ソース ツリーで管理する。`opentouryo-base2-customize`）。
+`Temp/` には**基盤ソース（`Frameworks/Infrastructure` ＝親クラス2 を含む）丸ごと**が入るが、
+アプリ リポジトリはビルド済み DLL を参照するだけなので**丸ごとは取り込まない**のが正しい。
+親クラス2 をカスタマイズする場合でも、**バージョン管理するのは修正差分だけ**
+（`base2-overlay/` は除外せずコミットする。`opentouryo-base2-customize`）。
 
 ```gitignore
 # OpenTouryo セットアップの作業ツリー（ZIP 展開・基盤ビルド。基盤ソース＝親クラス2 を含む）
@@ -214,9 +220,19 @@ packages/
 *.user
 ```
 
-- **`OpenTouryoAssemblies/`（ベンダした DLL）は除外しない**。これはリポジトリに含めて
-  再セットアップ無しでビルドできるようにする（NuGet に無い依存のベンダ）。
+- **`OpenTouryoAssemblies/`（ベンダした DLL）と `base2-overlay/`（親クラス2 の修正差分）は除外しない**。
+  リポジトリに含めて、再セットアップ無しでビルドでき、修正差分も追跡できるようにする。
 - 既存の `.gitignore` があれば追記（重複行は避ける）。サンプル同梱の `.gitignore` があれば統合する。
+
+## 完了後（任意）：構成変更へ進むか選ぶ
+
+セットアップが済んだら、**続けて構成変更（`opentouryo-project-transform`）を行うかをユーザに選ばせる**。
+早くフィードバックを得たいなら、セットアップ直後にその場で実行してよい（**任意**）。
+
+- 進む → `opentouryo-project-transform`（例：3層サンプルの2層化・サンプル固有コードの整理・`CS0246` 解消）
+- 後回し → 何もしない。利用者がソリューションを俯瞰してから別途依頼する
+
+**セットアップの途中に構成変更の判断を割り込ませない。** 選ばせるのは「ソリューションが開ける状態」に達した後。
 
 ## やってはいけないこと
 

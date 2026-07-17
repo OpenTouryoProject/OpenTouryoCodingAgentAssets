@@ -148,8 +148,8 @@ opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実
 opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
 opentouryo-richclient-async       実効145L tok~2031  完了（リッチクライアントの非同期呼び出し）
 opentouryo-common-parts           実効118L tok~2047  完了（用途→共通部品のインデックス）
-opentouryo-project-setup          実効210L tok~3973  完了（新規プロジェクトの立ち上げ。実測フィードバックで6件補正）
-opentouryo-project-transform      実効 64L tok~1195  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消）
+opentouryo-project-setup          実効252L tok~4796  完了（立ち上げ。実測FB6件補正＋.gitignore/オーバーレイ＋完了後の変形を任意選択。★上限に接近）
+opentouryo-project-transform      実効 70L tok~1310  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消。実行は任意・選択式）
 opentouryo-layer-b               実効292L tok~4134  完了
 opentouryo-layer-d             実効149L tok~2216  完了（Dao 3系統の使い分け・入口）
 opentouryo-dao-custom          実効151L tok~2015  完了
@@ -167,7 +167,7 @@ opentouryo-config              実効195L tok~2631  完了
 opentouryo-auth                実効309L tok~4953  完了 ★上限に貼り付いている
 opentouryo-oauth2-client       実効263L tok~2851  完了
 opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の挙動・運用ルールの確認手順＝読む側）
-opentouryo-base2-customize     実効 89L tok~2140  完了（親クラス2 のカスタマイズ＝纏め者向け・作る側）
+opentouryo-base2-customize     実効124L tok~2820  完了（親クラス2 のカスタマイズ＝纏め者向け・作る側。オーバーレイ+固定タグ）
 ```
 
 **全29スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
@@ -290,6 +290,9 @@ APIリファレンスで足りる）。
 | 3層サンプルの2層化はセットアップ範囲外（作者方針 2026-07-17） | WebForms_Sample は 3層構成で、ZIP に無い他サンプルのビルド出力（`WSServer_sample.dll` / `WSIFType_sample.dll`）に依存し、単体では as-is でビルドが通らないことがある。**当初スキルに「3層部分を削る」詳細手順を書いたが作者がオーバースペックと判断**：セットアップの役割は「取り出し・参照・リソース・config を整えてソリューションを開ける状態」まで。層の取捨・改変は利用者がソリューションを俯瞰して別途エージェントに依頼する後工程に委ね、セットアップ中に判断を求めない。スキルは短い「範囲外」注記に置換。**削る場合の実務知識（参考）**：2層画面 `sampleScreen_cc.aspx.cs` が `using WSIFType_sample;` で WS 側の型（`TestParameterValue` 等）を掴んでおり、同名クラスが同梱ソース（`AppCode\sample\Common\`、`using MyType;`）にもあるため `using MyType;` に差し替え。周辺（`3TierTableAdapter`・3層専用B層 `GetMasterData.cs`・menu のリンク）も除去。確実なのは WS 参照を外して `CS0246` を潰す手順 |
 | net48 config の綴りは実フォルダと不一致（同上・app.config で確認） | net48 サンプルの app.config は `resource\XML\...`（大文字）・`resource\test`（小文字）だが実フォルダは `Xml` / `Test`。Windows では顕在化しないが **Linux で core を動かすなら実フォルダ側に config を合わせる**。当初スキルの「net48 は Xml」は逆だったので是正 |
 | ベンダ元パスの起点（同上） | `Build_*` の生成場所は `<extract>\root\programs\CS\Frameworks\Infrastructure\`。スキルの xcopy 元は起点 `root\programs\CS\` を省いていたので明示 |
+| 親クラス2 の所在とビルド（作者提案でスキル化） | 親クラス2＝`Frameworks/Infrastructure/Business`（`My*` 群、`OpenTouryo.Business(.RichClient)`）。親クラス1 の `UOC_*` 共通フックを **override** して接続・例外・ライフサイクル・画面初期化を注入。ビルドは `3_Build_Business_*`（`2_Build_NuGet_*` の後）。`opentouryo-base2-customize`（纏め者向け・作る側）を新設、`project-policy`（読む側）と対 |
+| セットアップで `.gitignore` を生成（作者提案 2026-07-17） | `Temp/`（ZIP 展開・基盤ビルドの作業ツリー。丸ごとの基盤ソース＝親クラス2 を含む）を除外。標準 .NET 生成物（`bin/`/`obj/`/`packages/`/`.vs/`/`*.user`）も。`OpenTouryoAssemblies/`（ベンダ DLL）は**除外しない**（コミット） |
+| 親クラス2 修正のバージョン管理＝オーバーレイ＋固定タグ（作者決定 2026-07-17） | 丸ごとではなく**修正ファイルだけ**を元パス保持で `base2-overlay/` に置きコミット（アプリ リポジトリ同居）。ビルドは固定タグ展開ツリーへ `xcopy base2-overlay\* → <extract>\root\programs\CS\` してから `3_Build_Business_*`。DLL は「固定タグ＋オーバーレイ」で再現可能。`develop` 不可（土台が動く）。複数アプリ共有時のみ纏め者専用リポジトリ。`base2-customize` / `project-setup` に反映 |
 
 ### 4.4 作者から得た情報（コードからは読めない）
 

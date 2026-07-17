@@ -33,8 +33,8 @@ metadata:
 - ビルドは **`3_Build_Business_net48` / `3_Build_Business_netcore100`**
   （親クラス1 の `2_Build_NuGet_*` が先）。成果は `OpenTouryo.Business(.RichClient).dll`。
   これを導入プロジェクトが参照する（`opentouryo-project-setup` のベンダ）。
-- **作業コピーは Temp の残留物ではなく、纏め者が保守する OpenTouryo のソース ツリー**（フォーク/クローン）。
-  `project-setup` が Temp に展開するのはビルドの副産物で、そこを直接いじる場所ではない。
+- **カスタマイズは「修正ファイルだけ」をオーバーレイとしてバージョン管理する**（後述の「バージョン管理」）。
+  `project-setup` が Temp に展開する丸ごとのツリーはビルドの副産物で、そこを直接いじって放置する場所ではない。
 
 ### 層別マップ
 
@@ -65,12 +65,45 @@ metadata:
 
 ## 変更 → 反映のループ
 
-1. `Frameworks/Infrastructure/Business/` の対象 `My*` を直す（override 実装 / 定数 / メッセージ）。
-2. **`3_Build_Business_net48` / `3_Build_Business_netcore100`** でビルド
+1. 対象 `My*` を **`base2-overlay/`（バージョン管理された修正差分。後述）** で編集する
+   （override 実装 / 定数 / メッセージ）。
+2. ビルド スクリプトが**オーバーレイを固定タグの展開ツリーへ上書き**してから
+   **`3_Build_Business_net48` / `3_Build_Business_netcore100`** でビルドする
    （親クラス1 のビルド `2_Build_NuGet_*` が先に要る）。
 3. 生成された `OpenTouryo.Business(.RichClient).dll` を導入プロジェクトへ配布
    （`opentouryo-project-setup` のベンダ先 `OpenTouryoAssemblies\Build_*`）。
 4. 依存アプリを再ビルドして反映。**破壊的変更（シグネチャ・挙動）は全依存アプリに波及**する。
+
+## バージョン管理（オーバーレイ ＋ 固定タグ）
+
+親クラス2 のソースは丸ごと（約13,800行）を抱え込まず、**直したファイルだけ**を、
+元のパスを保った `base2-overlay/` に置いて Git 管理する（＝修正差分だけを残す）。
+
+```
+<repo>/
+  base2-overlay/                                    ← コミットする（修正だけ・小さい）
+    Frameworks/Infrastructure/Business/
+      Business/MyFcBaseLogic.cs
+      Util/MyLiteral.cs
+      Exceptions/MyBusinessApplicationExceptionMessage.cs
+  OpenTouryoAssemblies/Build_net48/...              ← ビルド済み DLL（コミット）
+  Temp/                                             ← .gitignore で除外（使い捨て）
+```
+
+- **取得元は固定タグに固定する**（`develop` は土台が動きオーバーレイの当たりがズレる。
+  `project-setup` ②で固定タグを選ぶ）。
+- ビルド スクリプトは `3_Build_Business_*` の**前に**オーバーレイを展開ツリーへ上書きする：
+
+  ```
+  xcopy /Y /E  base2-overlay\*  Temp\OpenTouryo-<tag>\root\programs\CS\
+  ```
+
+- こうすると DLL は **「固定タグ ＋ オーバーレイ」から再現可能**。リポジトリに残るのは修正差分だけ。
+- **置き場はアプリ リポジトリ同居**（`base2-overlay/` をコミット。`Temp/` は除外のまま、DLL はコミット）。
+  1リポジトリで完結する。**複数アプリで親クラス2 を共有する場合は、纏め者の専用リポジトリに
+  オーバーレイを置き、各アプリはビルド済み DLL だけ受け取る**（重複を避ける）。
+- タグを上げるときは、タグを差し替えてオーバーレイを再適用・再ビルドし、
+  upstream 側の変更と衝突した箇所（当たらなくなった差分）を直す。
 
 ## 規約・境界
 
@@ -83,8 +116,10 @@ metadata:
 
 ## やってはいけないこと
 
-- **アプリ側リポジトリに親クラス2 のソースを取り込んで各アプリで個別改造する** — 親クラス2 は
-  纏め者が一元管理し、DLL で配布する。アプリ側は参照するだけ（`opentouryo-project-setup`）
+- **親クラス2 のソースを丸ごと取り込んで、アプリを親クラス2 ソースから直接ビルドする（`ProjectReference` 化）**
+  — 親クラス2 は DLL に固めて参照する。バージョン管理するのは**修正差分（`base2-overlay/`）だけ**（上記）
+- **複数アプリで親クラス2 をそれぞれ勝手に分岐させる** — 共有するなら纏め者の専用リポジトリに一元化する
 - **親クラス1（`Framework` / `Public`）を直して辻褄合わせ** — バイナリ提供が前提。触らない
-- **Temp の展開物（`project-setup` の副産物）を直接編集する** — 作業コピーは保守用のソース ツリー
+- **Temp の展開物（`project-setup` の副産物）を直接編集して放置する** — 修正は `base2-overlay/` に残す
+  （展開ツリーへの適用はビルド スクリプトが行う）
 - **破壊的変更を告知なく入れる** — 依存アプリの再ビルドが要る。影響範囲を見てから
