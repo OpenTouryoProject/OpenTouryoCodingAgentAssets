@@ -111,7 +111,7 @@ Claude Code は**ブロックレベルの HTML コメントを読み込み時に
 | ツール | CLI 化 | 理由 |
 | --- | --- | --- |
 | `DPQuery_Tool`（動的クエリ分析ツール） | **しない** | エージェントは `.sql` / `.xml` を**直接書けて Dao 経由で実行・テストできる**。ツールの価値は「人が GUI で試験実行する」ことで、エージェントの作業フローとは前提が違う |
-| **D層自動生成ツール（墨壺）** | **する予定** | **ランタイムから実行できない処理**（DB スキーマの読み取り → Dao / DTO / SQL のコード生成）を含む。エージェントが直接できないので、CLI 化すれば呼べるようになる |
+| **D層自動生成ツール（墨壺）** | **する予定**（本体 Issue [#508](https://github.com/OpenTouryoProject/OpenTouryo/issues/508) 起票済み・2026-07-17） | **ランタイムから実行できない処理**（DB スキーマの読み取り → Dao / DTO / SQL のコード生成）を含む。エージェントが直接できないので、CLI 化すれば呼べるようになる |
 | データ・メンテナンス画面自動生成（ASP.NET） | **未検討・スコープ外** | doc0（Index）で存在を確認した既知の GUI ツール。墨壺同様「エージェントが直接できない生成処理」を含むので将来 CLI 化の候補ではあるが、画面生成は現状スコープ外。スキル化もしていない |
 
 **教訓：人間向け GUI ツールを機械的にエージェント向けへ移植しない。**
@@ -148,8 +148,9 @@ opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実
 opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
 opentouryo-richclient-async       実効145L tok~2031  完了（リッチクライアントの非同期呼び出し）
 opentouryo-common-parts           実効118L tok~2047  完了（用途→共通部品のインデックス）
-opentouryo-project-setup          実効252L tok~4796  完了（立ち上げ。実測FB6件補正＋.gitignore/オーバーレイ＋完了後の変形を任意選択。★上限に接近）
-opentouryo-project-transform      実効 70L tok~1310  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消。実行は任意・選択式）
+opentouryo-project-setup          実効226L tok~4300  完了（立ち上げ。実測FB＋実機検証3点[pause/ASCII/.\\]を反映。③のスクリプト詳細を setup-script.md へ分離＝本体は目安内に回復）
+                                  └ setup-script.md 67L tok~1100  ③のスクリプト実装リファレンス（on-demand で読む補助ファイル）
+opentouryo-project-transform      実効 79L tok~1400  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消。Web.config endpoint は触らないに是正。実行は任意・選択式）
 opentouryo-layer-b               実効292L tok~4134  完了
 opentouryo-layer-d             実効149L tok~2216  完了（Dao 3系統の使い分け・入口）
 opentouryo-dao-custom          実効151L tok~2015  完了
@@ -293,6 +294,10 @@ APIリファレンスで足りる）。
 | 親クラス2 の所在とビルド（作者提案でスキル化） | 親クラス2＝`Frameworks/Infrastructure/Business`（`My*` 群、`OpenTouryo.Business(.RichClient)`）。親クラス1 の `UOC_*` 共通フックを **override** して接続・例外・ライフサイクル・画面初期化を注入。ビルドは `3_Build_Business_*`（`2_Build_NuGet_*` の後）。`opentouryo-base2-customize`（纏め者向け・作る側）を新設、`project-policy`（読む側）と対 |
 | セットアップで `.gitignore` を生成（作者提案 2026-07-17） | `Temp/`（ZIP 展開・基盤ビルドの作業ツリー。丸ごとの基盤ソース＝親クラス2 を含む）を除外。標準 .NET 生成物（`bin/`/`obj/`/`packages/`/`.vs/`/`*.user`）も。`OpenTouryoAssemblies/`（ベンダ DLL）は**除外しない**（コミット） |
 | 親クラス2 修正のバージョン管理＝オーバーレイ＋固定タグ（作者決定 2026-07-17） | 丸ごとではなく**修正ファイルだけ**を元パス保持で `base2-overlay/` に置きコミット（アプリ リポジトリ同居）。ビルドは固定タグ展開ツリーへ `xcopy base2-overlay\* → <extract>\root\programs\CS\` してから `3_Build_Business_*`。DLL は「固定タグ＋オーバーレイ」で再現可能。`develop` 不可（土台が動く）。複数アプリ共有時のみ纏め者専用リポジトリ。`base2-customize` / `project-setup` に反映 |
+| 生成スクリプトが実環境で3回失敗（**実機検証 2026-07-18**：VS2026 / .NET SDK 10.0.302 / コンソール CP65001） | 基盤ビルド バッチを非対話で回すと3点で嵌る。①**末尾 `pause`** で入力待ち停止 → `< nul` で標準入力を塞ぐ。②生成 `.bat` の**全角コメント／`echo`** が UTF-8（`chcp 65001`）コンソールで破損し直後の `%変数%` 展開ごと壊れる → **ASCII 限定**。③`NoDefaultCurrentDirectoryInExePath=1` 環境で `.\` 無しの `call` が「認識されない」で失敗 → `call .\<bat>` と明示。模範 `3_BuildLibsAtOtherRepos.bat` にも注記が無く踏む。`project-setup` ③ に3点を追記 |
+| WebForms_Sample の `Web.config` endpoint は3層固有でない（**実機検証 2026-07-18**・作者へ B 報告） | 当初 `project-transform` の「削る」に `Web.config` endpoint を挙げたが誤り。`system.serviceModel` の endpoint は 3層サンプル（`WSServer_sample`）用ではなく**フレームワークの Transmission WCF 設定**（`IWCFHTTPSvcForFx` / `IWCFTCPSvcForFx`）と `IJSONService`。`WSServer_sample` は DLL 参照でインプロセス呼び出しされ専用 endpoint を持たない。消すと2層化に不要かつ実行時構成を壊しかねない → **「触らない」に是正**。transform の他項（`using WSIFType_sample;`→`using MyType;` の罠、3層画面・`3TierTableAdapter`・`GetMasterData.cs`・menu リンク除去）は実機と完全一致で正確だった |
+| VS エディションによる msbuild 解決は**利用側で対処**（**実機検証 2026-07-18**・作者判断） | 本体の `z_Common.bat` は **VS18 系で `18\Community` しか見ない**（VS2022 までは Community/Professional/Enterprise 網羅）。VS18 の BuildTools/Professional/Enterprise だけだと `BUILDFILEPATH` が空になり基盤ビルドが失敗する。当初 C として本体報告候補にしたが、**本体はエージェント/CI・新しい VS エディションでの非対話ビルドを想定して作られていない**ため本体の不具合ではなく**利用側（このセットアップ）で対処する前提**とする（作者判断）→ **Issue 化しない**。対処＝ビルド前に msbuild が解決できることを確認し、駄目なら Community 導入／msbuild のパス通し／`z_Common.bat` へ自環境パス補正。注記は `setup-script.md` の「VS のエディション・バージョンによる msbuild 解決」節へ |
+| 実機で追認できた既存指摘（**実機検証 2026-07-18**・D＝直さない確認） | 次はスキル記述どおりで正しかった：⑤3rd-party DLL 張り替え（`MySql.Data`/`Oracle.ManagedDataAccess` は NuGet 非復元でベンダ先へ）／⑥config 綴りの罠（`XML/test`→実体 `Xml/Test`）／⑥環境変数方式（`%OT_RESOURCE_ROOT%\...` を `ResourceLoader` が展開し IIS Express で解決）／⑦net48 は msbuild 前に `nuget restore <sln>` 必須・`nuget.exe` は ZIP の `root\programs\nuget.exe` 流用／「3層サンプルは as-is で通らないことがある・2層化は後工程」の切り分け。**変更不要** |
 
 ### 4.4 作者から得た情報（コードからは読めない）
 
@@ -356,6 +361,7 @@ APIリファレンスで足りる）。
 **下記のアクセスログの件は、作者確認で「移植漏れの可能性が高く、今後修正するかもしれない」
 との回答を得た（2026-07-17）。→ スキルには書かない方針で確定。** 修正待ちの本体課題であり、
 「Core はログが粗い」と書くと、修正後に陳腐化し、かつバグを仕様として教えることになる。
+**本体 Issue [#509](https://github.com/OpenTouryoProject/OpenTouryo/issues/509) を起票済み（2026-07-17）。**
 
 #### ASP.NET Core MVC のアクセスログ出力点が net48 より大幅に少ない
 
@@ -547,7 +553,8 @@ APIリファレンスで足りる）。
       作者から「現時点でスキル化する必要はない」と明示されている。連携する方針になったら別スキルへ
 - [ ] `opentouryo-oauth2-client`: 認可コードグラント以外のグラント
       （`ClientCredentialsGrantAsync` / PKCE / CIBA ほか。存在は本文に列挙済み）
-- [ ] **D層自動生成ツール（墨壺）の CLI 化待ち**（作者が CLI 化を予定。2.7 参照）。
+- [ ] **D層自動生成ツール（墨壺）の CLI 化待ち**（作者が CLI 化を予定。2.7 参照。
+      本体 Issue [#508](https://github.com/OpenTouryoProject/OpenTouryo/issues/508) 起票済み・2026-07-17）。
       CLI ができたら `opentouryo-dao-generated` に「生成の呼び出し方」を追記できる。
       現状スキルは「生成物の使い方」だけを扱う（生成そのものはツール前提）
 
@@ -557,7 +564,8 @@ APIリファレンスで足りる）。
 
 - [x] **Core MVC のアクセスログ出力点が net48 より少ないのは意図的か、移植漏れか**（4.5 参照）。
       **解決（2026-07-17）：作者回答「移植漏れの可能性が高く、今後修正するかもしれない」。**
-      → スキルには書かない（本体の修正待ち課題。仕様ではない）。この項目に残作業は無い
+      → スキルには書かない（本体の修正待ち課題。仕様ではない）。本体 Issue
+      [#509](https://github.com/OpenTouryoProject/OpenTouryo/issues/509) 起票済み。この項目に残作業は無い
 
 ---
 

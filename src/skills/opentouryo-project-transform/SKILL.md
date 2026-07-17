@@ -48,9 +48,14 @@ metadata:
 ### 削る
 
 - 3層画面：`Aspx\sample\3Tier\`、`Aspx\start\menu.aspx` の3層リンク
-- `Web.config` の endpoint 定義、`WSIFType_sample` / `WSServer_sample` 参照
+- `WSIFType_sample` / `WSServer_sample` 参照（3層画面を消したうえで）
 - 3層画面専用の周辺ソース：`AppCode\sample\3TierTableAdapter\ProductsTableAdapter.cs`、
   3層画面からのみ使う B層 `AppCode\sample\Business\GetMasterData.cs`
+
+> **`Web.config` の endpoint（`system.serviceModel`）は削らない。** このサンプルの endpoint は
+> 3層固有（`WSServer_sample`）ではなく、**フレームワークの Transmission WCF 設定**
+> （`IWCFHTTPSvcForFx` / `IWCFTCPSvcForFx`）と `IJSONService`。`WSServer_sample` は DLL 参照で
+> インプロセス呼び出しされ、専用 endpoint を持たない。消しても2層化に不要なうえ、実行時構成を壊しかねない。
 
 ### 直す（見落としやすい罠）
 

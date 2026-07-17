@@ -66,44 +66,18 @@ metadata:
 ## ③ セットアップ スクリプトを生成して実行
 
 **その場限りのコマンド羅列にせず、セットアップ スクリプトを1本生成して実行する**
-（再現・レビュー可能にする。生成物はリポジトリに残して再セットアップに使える）。模範は
-MultiPurposeAuthSite の `root/programs/3_BuildLibsAtOtherRepos.bat`（固定タグ）/
-`3_BuildLibsAtOtherReposInTimeOfDev.bat`（develop）。スクリプトの中身：
+（再現・レビュー可能にする。生成物はリポジトリに残して再セットアップに使える）。3段構成：
 
-1. **ZIP 取得**（`git clone` ではない）— PowerShell の `WebClient.DownloadFile()` で
-   `https://github.com/OpenTouryoProject/OpenTouryo/archive/<ref>.zip` を取得し、
-   **リポジトリ直下の作業ツリー `Temp\OpenTouryo-<ref>\`** に展開する
-   （この `Temp\` は基盤ソースを含むビルド用の作業場。⑦の `.gitignore` で除外する）。
+1. **ZIP 取得**（`git clone` ではない）— `<ref>` の archive を `Temp\OpenTouryo-<ref>\` へ展開
+2. **基盤ビルド** — 展開先の `root\programs\CS\` で `2_/3_Build_*_net48` と `..._netcore100` の**4バッチを順に実行**
+3. **ベンダ** — 生成された `Build_net48\` / `Build_netcore100\` を `OpenTouryoAssemblies\` へコピー
 
-2. **基盤ビルド** — 展開先の `...\root\programs\CS\` で、**4つのバッチを順に実行する**：
+模範は MultiPurposeAuthSite の `3_BuildLibsAtOtherRepos.bat`（固定タグ）/ `...InTimeOfDev.bat`（develop）。
 
-   ```
-   2_Build_NuGet_net48.bat
-   3_Build_Business_net48.bat
-   2_Build_NuGet_netcore100.bat
-   3_Build_Business_netcore100.bat
-   ```
-
-   前提ツール：**VS Build Tools**（net48 は非 SDK csproj で msbuild が要る）と
-   **.NET SDK**（core は `dotnet build`）。**このバッチ名（net48 / netcore100）が正**。
-   本体の `99_BuildLibsAtOtherRepos*.bat` は陳腐化して `net45`〜`netcore30` を呼ぶので**参考にしない**。
-
-   **親クラス2 をカスタマイズしている場合**（リポジトリに `base2-overlay/` がある）は、
-   `3_Build_Business_*` の**前に**オーバーレイを展開ツリーへ上書きする
-   （`xcopy /Y /E base2-overlay\* <extract>\root\programs\CS\`）。この場合、取得元は**固定タグ**にする
-   （`opentouryo-base2-customize`）。カスタマイズが無ければ不要。
-
-3. **ベンダ** — 生成物を導入リポジトリへコピーする（`xcopy /Y /E`）。**コピー元の起点は
-   展開先の `root\programs\CS\` 配下**（`Build_*` はここに生成される。起点を省くと存在しないパスになる）。
-
-   ```
-   <extract>\root\programs\CS\Frameworks\Infrastructure\Build_net48      → <repo>\OpenTouryoAssemblies\Build_net48\
-   <extract>\root\programs\CS\Frameworks\Infrastructure\Build_netcore100 → <repo>\OpenTouryoAssemblies\Build_netcore100\
-   ```
-
-   （`<extract>` は手順1の `Temp\OpenTouryo-<ref>`。）
-
-**1回実行すれば DLL は再利用できる**（毎回ビルドしない）。
+> **実装の詳細は同梱の [`setup-script.md`](setup-script.md) を必ず参照して生成する。**
+> 正しいバッチ名、非対話実行の落とし穴（末尾 `pause` は `< nul` で塞ぐ・生成 `.bat` のコメントは
+> ASCII 限定・`call .\` を明示）、VS エディションによる msbuild 解決、ベンダ元パスの起点、
+> `base2-overlay/` の上書き手順をそこに集約している。**1回実行すれば DLL は再利用できる**。
 
 ## ④⑤ サンプルの取り出しと参照の張り替え（このスキルの核心）
 
