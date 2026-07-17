@@ -3,7 +3,7 @@
 作業を再開するための記録。**アセットの内容ではなく、アセットを作る側の記録。**
 配布されるのは `src/` 配下のみで、このファイルは配布されない。
 
-最終更新: 2026-07-17（全26スキル。利用ガイド doc 0〜8・設定一覧まで確認し、整合性補正と
+最終更新: 2026-07-17（全27スキル。利用ガイド doc 0〜8・設定一覧まで確認し、整合性補正と
 新規スキル追加、ランタイム差（net48 / .NET 10.0）の反映を実施）
 
 ---
@@ -117,6 +117,18 @@ Claude Code は**ブロックレベルの HTML コメントを読み込み時に
 D層自動生成ツールの CLI ができたら、`opentouryo-dao-generated` から呼び出し方を案内できる
 （現状スキルは「生成物の使い方」を扱い、生成そのものはツール前提。§5 / §7 参照）。
 
+**この基準の実例：プロジェクトセットアップ（`opentouryo-project-setup`）。**
+新規立ち上げ（OpenTouryo を GitHub から ZIP 取得 → 基盤ビルド → サンプルを取り出し → 参照
+張り替え → リソース移設 → config 張り替え）は、**すべてエージェントが直接できる**
+（ダウンロード・ビルドバッチ実行・csproj/config 編集）。GUI に頼らず手順スキルとして実装した。
+Download→Build→ベンダは、その場のコマンド羅列にせず**セットアップ スクリプトを生成して実行**する
+（作者の指示。再現・レビュー可能にする。模範は MultiPurposeAuthSite の
+`3_BuildLibsAtOtherRepos.bat` / `...InTimeOfDev.bat`）。
+ビルドは4バッチ（`2_Build_NuGet_net48` → `3_Build_Business_net48` →
+`2_Build_NuGet_netcore100` → `3_Build_Business_netcore100`。`9_CICD.bat` は使わない）。
+基盤 DLL は導入リポジトリ内 `OpenTouryoAssemblies\Build_net48\` / `Build_netcore100\` にベンダし、
+`Reference Include="OpenTouryo.*"` の `HintPath` だけを張り替える（3rd-party は NuGet 復元に任せる）。
+
 ---
 
 ## 3. 成果物の現状
@@ -131,6 +143,7 @@ opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実
 opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
 opentouryo-richclient-async       実効145L tok~2031  完了（リッチクライアントの非同期呼び出し）
 opentouryo-common-parts           実効118L tok~2047  完了（用途→共通部品のインデックス）
+opentouryo-project-setup          実効171L tok~2839  完了（新規プロジェクトの立ち上げ）
 opentouryo-layer-b               実効292L tok~4134  完了
 opentouryo-layer-d             実効149L tok~2216  完了（Dao 3系統の使い分け・入口）
 opentouryo-dao-custom          実効151L tok~2015  完了
@@ -150,7 +163,7 @@ opentouryo-oauth2-client       実効263L tok~2851  完了
 opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の挙動・運用ルールの確認手順）
 ```
 
-**全26スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全27スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 計測は `scratchpad/measure.py` 相当のスクリプトで行う（見積り式：ASCII 1/4字 + 非ASCII 1/1.1字）。
 
@@ -159,8 +172,10 @@ opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の�
 独立させたのもこれが一因（2.5 参照）。
 
 相互リンクしている（B層 → D層 → クエリ定義、全層 → 例外、P層3種 → auth、
-auth → oauth2-client、など）。
-`AGENTS.md` は257行（実効201行 / 約3,220トークン）。目安200行をわずかに超えている。
+auth → oauth2-client、setup → config / project-policy、など）。
+`AGENTS.md` は実効216行（圧縮後）。横断事実（DBMS 差・名前空間・ランタイム差・セットアップ）の
+追記で一度229行まで膨らみ、冗長プロースを圧縮して戻した。目安200行はわずかに超えるが、
+残りは27スキルの一覧表と非推奨リファレンス表が中心で、これ以上は load-bearing な情報を削ることになる。
 
 **残るのは各スキル内の TODO（プロジェクト固有の値・未確認の論点）と AGENTS.md の TODO。**
 
@@ -585,7 +600,7 @@ skills-ref validate ./src/skills/opentouryo-layer-d
 
 ## 7. 次にやること
 
-**このリポジトリ側の作業は残っていない。** 全26スキル、`AGENTS.md`（アーキテクチャ節を含む）、
+**このリポジトリ側の作業は残っていない。** 全27スキル、`AGENTS.md`（アーキテクチャ節を含む）、
 インストーラまで書き終えた。利用ガイド（doc 0〜8・動的クエリ・D層自動生成・設定一覧）も
 一通り確認し、整合性の補正と新規スキル（dialog / p-call-business / richclient-async /
 common-parts / project-policy ほか）への反映を済ませた。

@@ -37,6 +37,7 @@ src/
     opentouryo-oauth2-client/    外部IdP連携（OAuth2 / OIDC クライアント）
     opentouryo-project-policy/   プロジェクト方針（親クラス2 の挙動）の確認
     opentouryo-common-parts/     共通部品（ユーティリティ）を用途から探す
+    opentouryo-project-setup/    新規プロジェクトの立ち上げ（取得・ビルド・サンプルから構成）
 install/
   install.ps1                   対象リポジトリへのインストーラ
 docs/
