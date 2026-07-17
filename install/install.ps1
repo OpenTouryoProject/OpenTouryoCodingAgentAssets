@@ -1,4 +1,4 @@
-#Requires -Version 7.0
+﻿#Requires -Version 5.1
 <#
 .SYNOPSIS
     OpenTouryo 用のコーディングエージェント・アセットを、対象リポジトリへインストールする。
@@ -118,7 +118,9 @@ function Write-AssetFile {
             New-Item -ItemType Directory -Path $dir -Force | Out-Null
         }
         # BOM なし UTF-8。エージェント・Git の双方で扱いやすい。
-        Set-Content -Path $Path -Value $Content -Encoding utf8NoBOM -NoNewline
+        # Windows PowerShell 5.1 では -Encoding utf8 が BOM 付きになるため、.NET で直接書く
+        # （utf8NoBOM は PowerShell 6+ 専用。5.1 でも動くようにこの方式を採る）。
+        [System.IO.File]::WriteAllText($Path, $Content, (New-Object System.Text.UTF8Encoding($false)))
         Write-Host "  書き込み: $Path"
     }
 }
@@ -145,7 +147,13 @@ function Install-Skills {
 # ---- 実行 ----
 
 if (-not (Test-Path $InstructionsSource)) {
-    throw "インストラクションの原本が見つかりません: $InstructionsSource"
+    throw @"
+アセットの原本が見つかりません: $InstructionsSource
+このインストーラはアセット・リポジトリ（OpenTouryoCodingAgentAssets）の install/ 内から実行してください。
+install.ps1 だけを他所へコピーしても、隣接する src/instructions・src/skills を読めないため動きません。
+導入先は -TargetRoot で指定します（既定はカレントディレクトリ）:
+  <アセット>\install\install.ps1 -Product claude -TargetRoot <導入先リポジトリ>
+"@
 }
 
 $TargetRoot = (Resolve-Path $TargetRoot).Path

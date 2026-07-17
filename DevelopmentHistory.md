@@ -3,8 +3,9 @@
 作業を再開するための記録。**アセットの内容ではなく、アセットを作る側の記録。**
 配布されるのは `src/` 配下のみで、このファイルは配布されない。
 
-最終更新: 2026-07-17（全27スキル。利用ガイド doc 0〜8・設定一覧まで確認し、整合性補正と
-新規スキル追加、ランタイム差（net48 / .NET 10.0）の反映を実施）
+最終更新: 2026-07-17（全28スキル。利用ガイド doc 0〜8・設定一覧まで確認し、整合性補正と
+新規スキル追加、ランタイム差（net48 / .NET 10.0）の反映を実施。project-setup を実測フィードバックで
+補正し、変形の後工程 project-transform を分離）
 
 ---
 
@@ -61,12 +62,16 @@ import する `CLAUDE.md` を生成する。Windows では symlink に管理者�
 
 ### 2.4 インストーラ
 
-`install/install.ps1`（PowerShell 7）。動作確認済み。
+`install/install.ps1`。**Windows PowerShell 5.1 / PowerShell 7 の両対応**。動作確認済み。
 
 - 生成マーカー `<!-- opentouryo-agent-assets:generated -->` を埋め込み、
   **利用者が自分で書いた既存ファイルは上書きしない**（`-Force` で上書き可）
 - 再実行は冪等
 - スキルは `src/skills/` を走査するので、**スキル追加時にインストーラの変更は不要**
+- **5.1 対応の要点**：①`#Requires -Version 5.1` ②生成物の書き込みは
+  `utf8NoBOM`（PS6+専用）を使わず `[IO.File]::WriteAllText` で BOM 無し UTF-8 出力
+  ③スクリプト自身を **UTF-8 with BOM で保存**（5.1 は BOM 無し .ps1 を ANSI=cp932 と
+  誤読し、日本語コメントでヒアストリング解析が壊れるため）
 
 ### 2.5 スキル分割の基準
 
@@ -143,7 +148,8 @@ opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実
 opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
 opentouryo-richclient-async       実効145L tok~2031  完了（リッチクライアントの非同期呼び出し）
 opentouryo-common-parts           実効118L tok~2047  完了（用途→共通部品のインデックス）
-opentouryo-project-setup          実効171L tok~2839  完了（新規プロジェクトの立ち上げ）
+opentouryo-project-setup          実効210L tok~3973  完了（新規プロジェクトの立ち上げ。実測フィードバックで6件補正）
+opentouryo-project-transform      実効 64L tok~1195  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消）
 opentouryo-layer-b               実効292L tok~4134  完了
 opentouryo-layer-d             実効149L tok~2216  完了（Dao 3系統の使い分け・入口）
 opentouryo-dao-custom          実効151L tok~2015  完了
@@ -163,7 +169,7 @@ opentouryo-oauth2-client       実効263L tok~2851  完了
 opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の挙動・運用ルールの確認手順）
 ```
 
-**全27スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全28スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 計測は `scratchpad/measure.py` 相当のスクリプトで行う（見積り式：ASCII 1/4字 + 非ASCII 1/1.1字）。
 
@@ -277,6 +283,12 @@ APIリファレンスで足りる）。
 | 親クラス2 の abstract 差 | **Web Forms の `MyBaseController` は `abstract`**（`UOC_FormInit` が実装必須）だが、**`MyBaseControllerWin` は具象**（空実装済みで override 任意） |
 | net48 MVC の認可 | **`web.config` の `<authorization>` と `[Authorize]` の二段構え**。属性だけではない（Web Forms の `<location>` に相当するのが属性） |
 | Core の必須構成 | `Startup` で `services._AddHttpContextAccessor()` / `app._UseHttpContextAccessor()` を呼ばないと `UserInfoHandle` が動かない（`MyHttpContext.Current.Session` に依存）。**忘れてもコンパイルは通る**。先頭の `_` は誤記ではない |
+| resource パスは環境変数方式（実測フィードバックで判明・`ResourceLoader` で確認） | **相対パス（`resource\...`）は不可。** `ResourceLoader.Exists` は設定値をフルパス前提で `File.Exists` に渡し、相対はプロセスのカレント基準＝IIS Express/w3wp ではアプリ外で 500。解決の直前に `StringVariableOperator.BuiltStringIntoEnvironmentVariable` が **`%環境変数%` を展開**するので、`%OT_RESOURCE_ROOT%\...`（リポジトリ直下 `resource\` を指すユーザ環境変数、セットアップ スクリプトで設定）に張り替える。可搬性も保てる。`project-setup` ⑥ を相対→環境変数方式に是正（作者承認 2026-07-17） |
+| ベンダ対象は `Build_*\` の DLL 全部（同上・csproj で確認） | **`OpenTouryo.*` だけではない。** net48 WebForms_Sample の `MySql.Data` / `Oracle.ManagedDataAccess` は `packages.config` に無く HintPath が他サンプルのビルド出力（`WS_sample\Build`）を指すため **NuGet 非復元**。基盤ビルド出力 `Build_net48\` に同梱（`OpenTouryo.DamMySQL` / `.DamManagedOdp` の依存）されるので、これらも `OpenTouryo.*` と同様にベンダ先へ張り替える。「触らない」のは NuGet 復元される 3rd-party だけ |
+| net48 は `nuget restore` が必須（同上・公式 `10_Build_WebApp_sample.bat` で確認） | `packages.config` 方式は **msbuild の前に `nuget restore <sln>`**（`msbuild /t:restore` では復元されない）。`nuget.exe` は ZIP 同梱の `root\programs\nuget.exe` を流用。`project-setup` ⑦ に追記 |
+| 3層サンプルの2層化はセットアップ範囲外（作者方針 2026-07-17） | WebForms_Sample は 3層構成で、ZIP に無い他サンプルのビルド出力（`WSServer_sample.dll` / `WSIFType_sample.dll`）に依存し、単体では as-is でビルドが通らないことがある。**当初スキルに「3層部分を削る」詳細手順を書いたが作者がオーバースペックと判断**：セットアップの役割は「取り出し・参照・リソース・config を整えてソリューションを開ける状態」まで。層の取捨・改変は利用者がソリューションを俯瞰して別途エージェントに依頼する後工程に委ね、セットアップ中に判断を求めない。スキルは短い「範囲外」注記に置換。**削る場合の実務知識（参考）**：2層画面 `sampleScreen_cc.aspx.cs` が `using WSIFType_sample;` で WS 側の型（`TestParameterValue` 等）を掴んでおり、同名クラスが同梱ソース（`AppCode\sample\Common\`、`using MyType;`）にもあるため `using MyType;` に差し替え。周辺（`3TierTableAdapter`・3層専用B層 `GetMasterData.cs`・menu のリンク）も除去。確実なのは WS 参照を外して `CS0246` を潰す手順 |
+| net48 config の綴りは実フォルダと不一致（同上・app.config で確認） | net48 サンプルの app.config は `resource\XML\...`（大文字）・`resource\test`（小文字）だが実フォルダは `Xml` / `Test`。Windows では顕在化しないが **Linux で core を動かすなら実フォルダ側に config を合わせる**。当初スキルの「net48 は Xml」は逆だったので是正 |
+| ベンダ元パスの起点（同上） | `Build_*` の生成場所は `<extract>\root\programs\CS\Frameworks\Infrastructure\`。スキルの xcopy 元は起点 `root\programs\CS\` を省いていたので明示 |
 
 ### 4.4 作者から得た情報（コードからは読めない）
 
@@ -600,7 +612,7 @@ skills-ref validate ./src/skills/opentouryo-layer-d
 
 ## 7. 次にやること
 
-**このリポジトリ側の作業は残っていない。** 全27スキル、`AGENTS.md`（アーキテクチャ節を含む）、
+**このリポジトリ側の作業は残っていない。** 全28スキル、`AGENTS.md`（アーキテクチャ節を含む）、
 インストーラまで書き終えた。利用ガイド（doc 0〜8・動的クエリ・D層自動生成・設定一覧）も
 一通り確認し、整合性の補正と新規スキル（dialog / p-call-business / richclient-async /
 common-parts / project-policy ほか）への反映を済ませた。

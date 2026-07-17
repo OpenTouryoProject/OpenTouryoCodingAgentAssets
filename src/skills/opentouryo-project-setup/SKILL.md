@@ -84,14 +84,18 @@ MultiPurposeAuthSite の `root/programs/3_BuildLibsAtOtherRepos.bat`（固定タ
    ```
 
    前提ツール：**VS Build Tools**（net48 は非 SDK csproj で msbuild が要る）と
-   **.NET SDK**（core は `dotnet build`）。
+   **.NET SDK**（core は `dotnet build`）。**このバッチ名（net48 / netcore100）が正**。
+   本体の `99_BuildLibsAtOtherRepos*.bat` は陳腐化して `net45`〜`netcore30` を呼ぶので**参考にしない**。
 
-3. **ベンダ** — 生成物を導入リポジトリへコピーする（`xcopy /Y /E`）。
+3. **ベンダ** — 生成物を導入リポジトリへコピーする（`xcopy /Y /E`）。**コピー元の起点は
+   展開先の `root\programs\CS\` 配下**（`Build_*` はここに生成される。起点を省くと存在しないパスになる）。
 
    ```
-   Frameworks\Infrastructure\Build_net48       → <repo>\OpenTouryoAssemblies\Build_net48\
-   Frameworks\Infrastructure\Build_netcore100  → <repo>\OpenTouryoAssemblies\Build_netcore100\
+   <extract>\root\programs\CS\Frameworks\Infrastructure\Build_net48      → <repo>\OpenTouryoAssemblies\Build_net48\
+   <extract>\root\programs\CS\Frameworks\Infrastructure\Build_netcore100 → <repo>\OpenTouryoAssemblies\Build_netcore100\
    ```
+
+   （`<extract>` は手順1の `Temp\OpenTouryo-<ref>`。）
 
 **1回実行すれば DLL は再利用できる**（毎回ビルドしない）。
 
@@ -124,15 +128,24 @@ MultiPurposeAuthSite の `root/programs/3_BuildLibsAtOtherRepos.bat`（固定タ
   `.CustomControl` / `.DamManagedOdp` ほか）。その `Reference` をそのまま使い、`HintPath` だけ直す。
 - 元の `Build_*` フォルダ名を維持してベンダするので、**DLL 名・net48/core の区別はそのまま**。
   張り替えは**パス接頭辞の変更だけ**で済む。
-- **`OpenTouryo.*` 以外（3rd-party）は触らない。** net48 は `packages.config`、
-  core は `PackageReference` で NuGet 復元される。
+- **張り替える対象は「ベンダ先 `Build_*\` に含まれる DLL すべて」**（`OpenTouryo.*` だけとは限らない）。
+  例：net48 サンプルの `MySql.Data` / `Oracle.ManagedDataAccess` は **`packages.config` に無く**、
+  HintPath が他サンプルのビルド出力（`..\..\..\WS_sample\Build\...`）を指すため **NuGet では復元されない**。
+  これらは基盤のビルド出力 `Build_net48\` に同梱される（`OpenTouryo.DamMySQL` / `.DamManagedOdp` が依存）ので、
+  `OpenTouryo.*` と同様にベンダ先へ張り替える。
+- **触らないのは NuGet 復元される 3rd-party だけ**（net48＝`packages.config`、core＝`PackageReference`）。
 - 相対パス（`..\` の数）はプロジェクトの配置に合わせる。
 
-### 3層（WCF/WS）サンプルの注意
+### 3層（WCF/WS）サンプルの扱い
 
-一部サンプルは 3層構成で、他サンプルの DLL（`WSServer_sample.dll` 等）や WCF エンドポイントを
-参照する。**2層で使うなら、3層部分（`_3Tier` 画面・`Web.config` の endpoint 定義・他サンプル
-参照）を削る。**
+一部サンプルは 3層構成で、**ZIP に含まれない他サンプルのビルド出力**（`WSServer_sample.dll` /
+`WSIFType_sample.dll` 等）や WCF エンドポイントに依存する。この場合、対象サンプル単体では
+as-is でビルドが通らないことがある。
+
+**不要な層の削減（2層化）や画面・参照の改変は、セットアップの範囲外**とする。セットアップの目的は
+サンプルを取り出し、参照・リソース・config を整えて**ソリューションを開ける状態にする**ところまで。
+どの層を残す／削るかは、利用者がソリューション全体を俯瞰したうえで**別途エージェントに依頼する
+後工程**に委ねる（セットアップ中に判断を求めない）。その後工程は `opentouryo-project-transform`。
 
 ## ⑥ リソース（resource）の移設と config パスの張り替え
 
@@ -143,24 +156,42 @@ MultiPurposeAuthSite の `root/programs/3_BuildLibsAtOtherRepos.bat`（固定タ
    （＝リポジトリ直下に `resource\` ができる。中身は `Log` / `Sql` / `Xml` / `X509` / `Test`）。
    展開済み ZIP から取り出す。
 
-2. `app.config` / `appsettings.json` の**パス系キーをリポジトリ直下の `resource\` へ張り替える**
-   （絶対 `C:\root\files\resource\...` → リポジトリ相対 `resource\...`）。
+2. `app.config` / `appsettings.json` の**パス系キーを環境変数方式で張り替える**
+   （絶対 `C:\root\files\resource\...` → `%OT_RESOURCE_ROOT%\...`）。
+
+   **相対パス（`resource\...`）は使わない。** フレームワークは設定値を**フルパス前提**で
+   ファイル API（`File.Exists` 等）に渡すため、相対パスは**実行プロセスのカレント ディレクトリ基準**で
+   解決される。IIS Express / w3wp のカレントはアプリ フォルダではないので、相対パスは原理的に解決できない
+   （`ResourceLoader.Exists` → `System.ArgumentException: リソースファイル…は見つかりませんでした` で 500）。
+
+   代わりに、`ResourceLoader` がパス解決の直前に展開する **`%環境変数%`** を使う
+   （`StringVariableOperator.BuiltStringIntoEnvironmentVariable`）。マシン固有の絶対パスを config に
+   残さずに済み、可搬になる。SQL 定義（`MyBaseDao.SetSqlByFile2` → `ResourceLoader`）も同じ経路で効く。
 
    | キー | 参照先 |
    | --- | --- |
-   | `FxLog4NetConfFile` | `resource\Log\SampleLogConf.xml` |
-   | `FxXMLSPDefinition` / `FxXMLMSGDefinition` / `FxXMLSCDefinition` / `FxXMLTCDefinition` / `FxXMLTMProtocolDefinition` / `FxXMLTMInProcessDefinition` | `resource\Xml\*.xml`（XML 定義） |
-   | `SqlTextFilePath` | `resource\Sql`（SQL 定義フォルダ） |
-   | `SpRp_RsaCerFilePath` | `resource\X509\*.cer`（OAuth2 用証明書） |
+   | `FxLog4NetConfFile` | `%OT_RESOURCE_ROOT%\Log\SampleLogConf.xml` |
+   | `FxXMLSPDefinition` / `FxXMLMSGDefinition` / `FxXMLSCDefinition` / `FxXMLTCDefinition` / `FxXMLTMProtocolDefinition` / `FxXMLTMInProcessDefinition` | `%OT_RESOURCE_ROOT%\Xml\*.xml`（XML 定義） |
+   | `SqlTextFilePath` | `%OT_RESOURCE_ROOT%\Sql`（SQL 定義フォルダ） |
+   | `SpRp_RsaCerFilePath` | `%OT_RESOURCE_ROOT%\X509\*.cer`（OAuth2 用証明書） |
 
-3. **注意：net48 は `resource\Xml`、core は `resource/XML` と大文字小文字が違う。**
-   Windows では問題ないが Linux で core を動かすと効く。**既存 config の綴りに合わせる。**
+   **`OT_RESOURCE_ROOT` はリポジトリ直下の `resource\` を指す環境変数**（変数名は任意。この例に統一）。
+   **セットアップ スクリプトで設定する**（ユーザ環境変数 `OT_RESOURCE_ROOT = <repo>\resource`）と、
+   クローンし直しても再実行で張り直せる。設定後は IIS Express / プロセスの再起動で反映する。
+
+3. **注意：config の綴りは実フォルダと一致していないことがある。** net48 サンプルの app.config は
+   `resource\XML\...`（大文字）・`resource\test`（小文字）だが、実フォルダは `Xml` / `Test`。
+   Windows は大文字小文字を区別しないので顕在化しないが、**Linux で core を動かすなら実フォルダの
+   綴り（`Xml` / `Test` 等）に config を合わせて直す**（フォルダを config に合わせるのではない）。
 
 ## ⑦ 残りの構成と検証
 
 - 接続文字列（`ConnectionString_SQL` ほか。DBMS 選択は `actionType` の先頭。
   `opentouryo-config` / `opentouryo-p-call-business`）
 - **core は `GetConfigParameter.InitConfiguration()` が必須**（`opentouryo-config`）
+- **net48（`packages.config`）は msbuild の前に `nuget restore <sln>` が必須**
+  （`msbuild /t:restore` では復元されない）。`nuget.exe` は取得した ZIP の
+  `root\programs\nuget.exe` を流用できる。core は `dotnet restore`（`dotnet build` に含まれる）。
 - ビルドが通り、実行できることを確認する（net48＝msbuild／core＝`dotnet build`）
 
 ## やってはいけないこと
@@ -169,7 +200,10 @@ MultiPurposeAuthSite の `root/programs/3_BuildLibsAtOtherRepos.bat`（固定タ
 - **3rd-party の `PackageReference` / `packages.config` まで張り替える** — NuGet 復元に任せる
 - **基盤（`Frameworks/Infrastructure/*`）を導入リポジトリに取り込んで改造する** — 纏め者の領分
   （`opentouryo-project-policy`）。導入プロジェクトはビルド済み DLL を参照するだけ
-- **config のパスを `C:\root\files\...` の絶対パスのまま残す** — 移設して相対パスに張り替える
+- **マシン固有の絶対パス（`C:\root\files\...` や `D:\git\MyApp\resource\...`）を config に直書きする**
+  — 環境変数方式（`%OT_RESOURCE_ROOT%\...`）にする。可搬性が失われ、クローンごとに壊れる
+- **resource のパスを相対（`resource\...`）にする** — カレント ディレクトリ基準で解決され、
+  IIS Express / w3wp では届かず実行時 500。環境変数方式にする（⑥）
 - **Download→Build→ベンダをアドホックなコマンド羅列で済ませる** — スクリプト化して残す
 - **net48 サンプルを .NET 10.0 で、または Web Forms を core で使おうとする** — ランタイム対象外
 - **`LayerB.cs` / `LayerD.cs` を別 DLL 化しようとする** — サンプルは同梱ソースが前提

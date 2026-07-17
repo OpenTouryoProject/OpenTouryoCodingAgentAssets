@@ -38,6 +38,7 @@ src/
     opentouryo-project-policy/   プロジェクト方針（親クラス2 の挙動）の確認
     opentouryo-common-parts/     共通部品（ユーティリティ）を用途から探す
     opentouryo-project-setup/    新規プロジェクトの立ち上げ（取得・ビルド・サンプルから構成）
+    opentouryo-project-transform/ セットアップ後の変形（2層化・サンプル整理・CS0246 解消）
 install/
   install.ps1                   対象リポジトリへのインストーラ
 docs/
