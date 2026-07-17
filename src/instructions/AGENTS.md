@@ -262,6 +262,7 @@ TODO
 | `opentouryo-auth` | 認証・ユーザ情報を扱うとき |
 | `opentouryo-oauth2-client` | 外部 IdP と連携するとき（OAuth2 / OIDC のクライアント＝RP） |
 | `opentouryo-project-policy` | 「このプロジェクトではどうなっているか」（親クラス2 の実装で決まる仕様）が分からないとき |
+| `opentouryo-base2-customize` | **纏め者が**親クラス2（基盤 Business 層 `Frameworks/Infrastructure/Business`）の共通処理をカスタマイズするとき（アプリ開発者は使わない） |
 | `opentouryo-common-parts` | ユーティリティ（文字列チェック・エンコード・ハッシュ・圧縮など）を自作する前に、既存の共通部品を探すとき |
 | `opentouryo-project-setup` | 新規プロジェクトをゼロから立ち上げるとき（OpenTouryo 取得・基盤ビルド・サンプルから構成） |
 | `opentouryo-project-transform` | セットアップ後、取り出したサンプルを用途へ合わせて変形するとき（不要な層の削減＝2層化・サンプル固有コードの整理・CS0246 の解消） |

@@ -3,7 +3,7 @@
 作業を再開するための記録。**アセットの内容ではなく、アセットを作る側の記録。**
 配布されるのは `src/` 配下のみで、このファイルは配布されない。
 
-最終更新: 2026-07-17（全28スキル。利用ガイド doc 0〜8・設定一覧まで確認し、整合性補正と
+最終更新: 2026-07-17（全29スキル。利用ガイド doc 0〜8・設定一覧まで確認し、整合性補正と
 新規スキル追加、ランタイム差（net48 / .NET 10.0）の反映を実施。project-setup を実測フィードバックで
 補正し、変形の後工程 project-transform を分離）
 
@@ -166,10 +166,11 @@ opentouryo-logging             実効166L tok~2114  完了
 opentouryo-config              実効195L tok~2631  完了
 opentouryo-auth                実効309L tok~4953  完了 ★上限に貼り付いている
 opentouryo-oauth2-client       実効263L tok~2851  完了
-opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の挙動・運用ルールの確認手順）
+opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の挙動・運用ルールの確認手順＝読む側）
+opentouryo-base2-customize     実効 89L tok~2140  完了（親クラス2 のカスタマイズ＝纏め者向け・作る側）
 ```
 
-**全28スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全29スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 計測は `scratchpad/measure.py` 相当のスクリプトで行う（見積り式：ASCII 1/4字 + 非ASCII 1/1.1字）。
 
@@ -612,7 +613,7 @@ skills-ref validate ./src/skills/opentouryo-layer-d
 
 ## 7. 次にやること
 
-**このリポジトリ側の作業は残っていない。** 全28スキル、`AGENTS.md`（アーキテクチャ節を含む）、
+**このリポジトリ側の作業は残っていない。** 全29スキル、`AGENTS.md`（アーキテクチャ節を含む）、
 インストーラまで書き終えた。利用ガイド（doc 0〜8・動的クエリ・D層自動生成・設定一覧）も
 一通り確認し、整合性の補正と新規スキル（dialog / p-call-business / richclient-async /
 common-parts / project-policy ほか）への反映を済ませた。

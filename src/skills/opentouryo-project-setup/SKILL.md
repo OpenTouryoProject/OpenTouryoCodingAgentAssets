@@ -28,7 +28,7 @@ metadata:
 ④ 対象サンプルを新規リポジトリへ取り出す
 ⑤ .csproj の OpenTouryo.* 参照（HintPath）を OpenTouryoAssemblies\ へ張り替える
 ⑥ root/files/resource をリポジトリ直下へコピーし、config のパスを張り替える
-⑦ 残りの構成（接続文字列等）を整えて、ビルド・実行で検証する
+⑦ .gitignore を置き、残りの構成（接続文字列等）を整えて、ビルド・実行で検証する
 ```
 
 **基盤（OpenTouryo フレームワーク）はバイナリ提供が前提。** ビルドした DLL を参照する
@@ -72,7 +72,8 @@ MultiPurposeAuthSite の `root/programs/3_BuildLibsAtOtherRepos.bat`（固定タ
 
 1. **ZIP 取得**（`git clone` ではない）— PowerShell の `WebClient.DownloadFile()` で
    `https://github.com/OpenTouryoProject/OpenTouryo/archive/<ref>.zip` を取得し、
-   `Temp\OpenTouryo-<ref>\` に展開する。
+   **リポジトリ直下の作業ツリー `Temp\OpenTouryo-<ref>\`** に展開する
+   （この `Temp\` は基盤ソースを含むビルド用の作業場。⑦の `.gitignore` で除外する）。
 
 2. **基盤ビルド** — 展開先の `...\root\programs\CS\` で、**4つのバッチを順に実行する**：
 
@@ -184,7 +185,7 @@ as-is でビルドが通らないことがある。
    Windows は大文字小文字を区別しないので顕在化しないが、**Linux で core を動かすなら実フォルダの
    綴り（`Xml` / `Test` 等）に config を合わせて直す**（フォルダを config に合わせるのではない）。
 
-## ⑦ 残りの構成と検証
+## ⑦ .gitignore・残りの構成と検証
 
 - 接続文字列（`ConnectionString_SQL` ほか。DBMS 選択は `actionType` の先頭。
   `opentouryo-config` / `opentouryo-p-call-business`）
@@ -194,12 +195,37 @@ as-is でビルドが通らないことがある。
   `root\programs\nuget.exe` を流用できる。core は `dotnet restore`（`dotnet build` に含まれる）。
 - ビルドが通り、実行できることを確認する（net48＝msbuild／core＝`dotnet build`）
 
+### `.gitignore` を置く
+
+リポジトリ直下に `.gitignore` を生成する。**まず作業ツリー `Temp/`（③の ZIP 展開・基盤ビルド）を除外する。**
+`Temp/` には**基盤ソース（`Frameworks/Infrastructure` ＝親クラス2 を含む）**が入るが、
+アプリ リポジトリはビルド済み DLL を参照するだけなので**取り込まない**のが正しい
+（親クラス2 のカスタマイズは纏め者が別ソース ツリーで管理する。`opentouryo-base2-customize`）。
+
+```gitignore
+# OpenTouryo セットアップの作業ツリー（ZIP 展開・基盤ビルド。基盤ソース＝親クラス2 を含む）
+Temp/
+
+# .NET ビルド生成物
+bin/
+obj/
+packages/
+.vs/
+*.user
+```
+
+- **`OpenTouryoAssemblies/`（ベンダした DLL）は除外しない**。これはリポジトリに含めて
+  再セットアップ無しでビルドできるようにする（NuGet に無い依存のベンダ）。
+- 既存の `.gitignore` があれば追記（重複行は避ける）。サンプル同梱の `.gitignore` があれば統合する。
+
 ## やってはいけないこと
 
 - **`OpenTouryo.*` を `ProjectReference` にする** — 基盤はバイナリ提供が前提。DLL 参照にする
 - **3rd-party の `PackageReference` / `packages.config` まで張り替える** — NuGet 復元に任せる
 - **基盤（`Frameworks/Infrastructure/*`）を導入リポジトリに取り込んで改造する** — 纏め者の領分
   （`opentouryo-project-policy`）。導入プロジェクトはビルド済み DLL を参照するだけ
+- **作業ツリー `Temp/`（基盤ソース＝親クラス2 を含む）をコミットする** — `.gitignore` で除外する（⑦）。
+  親クラス2 のカスタマイズは纏め者が別ソース ツリーで（`opentouryo-base2-customize`）
 - **マシン固有の絶対パス（`C:\root\files\...` や `D:\git\MyApp\resource\...`）を config に直書きする**
   — 環境変数方式（`%OT_RESOURCE_ROOT%\...`）にする。可搬性が失われ、クローンごとに壊れる
 - **resource のパスを相対（`resource\...`）にする** — カレント ディレクトリ基準で解決され、
