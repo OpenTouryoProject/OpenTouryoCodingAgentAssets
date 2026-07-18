@@ -40,6 +40,17 @@ metadata:
 （`opentouryo-common-parts` / `AGENTS.md` の「クラスの階層と修正可否」）。**親クラス2 をカスタマイズする**なら
 `opentouryo-base2-customize`（③のビルドに関わる）。
 
+## 既存プロジェクトへの追加・再実行（冪等性）
+
+このスキルは新規立ち上げが主眼だが、**既に構築済みの repo に別サンプルを追加**する再実行もある
+（例：WebForms がある repo に MVC を足す）。その場合：
+
+- **既存成果を上書きしない。** 取り出し済みサンプル・`resource\`・config・`OpenTouryoAssemblies\` を壊さないよう
+  追加分だけを対象にする。衝突しうるなら**ユーザに意図を確認**してから進める。
+- **同一ランタイムなら ③ 基盤ビルドは流用**（`OpenTouryoAssemblies\Build_net48\` 等を再利用。再ビルド不要）。
+  ③ を回すのはタグを変える／別ランタイムを足すときだけ（`opentouryo-project-setup-selection` で判断）。
+- ⑥ resource・⑦ `.gitignore` は既に整っていれば再張替不要（追加サンプル固有のキーだけ足す）。
+
 ## 完了後（任意）：構成変更へ進むか選ぶ
 
 セットアップ（①〜⑦）が済んだら、**続けて構成変更（`opentouryo-project-transform`）を行うかをユーザに選ばせる**。

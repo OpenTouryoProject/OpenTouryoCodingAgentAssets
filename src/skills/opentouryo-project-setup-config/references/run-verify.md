@@ -10,8 +10,13 @@
    `IISUrl=https://localhost:44371/`（SSL）で、証明書が無いと詰まる。`http` ポートを指定して起動する：
 
    ```
-   iisexpress.exe /path:"<repo>\WebForms_Sample" /port:8080 /clr:v4.0
+   iisexpress.exe /path:"<repo>\WebForms_Sample\WebForms_Sample" /port:8080 /clr:v4.0
    ```
+
+   **`/path` は Web ルート＝`Web.config` があるフォルダを指す**（実測で 1 階層ずれやすい）。WebForms サンプルは
+   `.sln` が外側 `WebForms_Sample\`、**`Web.config` は内側 `WebForms_Sample\WebForms_Sample\`** にある
+   （`build-app.ps1` の sln パス `…\WebForms_Sample\WebForms_Sample.sln` は外側＝別階層）。外側を `/path` にすると
+   `Web.config` の無い階層を配信して詰まる。
 
 2. **`OT_RESOURCE_ROOT` を iisexpress プロセスへ確実に渡す。** User スコープ環境変数は新規プロセスに
    継承されるが、`SetEnvironmentVariable(...,'User')` の直後は同一セッションにまだ載っていないことがある。
@@ -19,7 +24,7 @@
 
    ```powershell
    $env:OT_RESOURCE_ROOT = "<repo>\resource"
-   & $iisexpress /path:"<repo>\WebForms_Sample" /port:8080 /clr:v4.0
+   & $iisexpress /path:"<repo>\WebForms_Sample\WebForms_Sample" /port:8080 /clr:v4.0   # Web.config のある内側
    ```
 
 ## スモークテスト対象と判定

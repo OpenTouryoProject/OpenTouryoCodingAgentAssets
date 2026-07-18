@@ -17,6 +17,14 @@ HintPath が他サンプルのビルド出力（`..\..\..\WS_sample\Build\...`�
 `OpenTouryo.*` と同様にベンダ先へ張り替える。**触らないのは NuGet 復元される 3rd-party だけ**
 （net48＝`packages.config`、core＝`PackageReference`）。
 
+**⚠ `MySql.Data` / `Oracle.ManagedDataAccess` の「元」HintPath はサンプルで割れる**（実測。機械的な一括置換だと外す）：
+- **MVC(net48)**：`..\..\..\..\Frameworks\Infrastructure\Build\`（DamMySQL 等と同じ場所）
+- **WebForms**：`..\..\..\WS_sample\Build\`（3層構成で WS 側を指す。ただし同じ csproj 内でも `OpenTouryo.DamMySQL`
+  だけは `..\..\..\..\Frameworks\Infrastructure\Build\` と**別**）
+
+→ **`OpenTouryo.*` と DB DLL を一律の接頭辞で置換せず、各 `HintPath` の実際の「元」を見て**ベンダ先
+`..\OpenTouryoAssemblies\Build_net48\`（相対 `..\` はプロジェクト配置に合わせる）へ張り替える。
+
 ## net48 でも `PackageReference` を併用することがある（`packages.config` 無し≠復元不要）
 
 net48 は 3rd-party＝`packages.config` が典型だが、**非SDK net48 csproj が `PackageReference` を併用**している例がある

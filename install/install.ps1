@@ -105,7 +105,9 @@ function Write-AssetFile {
     )
 
     if (Test-Path $Path) {
-        $existing = Get-Content -Path $Path -Raw
+        # UTF-8 で読む（Windows PowerShell 5.1 の Get-Content 既定は ANSI で、
+        # UTF-8 の日本語を誤読して文字化けする。.NET は BOM 検出＋UTF-8 既定）。
+        $existing = [System.IO.File]::ReadAllText($Path)
         if ($existing -notlike "*$GeneratedMarker*" -and -not $Force) {
             Write-Warning "スキップ（既存ファイルを保護）: $Path`n  上書きするには -Force を指定してください。"
             return
@@ -158,7 +160,8 @@ install.ps1 だけを他所へコピーしても、隣接する src/instructions
 
 $TargetRoot = (Resolve-Path $TargetRoot).Path
 $skills = Resolve-Skills -Requested $Skill
-$instructionsBody = Get-Content -Path $InstructionsSource -Raw
+# UTF-8 で読む（PS 5.1 の Get-Content 既定 ANSI だと AGENTS.md の日本語が文字化けする）。
+$instructionsBody = [System.IO.File]::ReadAllText($InstructionsSource)
 
 Write-Host "インストール先: $TargetRoot"
 Write-Host "対象プロダクト: $($Product -join ', ')"

@@ -31,6 +31,29 @@ IIS Express / w3wp のカレントはアプリ フォルダではないので、
 **セットアップ スクリプトで設定する**（ユーザ環境変数 `OT_RESOURCE_ROOT = <repo>\resource`）と、
 クローンし直しても再実行で張り直せる。設定後は IIS Express / プロセスの再起動で反映する。
 
+## ★ ログ定義（`resource\Log\*.xml`）の中の出力先パスも張り替える（見落とし注意・実測）
+
+`FxLog4NetConfFile` で**ログ定義ファイルのパス**を `%OT_RESOURCE_ROOT%\...` にしても不十分。**ログ定義ファイルの
+中身**（例 `SampleLogConf.xml`）の各 appender が**絶対の出力先**を持つ：
+
+```xml
+<param name="File" value="C:\root\files\resource\Log\ACCESS" />   <!-- ACCESS / SQLTRACE / OPERATION 各 appender -->
+```
+
+**この `File` の値を張り替えないと、ログは旧 `C:\root\files\...` へ出続ける（または出力できない）。**
+
+**注意：ここに `%OT_RESOURCE_ROOT%` をそのまま書いても展開されない。** OpenTouryo が `%VAR%` を展開するのは
+**ログ定義ファイルの「パス」だけ**（`LogManager_log4net` はファイルを生ストリームで開いて `XmlConfigurator` に渡す＝
+中身は展開しない）。log4net も素の `<param name="File" value="%OT_RESOURCE_ROOT%\...">` は展開しない。
+→ **log4net の `PatternString` で環境変数を展開させる**（`<param name="File">` を型付き `<file>` に置き換える）：
+
+```xml
+<file type="log4net.Util.PatternString" value="%env{OT_RESOURCE_ROOT}\Log\ACCESS" />
+```
+
+`%env{OT_RESOURCE_ROOT}` が実行時に展開される（`OT_RESOURCE_ROOT` はプロセスへ渡す＝`run-verify.md`）。
+環境変数方式を使わず**移設先の絶対パスへ直接書き換える**のでも動くが、可搬性は失われる。
+
 ## 綴りの罠（`Xml` / `Test`）
 
 config の綴りは実フォルダと一致していないことがある。net48 サンプルの app.config は `resource\XML\...`（大文字）・
