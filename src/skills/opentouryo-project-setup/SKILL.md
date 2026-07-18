@@ -48,7 +48,10 @@ metadata:
 - **既存成果を上書きしない。** 取り出し済みサンプル・`resource\`・config・`OpenTouryoAssemblies\` を壊さないよう
   追加分だけを対象にする。衝突しうるなら**ユーザに意図を確認**してから進める。
 - **同一ランタイムなら ③ 基盤ビルドは流用**（`OpenTouryoAssemblies\Build_net48\` 等を再利用。再ビルド不要）。
-  ③ を回すのはタグを変える／別ランタイムを足すときだけ（`opentouryo-project-setup-selection` で判断）。
+  ③ を回すのはタグを変える／別ランタイムを足すときだけ（`opentouryo-project-setup-selection` で判断）。**別ランタイムを
+  足すなら、そのランタイムの `Build_netcore100\` 等だけをビルド**（既存 ZIP 展開を再 DL せず流用してよい）。
+- **同系列を別ランタイムで足すとフォルダ名が衝突する。** 例：net48 MVC が `MVC_Sample\` を占有済みで Core MVC も既定同名
+  → **別名（`MVC_Sample_Core\` 等）で取り出す**（`.sln`・参照の相対パスも合わせる）。
 - ⑥ resource・⑦ `.gitignore` は既に整っていれば再張替不要（追加サンプル固有のキーだけ足す）。
 
 ## 完了後（任意）：構成変更へ進むか選ぶ

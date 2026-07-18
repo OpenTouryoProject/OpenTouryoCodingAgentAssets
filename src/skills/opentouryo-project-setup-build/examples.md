@@ -100,6 +100,54 @@ if ((Test-Path $overlay) -and
 Get-ChildItem $vendor -Filter 'OpenTouryo.*.dll' | Select-Object -ExpandProperty Name
 ```
 
+## `setup-build-netcore.ps1`（.NET 10.0 基盤ビルド → ベンダ）
+
+net48 版と同型で、回すバッチが `*_netcore100` になる。**混在ランタイム repo（net48 は既にベンダ済みで
+.NET 10.0 だけ後から足す）では、既存の ZIP 展開ツリーを再 DL せず流用し、netcore のバッチだけ回す**。
+ベンダ先 `Build_netcore100\` は **TFM サブフォルダ（`net10.0\` と `net10.0-windows7.0\`）を両方含む**ので丸ごとコピーする。
+
+```powershell
+$ErrorActionPreference = 'Stop'
+$repo    = $PSScriptRoot
+$ref     = '03-20'                       # net48 と同じタグに揃える（ask the user; not a default）
+$work    = 'C:\otr'
+$extract = Join-Path $work "OpenTouryo-$ref"
+$cs      = Join-Path $extract 'root\programs\CS'
+$vendor  = Join-Path $repo 'OpenTouryoAssemblies\Build_netcore100'
+
+# --- 1. 既存 extract を流用（無ければ ZIP 取得）。net48 で展開済みなら再 DL しない ---
+if (-not (Test-Path $cs)) {
+    $zip = Join-Path $work "OpenTouryo-$ref.zip"
+    if (-not (Test-Path $zip)) {
+        (New-Object System.Net.WebClient).DownloadFile(
+            "https://github.com/OpenTouryoProject/OpenTouryo/archive/$ref.zip", $zip)
+    }
+    Expand-Archive -Path $zip -DestinationPath $work -Force
+}
+
+# --- 2. 基盤ビルド（.NET 10.0 のバッチだけ。SDK の dotnet build を使う）---
+Push-Location $cs
+try {
+    cmd /c ".\2_Build_NuGet_netcore100.bat    < nul"
+    if ($LASTEXITCODE -ne 0) { throw "2_Build_NuGet_netcore100 failed ($LASTEXITCODE)" }
+    cmd /c ".\3_Build_Business_netcore100.bat < nul"
+    if ($LASTEXITCODE -ne 0) { throw "3_Build_Business_netcore100 failed ($LASTEXITCODE)" }
+} finally { Pop-Location }
+
+# --- 3. ベンダ（net10.0\ と net10.0-windows7.0\ の両サブフォルダごと）---
+$src = Join-Path $cs 'Frameworks\Infrastructure\Build_netcore100'
+if (-not (Test-Path $src)) { throw "Build output not found: $src" }
+New-Item -ItemType Directory -Force -Path $vendor | Out-Null
+Copy-Item -Path (Join-Path $src '*') -Destination $vendor -Recurse -Force
+if (-not (Test-Path (Join-Path $vendor 'net10.0\OpenTouryo.Business.dll'))) {
+    throw "netcore base build did not produce net10.0\OpenTouryo.Business.dll (check output)."
+}
+```
+
+> **既知の警告（本体側）**：core サンプル（例 Core MVC）は `log4net 3.2.0` を `PackageReference` で参照するため、
+> ビルドで **`NU1902`（脆弱性・中）** が出ることがある。**ビルドは通る**。本体のバージョン更新待ちの既知事項なので、
+> セットアップ側で無理に差し替えない（差し替えると本体構成から乖離する）。
+
 ## `build-app.ps1`（WS ビルド＋`Build\` 配置 → restore → WebForms ビルド → ツール）
 
 ```powershell

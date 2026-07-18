@@ -7,7 +7,11 @@
 
 net48 サンプルの元 HintPath は `…\Frameworks\Infrastructure\Build\`（サフィックス無し）だが、
 ベンダ先は `…\OpenTouryoAssemblies\Build_net48\`。**単純な接頭辞置換ではなく、末尾フォルダ名も変わる**
-（`…\Build\` → `…\OpenTouryoAssemblies\Build_net48\`）。core は `…\Build_netcore100\net10.0\`。
+（`…\Build\` → `…\OpenTouryoAssemblies\Build_net48\`）。
+
+**core（`Build_netcore100\`）は TFM サブフォルダが2種類ある**（実測）：`net10.0\` と `net10.0-windows7.0\`。
+**Web / MVC / バッチ / CLI は `net10.0\`、WinForms / WPF（RichClient・2CS）は `net10.0-windows7.0\`** を参照する
+（サンプルの csproj の `TargetFramework` に対応）。ベンダ先も `…\Build_netcore100\<TFM>\` の該当サブフォルダを指す。
 
 ## 張り替え対象は「ベンダ先 `Build_*\` に含まれる DLL すべて」（`OpenTouryo.*` だけではない）
 

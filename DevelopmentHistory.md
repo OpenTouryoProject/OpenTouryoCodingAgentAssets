@@ -148,10 +148,10 @@ opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実
 opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
 opentouryo-richclient-async       実効145L tok~2031  完了（リッチクライアントの非同期呼び出し）
 opentouryo-common-parts           実効118L tok~2047  完了（用途→共通部品のインデックス）
-opentouryo-project-setup          実効 64L tok~1490  完了（**ファサード**。全体の流れ＝4スキルの呼び出し順のみ／完了後（→transform）・コミット促し／全工程共通の禁止事項。手順は下の4スキルへ委譲）
+opentouryo-project-setup          実効 78L tok~1896  完了（**ファサード**。全体の流れ＝4スキルの呼び出し順のみ／既存への追加・再実行〔冪等性：同ランタイムは③流用・別ランタイムは片方だけ・同系列別ランタイムはフォルダ名衝突→別名〕／完了後（→transform）・コミット促し／全工程共通の禁止事項）
 opentouryo-project-setup-selection 実効 73L tok~1785  完了（①②。起点サンプル選択〔全系列を必ず提示・間引かない〕＋取得元 <ref>〔固定タグ番号はユーザ確認・develop〕。WS依存列は csproj 確定値。次は build/core）
 opentouryo-project-setup-build    実効148L tok~3659  完了（③。ZIP取得→ランタイム別バッチ→ベンダ。footgun＋偽の成功＋MAX_PATH短ルート＋PowerShell 既定推奨。短ルート展開ツリーをワークスペース化〔コピーバック廃止〕。Nuget_RichClient は Framework.RichClient まで＝Business.RichClient は別 sln）
-                                  └ examples.md 162L         実機で通した as-built スクリプト2本（on-demand。setup-build.ps1 / build-app.ps1。雛形）。任意ブロック：setup-build に base2 overlay 適用〔Copy-Item・BOM 保持〕＋2CS の BusinessRichClient_net48.sln ビルド、build-app に開発支援ツール〔DaoGen/DPQuery〕ビルド〔PackageReference restore で Microsoft.Data.SqlClient 欠落を炙り出し〕
+                                  └ examples.md ~205L        実機で通した as-built スクリプト3本（on-demand。setup-build.ps1 / setup-build-netcore.ps1 / build-app.ps1。雛形）。netcore は既存 extract 流用・netcore バッチのみ・Build_netcore100 の TFM 両サブフォルダをベンダ・NU1902〔log4net 3.2.0〕は本体側既知警告。任意ブロック：setup-build に base2 overlay＋2CS の BusinessRichClient sln、build-app に DaoGen/DPQuery ビルド
 opentouryo-project-setup-core     実効 61L tok~1308  完了（④⑤＝核心。取り出し〔+開発支援ツール〕・HintPath 張替・3層/WS の CS0246 解消〔(A)残す/(B)切離し〕。references/samples を保持）
                                   ├ references/reference-rewrite.md 39L         ⑤の edge case（接頭辞だけでない・Build_* 全 DLL＝MySql/Oracle 非復元・MAX_PATH フラット化・net48 も PackageReference 併用時は restore）
                                   ├ samples/webservices.md 56L tok~1200  WS/3層の共通機構（サンプル横断で共有）：(A)そのまま残す/参照/Build\配置・(B)WS切り離し・core 実用不可・MAX_PATH
@@ -160,8 +160,7 @@ opentouryo-project-setup-core     実効 61L tok~1308  完了（④⑤＝核心�
                                   └ samples/dpquerytool.md ~45L         開発支援ツール DPQuery_Tool（動的クエリ試験＝PARAM タグ。取り出し/張替は daogentool.md と同じ）→ query-definition
 opentouryo-project-setup-config   実効 76L tok~1637  完了（⑥⑦。resource 移設・config パス張替〔%OT_RESOURCE_ROOT%〕・.gitignore・接続文字列/InitConfiguration/nuget restore/sessionState=StateServer・ビルド/実行検証。references を保持）
                                   ├ references/resource-config.md   46L tok~900  ⑥の詳細（相対不可＝ResourceLoader・%VAR%展開／FxContainerization と別・パスキー一覧・綴りの罠・config二段）
-                                  └ references/run-verify.md        ~30L         ⑦の実行確認（IIS Express：HTTP で SSL 回避・OT_RESOURCE_ROOT の渡し方・Ping/login スモーク・500＝resource/config 失敗）
-                                  └ examples.md 162L         実機で通した as-built スクリプト2本（on-demand。setup-build.ps1 / build-app.ps1。雛形）。任意ブロック：setup-build に base2 overlay 適用〔Copy-Item・BOM 保持〕＋2CS の BusinessRichClient_net48.sln ビルド、build-app に開発支援ツール〔DaoGen/DPQuery〕ビルド〔PackageReference restore で Microsoft.Data.SqlClient 欠落を炙り出し〕
+                                  └ references/run-verify.md        ~45L         ⑦の実行確認。net48＝IIS Express（HTTP で SSL 回避・`/path` は Web.config のある内側・OT_RESOURCE_ROOT の渡し方・Ping/login スモーク・500＝resource/config 失敗）／core＝Kestrel（dotnet run は launchSettings の applicationUrl 優先＝ASPNETCORE_URLS 無視。--urls/--launch-profile で固定）
 opentouryo-project-transform      実効106L tok~2100  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消。実機E2E反映：改行LF/非対話PSガード・2層化のDB DLL付替・test*マスタ警告・csproj剪定手法。実行は任意）
 opentouryo-layer-b               実効292L tok~4134  完了
 opentouryo-layer-d             実効149L tok~2216  完了（Dao 3系統の使い分け・入口）
@@ -361,6 +360,8 @@ APIリファレンスで足りる）。
 | selection フロー検証で判明した3件（作者報告・**2026-07-18**。いずれもスキル doc 側、本体は既知どおり） | **A（doc バグ）**：`run-verify.md` の IIS Express `/path` が Web ルートと1階層ずれ。ミラー確認：WebForms は `.sln` が外側 `WebForms_Sample\`、`Web.config` は内側 `WebForms_Sample\WebForms_Sample\`。→ `/path` を内側に修正＋「`/path`＝`Web.config` のある階層、sln パスとは別階層」を明記。**B（構成の穴）**：ファサードが新規前提で、既存 repo への**追加・再実行（冪等性）**の手当て無し。→ ファサードに「既存への追加・再実行」節（既存成果を上書きしない・同一ランタイムなら ③ 流用・⑥⑦ 再張替不要）、selection ② に「2本目が同ランタイムなら ③ スキップ可」。**C（reference-rewrite が WebForms 前提のみ）**：`MySql.Data`/`Oracle` の元 HintPath がサンプルで割れる（ミラー確認：MVC net48＝`..\..\..\..\Frameworks\Infrastructure\Build\`／WebForms＝`..\..\..\WS_sample\Build\`、しかも WebForms でも `DamMySQL` だけ Frameworks 側）。→ reference-rewrite.md に「元 HintPath はサンプルで割れる・一律接頭辞置換せず各 HintPath の実際の元を見る」を追記。**本体側の新規報告は無し**（MAX_PATH/MSB3553・VS18 msbuild 検出・DB 未起動の /Ping タイムアウトは既記載の既知事項） |
 
 | README のスキル一覧を用途・利用者順に3グループ化（作者要望・**2026-07-19**） | 層順のフラット一覧を**ライフサイクル／利用者**で再編：**①立ち上げ・構成**（初期設定＝立ち上げ担当/纏め者。project-setup 一式＋transform＋policy＋base2-customize の8）／**②各層のコード実装**（日常常用＝アプリ開発者。P/B/D＋Dao＋query-definition の14）／**③制御・定義／横断機能**（機能利用＝必要時参照。定義ファイル群＋exception/logging/config/auth/oauth2/common-parts の11）。全33件を欠落なく分類（`grep` で件数一致を確認）。README のみ変更（AGENTS.md のスキル選択表は据え置き） |
+
+| 再実行（.NET 10.0 / Core MVC 追加）で判明した core・混在ランタイム系5件（作者報告・**2026-07-19**。B〔冪等性〕は前回更新で解消済み） | **D**：`examples.md` に netcore100 の例が無く net48 専用だった → **`setup-build-netcore.ps1` 雛形を追加**（既存 ZIP 展開を再 DL せず流用・netcore バッチのみ・`Build_netcore100\` の TFM 両サブフォルダをベンダ）。混在ランタイム repo〔net48 済みで .NET10.0 だけ後追加〕に対応。**E**：`run-verify.md` が net48/IIS Express 専用 → **core＝Kestrel（`dotnet run`）節を追加**。`dotnet run` は **launchSettings.json の applicationUrl を優先**し `ASPNETCORE_URLS` を無視する〔実測：5080 指定でも 5219 起動〕→ `--urls`/`--launch-profile` で固定 or launchSettings のポートを使う。**F**：ファサード冪等性節に「**同系列を別ランタイムで足すとフラット化フォルダ名が衝突**〔net48 MVC が `MVC_Sample\` 占有・Core MVC も同名〕→ 別名 `MVC_Sample_Core\`」を追加。**minor**：`reference-rewrite.md` に「`Build_netcore100\` は **TFM サブフォルダ2種**〔`net10.0\`＝Web/MVC/Bat/CLI、`net10.0-windows7.0\`＝WinForms/WPF・2CS〕」を明記（ミラーの csproj TargetFramework で確認）。**G〔本体側〕**：Core MVC が **log4net 3.2.0** を参照し `NU1902`〔GHSA-4f7c-pmjv-c25w・中〕が出る（ビルドは通る）→ 本体のバージョン更新検討事項。スキルは examples.md に「既知警告・セットアップ側で差し替えない」と注記（net48 系では出ない core 固有） |
 
 ### 4.4 作者から得た情報（コードからは読めない）
 

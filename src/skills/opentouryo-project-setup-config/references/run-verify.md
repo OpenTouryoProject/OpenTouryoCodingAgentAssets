@@ -33,3 +33,19 @@
 - `Aspx/start/login.aspx` … **200** でログインフォームが描画されれば OK。
 - **500 が出たら resource パス／config 解決の失敗を疑う**（フレームワーク初期化で XML 定義・log4net を
   `%OT_RESOURCE_ROOT%` から読む＝ここが実行時検証の勘所。⑥ / `references/resource-config.md`）。
+
+## core（.NET 10.0）＝ Kestrel（`dotnet run`）
+
+core は IIS Express ではなく Kestrel。**`dotnet run` は `Properties\launchSettings.json` の `applicationUrl` を優先する**ため、
+`ASPNETCORE_URLS` を環境変数で与えても**無視される**ことがある（実測：`5080` を渡したが profile の `5219` で起動）。
+ポートを固定するには：
+
+- `dotnet run --urls http://localhost:5080`（または `--launch-profile <名>` でプロファイルを明示）
+- あるいは **launchSettings のポート（`http` プロファイルの `applicationUrl`）をそのまま使う**（そこに出るポートで開く）
+
+```powershell
+$env:OT_RESOURCE_ROOT = "<repo>\resource"   # dotnet run を起こすシェルで設定してから実行
+dotnet run --project "<repo>\MVC_Sample_Core\MVC_Sample" --urls http://localhost:5080
+```
+
+スモークは net48 と同様（未認証で 302→login、login 200、500＝resource/config 解決失敗）。**core は `InitConfiguration()` 必須**（⑦）。
