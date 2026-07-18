@@ -148,11 +148,13 @@ opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実
 opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
 opentouryo-richclient-async       実効145L tok~2031  完了（リッチクライアントの非同期呼び出し）
 opentouryo-common-parts           実効118L tok~2047  完了（用途→共通部品のインデックス）
-opentouryo-project-setup          実効225L tok~4802  完了（立ち上げ入口。①〜⑦。③は build へ委譲。⑤⑥ の詳細を references/ へ退避＝目安内。核心は inline。①表は全系列・WS依存列は csproj 確定値、別 repo〔ASPNETWebService/Frontend〕は対象外で表外）
+opentouryo-project-setup          実効231L tok~4882  完了（立ち上げ入口。①〜⑦。③は build へ委譲。⑤⑥ の詳細を references/ へ退避＝目安内。核心は inline。①表は全系列・WS依存列は csproj 確定値、別 repo〔ASPNETWebService/Frontend〕は対象外で表外。④で開発支援ツールも取り出し。整備状況の「残件」は執筆者メモ〈!-- --〉化）
                                   ├ references/reference-rewrite.md 26L tok~500  ⑤の edge case（接頭辞だけでない・Build_* 全 DLL＝MySql/Oracle 非復元・MAX_PATH フラット化）
                                   ├ references/resource-config.md   46L tok~900  ⑥の詳細（相対不可＝ResourceLoader・%VAR%展開／FxContainerization と別・パスキー一覧・綴りの罠・config二段）
-                                  ├ samples/webservices.md 56L tok~1200  WS/3層の共通機構（サンプル横断で共有）：(A)取り出し/参照/Build\配置・(B)2層化・core 実用不可・MAX_PATH
-                                  └ samples/webforms.md    38L tok~700   Web Forms 固有（cc 画面の CS0246・(B)画面差し替え・config二段・test*マスタ固有名）。共通は samples/webservices.md
+                                  ├ samples/webservices.md 56L tok~1200  WS/3層の共通機構（サンプル横断で共有）：(A)そのまま残す/参照/Build\配置・(B)WS切り離し・core 実用不可・MAX_PATH
+                                  ├ samples/webforms.md    38L tok~700   Web Forms 固有（cc 画面の CS0246・(B)画面差し替え・config二段・test*マスタ固有名）。共通は samples/webservices.md
+                                  ├ samples/daogentool.md  ~40L         開発支援ツール DaoGen_Tool（墨壺＝D層自動生成。Frameworks\Tools 配下・⑤同様に張替・net48 は packages.config 無で全 HintPath 対象）→ dao-generated
+                                  └ samples/dpquerytool.md ~40L         開発支援ツール DPQuery_Tool（動的クエリ試験＝PARAM タグ。取り出し/張替は daogentool.md と同じ）→ query-definition
 opentouryo-project-setup-build    実効126L tok~2700  完了（③を独立スキル化。ZIP取得→ランタイム別バッチ→ベンダ。footgun＋偽の成功＋MAX_PATH短ルート＋PowerShell 既定推奨）
                                   └ examples.md 109L tok~1400  実機で通した as-built スクリプト2本（on-demand。setup-build.ps1 / build-app.ps1。雛形）
 opentouryo-project-transform      実効106L tok~2100  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消。実機E2E反映：改行LF/非対話PSガード・2層化のDB DLL付替・test*マスタ警告・csproj剪定手法。実行は任意）
@@ -328,6 +330,12 @@ APIリファレンスで足りる）。
 | `ASPNETWebService`・`Frontend` は別リポジトリと判明→①表から除外、CLI は依存なし確定（作者フィードバック＋手修正・**2026-07-18**） | 前項で「ミラーが README のみのスタブ」と括っていた `Backend\ASPNETWebService`（Web サービス／リソースサーバ）と `Frontend`（SPA フロント）は、**ミラーの取り込み漏れではなく OpenTouryo 本体とは別のリポジトリ**だった：`ASPNETWebService`＝<https://github.com/OpenTouryoProject/ResourceServerTemplates>、`Frontend`＝<https://github.com/OpenTouryoProject/FrontendTemplates>。→ **作者の最終判断**：別リポジトリはそもそも「OpenTouryo から取り出すサンプル」ではないので **①表から完全に除外**（このスキルの ZIP フロー対象外。立ち上げは各 repo 側手順）。あわせて **`CLI_sample` は WS 依存なしを確定**（`なし`）。結果、**表に未検証行が無くなり `未確認 †` 区分は廃止**、凡例は `なし`／`あり` の2つ、「残件」は `samples/<name>.md` 未整備の1種類だけに単純化。メモリ `reference-csharp-source-mirror` にも「ミラーの穴＝別リポジトリ（URL）」を記録 |
 
 | (A)/(B) の呼称を層数ベース→WS 依存の有無ベースへ（作者フィードバック・**2026-07-18**） | 「(A) 3層のまま通す／(B) 2層で使う（2層化）」という**層数（2層/3層）ベースの呼称が混乱を招く**：core 版は通信制御（Transmission）を使っても `BinaryFormatter` 廃止で**インプロセスのみ＝実質2層**になり得るため、「WS を残す＝3層」が常に成り立たない。→ 判断軸を**WS 依存の有無**に統一し、**(A) そのまま残す／(B) WS 依存を切り離す**へ改称。反映先：`project-setup` SKILL.md（①凡例まわり・「3層サンプルの扱い」・完了後の transform 案内）、`samples/webservices.md`（(A)/(B) 見出し）、`samples/webforms.md`、`project-transform` SKILL.md（節見出し「WS 依存を切り離す」・本文の「2層化」表現・description。ただし `2層化`/`3層を削る` は検索語として description に温存、`3Tier` フォルダ名や `3層画面`・`2層画面` の実体名はそのまま） |
+
+| 短ルート ビルド時の「基盤ソース引き込み」が抜けた→念押し格上げ（作者フィードバック・**2026-07-18**） | 深いリポ回避で短い作業ルート（`C:\ot\`）でビルドした際、**親クラス2 カスタマイズ用の基盤ソース `root\programs\CS\Frameworks`（`Infrastructure`）をワークスペースへ引き込む手順をエージェントが実行しなかった**（使い捨てツリーにしか残らず base2 カスタマイズ不可）。原因：`setup-build` §1 で「例外」として柔らかく書いていただけで見落とされた。→ **`setup-build/SKILL.md` §1** に見出し付きの必須手順「★ 基盤ソースの引き込みを必ず行う」へ格上げ（`xcopy` 例＋**`<workspace>\...\Frameworks\Infrastructure\Business` の実在確認**、無ければ止めてやり直し）、**やってはいけないこと**にも「引き込まない」を追加。**`base2-customize/SKILL.md`** の該当バレットも「★ 最初に引き込む（省略しない）」の imperative へ強化（同じ `xcopy`＋実在確認）。両スキルを相互参照。サイズ：setup-build tok~3603・base2 tok~3185（目安内） |
+
+| ④ 取り出しに開発支援ツール（`Frameworks\Tools`）を追加＋ツール別ドキュメント新設（作者フィードバック・**2026-07-18**） | セットアップの ④取り出しは**サンプルだけ**を対象にしていたが、OpenTouryo は `Frameworks\Tools\` 配下（`Samples\` ではない）に GUI 開発支援ツールを同梱する。→ **④に「開発支援ツールも取り出す」を追加**：`DaoGen_Tool`（＝墨壺。D層自動生成＝`opentouryo-dao-generated`/`layer-d`）と `DPQuery_Tool`（動的クエリ試験＝`opentouryo-query-definition` の `PARAM` タグ）。両ツールもサンプルと同じ `Reference`+`HintPath` 方式で ⑤ と同じ張替。**実ミラーで確認した net48 の要注意点：`packages.config` が無く、3rd-party（`MySql.Data`/`Oracle.ManagedDataAccess`）含め全 HintPath が `..\..\Infrastructure\Build\` を指す＝全部ベンダ先へ張替**（core は `PackageReference`＋`Build_netcore100\net10.0\`）。WinExe/WinForms、net48（`*.csproj`）＋core（`*Core.csproj`＝`net10.0-windows7.0`）。→ **`samples/daogentool.md`・`samples/dpquerytool.md` を新設**（置き場所・ランタイム・張替手順・関連スキル・使い方の要点）。①「残件」の現存ファイル列挙も更新 |
+
+| 「残件」は本文でなく執筆者メモ（`<!-- -->`）にする（作者指摘・**2026-07-18**） | `project-setup` ① の「残件」（`samples/<name>.md` の整備状況＝ドキュメント TODO）が**可視の本文**に書かれていた。これはエージェントへの実行指示ではなく**執筆者向けのメタ情報**なので、`base2-customize`/`oauth2-client`/`project-transform` と同じく **`<!-- 執筆者メモ（Claude Code は読み込み時に除去）… -->`** へ移した。実行に効く一文（「専用 `.md` が無いサンプルも表＋`samples/webservices.md` で取り出せる」）だけ本文に残置。コメントは measure の実効（eff）・読み込みから除外＝予算に効かない（tok~4971→4882）。**方針**：スキル本文はエージェントが従う指示だけ、整備状況・将来 TODO・執筆意図は `<!-- -->` に置く（既存の慣行を横展開） |
 
 ### 4.4 作者から得た情報（コードからは読めない）
 

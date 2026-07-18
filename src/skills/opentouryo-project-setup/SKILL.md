@@ -67,9 +67,12 @@ metadata:
 **「WS/3層依存`なし`」 の行（2CS Win/WPF・Bat）はWS 参照無しを確認済み。
 故に **(A)・(B) 共に非該当**。到達点は「開ける状態」で as-is クリーンビルドは保証しない。
 
-**残件**：**サンプル固有メモ `samples/<サンプル>.md` は、検証したサンプルから順に整備する**。現状あるのは
-`samples/webforms.md` のみ。他サンプルは、この表＋`webservices.md` で起点として取り出せるが、**固有の癖が
-見つかれば `samples/<name>.md` を起こす**（＝ドキュメントの残件。中身が無い＝未整備）。
+**専用の `samples/<サンプル>.md` が無いサンプルも、この表＋`samples/webservices.md` で起点として取り出せる。**
+
+<!-- 執筆者メモ（Claude Code は読み込み時に除去）：`samples/<サンプル>.md` は検証したサンプルから順に整備する
+     残件。現状あるのは webforms.md（サンプル）／daogentool.md・dpquerytool.md（開発支援ツール）。
+     サンプル固有の癖が見つかったら samples/<name>.md を起こす。 -->
+
 
 **WPF は P層フレームワークを持たない**（`opentouryo-layer-p-winforms-screen` 参照）。
 `2CS_sample\2CSClientWPF_sample` を参考に、画面は素の WPF として実装する。
@@ -110,6 +113,12 @@ VS エディションによる msbuild 解決、ベンダ元パスの起点、`b
 
 対象サンプルのフォルダを新規リポジトリへコピーする。**`LayerB.cs` / `LayerD.cs` は
 サンプルに同梱されたソース**なので、それごと取り出す（B/D層は別 DLL ではない。開発の起点）。
+
+**開発支援ツールも一緒に取り出す。** OpenTouryo は `Frameworks\Tools\` 配下（`Samples\` ではない）に GUI ツールを
+同梱する。**取り出し対象に `DaoGen_Tool`（＝墨壺。D層自動生成）と `DPQuery_Tool`（動的クエリ試験）を含める**
+（DAO 自動生成・動的 SQL は OpenTouryo 開発の標準ワークフローで後から必要になる）。両ツールもサンプルと同じ
+`Reference`+`HintPath` 方式なので ⑤ と同じ要領で張り替える（net48 は `packages.config` 無し＝DB DLL 含め全 HintPath が
+対象。注意点あり）。詳細と手順は `samples/daogentool.md` / `samples/dpquerytool.md`。
 
 ### ⑤ 参照を張り替える
 

@@ -41,11 +41,27 @@ PowerShell の `WebClient.DownloadFile()` で
 → **深いリポでは短い作業ルート（例 `C:\ot\`）でビルドする**か、long path を有効化する。**ベンダ後の DLL だけが
 リポに入る**ので、作業ツリーの場所はリポジトリと無関係でよい（リポ直下に置くなら `Temp\` は ⑦ の `.gitignore` で除外）。
 
-**ただし親クラス2 をカスタマイズする場合（`base2-overlay/` がある）は例外**：短ルートで展開・ビルドすると
-**カスタマイズ対象の基盤ソース `root\programs\CS\Frameworks\Infrastructure`（特に `Business`）がワークスペース外の
-使い捨てツリーにしか無くなる**。オーバーレイの差分はこの基盤ソースから起こし・当てるので、**この
-`Frameworks\Infrastructure` だけはワークスペースにも展開しておく**（`base2-overlay/` は従来どおり差分のみコミット、
-基盤ソースは `.gitignore`。ビルド自体は短ルートで）。`opentouryo-base2-customize`。
+### ★ 親クラス2 をカスタマイズする場合は「基盤ソースの引き込み」を必ず行う（実測で抜けやすい）
+
+**親クラス2 をカスタマイズする（`base2-overlay/` がある、またはこれから作る）なら、短ルートでビルドしても
+`Frameworks\Infrastructure` をワークスペースへ引き込む手順を必ず実行する。** 短ルートで展開・ビルドしただけだと、
+**カスタマイズ対象の基盤ソース `root\programs\CS\Frameworks\Infrastructure`（特に `Business`）が使い捨ての作業ツリー
+（`C:\ot\...`）にしか無く、ワークスペースから見えない**（実測：この引き込みが実行されず抜けた）。オーバーレイの差分は
+この基盤ソースから起こし・当てるので、ワークスペースに無いと base2 カスタマイズが始められない。
+
+**必ず実行する（省略しない）**：ビルド用の展開・ビルドは短ルート（`C:\ot\`）で行いつつ、**基盤ソース
+`Frameworks\Infrastructure` だけはワークスペースの `root\programs\CS\Frameworks\Infrastructure` にも展開（コピー）する**。
+
+```
+# 例：短ルートでビルド後、基盤ソースをワークスペースへ引き込む（存在＝必須で確認）
+xcopy /Y /E "C:\ot\OpenTouryo-<ref>\root\programs\CS\Frameworks\Infrastructure" ^
+            "<workspace>\root\programs\CS\Frameworks\Infrastructure\"
+```
+
+- **確認**：引き込み後、`<workspace>\root\programs\CS\Frameworks\Infrastructure\Business` が存在することを確かめる。
+  無ければ base2 カスタマイズは不可能なので、ここで止めて引き込みからやり直す。
+- `base2-overlay/` は従来どおり**差分のみコミット**、引き込んだ基盤ソースは `.gitignore`（⑦）で除外。取得元 `<ref>` は
+  **固定タグ**にする（`develop` は土台が動いて再現性を失う）。ビルド自体は短ルートで可。詳細は `opentouryo-base2-customize`。
 
 ## 2. 基盤ビルド
 
@@ -129,3 +145,6 @@ Community/Professional/Enterprise を網羅）。VS18 の BuildTools/Professiona
 - **アドホックなコマンド羅列で済ませる** — スクリプト化してリポジトリに残す
 - **作業ツリー `Temp/`（基盤ソース＝親クラス2 を含む）をコミットする** — `.gitignore` で除外
 - **`base2-overlay` があるのに `develop` で焼く** — 固定タグにする（再現性）
+- **★ 親クラス2 をカスタマイズするのに、短ルートでビルドしただけで `Frameworks\Infrastructure` をワークスペースへ
+  引き込まない** — 基盤ソースが使い捨てツリーにしか残らず base2 カスタマイズ不可（実測で抜けた）。§1 の引き込みを必ず実行し、
+  `<workspace>\...\Frameworks\Infrastructure\Business` の実在で確認する

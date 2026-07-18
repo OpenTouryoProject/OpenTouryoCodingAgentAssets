@@ -100,10 +100,19 @@ metadata:
   xcopy /Y /E  base2-overlay\*  <extract>\root\programs\CS\
   ```
 
-- **カスタマイズ対象の基盤ソースはワークスペースにも置く。** 短い作業ルートで展開・ビルドすると、直す元の
-  `Frameworks/Infrastructure`（特に `Business`）が使い捨てツリーにしか残らない。オーバーレイの差分は
-  この基盤ソースから起こし・当てるので、**`Frameworks/Infrastructure` はワークスペースに展開しておく**
-  （`.gitignore`。コミットするのは差分＝`base2-overlay/` だけ。ビルド自体は短ルートで）。
+- **★ 最初に基盤ソースをワークスペースへ引き込む（省略しない・実測で抜けやすい）。** 短い作業ルートで
+  展開・ビルドすると、直す元の `Frameworks/Infrastructure`（特に `Business`）が使い捨てツリー（`C:\ot\...`）にしか
+  残らず、ワークスペースから見えない。オーバーレイの差分はこの基盤ソースから起こし・当てるので、**カスタマイズを
+  始める前に `Frameworks/Infrastructure` をワークスペースへ展開（コピー）する**：
+
+  ```
+  xcopy /Y /E "C:\ot\OpenTouryo-<ref>\root\programs\CS\Frameworks\Infrastructure" ^
+              "<workspace>\root\programs\CS\Frameworks\Infrastructure\"
+  ```
+
+  引き込み後、**`<workspace>\...\Frameworks\Infrastructure\Business` の実在を確認**してから直し始める（無ければ
+  カスタマイズ不可なので引き込みからやり直す）。`.gitignore` で除外し、コミットするのは差分＝`base2-overlay/` だけ。
+  ビルド自体は短ルートで可（`opentouryo-project-setup-build` §1 と対）。
 - こうすると DLL は **「固定タグ ＋ オーバーレイ」から再現可能**。リポジトリに残るのは修正差分だけ。
 - **置き場はアプリ リポジトリ同居**（`base2-overlay/` をコミット。`Temp/` は除外のまま、DLL はコミット）。
   1リポジトリで完結する。**複数アプリで親クラス2 を共有する場合は、纏め者の専用リポジトリに
