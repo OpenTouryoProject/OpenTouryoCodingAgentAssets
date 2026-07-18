@@ -25,3 +25,13 @@ net48 Web Forms は実効 config が `Web.config` だが、キーの所在が分
 
 パス系キーの張り替えは `app.config` を開く（`Web.config` を眺めても見つからない）。
 （.NET Core のサンプルはこの二段構成ではなく `appsettings.json` に集約される。）
+
+## サンプル整理：`test*` 一括削除は足場を壊す（固有名）
+
+不要なテスト画面を削るとき、**`test*` 接頭辞で機械的に消さない**（実測）。手順は `opentouryo-project-transform`
+「サンプル固有コードの整理」。このサンプルの固有名：
+
+- **残すマスタ＝`testBlankScreen.master`** — 名前は `test` でも**実マスタ**。`login` / `logout` / `menu` /
+  `ErrorScreen` / OAuth2 等が `MasterPageFile` に参照する足場。消すと残す画面が全滅する。
+- **CRUD 用マスタ＝`sampleScreen.master`**。
+- 削除前に、**残す画面の `MasterPageFile` を確認**してから消す。

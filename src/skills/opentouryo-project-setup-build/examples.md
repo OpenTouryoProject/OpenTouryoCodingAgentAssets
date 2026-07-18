@@ -20,7 +20,7 @@ WS の `bin\Debug` → `WS_sample\Build\` 配置）を織り込み済み。
 # OpenTouryoAssemblies\Build_net48. Idempotent; re-run to refresh a tag.
 $ErrorActionPreference = 'Stop'
 $repo    = $PSScriptRoot
-$ref     = '03-20'                       # fixed tag (stable operation)
+$ref     = '03-20'                       # fixed tag; set per project (ask the user which tag; not a default)
 # Base build runs from a SHORT root (C:\ot), not <repo>\Temp: the legacy
 # net48 Business build writes a very long generated .resources filename;
 # under a deep repo path the fully-qualified path exceeds MAX_PATH (MSB3553).

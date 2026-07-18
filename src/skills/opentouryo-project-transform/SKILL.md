@@ -38,6 +38,12 @@ metadata:
 - **段階的に**：一気に消さず、`削る → 再ビルド → CS0246（型・名前空間が見つからない）等を潰す` を繰り返す。
 - **基盤（`Frameworks/Infrastructure/*` / `OpenTouryo.*` DLL）には触らない**（`opentouryo-project-policy`）。
   変形の対象は**サンプル由来の業務コード側だけ**。
+- **複数行の一括置換前に改行コードを確認する**（実測）。サンプルの `.csproj` / `.config` は **LF**
+  （GitHub ZIP 由来）のことがあり、**CRLF 前提の複数行ブロック置換はマッチせず失敗する**（単一行は通るので
+  気付きにくい）。編集ツールの改行前提に合わせるか、LF のまま扱う。
+- **非対話 PowerShell では削除とテキスト置換を別コマンドに分ける**（実測）。`Remove-Item` と `/>` 等の
+  断片を含む文字列を同一コマンドに混ぜると、安全ガードが断片（例 `/>` + 改行）を「システムパス削除」と
+  誤検知してコマンド全体がブロックされることがある。
 
 ## 3層構成サンプルを2層で使う（2層化）
 
@@ -51,6 +57,12 @@ metadata:
 - `WSIFType_sample` / `WSServer_sample` 参照（3層画面を消したうえで）
 - 3層画面専用の周辺ソース：`AppCode\sample\3TierTableAdapter\ProductsTableAdapter.cs`、
   3層画面からのみ使う B層 `AppCode\sample\Business\GetMasterData.cs`
+
+> **WS 参照は `WSIFType_sample` / `WSServer_sample` だけではない**（実測）。WebForms の csproj は
+> **`MySql.Data.dll` / `Oracle.ManagedDataAccess.dll` も `WS_sample\Build\` を HintPath 参照**している。
+> `WS_sample` ごと消して完全に2層化するなら、**この2つの HintPath をベンダ先
+> （`OpenTouryoAssemblies\Build_net48\`）へ張り替える**（さもないと参照切れ。`opentouryo-project-setup` ⑤ /
+> `references/reference-rewrite.md` と同じ要領）。
 
 > **`Web.config` の endpoint（`system.serviceModel`）は削らない。** このサンプルの endpoint は
 > 3層固有（`WSServer_sample`）ではなく、**フレームワークの Transmission WCF 設定**
@@ -70,6 +82,20 @@ WS 参照（`WSIFType_sample` / `WSServer_sample`）を外してビルドし、*
 
 - 同名クラスが同梱ソースにある → `using` を差し替える（上記の罠）
 - 3層専用のコードだった → 削る
+
+## サンプル固有コードの整理（不要なテスト画面等の削除）
+
+サンプルには動作確認用のテスト画面が多数含まれる。用途に不要なら削るが、**名前の接頭辞で機械的に
+一括削除しない**。
+
+- **★ `test*` 接頭辞でも「実使用」のものがある**（実測・最優先の注意）。例：`testBlankScreen.master` は
+  名前が `test` でも**実マスタ**で、`login` / `logout` / `menu` / `ErrorScreen` / OAuth2 等の `MasterPageFile`
+  として参照されている。`test*` で一括削除すると足場（マスタ）が全滅する。**削除前に、残す画面の
+  `MasterPageFile` を確認する**。サンプル固有の「残す／CRUD 用」マスタ名は `samples/webforms.md`。
+- **csproj の大量剪定は「実在しない `Include` を消す」方式が堅牢**（実測）。ファイルを先に削除し、
+  csproj の `Content` / `Compile` / `None` / `EmbeddedResource` のうち **`Include` 先が実在しないエントリ**を
+  XML DOM で剪定する（`PreserveWhitespace=true` ＋直前の空白ノード除去で差分最小。**ワイルドカードと
+  `Reference` 系は除外**）。名前マッチで消すより安全・高速。剪定後も段階ビルドで確認する。
 
 ## やってはいけないこと
 

@@ -36,20 +36,23 @@ metadata:
 
 ## ① 取り出すサンプルを選ぶ
 
-**作りたいものに合うサンプルが起点になる。** サンプルは OpenTouryo リポジトリの
-`root/programs/CS/`（net48 は `Samples\`、.NET 10.0 は `Samples4NetCore\`）配下。
+**作りたいものに合うサンプルが起点になる。** パスの接頭辞は **net48＝`Samples\`／.NET 10.0＝`Samples4NetCore\`**
+（Web 系は `Samples4NetCore\Backend\`、2CS/Bat/CLI/WS 系は `Samples4NetCore\Legacy\`）。下表は各系列の起点。
 
-| 作りたいもの | サンプル | ランタイム | WS/3層依存 |
+| 作りたいもの | サンプル（系列\起点） | ランタイム | WS/3層依存 |
 | --- | --- | --- | --- |
-| ASP.NET MVC | `Samples\WebApp_sample\MVC_Sample` | net48 | 未確認 |
-| ASP.NET Core MVC | `Samples4NetCore\Backend\MVC_Sample` | .NET 10.0 | 未確認 |
-| Web Forms | `Samples\WebApp_sample\WebForms_Sample` | **net48 のみ** | **あり（transform 前提）** |
-| Windows Forms（2層C/S） | `Samples\2CS_sample\2CSClientWin_sample` | net48 | 未確認 |
-| Windows Forms（2層C/S） | `Samples4NetCore\Legacy\2CS_sample\2CSClientWin_sample` | .NET 10.0 | 未確認 |
-| 3層リッチクライアント（WS/WCF 経由・WinForms/WPF） | `Samples\WS_sample\WSClient_sample\WSClientWin_sample`（WPF 等も同階層） | net48 | **あり（構成上必須）** |
-| 3層リッチクライアント（同上・**実用性なし** ※） | `Samples4NetCore\Legacy\WS_sample\WSClient_sample\...` | .NET 10.0 | あり（構成上必須） |
-| バッチ / コンソール | `Samples\Bat_sample` / `Samples4NetCore\Legacy\Bat_sample` | net48 / .NET 10.0 | 未確認 |
-| CLI | `Samples4NetCore\Legacy\CLI_sample` | .NET 10.0 | 未確認 |
+| ASP.NET MVC | `WebApp_sample\MVC_Sample`（core は `Backend\MVC_Sample`） | net48 / .NET 10.0 | 未確認 |
+| Web Forms | `WebApp_sample\WebForms_Sample` | **net48 のみ** | **あり（transform 前提）** |
+| Web サービス（バックエンド） | `Backend\ASPNETWebService` | .NET 10.0 | — |
+| Windows Forms（2層C/S） | `2CS_sample\2CSClientWin_sample` | net48 / .NET 10.0 | 未確認 |
+| WPF（2層C/S） | `2CS_sample\2CSClientWPF_sample` | net48 / .NET 10.0 | 未確認 |
+| 3層リッチクライアント（WinForms/WPF・WS 経由） | `WS_sample\WSClient_sample\WSClientWin_sample`（`WPF`/`Win2`/`WinCone` も同階層） | net48（core は ※実用性なし） | **あり（構成上必須）** |
+| バッチ | `Bat_sample\SimpleBatch_sample`（再実行可 `RerunnableBatch_sample`〜`3`） | net48 / .NET 10.0 | 未確認 |
+| CLI（コンソール） | `CLI_sample\Simple_CLI`（認証付 `DAG_Login_CLI` / `LIR_Login_CLI`） | net48 / .NET 10.0 | 未確認 |
+
+**上表は代表的な起点で、系列には他の派生もある。** `2CS_sample` には機能デモ（`AsyncEvent_sample`＝net48 のみ /
+`CustCtrl_sample` / `GenDaoAndBatUpd_sample` / `TimeStamp_sample`）もある。**どの系列・派生を起点にするかは、
+候補を提示してユーザに選ばせる**（一部だけ出して決め打ちしない）。
 
 **「WS/3層依存あり」のサンプルは取り出し直後 `CS0246` が残る**（`WS_sample` の `WSIFType_sample` /
 `WSServer_sample` ビルド出力に依存。依存元ソースは `Samples\WS_sample` に実在）。**確定該当（実ソース確認）**：
@@ -74,8 +77,13 @@ metadata:
 
 | 選択 | `<ref>` | 用途 |
 | --- | --- | --- |
-| 固定タグ | 例 `03-20` | **安定運用**（`3_BuildLibsAtOtherRepos.bat` 相当） |
+| 固定タグ | **どのタグかをユーザに確認**（例示は下記） | **安定運用**（`3_BuildLibsAtOtherRepos.bat` 相当） |
 | develop | `develop` | 最新追従（`...InTimeOfDev.bat` 相当） |
+
+**「固定タグ」を選ばれたら、具体的なタグ番号を必ずユーザに確認する。`03-20` は例示であり、
+勝手に既定値として使わない**（作者フィードバック 2026-07-18：例示タグが強制選択されて選べなかった）。
+利用可能なタグは OpenTouryo リポジトリの releases / tags（`https://github.com/OpenTouryoProject/OpenTouryo/tags`）
+で確認できる。最新の安定タグが分からなければ、候補を提示するか latest を案内してユーザに決めてもらう。
 
 選んだ `<ref>` を③（`opentouryo-project-setup-build`）に渡す。
 
