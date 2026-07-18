@@ -1,6 +1,6 @@
 ---
 name: opentouryo-base2-customize
-description: "OpenTouryo の親クラス2（纏め者がカスタマイズする基盤の Business 層＝Frameworks/Infrastructure/Business の My* クラス群）を、纏め者の立場でカスタマイズする。共通処理の差し込み点（UOC_ConnectionOpen による DBMS/接続選択、UOC_ABEND による例外→エラー画面、UOC_PreAction/AfterAction/AfterTransaction のライフサイクル、MyBaseController の addControlEvent や %1/%2 置換、MyLiteral の接頭辞、MyUserInfo、事前定義の例外メッセージ）を override で直し、3_Build_Business_* でビルドして OpenTouryo.Business(.RichClient).dll を作り、導入プロジェクトへ配布する。アプリ側でその挙動を読んで確認するのは opentouryo-project-policy、DLL の取得・ベンダは opentouryo-project-setup、業務コードを書くのは各層スキル。親クラス2 / ベースクラス2 / 基盤カスタマイズ / 纏め者 / 共通処理の差し込み / My* を扱うときに使う。"
+description: "OpenTouryo の親クラス2（纏め者がカスタマイズする基盤の Business 層＝Frameworks/Infrastructure/Business の My* クラス群）を、纏め者の立場でカスタマイズする。共通処理の差し込み点（UOC_ConnectionOpen による DBMS/接続選択、UOC_ABEND による例外→エラー画面、UOC_PreAction/AfterAction/AfterTransaction のライフサイクル、MyBaseController の addControlEvent や %1/%2 置換、MyLiteral の接頭辞、MyUserInfo、事前定義の例外メッセージ）を override で直し、3_Build_Business_* でビルドして OpenTouryo.Business(.RichClient).dll を作り、導入プロジェクトへ配布する。アプリ側でその挙動を読んで確認するのは opentouryo-project-policy、DLL のビルド・ベンダは opentouryo-project-setup-build、業務コードを書くのは各層スキル。親クラス2 / ベースクラス2 / 基盤カスタマイズ / 纏め者 / 共通処理の差し込み / My* を扱うときに使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -19,7 +19,7 @@ metadata:
 （`Frameworks/Infrastructure/Business/` の `My*` クラス群）をプロジェクト方針に合わせて直す。
 
 - アプリ側で「この挙動はどうなっているか」を**読んで確認**する → `opentouryo-project-policy`
-- 直した DLL を**取得・ベンダ**する（アプリ側） → `opentouryo-project-setup`
+- 直した DLL を**ビルド・ベンダ**する（アプリ側） → `opentouryo-project-setup-build`
 - 業務コードを書く（アプリ開発者） → 各層スキル（`opentouryo-layer-*` ほか）
 
 **アプリ開発者は親クラス2 を触らない。** ここは纏め者の領分。
@@ -31,7 +31,7 @@ metadata:
 - 親クラス1（`Framework` / `Public` ＝バイナリ提供、**触らない**）の共通処理フックを **override** して、
   プロジェクト共通の挙動（接続・認証・例外・ログ・画面初期化）を注入するのが役割。
 - ビルドは **`3_Build_Business_net48` / `3_Build_Business_netcore100`**（親クラス1 の `2_Build_NuGet_*` が先）。
-  これを導入プロジェクトが参照する（`opentouryo-project-setup` のベンダ）。
+  これを導入プロジェクトが参照する（`opentouryo-project-setup-build` のベンダ）。
 - **★ `OpenTouryo.Business` と `OpenTouryo.Business.RichClient`（2CS）は別 sln＝ビルド経路が違う**（実測・net48 03-20）。
   `3_Build_Business_net48` がビルドするのは `Business_net48.sln`＝**`Business` + `CustomControl` だけ**。**2CS クラス
   （`MyBaseLogic2CS` / `MyFcBaseLogic2CS` ＝ `OpenTouryo.Business.RichClient`）は別の `BusinessRichClient_net48.sln`
@@ -39,7 +39,7 @@ metadata:
   `Framework.RichClient` まで）。**2CS を直しても標準フローだと無言で無視される**（エラーも出ない）。core も同構成で
   同じ穴の可能性が高い（`BusinessRichClient_netcore100.sln` が別在。要確認）。→ 2CS を触るなら次項のビルドに一手足す。
 - **カスタマイズは「修正ファイルだけ」をオーバーレイとしてバージョン管理する**（後述の「バージョン管理」）。
-  `project-setup` が Temp に展開する丸ごとのツリーはビルドの副産物で、そこを直接いじって放置する場所ではない。
+  `opentouryo-project-setup-build` が展開する丸ごとのツリーはビルドの副産物で、そこを直接いじって放置する場所ではない。
 
 ### 層別マップ
 
@@ -78,7 +78,7 @@ metadata:
    `3_Build_Business_*` に加えて `BusinessRichClient_net48.sln`（core は `_netcore100`）も別途ビルドする**
    （さもないと 2CS の変更が無言で無視される。前述）。
 3. 生成された `OpenTouryo.Business.dll`（2CS を直したなら `OpenTouryo.Business.RichClient.dll` も）を導入プロジェクトへ配布
-   （`opentouryo-project-setup` のベンダ先 `OpenTouryoAssemblies\Build_*`）。
+   （`opentouryo-project-setup-build` のベンダ先 `OpenTouryoAssemblies\Build_*`）。
 4. 依存アプリを再ビルドして反映。**破壊的変更（シグネチャ・挙動）は全依存アプリに波及**する。
 
 ## バージョン管理（オーバーレイ ＋ 固定タグ）
@@ -100,7 +100,7 @@ metadata:
 ```
 
 - **取得元は固定タグに固定する**（`develop` は土台が動きオーバーレイの当たりがズレる。
-  `project-setup` ②で固定タグを選ぶ）。
+  `opentouryo-project-setup-selection` ②で固定タグを選ぶ）。
 - ビルド スクリプトは `3_Build_Business_*` の**前に**オーバーレイを展開ツリーへ上書きする
   （`<extract>` は展開先。深いリポで MAX_PATH を避けるため短い作業ルート `C:\otr\...` のこともある。
   `opentouryo-project-setup-build`）：

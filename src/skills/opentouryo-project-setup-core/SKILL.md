@@ -1,0 +1,65 @@
+---
+name: opentouryo-project-setup-core
+description: "OpenTouryo 新規立ち上げ（opentouryo-project-setup）の ④⑤＝核心。選んだサンプル（＋開発支援ツール DaoGen_Tool/DPQuery_Tool）を新規リポジトリへ取り出し、.csproj の OpenTouryo.* 参照の HintPath をベンダ先 OpenTouryoAssemblies\\ へ張り替える。3層（WCF/WS）サンプルの CS0246 解消〔(A) そのまま残す／(B) WS 依存を切り離す〕も扱う。サンプル取り出し / 参照張り替え / HintPath / DLL 参照 / CS0246 / WS 依存 / LayerB LayerD を伴う作業のときに使う。前工程はサンプル・取得元選択 opentouryo-project-setup-selection と基盤ビルド opentouryo-project-setup-build、後工程は resource/config の opentouryo-project-setup-config。"
+license: MIT
+metadata:
+  author: OpenTouryoProject
+  version: "0.1.0"
+---
+
+# ④⑤ サンプルの取り出しと参照の張り替え（核心）
+
+新規立ち上げ（`opentouryo-project-setup`）の核心。前提：①②で起点サンプルと `<ref>` が決まり
+（`opentouryo-project-setup-selection`）、③で基盤 DLL がベンダ済み（`opentouryo-project-setup-build`＝
+`OpenTouryoAssemblies\Build_net48\` / `Build_netcore100\`）。この後は ⑥⑦ `opentouryo-project-setup-config`。
+
+## ④ 取り出す
+
+対象サンプルのフォルダを新規リポジトリへコピーする。**`LayerB.cs` / `LayerD.cs` は
+サンプルに同梱されたソース**なので、それごと取り出す（別 DLL ではない）。
+
+**開発支援ツールも一緒に取り出す。** `Frameworks\Tools\` 配下（`Samples\` ではない）の `DaoGen_Tool`
+（墨壺＝D層自動生成）と `DPQuery_Tool`（動的クエリ試験）を取り出し対象に含める（DAO 自動生成・動的 SQL は標準ワークフロー）。
+⑤ と同様に張り替えるが、**両ツールは `HintPath`＋`PackageReference` 混在で net48 でも restore が要る**
+（`Microsoft.Data.SqlClient` 等。漏れは `CS0234`）。詳細は `samples/daogentool.md` / `samples/dpquerytool.md`。
+
+## ⑤ 参照を張り替える
+
+サンプルの `.csproj` は、フレームワークを **`Reference` + `HintPath`（DLL 参照）** で参照している。
+`Reference Include="OpenTouryo.*"` の **`HintPath` だけ**をベンダ先へ書き換える。
+
+```xml
+<!-- net48（core は Build_netcore100\net10.0\ に読み替え） -->
+<Reference Include="OpenTouryo.Framework">
+  <HintPath>..\OpenTouryoAssemblies\Build_net48\OpenTouryo.Framework.dll</HintPath>
+</Reference>
+```
+
+- **必要なアセンブリはサンプルの csproj に列挙済み**（`OpenTouryo.Public` / `.Framework` / `.Business` ほか）。
+  その `Reference` をそのまま使い、`HintPath` だけ直す。
+- **触らないのは NuGet 復元される 3rd-party だけ**（net48＝`packages.config`、core＝`PackageReference`）。
+  相対パス（`..\` の数）はプロジェクトの配置に合わせる。
+
+**間違えやすい edge case は `references/reference-rewrite.md`**（末尾フォルダ名 `Build\`→`Build_net48\` も変わる／
+`MySql`・`Oracle` もベンダ張替＝NuGet 非復元／net48 でも `PackageReference` 併用時は restore／MAX_PATH フラット化）。
+
+## 3層（WCF/WS）サンプルの扱い
+
+一部サンプルは**他サンプルのビルド出力**（`WSServer_sample.dll` / `WSIFType_sample.dll`）に依存する
+（依存元ソースは `Samples\WS_sample` に実在。無いのはビルド出力だけ）。as-is で通らないことがあり、解消は2通り：
+- **(A) そのまま残す** — 依存元サンプルも取り出し⑤同様に張り替えてビルドし、**出力を参照先 `WS_sample\Build\` へ
+  配置する**（`.sln` 直ビルドは `bin\Debug\` に出る＝実測。要配置）。**セットアップで完結**。
+- **(B) WS 依存を切り離す** — WS 参照を外す（**後工程 `opentouryo-project-transform`**）。
+
+**(A)/(B) の選択・層の削減・画面改変は、セットアップ中に判断を求めない**（開ける状態の後に利用者が決める）。
+**WS/3層の共通手順は `samples/webservices.md`、サンプル固有は `samples/<サンプル>.md`**（Web Forms は `samples/webforms.md`）。
+
+<!-- 執筆者メモ（Claude Code は読み込み時に除去）：samples/<サンプル>.md は検証したサンプルから順に整備する残件。
+     現状あるのは webforms.md（サンプル）／daogentool.md・dpquerytool.md（開発支援ツール）。
+     専用 md が無いサンプルも上の一般手順＋samples/webservices.md で取り出せる。癖が見つかったら md を起こす。 -->
+
+## やってはいけないこと
+
+- **3rd-party の `PackageReference` / `packages.config` まで張り替える** — NuGet 復元に任せる（`OpenTouryo.*` だけ張替）
+- **`LayerB.cs` / `LayerD.cs` を別 DLL 化しようとする** — サンプルは同梱ソースが前提
+- **`OpenTouryo.*` を `ProjectReference` にする** — 基盤はバイナリ提供が前提。DLL 参照にする

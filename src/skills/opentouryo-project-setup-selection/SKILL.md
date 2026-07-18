@@ -1,0 +1,73 @@
+---
+name: opentouryo-project-setup-selection
+description: "OpenTouryo 新規立ち上げ（opentouryo-project-setup）の ①②。起点にするサンプル系列を選び（作りたいもの＝ASP.NET MVC / Web Forms / Windows Forms 2CS / WPF 2CS / 3層リッチクライアント〔WSClient_sample〕/ バッチ / CLI）、OpenTouryo の取得元 <ref>（固定タグ〔安定運用〕または develop〔最新追従〕）をユーザに選ばせる。全系列を必ず提示し間引かない、固定タグは番号をユーザに確認する、が要点。サンプル選択 / 起点サンプル / どのサンプル / 取得元 / 固定タグ / develop / バージョン選択 を伴う作業のときに使う。選んだら基盤ビルドは opentouryo-project-setup-build、取り出しは opentouryo-project-setup-core。"
+license: MIT
+metadata:
+  author: OpenTouryoProject
+  version: "0.1.0"
+---
+
+# ①② サンプルと取得元を選ぶ
+
+新規立ち上げ（`opentouryo-project-setup`）の最初の工程。**起点サンプル**と**取得元 `<ref>`** を決める。
+決めたら ③ `opentouryo-project-setup-build`（基盤ビルド）→ ④⑤ `opentouryo-project-setup-core`（取り出し）へ。
+
+## ① 取り出すサンプルを選ぶ
+
+**作りたいものに合うサンプルが起点になる。** パスの接頭辞は **net48＝`Samples\`／.NET 10.0＝`Samples4NetCore\`**
+（Web 系は `Samples4NetCore\Backend\`、2CS/Bat/CLI/WS 系は `Samples4NetCore\Legacy\`）。下表は各系列の起点。
+
+| 作りたいもの | サンプル（系列\起点） | ランタイム | WS/3層依存 |
+| --- | --- | --- | --- |
+| ASP.NET MVC | `WebApp_sample\MVC_Sample`（core は `Backend\MVC_Sample`） | net48 / .NET 10.0 | **net48:あり** / core:なし |
+| Web Forms | `WebApp_sample\WebForms_Sample` | **net48 のみ** | **あり（transform 前提）** |
+| Windows Forms（2層C/S） | `2CS_sample\2CSClientWin_sample` | net48 / .NET 10.0 | なし |
+| WPF（2層C/S） | `2CS_sample\2CSClientWPF_sample` | net48 / .NET 10.0 | なし |
+| 3層リッチクライアント（WinForms/WPF・WS 経由） | `WS_sample\WSClient_sample\WSClientWin_sample`（`WPF`/`Win2`/`WinCone` も同階層） | net48（core は ※実用性なし） | **あり（構成上必須）** |
+| バッチ | `Bat_sample\SimpleBatch_sample`（再実行可 `RerunnableBatch_sample`〜`3`） | net48 / .NET 10.0 | なし |
+| CLI（コンソール） | `CLI_sample\Simple_CLI`（認証付 `DAG_Login_CLI` / `LIR_Login_CLI`） | net48 / .NET 10.0 | なし |
+
+**「WS/3層依存」列の凡例**：`なし`＝csproj で WS 参照無しを確認済み／`あり`＝WS DLL 参照あり
+（取り出し直後に missing-ref か `CS0246`。解消は ④⑤ の `opentouryo-project-setup-core`）。
+
+**サンプル選択では上表の全系列を必ず提示してユーザに選ばせる。系列をまとめて間引かない**
+（実測：4択にまとめて **3層リッチクライアント＝`WSClient_sample` と WPF が選択肢から欠落**した）。**選択 UI が
+選択肢数を制限しても、収まらなければ全系列を番号付きリストで提示して番号で選ばせる**（固定4択に押し込めて捨てない）。
+派生（`2CS_sample` の機能デモや `WSClient_sample` の他 variant 等）は**系列を選んだ後の枝**でよいが、
+系列そのものは全部見せる。
+
+**「WS/3層依存あり」の内訳**（取り出し直後 `CS0246` が残る。依存元ソースは `Samples\WS_sample` に実在）：
+- **`WebForms_Sample`**（net48）— WS を利用（core 化の (B) 切り離しも可）。
+- **`MVC_Sample` の net48**（`Crud1Controller` が `TestParameterValue` 等の WS 型を使用。**core の MVC はなし**）。
+- **`WS_sample\WSClient_sample` 一式**（core は `Samples4NetCore\Legacy\...`）— 3層リッチクライアント＝構成上 WS 必須。
+  **※ core 版は `BinaryFormatter` 廃止で実質インプロセスのみ＝実用は net48 側**（`opentouryo-transmission`）。
+
+解消手順（(A) そのまま残す／(B) WS 依存を切り離す）は ④⑤＝`opentouryo-project-setup-core` の「3層サンプルの扱い」
+（共通機構は同スキルの `samples/webservices.md`）。到達点は「開ける状態」で as-is クリーンビルドは保証しない。
+
+**WPF は P層フレームワークを持たない**（`opentouryo-layer-p-winforms-screen`）。
+`2CS_sample\2CSClientWPF_sample` を参考に、画面は素の WPF として実装する。
+
+## ② 取得元をユーザに選ばせる
+
+**どのバージョンの OpenTouryo を使うかをユーザに確認する。**
+
+| 選択 | `<ref>` | 用途 |
+| --- | --- | --- |
+| 固定タグ | **どのタグかをユーザに確認**（例示は下記） | **安定運用**（`3_BuildLibsAtOtherRepos.bat` 相当） |
+| develop | `develop` | 最新追従（`...InTimeOfDev.bat` 相当） |
+
+**「固定タグ」を選ばれたら、具体的なタグ番号を必ずユーザに確認する。`03-20` は例示であり、
+勝手に既定値として使わない**（作者フィードバック 2026-07-18：例示タグが強制選択されて選べなかった）。
+利用可能なタグは OpenTouryo リポジトリの releases / tags（`https://github.com/OpenTouryoProject/OpenTouryo/tags`）
+で確認できる。最新の安定タグが分からなければ、候補を提示するか latest を案内してユーザに決めてもらう。
+**親クラス2 をカスタマイズするなら固定タグにする**（`develop` は土台が動く。`opentouryo-base2-customize`）。
+
+選んだサンプルの**標的ランタイム**と `<ref>` を、次の ③ `opentouryo-project-setup-build` に渡す。
+
+## やってはいけないこと
+
+- **サンプル選択で系列を間引く** — 固定4択に押し込めて **3層リッチクライアント（`WSClient_sample`）や WPF を
+  落とさない**（実測で欠落。UI 制限時は番号付きリストで全系列を出す）
+- **固定タグの例示 `03-20` を既定値として勝手に使う** — どのタグかを必ずユーザに確認する
+- **net48 サンプルを .NET 10.0 で、または Web Forms を core で選ぼうとする** — ランタイム対象外

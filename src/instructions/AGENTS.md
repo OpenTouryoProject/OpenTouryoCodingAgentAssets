@@ -264,8 +264,11 @@ TODO
 | `opentouryo-project-policy` | 「このプロジェクトではどうなっているか」（親クラス2 の実装で決まる仕様）が分からないとき |
 | `opentouryo-base2-customize` | **纏め者が**親クラス2（基盤 Business 層 `Frameworks/Infrastructure/Business`）の共通処理をカスタマイズするとき（アプリ開発者は使わない） |
 | `opentouryo-common-parts` | ユーティリティ（文字列チェック・エンコード・ハッシュ・圧縮など）を自作する前に、既存の共通部品を探すとき |
-| `opentouryo-project-setup` | 新規プロジェクトをゼロから立ち上げるとき（サンプル選択・取り出し・参照張り替え・config。入口） |
-| `opentouryo-project-setup-build` | 基盤（フレームワーク）DLL をローカルでビルドして `OpenTouryoAssemblies\` へベンダするとき（`project-setup` の ③。タグ更新時の焼き直しにも単独で使う） |
+| `opentouryo-project-setup` | 新規プロジェクトをゼロから立ち上げるときの**入口＝ファサード**（全体の流れと呼び出し順のみ。手順は下の4スキルへ委譲） |
+| `opentouryo-project-setup-selection` | ①② 起点サンプルの選択（全系列を提示）と取得元 `<ref>`（固定タグ / develop）の決定 |
+| `opentouryo-project-setup-build` | ③ 基盤（フレームワーク）DLL をローカルでビルドして `OpenTouryoAssemblies\` へベンダするとき（タグ更新時の焼き直しにも単独で使う） |
+| `opentouryo-project-setup-core` | ④⑤ サンプル（＋開発支援ツール）の取り出しと `OpenTouryo.*` HintPath の張り替え（3層/WS の CS0246 解消も） |
+| `opentouryo-project-setup-config` | ⑥⑦ resource 移設・config パス張替（`%OT_RESOURCE_ROOT%`）・`.gitignore`・ビルド／実行検証 |
 | `opentouryo-project-transform` | セットアップ後、取り出したサンプルを用途へ合わせて変形するとき（不要な層の削減＝2層化・サンプル固有コードの整理・CS0246 の解消） |
 
 ## 参考資料

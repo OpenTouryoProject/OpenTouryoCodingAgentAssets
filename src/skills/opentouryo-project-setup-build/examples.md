@@ -3,15 +3,19 @@
 実環境（WebForms_Sample / net48 / 固定タグ `03-20` / 深いリポ パス）で**実際に通した2本**。
 本スキルが推奨する「生成スクリプトをリポジトリに残す・`.bat` より PowerShell ラッパ」の具体例で、
 既知の落とし穴（MAX_PATH＝短い作業ルート、exit code 不信＝DLL 実在で判定、`.\`＋`< nul`、
-WS の `bin\Debug` → `WS_sample\Build\` 配置）を織り込み済み。
+WS の `bin\Debug` → `WS_sample\Build\` 配置、**2CS＝`Business.RichClient` の別 sln**、
+**ツールの `PackageReference` restore**）を織り込み済み。
 
 **雛形化する際は `$ref`・パス・標的ランタイム（net48）をパラメタ化**する。フラット化しない
-（配置維持）方針なら `build-app.ps1` の相対パスは配置に合わせて変える。
+（配置維持）方針なら相対パスは配置に合わせて変える。**as-built の雛形なので、環境に合わせて調整する**
+（Configuration・restore 方式・msbuild 解決など）。
 
 - `setup-build.ps1` — 本スキル ①②③（ZIP取得 → net48 基盤ビルド → ベンダ）。短パス `C:\otr` でビルド、
-  `OpenTouryo.Business.dll` の実在で成否判定。
+  `OpenTouryo.Business.dll` の実在で成否判定。**親クラス2 をカスタマイズするなら任意ブロック**（overlay 適用＋
+  2CS の `Business.RichClient` ビルド）を有効化する。
 - `build-app.ps1` — アプリ側の取り出し後ビルド（`opentouryo-project-setup` ④⑤ / `samples/webforms.md` 構成A）。
   WS をビルド**して `WS_sample\Build\` へ配置**、`nuget restore` → WebForms ビルド。vswhere で msbuild 解決。
+  **開発支援ツールを取り出しているなら任意ブロック**（DaoGen/DPQuery のビルド）で欠落参照を早期に炙り出す。
 
 ## `setup-build.ps1`（ZIP取得 → net48 基盤ビルド → ベンダ）
 
@@ -30,6 +34,7 @@ $zip     = Join-Path $work "OpenTouryo-$ref.zip"
 $extract = Join-Path $work "OpenTouryo-$ref"
 $cs      = Join-Path $extract 'root\programs\CS'
 $vendor  = Join-Path $repo 'OpenTouryoAssemblies\Build_net48'
+$overlay = Join-Path $repo 'base2-overlay'   # present only when customizing 親クラス2
 
 # --- 1. ZIP acquisition (not git clone) ---
 New-Item -ItemType Directory -Force -Path $work | Out-Null
@@ -39,6 +44,16 @@ if (-not (Test-Path $extract)) {
             "https://github.com/OpenTouryoProject/OpenTouryo/archive/$ref.zip", $zip)
     }
     Expand-Archive -Path $zip -DestinationPath $work -Force
+}
+
+# --- 1b. (optional) apply base2 overlay BEFORE building ---
+# If this repo customizes the framework Business layer, its edited *.cs live in
+# base2-overlay\ as FILE-LEVEL copies (not patches). Overwrite the extract tree
+# with them before the build. Copy-Item preserves bytes incl UTF-8 BOM (the base
+# sources are UTF-8 BOM with Japanese comments); xcopy on a folder would also
+# prompt F/D. Requires a FIXED $ref (develop moves the base under the overlay).
+if (Test-Path $overlay) {
+    Copy-Item -Path (Join-Path $overlay '*') -Destination $cs -Recurse -Force
 }
 
 # --- 2. Base build (net48 only: the two bats the skill specifies) ---
@@ -51,6 +66,21 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "3_Build_Business_net48 failed ($LASTEXITCODE)" }
 } finally { Pop-Location }
 
+# --- 2b. (optional) build Business.RichClient (2CS) — the bats DON'T ---
+# 3_Build_Business_net48 builds Business + CustomControl only. The 2CS classes
+# (MyBaseLogic2CS / MyFcBaseLogic2CS = OpenTouryo.Business.RichClient) live in a
+# separate sln that no 2_/3_ script builds. If base2 customizes 2CS, build it
+# here (outputs into Build_net48 so the vendor step below picks it up); otherwise
+# the 2CS change is compiled into nothing and silently dropped.
+if (Test-Path $overlay) {
+    $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+    $msb = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild `
+            -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
+    $brc = Join-Path $cs 'Frameworks\Infrastructure\BusinessRichClient_net48.sln'
+    & $msb $brc /t:restore,build /p:Configuration=Release /nologo /v:m   # match the base bats' config
+    if ($LASTEXITCODE -ne 0) { throw "BusinessRichClient build failed ($LASTEXITCODE)" }
+}
+
 # --- 3. Vendor -> OpenTouryoAssemblies\Build_net48 ---
 $src = Join-Path $cs 'Frameworks\Infrastructure\Build_net48'
 if (-not (Test-Path $src)) { throw "Build output not found: $src" }
@@ -62,16 +92,22 @@ Copy-Item -Path (Join-Path $src '*') -Destination $vendor -Recurse -Force
 if (-not (Test-Path (Join-Path $vendor 'OpenTouryo.Business.dll'))) {
     throw "Base build did not produce OpenTouryo.Business.dll (check the build output above)."
 }
+# When customizing 2CS, also confirm the RichClient Business DLL was produced.
+if ((Test-Path $overlay) -and
+    -not (Test-Path (Join-Path $vendor 'OpenTouryo.Business.RichClient.dll'))) {
+    throw "base2-overlay present but OpenTouryo.Business.RichClient.dll not vendored (2b did not run?)."
+}
 Get-ChildItem $vendor -Filter 'OpenTouryo.*.dll' | Select-Object -ExpandProperty Name
 ```
 
-## `build-app.ps1`（WS ビルド＋`Build\` 配置 → restore → WebForms ビルド）
+## `build-app.ps1`（WS ビルド＋`Build\` 配置 → restore → WebForms ビルド → ツール）
 
 ```powershell
 # Build the WebForms sample (3-layer, WS in-process) against the vendored
 # OpenTouryo base DLLs. Reproducible from a fresh clone:
 #   1. build WS (WSServer builds WSIFType) and refresh WS_sample\Build
 #   2. nuget restore + build the WebForms solution
+#   3. (optional) build the dev tools taken out under Tools\
 # Prereq: run setup-build.ps1 once first (populates OpenTouryoAssemblies\).
 $ErrorActionPreference = 'Stop'
 $repo = $PSScriptRoot
@@ -85,6 +121,7 @@ if (-not $msb) { throw "MSBuild not found (install VS Build Tools / Community)" 
 $vendor  = Join-Path $repo 'OpenTouryoAssemblies\Build_net48'
 $wsRoot  = Join-Path $repo 'WS_sample'
 $wsBuild = Join-Path $wsRoot 'Build'
+$nuget   = Join-Path $repo 'tools\nuget.exe'
 
 # --- 1. build WS layer and refresh WS_sample\Build ---
 # `.sln` build outputs to each project's bin\Debug; WS_sample\Build is NOT
@@ -100,9 +137,26 @@ Copy-Item (Join-Path $vendor 'Oracle.ManagedDataAccess.dll') $wsBuild -Force
 
 # --- 2. restore + build WebForms ---
 $wfSln = Join-Path $repo 'WebForms_Sample\WebForms_Sample.sln'
-& (Join-Path $repo 'tools\nuget.exe') restore $wfSln   # msbuild /t:restore won't restore packages.config
+& $nuget restore $wfSln   # msbuild /t:restore won't restore packages.config
 if ($LASTEXITCODE -ne 0) { throw "nuget restore failed ($LASTEXITCODE)" }
 & $msb $wfSln /p:Configuration=Debug /nologo /v:m
 if ($LASTEXITCODE -ne 0) { throw "WebForms build failed ($LASTEXITCODE)" }
+
+# --- 3. (optional) build the dev tools (DaoGen_Tool / DPQuery_Tool) ---
+# Taken out under Frameworks\Tools (flattened here to repo root). Their csproj
+# MIX <Reference>+HintPath (OpenTouryo.* / MySql.Data / Oracle -> rewrite to the
+# vendor folder in ⑤) with <PackageReference> (Microsoft.Data.SqlClient etc.).
+# PackageReference needs a restore even on net48 (no packages.config); skipping
+# it -> CS0234 on `using Microsoft.Data.SqlClient;`. Building them here surfaces
+# that at setup time. (Assumes their HintPaths were already rewritten.)
+foreach ($tool in 'DaoGen_Tool','DPQuery_Tool') {
+    $toolSln = Join-Path $repo "$tool\$tool.sln"
+    if (-not (Test-Path $toolSln)) { continue }
+    & $msb $toolSln /t:restore,build /p:Configuration=Debug /nologo /v:m
+    if ($LASTEXITCODE -ne 0) { throw "$tool build failed ($LASTEXITCODE)" }
+}
 Write-Host "Build OK." -ForegroundColor Green
 ```
+
+（ビルド後、実際に動くことの確認＝IIS Express でのスモークは `opentouryo-project-setup-config` の
+`references/run-verify.md`。）

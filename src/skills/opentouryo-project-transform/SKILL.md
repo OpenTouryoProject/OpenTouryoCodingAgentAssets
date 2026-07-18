@@ -61,8 +61,8 @@ metadata:
 > **WS 参照は `WSIFType_sample` / `WSServer_sample` だけではない**（実測）。WebForms の csproj は
 > **`MySql.Data.dll` / `Oracle.ManagedDataAccess.dll` も `WS_sample\Build\` を HintPath 参照**している。
 > `WS_sample` ごと消して WS 依存を完全に断つなら、**この2つの HintPath をベンダ先
-> （`OpenTouryoAssemblies\Build_net48\`）へ張り替える**（さもないと参照切れ。`opentouryo-project-setup` ⑤ /
-> `references/reference-rewrite.md` と同じ要領）。
+> （`OpenTouryoAssemblies\Build_net48\`）へ張り替える**（さもないと参照切れ。`opentouryo-project-setup-core` ⑤ /
+> その `references/reference-rewrite.md` と同じ要領）。
 
 > **`Web.config` の endpoint（`system.serviceModel`）は削らない。** このサンプルの endpoint は
 > 3層固有（`WSServer_sample`）ではなく、**フレームワークの Transmission WCF 設定**
