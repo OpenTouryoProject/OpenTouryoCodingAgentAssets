@@ -92,12 +92,18 @@ metadata:
 
 - **取得元は固定タグに固定する**（`develop` は土台が動きオーバーレイの当たりがズレる。
   `project-setup` ②で固定タグを選ぶ）。
-- ビルド スクリプトは `3_Build_Business_*` の**前に**オーバーレイを展開ツリーへ上書きする：
+- ビルド スクリプトは `3_Build_Business_*` の**前に**オーバーレイを展開ツリーへ上書きする
+  （`<extract>` は展開先。深いリポで MAX_PATH を避けるため短い作業ルート `C:\ot\...` のこともある。
+  `opentouryo-project-setup-build`）：
 
   ```
-  xcopy /Y /E  base2-overlay\*  Temp\OpenTouryo-<tag>\root\programs\CS\
+  xcopy /Y /E  base2-overlay\*  <extract>\root\programs\CS\
   ```
 
+- **カスタマイズ対象の基盤ソースはワークスペースにも置く。** 短い作業ルートで展開・ビルドすると、直す元の
+  `Frameworks/Infrastructure`（特に `Business`）が使い捨てツリーにしか残らない。オーバーレイの差分は
+  この基盤ソースから起こし・当てるので、**`Frameworks/Infrastructure` はワークスペースに展開しておく**
+  （`.gitignore`。コミットするのは差分＝`base2-overlay/` だけ。ビルド自体は短ルートで）。
 - こうすると DLL は **「固定タグ ＋ オーバーレイ」から再現可能**。リポジトリに残るのは修正差分だけ。
 - **置き場はアプリ リポジトリ同居**（`base2-overlay/` をコミット。`Temp/` は除外のまま、DLL はコミット）。
   1リポジトリで完結する。**複数アプリで親クラス2 を共有する場合は、纏め者の専用リポジトリに

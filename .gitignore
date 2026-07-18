@@ -1,9 +1,10 @@
 # OpenTouryo 本体から持ち込んだ参照用の資料・ソース。
 # アセット執筆時の参照元であり、このリポジトリの成果物ではないため管理しない。
 # 取得元:
-#   documents/ … https://github.com/OpenTouryoProject/OpenTouryoDocuments
 #   files/     … https://github.com/OpenTouryoProject/OpenTouryo
+#   documents/ … https://github.com/OpenTouryoProject/OpenTouryoDocuments
 files/
 documents/
 reference/
+feedback/
 

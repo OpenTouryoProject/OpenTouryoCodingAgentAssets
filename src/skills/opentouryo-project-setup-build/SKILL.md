@@ -33,8 +33,19 @@ metadata:
 
 PowerShell の `WebClient.DownloadFile()` で
 `https://github.com/OpenTouryoProject/OpenTouryo/archive/<ref>.zip` を取得し、
-**リポジトリ直下の作業ツリー `Temp\OpenTouryo-<ref>\`** に展開する
-（この `Temp\` は基盤ソースを含むビルド用の作業場。`.gitignore` で除外する ← `opentouryo-project-setup` ⑦）。
+**作業ツリー `OpenTouryo-<ref>\`** に展開する（基盤ソースを含むビルド用の作業場）。
+
+**作業ツリーの置き場所は MAX_PATH(260) を避けて選ぶ**（実測）。既定はリポジトリ直下の `Temp\` だが、
+**リポジトリ パスが深いと net48 Business ビルドが `MSB3553` で失敗する**：生成物
+`obj\...\MyBusinessApplicationExceptionMessageResource.ja-JP.resources` の完全修飾パスが 260 文字を超える。
+→ **深いリポでは短い作業ルート（例 `C:\ot\`）でビルドする**か、long path を有効化する。**ベンダ後の DLL だけが
+リポに入る**ので、作業ツリーの場所はリポジトリと無関係でよい（リポ直下に置くなら `Temp\` は ⑦ の `.gitignore` で除外）。
+
+**ただし親クラス2 をカスタマイズする場合（`base2-overlay/` がある）は例外**：短ルートで展開・ビルドすると
+**カスタマイズ対象の基盤ソース `root\programs\CS\Frameworks\Infrastructure`（特に `Business`）がワークスペース外の
+使い捨てツリーにしか無くなる**。オーバーレイの差分はこの基盤ソースから起こし・当てるので、**この
+`Frameworks\Infrastructure` だけはワークスペースにも展開しておく**（`base2-overlay/` は従来どおり差分のみコミット、
+基盤ソースは `.gitignore`。ビルド自体は短ルートで）。`opentouryo-base2-customize`。
 
 ## 2. 基盤ビルド
 
@@ -54,13 +65,18 @@ call .\3_Build_Business_netcore100.bat < nul
 **両ランタイムに対応させる標的のときだけ4本すべて**を回す。前提ツール：**VS Build Tools**
 （net48 は非 SDK csproj で msbuild が要る）と **.NET SDK**（core は `dotnet build`）。
 **このバッチ名（net48 / netcore100）が正**。本体の `99_BuildLibsAtOtherRepos*.bat` は陳腐化して
-`net45`〜`netcore30` を呼ぶので**参考にしない**。
+`net45`〜`netcore30` を呼ぶので**参考にしない**。なお `2_Build_NuGet_net48.bat` は `Nuget_RichClient_net48.sln` も
+必ずビルドするので、RichClient を使わない標的でも `OpenTouryo.Framework.RichClient.dll` 等が生成される（無害。
+「標的ランタイムのバッチだけ」で絞れるのはランタイム粒度まで）。
 
 ### エージェント/CI では PowerShell ラッパを既定にする（推奨）
 
 スクリプトは `.bat` でも PowerShell でもよいが、**非対話実行では PowerShell ラッパを既定に推奨**する
 （子の基盤ビルド `.bat` は `cmd /c` で呼ぶ）。下記の落とし穴（`pause` / ASCII / `.\` / 括弧 / MSYS パス変換）を
 一括で避けられる。**Bash/MSYS から `cmd //c ".\x.bat"` で叩くのは避ける**（次項）。
+
+**実機で通した雛形2本（MAX_PATH・exit code 不信・WS 配置を織り込み済み）を同梱の
+[`examples.md`](examples.md) に置く**（`setup-build.ps1`＝本スキル、`build-app.ps1`＝アプリ側ビルド）。生成の出発点にできる。
 
 ### 生成スクリプトの実環境での注意（非対話実行で顕在化。実機検証済み）
 
@@ -71,6 +87,9 @@ call .\3_Build_Business_netcore100.bat < nul
   （＝ビルド成功でも Step 3 で必ず失敗して見える）。`echo` 内の `)` は `^)` にエスケープする。
 - **Bash/MSYS 経由の `cmd //c ".\x.bat"`** — Windows 絶対パス引数が MSYS に変換され、`cmd` の `if exist "D:\..."` が
   実在フォルダを MISSING と誤判定する。**PowerShell の `cmd /c` から実行する**と正常（上の推奨）。
+- **exit code は両方向に信用できない（偽の成功）** — これらのバッチは末尾 `pause` で、**msbuild が失敗しても
+  バッチ自体は exit 0** を返す（`MSB3553` 等で失敗しても `cmd /c` の戻りは 0）。前述の未エスケープ `)` は逆に
+  「偽の失敗」。**成否は exit code ではなく、生成物 DLL の実在で判定する**（下の §3 の確認を必ず行う）。
 
 ### VS のエディション・バージョンによる msbuild 解決（利用側で対処する）
 
@@ -97,7 +116,11 @@ Community/Professional/Enterprise を網羅）。VS18 の BuildTools/Professiona
 <extract>\root\programs\CS\Frameworks\Infrastructure\Build_netcore100 → <repo>\OpenTouryoAssemblies\Build_netcore100\
 ```
 
-（`<extract>` は手順1の `Temp\OpenTouryo-<ref>`。）**1回実行すれば DLL は再利用できる**（毎回ビルドしない）。
+（`<extract>` は手順1の作業ツリー `OpenTouryo-<ref>`。）**1回実行すれば DLL は再利用できる**（毎回ビルドしない）。
+
+**ベンダ後、成否を生成物の実在で確認する**（バッチの exit code は当てにならない＝上の「偽の成功」）。
+少なくとも **`OpenTouryo.Business.dll`**（Business ビルドの生成物で、`MSB3553` 等で最も失敗しやすい）が
+ベンダ先にあることを確かめる。無ければビルドは失敗している（ビルド出力を確認する）。
 
 ## やってはいけないこと
 

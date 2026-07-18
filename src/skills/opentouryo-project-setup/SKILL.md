@@ -51,21 +51,16 @@ metadata:
 | バッチ / コンソール | `Samples\Bat_sample` / `Samples4NetCore\Legacy\Bat_sample` | net48 / .NET 10.0 | 未確認 |
 | CLI | `Samples4NetCore\Legacy\CLI_sample` | .NET 10.0 | 未確認 |
 
-**「WS/3層依存あり」のサンプルは、取り出した直後は `CS0246` が残る**（他サンプル `WS_sample` の
-ビルド出力＝`WSIFType_sample` / `WSServer_sample` に依存。**依存元のソースはリポジトリに実在**する）。
-**確定該当は2系統**（実ソースで確認）：
-- **`WebForms_Sample`** — Web だが WS をインプロセス利用（2層化 (B) も選べる）。
-- **`WS_sample\WSClient_sample` 一式**（`WSClientWin_sample` / `WSClientWPF_sample` ほか。core は
-  `Samples4NetCore\Legacy\WS_sample\WSClient_sample\`）— **3層リッチクライアントで、WS/3層依存は構成上必須**。
-  これは「3層で使う」前提なので **(A)（`WSServer_sample` / `WSIFType_sample` も取り出してビルド）が本筋**（(B) 2層化は非該当）。
-  **※ .NET Core 版（`Samples4NetCore\Legacy\...`）は実用性が無い**：`BinaryFormatter`（バイナリシリアライズ）が
-  廃止され、**実質インプロセス呼び出ししか動かず、本当の WS 越しの3層にならない**。3層リッチクライアントを
-  実用するなら **net48 側**を使う（作者情報 → §4.4 相当）。
+**「WS/3層依存あり」のサンプルは取り出し直後 `CS0246` が残る**（`WS_sample` の `WSIFType_sample` /
+`WSServer_sample` ビルド出力に依存。依存元ソースは `Samples\WS_sample` に実在）。**確定該当（実ソース確認）**：
+- **`WebForms_Sample`** — Web で WS をインプロセス利用（2層化 (B) も可）。
+- **`WS_sample\WSClient_sample` 一式**（`WSClientWin_sample`/`WSClientWPF_sample` ほか。core は
+  `Samples4NetCore\Legacy\...`）— 3層リッチクライアント＝構成上 WS 必須。**(A) が本筋・(B) 非該当**。
+  **※ core 版は `BinaryFormatter` 廃止で実質インプロセスのみ＝実用的な3層にならず、実用は net48 側**
+  （`opentouryo-transmission` / §4.4）。
 
-表で「未確認」の行は、同様の依存があり得る前提で臨む。解消は用途で2通り：
-**(A) 3層維持＝依存元サンプルも取り出す**／**(B) 2層化＝`opentouryo-project-transform`**
-（詳細は下記「3層（WCF/WS）サンプルの扱い」）。**到達点は「ソリューションが開ける状態」**で、
-as-is のクリーンビルドは保証しない。
+他行（未確認）も同様の依存があり得る。**解消は (A) 3層維持／(B) 2層化**（下記「3層サンプルの扱い」。
+共通機構は `samples/webservices.md`）。**到達点は「ソリューションが開ける状態」**で、as-is のクリーンビルドは保証しない。
 
 **サンプル固有の癖は `samples/<サンプル>.md` に集約する**（取り出し前に確認する）。現状 `samples/webforms.md`
 （Web Forms の WS/3層依存・config 二段構成）。他サンプルは実測次第で追加する。
@@ -125,8 +120,8 @@ VS エディションによる msbuild 解決、ベンダ元パスの起点、`b
 - **必要なアセンブリはサンプルの csproj に列挙済み**（`OpenTouryo.Public` / `.Public.Security` /
   `.Framework` / `.Business` / `.Framework.RichClient` / `.Business.RichClient` /
   `.CustomControl` / `.DamManagedOdp` ほか）。その `Reference` をそのまま使い、`HintPath` だけ直す。
-- 元の `Build_*` フォルダ名を維持してベンダするので、**DLL 名・net48/core の区別はそのまま**。
-  張り替えは**パス接頭辞の変更だけ**で済む。
+- **張り替えは接頭辞だけでは済まない**：net48 サンプルの元 HintPath は `…\Frameworks\Infrastructure\Build\`
+  （サフィックス無し）だが、ベンダ先は `…\OpenTouryoAssemblies\Build_net48\`＝**末尾フォルダ名も変わる**。
 - **張り替える対象は「ベンダ先 `Build_*\` に含まれる DLL すべて」**（`OpenTouryo.*` だけとは限らない）。
   例：net48 サンプルの `MySql.Data` / `Oracle.ManagedDataAccess` は **`packages.config` に無く**、
   HintPath が他サンプルのビルド出力（`..\..\..\WS_sample\Build\...`）を指すため **NuGet では復元されない**。
@@ -134,20 +129,22 @@ VS エディションによる msbuild 解決、ベンダ元パスの起点、`b
   `OpenTouryo.*` と同様にベンダ先へ張り替える。
 - **触らないのは NuGet 復元される 3rd-party だけ**（net48＝`packages.config`、core＝`PackageReference`）。
 - 相対パス（`..\` の数）はプロジェクトの配置に合わせる。
+- **深いリポ パスは MAX_PATH(260) に当たる**（実測）。相対配置を保つと `nuget restore` がパッケージ内部の
+  深いパスで超過し失敗する → **取り出したプロジェクトをリポ直下へフラット化**して相対 `HintPath` を張り替える
+  （`long path` 有効化でも可。詳細は `samples/webservices.md`）。
 
 ### 3層（WCF/WS）サンプルの扱い
 
-一部サンプルは 3層構成で、**他サンプルのビルド出力**（`WSServer_sample.dll` / `WSIFType_sample.dll` 等）
-や WCF エンドポイントに依存する。**無いのはその「ビルド出力」で、依存元サンプル（`WS_sample` 等）の
-ソースはリポジトリに実在する**。そのため対象サンプル単体では as-is でビルドが通らないことがあるが、
-解消は用途で2通り：**(A) 3層のまま通す**＝依存元サンプルも取り出して⑤と同じ要領で張り替えてビルドする
-（**取り出し・参照張り替えの範囲＝セットアップで完結**）／**(B) 2層で使う**＝WS 依存を切り離す
-（**後工程 `opentouryo-project-transform`**）。
+一部サンプルは 3層構成で、**他サンプルのビルド出力**（`WSServer_sample.dll` / `WSIFType_sample.dll` 等）に依存する
+（依存元ソースは `Samples\WS_sample` に実在。無いのはビルド出力だけ）。単体では as-is で通らないことがあるが、
+解消は2通り：
+- **(A) 3層のまま通す** — 依存元サンプルも取り出し、⑤と同じ要領で張り替えてビルドし、**その出力を参照先
+  （`WS_sample\Build\`）へ配置する**まで（`.sln` 直ビルドは `bin\Debug\` に出るので配置が要る＝実測）。**セットアップで完結**。
+- **(B) 2層で使う** — WS 依存を切り離す（**後工程 `opentouryo-project-transform`**）。
 
-**(A)/(B) の選択と、不要な層の削減・画面改変は、セットアップ中に判断を求めない。** セットアップの目的は
-サンプルを取り出し、参照・リソース・config を整えて**ソリューションを開ける状態にする**ところまで。
-どちらに進めるかは、利用者がソリューション全体を俯瞰してから決めてよい。**サンプル別の具体手順は
-`samples/<サンプル>.md`**（Web Forms は `samples/webforms.md` に (A)/(B) 両方を記載）。
+**(A)/(B) の選択・層の削減・画面改変は、セットアップ中に判断を求めない**（開ける状態に達した後、利用者が
+俯瞰して決める）。**WS/3層の共通手順は `samples/webservices.md`、サンプル固有は `samples/<サンプル>.md`**
+（Web Forms は `samples/webforms.md`）。
 
 ## ⑥ リソース（resource）の移設と config パスの張り替え
 
@@ -197,6 +194,8 @@ VS エディションによる msbuild 解決、ベンダ元パスの起点、`b
 - **net48（`packages.config`）は msbuild の前に `nuget restore <sln>` が必須**
   （`msbuild /t:restore` では復元されない）。`nuget.exe` は取得した ZIP の
   `root\programs\nuget.exe` を流用できる。core は `dotnet restore`（`dotnet build` に含まれる）。
+- **セッション状態**（net48 Web）：サンプルの `Web.config` が **`sessionState mode="StateServer"`** だと
+  **ASP.NET State Service の起動が前提**。使わないなら `mode="InProc"` に変える。ビルドは通るのに起動できない、で迷いやすい
 - ビルドが通り、実行できることを確認する（net48＝msbuild／core＝`dotnet build`）
 
 ### `.gitignore` を置く
