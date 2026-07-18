@@ -79,7 +79,9 @@ call .\3_Build_Business_netcore100.bat < nul
 **このバッチ名（net48 / netcore100）が正**。本体の `99_BuildLibsAtOtherRepos*.bat` は陳腐化して
 `net45`〜`netcore30` を呼ぶので**参考にしない**。なお `2_Build_NuGet_net48.bat` は `Nuget_RichClient_net48.sln` も
 必ずビルドするので、RichClient を使わない標的でも `OpenTouryo.Framework.RichClient.dll` 等が生成される（無害。
-「標的ランタイムのバッチだけ」で絞れるのはランタイム粒度まで）。
+「標的ランタイムのバッチだけ」で絞れるのはランタイム粒度まで）。**ただし出来る RichClient は `Framework.RichClient` まで。
+`OpenTouryo.Business.RichClient`（2CS の親クラス2）は別 sln `BusinessRichClient_net48.sln` が要り、`2_/3_` 標準フローでは
+生成されない**（親クラス2 の 2CS カスタマイズ時に効く。`opentouryo-base2-customize`）。
 
 ### エージェント/CI では PowerShell ラッパを既定にする（推奨）
 

@@ -30,9 +30,14 @@ metadata:
   リッチクライアント分は `RichClient/`（`OpenTouryo.Business.RichClient`）。
 - 親クラス1（`Framework` / `Public` ＝バイナリ提供、**触らない**）の共通処理フックを **override** して、
   プロジェクト共通の挙動（接続・認証・例外・ログ・画面初期化）を注入するのが役割。
-- ビルドは **`3_Build_Business_net48` / `3_Build_Business_netcore100`**
-  （親クラス1 の `2_Build_NuGet_*` が先）。成果は `OpenTouryo.Business(.RichClient).dll`。
+- ビルドは **`3_Build_Business_net48` / `3_Build_Business_netcore100`**（親クラス1 の `2_Build_NuGet_*` が先）。
   これを導入プロジェクトが参照する（`opentouryo-project-setup` のベンダ）。
+- **★ `OpenTouryo.Business` と `OpenTouryo.Business.RichClient`（2CS）は別 sln＝ビルド経路が違う**（実測・net48 03-20）。
+  `3_Build_Business_net48` がビルドするのは `Business_net48.sln`＝**`Business` + `CustomControl` だけ**。**2CS クラス
+  （`MyBaseLogic2CS` / `MyFcBaseLogic2CS` ＝ `OpenTouryo.Business.RichClient`）は別の `BusinessRichClient_net48.sln`
+  を明示ビルドしないと生成されない**（`2_/3_` 標準フローも `Nuget_RichClient_net48.sln` も作らない＝出来るのは
+  `Framework.RichClient` まで）。**2CS を直しても標準フローだと無言で無視される**（エラーも出ない）。core も同構成で
+  同じ穴の可能性が高い（`BusinessRichClient_netcore100.sln` が別在。要確認）。→ 2CS を触るなら次項のビルドに一手足す。
 - **カスタマイズは「修正ファイルだけ」をオーバーレイとしてバージョン管理する**（後述の「バージョン管理」）。
   `project-setup` が Temp に展開する丸ごとのツリーはビルドの副産物で、そこを直接いじって放置する場所ではない。
 
@@ -41,7 +46,7 @@ metadata:
 | 層 | 主なクラス | 役割 |
 | --- | --- | --- |
 | P層 | `Presentation/MyBaseController`（Web Forms・**abstract**）／`MyBaseMVController(Core)`（MVC）／`RichClient/Presentation/MyBaseControllerWin`（WinForms・具象） | 画面共通処理・イベント結線・例外→画面 |
-| B層 | `Business/MyBaseLogic`・`MyFcBaseLogic`／`RichClient/Business/MyBaseLogic2CS`・`MyFcBaseLogic2CS` | 業務ロジックのライフサイクル・接続・トランザクション |
+| B層 | `Business/MyBaseLogic`・`MyFcBaseLogic`／`RichClient/Business/MyBaseLogic2CS`・`MyFcBaseLogic2CS`（**★2CS は別 sln**） | 業務ロジックのライフサイクル・接続・トランザクション |
 | D層 | `Dao/MyBaseDao`（＋ `CmnDao`） | クエリ実行の共通処理 |
 | 共通 | `Util/MyLiteral`・`MyUserInfo`・`MyCmnFunction`／`Exceptions/MyBusiness*ExceptionMessage` | 接頭辞・ユーザ情報・共通関数・例外メッセージ |
 
@@ -51,7 +56,7 @@ metadata:
 
 | フック / 拡張点 | クラス | 何をする所 |
 | --- | --- | --- |
-| `UOC_ConnectionOpen` | `MyFcBaseLogic` | **DBMS / 接続の選択**（`actionType.Split('%')[0]` で Dam を選び `ConnectionString_<code>` をロード）。`opentouryo-p-call-business` |
+| `UOC_ConnectionOpen` | `MyFcBaseLogic` | **DBMS / 接続の選択**（`actionType.Split('%')[0]` で Dam を選び `ConnectionString_<code>` をロード）。`opentouryo-p-call-business`。※ここを1 DBMS 固定に簡素化すると、**B層が渡す `actionType` の DB プレフィックスによる切替が無効化される**（意図的なら可。纏め者が意識する） |
 | `UOC_PreAction` / `UOC_AfterAction` / `UOC_AfterTransaction` | `MyBaseLogic` / `MyFcBaseLogic` | 業務ロジックの前後・トランザクション後の共通処理（認証チェック・ログ等） |
 | `UOC_ABEND` | `MyBaseController` / `MyFcBaseLogic` | **例外→共通エラー画面**への振替 |
 | `addControlEvent` | `MyBaseController` / `MyBaseControllerWin` | **コントロール・イベントの結線を追加**（対応コントロール／イベントを増やす）。`opentouryo-layer-p-webforms-event` / `-winforms-event` |
@@ -69,15 +74,19 @@ metadata:
    （override 実装 / 定数 / メッセージ）。
 2. ビルド スクリプトが**オーバーレイを固定タグの展開ツリーへ上書き**してから
    **`3_Build_Business_net48` / `3_Build_Business_netcore100`** でビルドする
-   （親クラス1 のビルド `2_Build_NuGet_*` が先に要る）。
-3. 生成された `OpenTouryo.Business(.RichClient).dll` を導入プロジェクトへ配布
+   （親クラス1 のビルド `2_Build_NuGet_*` が先に要る）。**2CS（`MyBaseLogic2CS` / `MyFcBaseLogic2CS`）を触ったら、
+   `3_Build_Business_*` に加えて `BusinessRichClient_net48.sln`（core は `_netcore100`）も別途ビルドする**
+   （さもないと 2CS の変更が無言で無視される。前述）。
+3. 生成された `OpenTouryo.Business.dll`（2CS を直したなら `OpenTouryo.Business.RichClient.dll` も）を導入プロジェクトへ配布
    （`opentouryo-project-setup` のベンダ先 `OpenTouryoAssemblies\Build_*`）。
 4. 依存アプリを再ビルドして反映。**破壊的変更（シグネチャ・挙動）は全依存アプリに波及**する。
 
 ## バージョン管理（オーバーレイ ＋ 固定タグ）
 
 親クラス2 のソースは丸ごと（約13,800行）を抱え込まず、**直したファイルだけ**を、
-元のパスを保った `base2-overlay/` に置いて Git 管理する（＝修正差分だけを残す）。
+元のパスを保った `base2-overlay/` に置いて Git 管理する（＝修正差分だけを残す）。**「差分」は
+ファイル単位の丸ごと差し替え**（編集済みの `.cs` をそのまま置く）で、行差分＝パッチ（hunk）ではない
+（適用は下記コピーで上書きするため）。
 
 ```
 <repo>/
@@ -96,9 +105,14 @@ metadata:
   （`<extract>` は展開先。深いリポで MAX_PATH を避けるため短い作業ルート `C:\otr\...` のこともある。
   `opentouryo-project-setup-build`）：
 
+  ```powershell
+  # フォルダ相手の xcopy は F/D を訊いて非対話で止まりうる。Copy-Item が安全
+  Copy-Item -Path base2-overlay\* -Destination <extract>\root\programs\CS\ -Recurse -Force
+  # xcopy を使うなら /I を付ける： xcopy /Y /E /I base2-overlay\* <extract>\root\programs\CS\
   ```
-  xcopy /Y /E  base2-overlay\*  <extract>\root\programs\CS\
-  ```
+
+  **元エンコードを保って書く**：基盤ソースは **UTF-8 BOM 付き**で日本語コメントを含む。オーバーレイをツールで
+  生成・編集する際に BOM 無し／別エンコードで書くと**日本語コメントが壊れる**。BOM 付き UTF-8 のまま扱う。
 
 - **★ 短ルートの展開ツリーをワークスペースに加え、そこの基盤ソースを直接いじる（コピーバックは廃止）。**
   短い作業ルート（`C:\otr\`）で展開・ビルドすると、直す元の `Frameworks/Infrastructure`（特に `Business`）は

@@ -113,13 +113,12 @@ VS エディションによる msbuild 解決、ベンダ元パスの起点、`b
 ### ④ 取り出す
 
 対象サンプルのフォルダを新規リポジトリへコピーする。**`LayerB.cs` / `LayerD.cs` は
-サンプルに同梱されたソース**なので、それごと取り出す（B/D層は別 DLL ではない。開発の起点）。
+サンプルに同梱されたソース**なので、それごと取り出す（別 DLL ではない）。
 
-**開発支援ツールも一緒に取り出す。** OpenTouryo は `Frameworks\Tools\` 配下（`Samples\` ではない）に GUI ツールを
-同梱する。**取り出し対象に `DaoGen_Tool`（＝墨壺。D層自動生成）と `DPQuery_Tool`（動的クエリ試験）を含める**
-（DAO 自動生成・動的 SQL は OpenTouryo 開発の標準ワークフローで後から必要になる）。両ツールもサンプルと同じ
-`Reference`+`HintPath` 方式なので ⑤ と同じ要領で張り替える（net48 は `packages.config` 無し＝DB DLL 含め全 HintPath が
-対象。注意点あり）。詳細と手順は `samples/daogentool.md` / `samples/dpquerytool.md`。
+**開発支援ツールも一緒に取り出す。** `Frameworks\Tools\` 配下（`Samples\` ではない）の `DaoGen_Tool`
+（墨壺＝D層自動生成）と `DPQuery_Tool`（動的クエリ試験）を取り出し対象に含める（DAO 自動生成・動的 SQL は標準ワークフロー）。
+⑤ と同様に張り替えるが、**両ツールは `HintPath`＋`PackageReference` 混在で net48 でも restore が要る**
+（`Microsoft.Data.SqlClient` 等。漏れは `CS0234`）。詳細は `samples/daogentool.md` / `samples/dpquerytool.md`。
 
 ### ⑤ 参照を張り替える
 
@@ -127,39 +126,30 @@ VS エディションによる msbuild 解決、ベンダ元パスの起点、`b
 `Reference Include="OpenTouryo.*"` の **`HintPath` だけ**をベンダ先へ書き換える。
 
 ```xml
-<!-- net48 -->
+<!-- net48（core は Build_netcore100\net10.0\ に読み替え） -->
 <Reference Include="OpenTouryo.Framework">
   <HintPath>..\OpenTouryoAssemblies\Build_net48\OpenTouryo.Framework.dll</HintPath>
 </Reference>
-
-<!-- .NET 10.0 -->
-<Reference Include="OpenTouryo.Framework">
-  <HintPath>..\OpenTouryoAssemblies\Build_netcore100\net10.0\OpenTouryo.Framework.dll</HintPath>
-</Reference>
 ```
 
-- **必要なアセンブリはサンプルの csproj に列挙済み**（`OpenTouryo.Public` / `.Public.Security` /
-  `.Framework` / `.Business` / `.Framework.RichClient` / `.Business.RichClient` /
-  `.CustomControl` / `.DamManagedOdp` ほか）。その `Reference` をそのまま使い、`HintPath` だけ直す。
+- **必要なアセンブリはサンプルの csproj に列挙済み**（`OpenTouryo.Public` / `.Framework` / `.Business` ほか）。
+  その `Reference` をそのまま使い、`HintPath` だけ直す。
 - **触らないのは NuGet 復元される 3rd-party だけ**（net48＝`packages.config`、core＝`PackageReference`）。
   相対パス（`..\` の数）はプロジェクトの配置に合わせる。
 
-**間違えやすい edge case は `references/reference-rewrite.md`**：張り替えは接頭辞だけでは済まない
-（末尾フォルダ名 `Build\`→`Build_net48\` も変わる）／`MySql`・`Oracle` 等ベンダ先の DLL 全部が対象
-（NuGet 非復元）／深いリポの MAX_PATH フラット化。
+**間違えやすい edge case は `references/reference-rewrite.md`**（末尾フォルダ名 `Build\`→`Build_net48\` も変わる／
+`MySql`・`Oracle` もベンダ張替＝NuGet 非復元／MAX_PATH フラット化）。
 
 ### 3層（WCF/WS）サンプルの扱い
 
-一部サンプルは 3層構成で、**他サンプルのビルド出力**（`WSServer_sample.dll` / `WSIFType_sample.dll` 等）に依存する
-（依存元ソースは `Samples\WS_sample` に実在。無いのはビルド出力だけ）。単体では as-is で通らないことがあるが、
-解消は2通り：
-- **(A) そのまま残す** — 依存元サンプルも取り出し、⑤と同じ要領で張り替えてビルドし、**その出力を参照先
-  （`WS_sample\Build\`）へ配置する**まで（`.sln` 直ビルドは `bin\Debug\` に出るので配置が要る＝実測）。**セットアップで完結**。
+一部サンプルは**他サンプルのビルド出力**（`WSServer_sample.dll` / `WSIFType_sample.dll`）に依存する
+（依存元ソースは `Samples\WS_sample` に実在。無いのはビルド出力だけ）。as-is で通らないことがあり、解消は2通り：
+- **(A) そのまま残す** — 依存元サンプルも取り出し⑤同様に張り替えてビルドし、**出力を参照先 `WS_sample\Build\` へ
+  配置する**（`.sln` 直ビルドは `bin\Debug\` に出る＝実測。要配置）。**セットアップで完結**。
 - **(B) WS 依存を切り離す** — WS 参照を外す（**後工程 `opentouryo-project-transform`**）。
 
-**(A)/(B) の選択・層の削減・画面改変は、セットアップ中に判断を求めない**（開ける状態に達した後、利用者が
-俯瞰して決める）。**WS/3層の共通手順は `samples/webservices.md`、サンプル固有は `samples/<サンプル>.md`**
-（Web Forms は `samples/webforms.md`）。
+**(A)/(B) の選択・層の削減・画面改変は、セットアップ中に判断を求めない**（開ける状態の後に利用者が決める）。
+**WS/3層の共通手順は `samples/webservices.md`、サンプル固有は `samples/<サンプル>.md`**（Web Forms は `webforms.md`）。
 
 ## ⑥ リソース（resource）の移設と config パスの張り替え
 
@@ -184,7 +174,9 @@ VS エディションによる msbuild 解決、ベンダ元パスの起点、`b
   `root\programs\nuget.exe` を流用できる。core は `dotnet restore`（`dotnet build` に含まれる）。
 - **セッション状態**（net48 Web）：サンプルの `Web.config` が **`sessionState mode="StateServer"`** だと
   **ASP.NET State Service の起動が前提**。使わないなら `mode="InProc"` に変える。ビルドは通るのに起動できない、で迷いやすい
-- ビルドが通り、実行できることを確認する（net48＝msbuild／core＝`dotnet build`）
+- ビルドが通り、実行できることを確認する（net48＝msbuild／core＝`dotnet build`）。**ビルド成功＝動く、ではない**
+  （初期化は `%OT_RESOURCE_ROOT%` を読むので実行して初めて ⑥ の成否が分かる）。WebForms の IIS Express 実行確認
+  （HTTP で SSL 回避・環境変数の渡し方・`Ping`/`login` スモーク・500 の見方）は `references/run-verify.md`
 
 ### `.gitignore` を置く
 
@@ -219,6 +211,9 @@ packages/
 - 後回し → 何もしない。利用者がソリューションを俯瞰してから別途依頼する
 
 **セットアップの途中に構成変更の判断を割り込ませない。** 選ばせるのは「ソリューションが開ける状態」に達した後。
+
+**セットアップ成果はコミットを促す。** 未コミットのままだと作業ツリーから失われうる（実測）。ビルド確認まで済んだ
+節目でユーザにコミットを提案する（git 操作はしない方針は保つ）。
 
 ## やってはいけないこと
 

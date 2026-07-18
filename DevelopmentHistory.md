@@ -148,14 +148,15 @@ opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実
 opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
 opentouryo-richclient-async       実効145L tok~2031  完了（リッチクライアントの非同期呼び出し）
 opentouryo-common-parts           実効118L tok~2047  完了（用途→共通部品のインデックス）
-opentouryo-project-setup          実効234L tok~4997  完了（立ち上げ入口。①〜⑦。③は build へ委譲。⑤⑥ の詳細を references/ へ退避＝目安内。核心は inline。①表は全系列・WS依存列は csproj 確定値、別 repo〔ASPNETWebService/Frontend〕は対象外で表外。④で開発支援ツールも取り出し。整備状況の「残件」は執筆者メモ〈!-- --〉化。①は全系列を必ず提示・UI 制限時も間引かない）
-                                  ├ references/reference-rewrite.md 26L tok~500  ⑤の edge case（接頭辞だけでない・Build_* 全 DLL＝MySql/Oracle 非復元・MAX_PATH フラット化）
+opentouryo-project-setup          実効230L tok~4995  完了（立ち上げ入口。①〜⑦。③は build へ委譲。⑤⑥ の詳細を references/ へ退避＝目安内。核心は inline。①表は全系列・WS依存列は csproj 確定値、別 repo〔ASPNETWebService/Frontend〕は対象外で表外。④で開発支援ツールも取り出し。整備状況の「残件」は執筆者メモ〈!-- --〉化。①は全系列を必ず提示・UI 制限時も間引かない。⑦に実行確認〔run-verify〕とコミット促し）
+                                  ├ references/reference-rewrite.md 39L         ⑤の edge case（接頭辞だけでない・Build_* 全 DLL＝MySql/Oracle 非復元・MAX_PATH フラット化・net48 も PackageReference 併用時は restore）
                                   ├ references/resource-config.md   46L tok~900  ⑥の詳細（相対不可＝ResourceLoader・%VAR%展開／FxContainerization と別・パスキー一覧・綴りの罠・config二段）
+                                  ├ references/run-verify.md        ~30L         ⑦の実行確認（IIS Express：HTTP で SSL 回避・OT_RESOURCE_ROOT の渡し方・Ping/login スモーク・500＝resource/config 失敗）
                                   ├ samples/webservices.md 56L tok~1200  WS/3層の共通機構（サンプル横断で共有）：(A)そのまま残す/参照/Build\配置・(B)WS切り離し・core 実用不可・MAX_PATH
                                   ├ samples/webforms.md    38L tok~700   Web Forms 固有（cc 画面の CS0246・(B)画面差し替え・config二段・test*マスタ固有名）。共通は samples/webservices.md
-                                  ├ samples/daogentool.md  ~40L         開発支援ツール DaoGen_Tool（墨壺＝D層自動生成。Frameworks\Tools 配下・⑤同様に張替・net48 は packages.config 無で全 HintPath 対象）→ dao-generated
-                                  └ samples/dpquerytool.md ~40L         開発支援ツール DPQuery_Tool（動的クエリ試験＝PARAM タグ。取り出し/張替は daogentool.md と同じ）→ query-definition
-opentouryo-project-setup-build    実効126L tok~2700  完了（③を独立スキル化。ZIP取得→ランタイム別バッチ→ベンダ。footgun＋偽の成功＋MAX_PATH短ルート＋PowerShell 既定推奨）
+                                  ├ samples/daogentool.md  ~45L         開発支援ツール DaoGen_Tool（墨壺＝D層自動生成。Frameworks\Tools 配下・HintPath＋PackageReference 混在＝net48 も restore 要・Microsoft.Data.SqlClient）→ dao-generated
+                                  └ samples/dpquerytool.md ~45L         開発支援ツール DPQuery_Tool（動的クエリ試験＝PARAM タグ。取り出し/張替は daogentool.md と同じ）→ query-definition
+opentouryo-project-setup-build    実効148L tok~3659  完了（③を独立スキル化。ZIP取得→ランタイム別バッチ→ベンダ。footgun＋偽の成功＋MAX_PATH短ルート＋PowerShell 既定推奨。短ルート展開ツリーをワークスペース化〔コピーバック廃止〕。Nuget_RichClient は Framework.RichClient まで＝Business.RichClient は別 sln）
                                   └ examples.md 109L tok~1400  実機で通した as-built スクリプト2本（on-demand。setup-build.ps1 / build-app.ps1。雛形）
 opentouryo-project-transform      実効106L tok~2100  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消。実機E2E反映：改行LF/非対話PSガード・2層化のDB DLL付替・test*マスタ警告・csproj剪定手法。実行は任意）
 opentouryo-layer-b               実効292L tok~4134  完了
@@ -175,7 +176,7 @@ opentouryo-config              実効195L tok~2631  完了
 opentouryo-auth                実効309L tok~4953  完了 ★上限に貼り付いている
 opentouryo-oauth2-client       実効263L tok~2851  完了
 opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の挙動・運用ルールの確認手順＝読む側）
-opentouryo-base2-customize     実効124L tok~2820  完了（親クラス2 のカスタマイズ＝纏め者向け・作る側。オーバーレイ+固定タグ）
+opentouryo-base2-customize     実効145L tok~3735  完了（親クラス2 のカスタマイズ＝纏め者向け・作る側。オーバーレイ+固定タグ。短ルート展開ツリーをワークスペース化。★2CS=Business.RichClient は別 sln〔BusinessRichClient_*.sln〕要ビルド／overlay 適用は Copy-Item＋UTF-8 BOM 保持／overlay はファイル丸ごと差替＝パッチでない）
 ```
 
 **全30スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
@@ -340,6 +341,10 @@ APIリファレンスで足りる）。
 | ①サンプル選択が間引かれ 3層CS/WSClient_sample が選べなかった→全系列提示を明記（実環境レポート・**2026-07-18**） | ① の選択で、エージェントの提示が**4バケット（MVC / Web Forms / WinForms 2CS / CLI・バッチ）＋「Type something」に間引かれ、3層リッチクライアント（`WS_sample\WSClient_sample`）と WPF が選択肢から欠落**した。原因は**提示層のバケット化**（実質4択の chooser に押し込めるため系列を落とす）。表は全8系列を列挙済みで、既存注記「一部だけ出して決め打ちしない」だけでは防げなかった。→ **① 表直後を強い明示指示に差し替え**：「上表の全系列を必ず提示してユーザに選ばせる／系列をまとめて間引かない（実測で 3層CS・WPF が欠落）／**選択 UI が選択肢数を制限しても、収まらなければ全系列を番号付きリストで提示して番号で選ばせる**／派生は系列を選んだ後の枝でよいが系列そのものは全部見せる」。**やってはいけないこと**にも「サンプル選択で系列を間引く（固定4択に押し込めて WSClient_sample/WPF を落とす）」を追加。追記で cl100k が 5000 を超えたため、凡例の MVC 重複・`なし`行の重複・派生の列挙を刈って **tok~4997（目安内）** に収めた |
 
 | コピーバックが繰り返し抜ける→「短ルートをワークスペースに追加」方式へ転換（作者フィードバック・**2026-07-18**） | 前々項で「基盤ソースの引き込み（`xcopy` で深いリポへコピーバック）」を必須手順へ格上げしたが、**あいかわらずエージェントが実行しなかった**（2回目の実測）。作者提案：**もう `C:\otr` をワークスペースに追加すればよい**。→ 設計転換：コピーという抜けやすいステップ自体を**廃止**。基盤ソース `Frameworks\Infrastructure` は ZIP 展開時点で `C:\otr\OpenTouryo-<ref>\root\programs\CS\Frameworks\Infrastructure` に**既に在る**ので、深いリポへコピーせず、**短ルート `C:\otr` をワークスペースに追加して展開ツリーを直接編集・ビルド**する（VS Code「フォルダーをワークスペースに追加」／エージェントは絶対パスで直接読み書き）。「ソースが無くて始められない」も「コピー忘れ」も原理的に起きない（＝実行必須のアクションが無い）。コミットは差分 `base2-overlay/` だけ、展開ツリーは使い捨て。長パス有効化でリポ直下ビルドし分離自体を無くす選択肢も併記。反映：`setup-build/SKILL.md` §1 の ★ 節＋やってはいけないこと、`base2-customize/SKILL.md` の該当バレット（`xcopy` コピーバック例は削除）。サイズ：setup-build tok~3570・base2 tok~3133（目安内） |
+
+| 検証レポート `skill-feedback-report.md` 反映（WebForms/net48/03-20 実機・**2026-07-18**。**ビルド→IIS Express 実行〔login 200〕まで完走**） | **A-1（最重要・記述訂正）**：`DaoGen_Tool`/`DPQuery_Tool` が素でビルド不可（`CS0234` Microsoft.Data.SqlClient）。ミラー確認で真因判明＝**net48 ツール csproj は `HintPath` と `PackageReference` の混在**（`packages.config` は無いが `Microsoft.Data.SqlClient`・`Azure.*` 等を `PackageReference` で持つ）。私の旧記述「net48 は packages.config 無し＝全 HintPath＝復元なし」は**誤り**→ `daogentool.md`/`dpquerytool.md`/`reference-rewrite.md`/① inline を訂正：**HintPath はベンダ張替＋`PackageReference` は restore（`msbuild -t:restore`/`nuget`/`dotnet`）**。`Microsoft.Data.SqlClient` は SNI ネイティブ要＝restore が正道（ベンダ DLL への HintPath 追加は compile 通るがネイティブ落として起動失敗しやすい）。**B-1**：⑦「実行できることを確認」の how-to を `references/run-verify.md` 新設（IIS Express を HTTP ポートで起動して SSL 回避／`OT_RESOURCE_ROOT` を起動コマンドで明示／`Ping.aspx`=302・`login.aspx`=200 スモーク／500＝resource・config 解決失敗）＋⑦に短ポインタ。**D-1**：⑦完了後に**コミット促し**を追加（未コミットで作業ツリーから消失した実測。git 操作は人の原則は維持）。**C（回帰確認・変更不要）**：タグ確認フロー／サンプル全系列提示（4択制限を番号付きリストで回避し WSClient/WPF を落とさず）／短ルート MAX_PATH 回避／exit code 不信→DLL 実在判定／VS18 Community 限定検出／sessionState InProc／resource 綴りの罠／HintPath 末尾フォルダ名＋MySql/Oracle 張替／構成A は④⑤で完結——すべて記述どおり通用。**D-2（任意・未対応）**：`build-app.ps1` 雛形にツール2本のビルドを足せば A-1 をセットアップ時に炙り出せる（examples.md への追記余地。今回は見送り）。追記で ① が cl100k 5000 を超えたため ⑤ XML を net48 例のみ化・重複刈りで **tok~4995** に収めた |
+
+| 検証レポート `skill-feedback-report-base2.md` 反映（SQL Server 固定・net48・03-20・IL 逆アセンブルで反映実証・**2026-07-18**） | **A-1（最重要・記述訂正）**：`3_Build_Business_net48` は **2CS＝`OpenTouryo.Business.RichClient` をビルドしない**。ミラーで裏取り：2CS クラス（`MyBaseLogic2CS`/`MyFcBaseLogic2CS`）は `Business/RichClient/Business.RichClient_net48.csproj`（別アセンブリ）にあり、`Nuget_RichClient_net48.sln` は `Framework.RichClient` **のみ**ビルド（＝`Business.RichClient` は別 sln `BusinessRichClient_net48.sln` が要る）。旧記述「成果は `Business(.RichClient).dll`」は**net48 で不成立＝2CS の改修が無言で無視される**。→ `base2-customize`（親クラス2 とは／層別マップ★／変更→反映ループに 2CS 用の別 sln ビルド追加）と `setup-build`（RichClient 注記に「出来るのは Framework.RichClient まで」）を訂正。core も同構成で同穴の可能性（要確認）と注記。**B-1**：overlay 適用の非対話・エンコーディング注意＝`xcopy` は F/D を訊くので **`Copy-Item -Recurse -Force`**（or `xcopy /Y /E /I`）、基盤ソースは **UTF-8 BOM 付き**でツール生成時に BOM/エンコード維持。**B-2**：overlay は**ファイル単位の丸ごと差替（パッチ＝行差分ではない）**を明記。**D**：`UOC_ConnectionOpen` を 1 DBMS 固定に簡素化すると `actionType` の DB 切替が無効化される副作用を row に注記。**C（回帰確認・変更不要）**：差し込み点表の正確さ／overlay+固定タグ再現／ビルド順／override シグネチャ不変で依存アプリ無変更、すべて記述どおり。サイズ：base2 tok~3735・setup-build tok~3659（目安内） |
 
 ### 4.4 作者から得た情報（コードからは読めない）
 
