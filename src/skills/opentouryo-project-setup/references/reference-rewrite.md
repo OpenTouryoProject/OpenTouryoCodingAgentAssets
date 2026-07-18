@@ -1,6 +1,6 @@
 # 参照（HintPath）張り替えの注意点
 
-`opentouryo-project-setup` ⑤ の詳細。核心（`Reference Include="OpenTouryo.*"` の `HintPath` を
+`opentouryo-project-setup-core` ⑤ の詳細。核心（`Reference Include="OpenTouryo.*"` の `HintPath` を
 ベンダ先へ書き換える）は SKILL.md ⑤、ここは**間違えやすい edge case**をまとめる。
 
 ## 接頭辞だけでは済まない（末尾フォルダ名も変わる）

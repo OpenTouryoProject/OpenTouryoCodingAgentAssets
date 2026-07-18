@@ -1,6 +1,6 @@
 # 共有メモ：WS/3層依存サンプルの取り出しとビルド
 
-`opentouryo-project-setup` で「WS/3層依存あり」のサンプル（`WebForms_Sample` / `WS_sample\WSClient_sample`
+`opentouryo-project-setup-core` で「WS/3層依存あり」のサンプル（`WebForms_Sample` / `WS_sample\WSClient_sample`
 一式 ほか）を取り出すときに**共通で効く機構**。サンプル固有の癖は `<サンプル>.md`（同 `samples/` 配下）、
 ここは WS まわりの共通部分をまとめる（サンプルが増えても共有できる）。
 

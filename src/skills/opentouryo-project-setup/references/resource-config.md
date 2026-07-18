@@ -1,6 +1,6 @@
 # リソース移設と config パス張り替えの詳細
 
-`opentouryo-project-setup` ⑥ の詳細。**Fx キー全般・`FxContainerization`（設定値まるごとを環境変数で
+`opentouryo-project-setup-config` ⑥ の詳細。**Fx キー全般・`FxContainerization`（設定値まるごとを環境変数で
 上書きする別機構）・`GetConfigParameter` は `opentouryo-config`**。ここは「サンプルの絶対パスを、可搬な
 `%OT_RESOURCE_ROOT%\...` に張り替える」やり方に絞る。
 

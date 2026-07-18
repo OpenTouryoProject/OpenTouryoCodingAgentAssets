@@ -1,6 +1,6 @@
 # サンプル固有メモ：Web Forms（`Samples\WebApp_sample\WebForms_Sample`・net48）
 
-`opentouryo-project-setup` でこのサンプルを取り出すときの、**サンプル固有の癖**。
+`opentouryo-project-setup-core` でこのサンプルを取り出すときの、**サンプル固有の癖**。
 （WS/3層まわりの共通機構は `webservices.md`。サンプル別メモはこの `samples/` 配下。育ったら独立スキルへ昇格。）
 
 ## WS/3層依存（共通手順は `webservices.md`）

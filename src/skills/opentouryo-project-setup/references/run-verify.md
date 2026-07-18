@@ -1,6 +1,6 @@
 # 実行確認（IIS Express での WebForms スモークテスト）
 
-`opentouryo-project-setup` ⑦「ビルドが通り、実行できることを確認する」の具体手順（net48 Web Forms）。
+`opentouryo-project-setup-config` ⑦「ビルドが通り、実行できることを確認する」の具体手順（net48 Web Forms）。
 ビルド成功＝動く、ではない。フレームワーク初期化は `%OT_RESOURCE_ROOT%` から XML 定義・log4net を読むので、
 **実行して初めて resource/config 張り替え（⑥）の成否が分かる**。
 

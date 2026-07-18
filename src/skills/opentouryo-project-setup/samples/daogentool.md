@@ -1,6 +1,6 @@
 # 開発支援ツール：DaoGen_Tool（墨壺 ＝ D層自動生成ツール）
 
-`opentouryo-project-setup` ④ で取り出す **開発支援 GUI ツール**。テーブル定義から
+`opentouryo-project-setup-core` ④ で取り出す **開発支援 GUI ツール**。テーブル定義から
 **自動生成Dao**（`DaoXxx : MyBaseDao`。`DaoShippers` 等）を生成する。生成物の使い方は
 `opentouryo-dao-generated`、系統の選び方は `opentouryo-layer-d`。**手書きせず、テーブル定義が
 変わったらこのツールで再生成する**のが前提なので、プロジェクトに取り出しておく。

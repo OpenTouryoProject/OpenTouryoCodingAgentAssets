@@ -1,6 +1,6 @@
 # 開発支援ツール：DPQuery_Tool（動的パラメタライズドクエリ 試験ツール）
 
-`opentouryo-project-setup` ④ で取り出す **開発支援 GUI ツール**。SQL 定義ファイル
+`opentouryo-project-setup-core` ④ で取り出す **開発支援 GUI ツール**。SQL 定義ファイル
 （静的 `.sql` / 動的 `.xml`）を**試験実行**して、動的 SQL の組み立て結果を確認する。
 SQL 定義の書き方（タグ・`@` パラメタ・ユーザパラメタ・`PARAM`）は `opentouryo-query-definition`。
 
