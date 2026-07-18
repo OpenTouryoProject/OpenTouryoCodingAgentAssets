@@ -13,6 +13,11 @@ net48 サンプルの元 HintPath は `…\Frameworks\Infrastructure\Build\`（�
 **Web / MVC / バッチ / CLI は `net10.0\`、WinForms / WPF（RichClient・2CS）は `net10.0-windows7.0\`** を参照する
 （サンプルの csproj の `TargetFramework` に対応）。ベンダ先も `…\Build_netcore100\<TFM>\` の該当サブフォルダを指す。
 
+**⚠ `net10.0-windows7.0\` は標準 `2_/3_Build_netcore100` 直後だと不完全**（実測）：`OpenTouryo.Business` と
+`Dam*`（`DamManagedOdp`/`DamMySQL`/`DamPstGrS`）と `Business.RichClient` が**無い**（`net10.0\` 側にはある）。
+`3_Build_BusinessRichClient_netcore100.bat` でこれらが揃うので、**`net10.0-windows7.0\` フォルダを丸ごと再ベンダ**してから
+張り替える（個別 DLL だけ拾うと `OpenTouryo.Business` で `CS0246`）。→ `opentouryo-project-setup-build` ③。
+
 ## 張り替え対象は「ベンダ先 `Build_*\` に含まれる DLL すべて」（`OpenTouryo.*` だけではない）
 
 例：net48 サンプルの `MySql.Data` / `Oracle.ManagedDataAccess` は **`packages.config` に無く**、

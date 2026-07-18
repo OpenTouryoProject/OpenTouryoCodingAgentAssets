@@ -116,6 +116,7 @@ $work    = 'C:\otr'
 $extract = Join-Path $work "OpenTouryo-$ref"
 $cs      = Join-Path $extract 'root\programs\CS'
 $vendor  = Join-Path $repo 'OpenTouryoAssemblies\Build_netcore100'
+$needRichClient = $true   # 標的が 2CS / rich client（TFM net10.0-windows7.0）なら true。Web/MVC/Bat/CLI は false
 
 # --- 1. 既存 extract を流用（無ければ ZIP 取得）。net48 で展開済みなら再 DL しない ---
 if (-not (Test-Path $cs)) {
@@ -134,15 +135,30 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "2_Build_NuGet_netcore100 failed ($LASTEXITCODE)" }
     cmd /c ".\3_Build_Business_netcore100.bat < nul"
     if ($LASTEXITCODE -ne 0) { throw "3_Build_Business_netcore100 failed ($LASTEXITCODE)" }
+
+    # 2b. RichClient (2CS / rich client の netcore サンプルで必須。setup-build-richclient-netcore.ps1 相当)。
+    # ★ netcore は net10.0-windows7.0\ に Business / Dam* / Business.RichClient が「ここで初めて」出る
+    #    （3_Build_Business_netcore100 直後は無い）。フォルダ丸ごと再ベンダするため、この後ベンダで上書きされる。
+    if ($needRichClient) {   # 標的が 2CS / rich client（TFM net10.0-windows7.0）なら true
+        cmd /c ".\3_Build_BusinessRichClient_netcore100.bat < nul"
+        if ($LASTEXITCODE -ne 0) { throw "3_Build_BusinessRichClient_netcore100 failed ($LASTEXITCODE)" }
+    }
 } finally { Pop-Location }
 
-# --- 3. ベンダ（net10.0\ と net10.0-windows7.0\ の両サブフォルダごと）---
+# --- 3. ベンダ（net10.0\ と net10.0-windows7.0\ の両サブフォルダを丸ごと）---
+# RichClient を回した場合、net10.0-windows7.0\ に Business/Dam*/Business.RichClient が揃うので、
+# 個別 DLL を拾わず「フォルダ丸ごと」コピーする（拾い漏らすと OpenTouryo.Business で CS0246）。
 $src = Join-Path $cs 'Frameworks\Infrastructure\Build_netcore100'
 if (-not (Test-Path $src)) { throw "Build output not found: $src" }
 New-Item -ItemType Directory -Force -Path $vendor | Out-Null
 Copy-Item -Path (Join-Path $src '*') -Destination $vendor -Recurse -Force
 if (-not (Test-Path (Join-Path $vendor 'net10.0\OpenTouryo.Business.dll'))) {
     throw "netcore base build did not produce net10.0\OpenTouryo.Business.dll (check output)."
+}
+# 2CS / rich client 標的なら Windows TFM 側にも Business が在ることを確認（RichClient ビルド漏れ検知）。
+if ($needRichClient -and
+    -not (Test-Path (Join-Path $vendor 'net10.0-windows7.0\OpenTouryo.Business.dll'))) {
+    throw "RichClient sample but net10.0-windows7.0\OpenTouryo.Business.dll missing (run 3_Build_BusinessRichClient_netcore100)."
 }
 ```
 

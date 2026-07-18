@@ -91,6 +91,12 @@ Business.RichClient も含め**全部ビルドされる**。本スキルは標�
 （親クラス2 を 2CS カスタマイズする場合も同じ sln。`opentouryo-base2-customize`）。→ **RichClient 系サンプルなら ③ に
 このビルドを足す**（`examples.md` の 2b＝`setup-build-richclient.ps1` 相当。フル一式で回すなら不要）。
 
+**★ netcore は欠落範囲がさらに広い（実測・03-20/.NET10）。** `net10.0-windows7.0` では、標準 `2_/3_Build_netcore100`
+直後の `Build_netcore100\net10.0-windows7.0\` に **`OpenTouryo.Business` と `Dam*`（`DamManagedOdp`/`DamMySQL`/`DamPstGrS`）
+まで無い**（`net10.0\` 側にはある）。`3_Build_BusinessRichClient_netcore100.bat` がこれらと `Business.RichClient` を
+まとめて生成するので、**`net10.0-windows7.0\` フォルダを丸ごと再ベンダ**する（`Business.RichClient.dll` だけ拾うと
+`OpenTouryo.Business` で `CS0246` が残る）。**net48 は TFM 分岐が無く、欠けるのは `Business.RichClient` のみ**。
+
 ### エージェント/CI では PowerShell ラッパを既定にする（推奨）
 
 スクリプトは `.bat` でも PowerShell でもよいが、**非対話実行では PowerShell ラッパを既定に推奨**する

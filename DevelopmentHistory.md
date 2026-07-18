@@ -368,6 +368,8 @@ APIリファレンスで足りる）。
 
 | 再実行（WPF 2CS・net48・既存流用）＝新規欠陥ゼロ（作者報告・**2026-07-19**） | WPF 2CS は WinForms 2CS とほぼ同一で一発通過（フラット化・参照張替・`SqlTextFilePath` 1点張替・`/t:restore`・起動スモーク）。**新規 Issue は無し**。**J（デスクトップ実行検証）は前ターンで対処済み**（`run-verify.md` のデスクトップ節）を再確認＝WPF も同節でカバー。見出しに `WPF` を明示追記。**C（MySql/Oracle の元 HintPath がサンプルで割れる）も対処済み**（reference-rewrite.md）。任意改善として selection に「**WPF 2CS ≒ WinForms 2CS 同一手順**（desktop・RichClient 要・`SqlTextFilePath` 1点）」の一言を追加。※報告者の `Select-String -SimpleMatch 'C:\root'` 取りこぼしはエージェント側の検査コマンド不備（`C:\\root` エスケープ or `.Contains` を使う）で、スキル／本体の欠陥ではない＝doc 変更なし |
 
+| Issue `skill-issue_netcore-richclient-windows-tfm.md`：netcore の RichClient 欠落は Business/Dam* ごと（作者報告・**2026-07-19**。net10.0 WinForms 2CS で実測） | H の netcore 版の精度不足。前回「2CS/RichClient は `Business.RichClient` が別ビルド（core は `_netcore100`）」と書いたが、**netcore は欠落範囲が広い**：標準 `2_/3_Build_netcore100` 直後の `Build_netcore100\net10.0-windows7.0\` に **`OpenTouryo.Business` と `Dam*`（DamManagedOdp/DamMySQL/DamPstGrS）まで無い**（`net10.0\` 側にはある）。`3_Build_BusinessRichClient_netcore100.bat` でこれらと `Business.RichClient` が揃う。core 2CS csproj は `OpenTouryo.Business` も `net10.0-windows7.0\` から参照するので、`Business.RichClient.dll` だけ拾うと `OpenTouryo.Business` で `CS0246`。→ **対処＝`net10.0-windows7.0\` フォルダを丸ごと再ベンダ**。net48 は TFM 分岐が無く欠けるのは `Business.RichClient` のみ（＝本体の欠陥ではない・記述の過小表現の修正）。反映：build SKILL ★節に netcore 段落／facade 例外／selection 注記／`reference-rewrite.md` の netcore TFM 節に「⚠ net10.0-windows7.0 は標準直後だと不完全＝丸ごと再ベンダ」／`examples.md` setup-build-netcore.ps1 に `$needRichClient` ガードの `3_Build_BusinessRichClient_netcore100.bat` ステップ＋Windows TFM 側 Business.dll の実在チェック。**J 追補**：run-verify デスクトップ節に GUI 合否基準（数秒生存＝startup OK・DB 依存は SQL Server 前提）を追記。開発元への本体 Issue は無し |
+
 ### 4.4 作者から得た情報（コードからは読めない）
 
 **これらは実装を読んでも分からない。** 失うと再取得できない。

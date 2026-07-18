@@ -35,7 +35,8 @@ metadata:
 ③ が回す `2_/3_Build_*` サブセットには含まれない（別 sln `BusinessRichClient_*.sln` を追加ビルド。フル一式／`9_CICD.bat`
 なら出る。**base2 の有無と無関係・素の依存**）。
 → これらを選んだら「同一ランタイムは ③ 流用でスキップ可」の例外＝**③ に RichClient 追加ビルドが必須**
-（`opentouryo-project-setup-build`）。バッチ・CLI・MVC・Web Forms は不要。
+（`opentouryo-project-setup-build`）。バッチ・CLI・MVC・Web Forms は不要。**netcore は `net10.0-windows7.0\` の
+`Business`/`Dam*` ごと欠けるのでフォルダ丸ごと再ベンダ**（net48 は `Business.RichClient` のみ）。
 
 **WPF 2CS は WinForms 2CS とほぼ同一手順**（実測）：デスクトップ exe・RichClient 基盤要・取り出し／参照張替は同じで、
 config は `SqlTextFilePath` の1点張替で足りることが多い（④⑤＝`opentouryo-project-setup-core`、⑥⑦＝`-config`）。
