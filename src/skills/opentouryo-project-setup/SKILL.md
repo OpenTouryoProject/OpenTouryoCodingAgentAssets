@@ -41,32 +41,44 @@ metadata:
 
 | 作りたいもの | サンプル（系列\起点） | ランタイム | WS/3層依存 |
 | --- | --- | --- | --- |
-| ASP.NET MVC | `WebApp_sample\MVC_Sample`（core は `Backend\MVC_Sample`） | net48 / .NET 10.0 | 未確認 |
+| ASP.NET MVC | `WebApp_sample\MVC_Sample`（core は `Backend\MVC_Sample`） | net48 / .NET 10.0 | **net48:あり** / core:なし |
 | Web Forms | `WebApp_sample\WebForms_Sample` | **net48 のみ** | **あり（transform 前提）** |
-| Web サービス（バックエンド） | `Backend\ASPNETWebService` | .NET 10.0 | — |
-| Windows Forms（2層C/S） | `2CS_sample\2CSClientWin_sample` | net48 / .NET 10.0 | 未確認 |
-| WPF（2層C/S） | `2CS_sample\2CSClientWPF_sample` | net48 / .NET 10.0 | 未確認 |
+| Web サービス（バックエンド） | **別 repo** `ResourceServerTemplates`（`Backend\ASPNETWebService` の実体） | .NET 10.0 | 別 repo ‡ |
+| Windows Forms（2層C/S） | `2CS_sample\2CSClientWin_sample` | net48 / .NET 10.0 | なし |
+| WPF（2層C/S） | `2CS_sample\2CSClientWPF_sample` | net48 / .NET 10.0 | なし |
 | 3層リッチクライアント（WinForms/WPF・WS 経由） | `WS_sample\WSClient_sample\WSClientWin_sample`（`WPF`/`Win2`/`WinCone` も同階層） | net48（core は ※実用性なし） | **あり（構成上必須）** |
-| バッチ | `Bat_sample\SimpleBatch_sample`（再実行可 `RerunnableBatch_sample`〜`3`） | net48 / .NET 10.0 | 未確認 |
-| CLI（コンソール） | `CLI_sample\Simple_CLI`（認証付 `DAG_Login_CLI` / `LIR_Login_CLI`） | net48 / .NET 10.0 | 未確認 |
+| バッチ | `Bat_sample\SimpleBatch_sample`（再実行可 `RerunnableBatch_sample`〜`3`） | net48 / .NET 10.0 | なし |
+| CLI（コンソール） | `CLI_sample\Simple_CLI`（認証付 `DAG_Login_CLI` / `LIR_Login_CLI`） | net48 / .NET 10.0 | 未確認 † |
+
+**「WS/3層依存」列の凡例**：`なし`＝実ミラー（`files/csharp/`）の csproj に WS 参照無しを確認済み／`あり`＝WS DLL 参照
+あり（取り出し直後に missing-ref か `CS0246`。要 (A)/(B)。net48 MVC は `Crud1Controller` が `TestParameterValue` 等を使用）／
+**`未確認 †`＝ミラー未収録**（`CLI_sample` 各種）で実物 csproj 未確認（＝下記「残件」）／
+**`別 repo ‡`＝OpenTouryo 本体のサンプルではなく別リポジトリ**で、この ZIP 取得フローの対象外。
+`Backend\ASPNETWebService`＝<https://github.com/OpenTouryoProject/ResourceServerTemplates>、
+`Frontend`（SPA フロント）＝<https://github.com/OpenTouryoProject/FrontendTemplates>（各 repo 側の手順で立ち上げる）。
 
 **上表は代表的な起点で、系列には他の派生もある。** `2CS_sample` には機能デモ（`AsyncEvent_sample`＝net48 のみ /
 `CustCtrl_sample` / `GenDaoAndBatUpd_sample` / `TimeStamp_sample`）もある。**どの系列・派生を起点にするかは、
 候補を提示してユーザに選ばせる**（一部だけ出して決め打ちしない）。
 
-**「WS/3層依存あり」のサンプルは取り出し直後 `CS0246` が残る**（`WS_sample` の `WSIFType_sample` /
-`WSServer_sample` ビルド出力に依存。依存元ソースは `Samples\WS_sample` に実在）。**確定該当（実ソース確認）**：
-- **`WebForms_Sample`** — Web で WS をインプロセス利用（2層化 (B) も可）。
-- **`WS_sample\WSClient_sample` 一式**（`WSClientWin_sample`/`WSClientWPF_sample` ほか。core は
-  `Samples4NetCore\Legacy\...`）— 3層リッチクライアント＝構成上 WS 必須。**(A) が本筋・(B) 非該当**。
-  **※ core 版は `BinaryFormatter` 廃止で実質インプロセスのみ＝実用的な3層にならず、実用は net48 側**
+**「WS/3層依存あり」のサンプルは取り出し直後 `CS0246`（または missing-ref）が残る**（`WS_sample` の
+`WSIFType_sample` / `WSServer_sample` に依存。依存元ソースは `Samples\WS_sample` に実在）。**確定該当（実ミラー確認）**：
+- **`WebForms_Sample`**（net48）— WS をインプロセス利用（2層化 (B) も可）。
+- **`MVC_Sample` の net48**（`Crud1Controller` が `TestParameterValue` 等の WS 型を使用。**core の MVC はなし**）。
+- **`WS_sample\WSClient_sample` 一式**（core は `Samples4NetCore\Legacy\...`）— 3層リッチクライアント＝構成上 WS 必須。
+  **(A) が本筋・(B) 非該当**。**※ core 版は `BinaryFormatter` 廃止で実質インプロセスのみ＝実用は net48 側**
   （`opentouryo-transmission` / §4.4）。
 
-他行（未確認）も同様の依存があり得る。**解消は (A) 3層維持／(B) 2層化**（下記「3層サンプルの扱い」。
-共通機構は `samples/webservices.md`）。**到達点は「ソリューションが開ける状態」**で、as-is のクリーンビルドは保証しない。
+**`なし` の行（2CS Win/WPF・Bat）は実ミラーで WS 参照無しを確認済み。** 解消は用途で **(A) 3層維持／(B) 2層化**
+（下記「3層サンプルの扱い」。共通機構は `samples/webservices.md`）。到達点は「開ける状態」で as-is クリーンビルドは保証しない。
 
-**サンプル固有の癖は `samples/<サンプル>.md` に集約する**（取り出し前に確認する）。現状 `samples/webforms.md`
-（Web Forms の WS/3層依存・config 二段構成）。他サンプルは実測次第で追加する。
+**残件は2種類ある**（＝ご指摘の「未確認」）：
+1. **サンプル固有メモ `samples/<サンプル>.md` は、検証したサンプルから順に整備する**。現状あるのは
+   `samples/webforms.md` のみ。他サンプルは、この表＋`webservices.md` で起点として取り出せるが、**固有の癖が
+   見つかれば `samples/<name>.md` を起こす**（＝ドキュメントの残件。中身が無い＝未整備）。
+2. 表の **`未確認 †`（`CLI_sample`）は、ミラー未収録のため WS 依存を確定できていない**（＝検証の残件。実物 csproj
+   で確認する）。**`別 repo ‡`（`ASPNETWebService`＝ResourceServerTemplates／`Frontend`＝FrontendTemplates）は
+   別リポジトリで、このスキルの ZIP フロー対象外**（各 repo 側の手順に従う）。
 
 **WPF は P層フレームワークを持たない**（`opentouryo-layer-p-winforms-screen` 参照）。
 `2CS_sample\2CSClientWPF_sample` を参考に、画面は素の WPF として実装する。

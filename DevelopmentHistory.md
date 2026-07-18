@@ -323,6 +323,10 @@ APIリファレンスで足りる）。
 
 | ①サンプル表が全系列を網羅していなかった（作者指摘・**2026-07-18**。`files/csharp/` で全列挙） | 取り出せるのは **WebApp_sample / 2CS_sample / Bat_sample / CLI_sample / WS_sample(WSClient_sample)** の系列だが、表は一部（WebApp の MVC/WebForms＋2CS/Bat/CLI/WSClient の各1つ）しか出さず決め打ちさせていた。実ミラーで確認した漏れ：**CLI は net48 にも存在**（`Samples\CLI_sample\{Simple_CLI,DAG_Login_CLI,LIR_Login_CLI}`。表は core だけだった）／**2CS に WPF・機能デモ多数**（`2CSClientWPF_sample`・`AsyncEvent_sample`〔net48 のみ〕・`CustCtrl_sample`・`GenDaoAndBatUpd_sample`・`TimeStamp_sample`）／**Bat は複数**（`SimpleBatch_sample`・`RerunnableBatch_sample`〜3）／**WSClient は4種**（`WSClientWin_sample`/`WPF`/`Win2`/`WinCone`）／**core に `Backend\ASPNETWebService`**（Web サービス バックエンド）。→ ①表を全系列網羅に再構成（接頭辞規約 net48＝`Samples\`・core＝`Backend\`/`Legacy\` を明記、ランタイムは `net48 / .NET 10.0` 併記、WPF 行と ASPNETWebService 行を追加、派生の存在を注記）＋「**候補を提示してユーザに選ばせる（一部だけ出して決め打ちしない）**」を明記 |
 
+| ①表の「未確認」を実ミラーで確定＋残件の2分類（作者質問・**2026-07-18**） | 「未確認」＝`samples/` にファイルが無い残件か？との問い。整理：**「未確認」は WS/3層依存の検証軸で、`samples/` の有無とは別軸**。`files/csharp/` の csproj を調べて確定：**net48 MVC は WS 依存**（`Crud1Controller` が `TestParameterValue`/`TestReturnValue` を使用・csproj が `WSIFType_sample`/`WSServer_sample` 参照。**core MVC はなし**）／**2CS(Win/WPF)・Bat＝なし**（WS 参照無し確認）。→ 表の WS 列を確定値へ、凡例（なし/あり/未確認†）を追加。**CLI_sample 各種・`Backend\ASPNETWebService`・`Frontend` はミラーが README のみのスタブ**で実ソース未収録＝WS 依存を確定できず「未確認 †」。残件は2種と明記：①`samples/<name>.md` 未整備（ドキュメント。現状 webforms.md のみ）②`未確認 †`（検証。ミラー未収録で実物 csproj 要確認）。※ ミラー自体が部分的（一部サンプルは README スタブ）と判明 |
+
+| `ASPNETWebService`・`Frontend` は別リポジトリと判明（作者フィードバック・**2026-07-18**） | 前項で「ミラーが README のみのスタブ」と括っていた `Backend\ASPNETWebService`（Web サービス／リソースサーバ）と `Frontend`（SPA フロント）は、**ミラーの取り込み漏れではなく OpenTouryo 本体とは別のリポジトリ**だった：`ASPNETWebService`＝<https://github.com/OpenTouryoProject/ResourceServerTemplates>、`Frontend`＝<https://github.com/OpenTouryoProject/FrontendTemplates>。→ ①表・凡例・残件を切り分け：これらは**このスキルの ZIP 取得フロー対象外**の「`別 repo ‡`」（各 repo 側の手順で立ち上げ、URL を明記）。ミラー未収録の**検証残件「未確認 †」は `CLI_sample` 系だけ**に縮小。メモリ `reference-csharp-source-mirror` にも「ミラーの穴＝別リポジトリ」を追記 |
+
 ### 4.4 作者から得た情報（コードからは読めない）
 
 **これらは実装を読んでも分からない。** 失うと再取得できない。
