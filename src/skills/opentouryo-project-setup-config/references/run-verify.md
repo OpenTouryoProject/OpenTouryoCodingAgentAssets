@@ -50,7 +50,7 @@ dotnet run --project "<repo>\MVC_Sample_Core\MVC_Sample" --urls http://localhost
 
 スモークは net48 と同様（未認証で 302→login、login 200、500＝resource/config 解決失敗）。**core は `InitConfiguration()` 必須**（⑦）。
 
-## デスクトップ（WinForms / 2CS・リッチクライアント）＝ exe
+## デスクトップ（WinForms / WPF・2CS・リッチクライアント）＝ exe
 
 Web ではないので HTTP スモークは無い。**exe を起動してプロセスが生存する（起動時クラッシュしない）ことを確認**する
 （初期化で resource/config・log4net を読むため、設定ミスは起動時例外として出る＝ここが検証点）。

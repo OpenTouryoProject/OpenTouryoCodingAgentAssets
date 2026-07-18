@@ -37,6 +37,9 @@ metadata:
 → これらを選んだら「同一ランタイムは ③ 流用でスキップ可」の例外＝**③ に RichClient 追加ビルドが必須**
 （`opentouryo-project-setup-build`）。バッチ・CLI・MVC・Web Forms は不要。
 
+**WPF 2CS は WinForms 2CS とほぼ同一手順**（実測）：デスクトップ exe・RichClient 基盤要・取り出し／参照張替は同じで、
+config は `SqlTextFilePath` の1点張替で足りることが多い（④⑤＝`opentouryo-project-setup-core`、⑥⑦＝`-config`）。
+
 **サンプル選択では上表の全系列を必ず提示してユーザに選ばせる。系列をまとめて間引かない**
 （実測：4択にまとめて **3層リッチクライアント＝`WSClient_sample` と WPF が選択肢から欠落**した）。**選択 UI が
 選択肢数を制限しても、収まらなければ全系列を番号付きリストで提示して番号で選ばせる**（固定4択に押し込めて捨てない）。
