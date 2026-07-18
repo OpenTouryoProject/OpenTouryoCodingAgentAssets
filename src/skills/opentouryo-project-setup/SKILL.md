@@ -120,18 +120,12 @@ VS エディションによる msbuild 解決、ベンダ元パスの起点、`b
 - **必要なアセンブリはサンプルの csproj に列挙済み**（`OpenTouryo.Public` / `.Public.Security` /
   `.Framework` / `.Business` / `.Framework.RichClient` / `.Business.RichClient` /
   `.CustomControl` / `.DamManagedOdp` ほか）。その `Reference` をそのまま使い、`HintPath` だけ直す。
-- **張り替えは接頭辞だけでは済まない**：net48 サンプルの元 HintPath は `…\Frameworks\Infrastructure\Build\`
-  （サフィックス無し）だが、ベンダ先は `…\OpenTouryoAssemblies\Build_net48\`＝**末尾フォルダ名も変わる**。
-- **張り替える対象は「ベンダ先 `Build_*\` に含まれる DLL すべて」**（`OpenTouryo.*` だけとは限らない）。
-  例：net48 サンプルの `MySql.Data` / `Oracle.ManagedDataAccess` は **`packages.config` に無く**、
-  HintPath が他サンプルのビルド出力（`..\..\..\WS_sample\Build\...`）を指すため **NuGet では復元されない**。
-  これらは基盤のビルド出力 `Build_net48\` に同梱される（`OpenTouryo.DamMySQL` / `.DamManagedOdp` が依存）ので、
-  `OpenTouryo.*` と同様にベンダ先へ張り替える。
 - **触らないのは NuGet 復元される 3rd-party だけ**（net48＝`packages.config`、core＝`PackageReference`）。
-- 相対パス（`..\` の数）はプロジェクトの配置に合わせる。
-- **深いリポ パスは MAX_PATH(260) に当たる**（実測）。相対配置を保つと `nuget restore` がパッケージ内部の
-  深いパスで超過し失敗する → **取り出したプロジェクトをリポ直下へフラット化**して相対 `HintPath` を張り替える
-  （`long path` 有効化でも可。詳細は `samples/webservices.md`）。
+  相対パス（`..\` の数）はプロジェクトの配置に合わせる。
+
+**間違えやすい edge case は `references/reference-rewrite.md`**：張り替えは接頭辞だけでは済まない
+（末尾フォルダ名 `Build\`→`Build_net48\` も変わる）／`MySql`・`Oracle` 等ベンダ先の DLL 全部が対象
+（NuGet 非復元）／深いリポの MAX_PATH フラット化。
 
 ### 3層（WCF/WS）サンプルの扱い
 
@@ -148,43 +142,16 @@ VS エディションによる msbuild 解決、ベンダ元パスの起点、`b
 
 ## ⑥ リソース（resource）の移設と config パスの張り替え
 
-**サンプルの config はリソースを絶対パス `C:\root\files\resource\...` で参照している。**
-そのままでは動かないので、移設して張り替える。
+**サンプルの config はリソースを絶対パス `C:\root\files\resource\...` で参照している。** 動かすには：
 
-**net48 Web Forms は config が二段構成**（パス系キーは `app.config`、接続文字列は `Web.config` 直下）。
-初見で迷いやすいので `samples/webforms.md` を参照。core はキーが `appsettings.json` に集約される。
+1. OpenTouryo の **`root/files/resource`**（`Log` / `Sql` / `Xml` / `X509` / `Test`）を導入リポジトリ**直下**へ
+   コピーする（展開済み ZIP から。＝リポジトリ直下に `resource\` ができる）。
+2. `app.config` / `appsettings.json` の**パス系キーを環境変数方式 `%OT_RESOURCE_ROOT%\...` に張り替える**
+   （絶対 `C:\root\files\resource\...` から。**相対パスは不可**）。
 
-1. OpenTouryo の **`root/files/resource`** を導入リポジトリ**直下**へコピーする
-   （＝リポジトリ直下に `resource\` ができる。中身は `Log` / `Sql` / `Xml` / `X509` / `Test`）。
-   展開済み ZIP から取り出す。
-
-2. `app.config` / `appsettings.json` の**パス系キーを環境変数方式で張り替える**
-   （絶対 `C:\root\files\resource\...` → `%OT_RESOURCE_ROOT%\...`）。
-
-   **相対パス（`resource\...`）は使わない。** フレームワークは設定値を**フルパス前提**で
-   ファイル API（`File.Exists` 等）に渡すため、相対パスは**実行プロセスのカレント ディレクトリ基準**で
-   解決される。IIS Express / w3wp のカレントはアプリ フォルダではないので、相対パスは原理的に解決できない
-   （`ResourceLoader.Exists` → `System.ArgumentException: リソースファイル…は見つかりませんでした` で 500）。
-
-   代わりに、`ResourceLoader` がパス解決の直前に展開する **`%環境変数%`** を使う
-   （`StringVariableOperator.BuiltStringIntoEnvironmentVariable`）。マシン固有の絶対パスを config に
-   残さずに済み、可搬になる。SQL 定義（`MyBaseDao.SetSqlByFile2` → `ResourceLoader`）も同じ経路で効く。
-
-   | キー | 参照先 |
-   | --- | --- |
-   | `FxLog4NetConfFile` | `%OT_RESOURCE_ROOT%\Log\SampleLogConf.xml` |
-   | `FxXMLSPDefinition` / `FxXMLMSGDefinition` / `FxXMLSCDefinition` / `FxXMLTCDefinition` / `FxXMLTMProtocolDefinition` / `FxXMLTMInProcessDefinition` | `%OT_RESOURCE_ROOT%\Xml\*.xml`（XML 定義） |
-   | `SqlTextFilePath` | `%OT_RESOURCE_ROOT%\Sql`（SQL 定義フォルダ） |
-   | `SpRp_RsaCerFilePath` | `%OT_RESOURCE_ROOT%\X509\*.cer`（OAuth2 用証明書） |
-
-   **`OT_RESOURCE_ROOT` はリポジトリ直下の `resource\` を指す環境変数**（変数名は任意。この例に統一）。
-   **セットアップ スクリプトで設定する**（ユーザ環境変数 `OT_RESOURCE_ROOT = <repo>\resource`）と、
-   クローンし直しても再実行で張り直せる。設定後は IIS Express / プロセスの再起動で反映する。
-
-3. **注意：config の綴りは実フォルダと一致していないことがある。** net48 サンプルの app.config は
-   `resource\XML\...`（大文字）・`resource\test`（小文字）だが、実フォルダは `Xml` / `Test`。
-   Windows は大文字小文字を区別しないので顕在化しないが、**Linux で core を動かすなら実フォルダの
-   綴り（`Xml` / `Test` 等）に config を合わせて直す**（フォルダを config に合わせるのではない）。
+**機構の詳細は `references/resource-config.md`**：なぜ相対パス不可か（`ResourceLoader` がフルパス前提）・
+`%VAR%` 展開（`FxContainerization` とは別機構）・**パス系キー一覧**（`Fx*` / `SqlTextFilePath` /
+`SpRp_RsaCerFilePath`）・綴りの罠（`Xml` / `Test`）・net48 Web の config 二段構成。Fx キー全般は `opentouryo-config`。
 
 ## ⑦ .gitignore・残りの構成と検証
 
