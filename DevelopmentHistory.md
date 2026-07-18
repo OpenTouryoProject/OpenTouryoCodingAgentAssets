@@ -148,7 +148,7 @@ opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実
 opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
 opentouryo-richclient-async       実効145L tok~2031  完了（リッチクライアントの非同期呼び出し）
 opentouryo-common-parts           実効118L tok~2047  完了（用途→共通部品のインデックス）
-opentouryo-project-setup          実効231L tok~4882  完了（立ち上げ入口。①〜⑦。③は build へ委譲。⑤⑥ の詳細を references/ へ退避＝目安内。核心は inline。①表は全系列・WS依存列は csproj 確定値、別 repo〔ASPNETWebService/Frontend〕は対象外で表外。④で開発支援ツールも取り出し。整備状況の「残件」は執筆者メモ〈!-- --〉化）
+opentouryo-project-setup          実効234L tok~4997  完了（立ち上げ入口。①〜⑦。③は build へ委譲。⑤⑥ の詳細を references/ へ退避＝目安内。核心は inline。①表は全系列・WS依存列は csproj 確定値、別 repo〔ASPNETWebService/Frontend〕は対象外で表外。④で開発支援ツールも取り出し。整備状況の「残件」は執筆者メモ〈!-- --〉化。①は全系列を必ず提示・UI 制限時も間引かない）
                                   ├ references/reference-rewrite.md 26L tok~500  ⑤の edge case（接頭辞だけでない・Build_* 全 DLL＝MySql/Oracle 非復元・MAX_PATH フラット化）
                                   ├ references/resource-config.md   46L tok~900  ⑥の詳細（相対不可＝ResourceLoader・%VAR%展開／FxContainerization と別・パスキー一覧・綴りの罠・config二段）
                                   ├ samples/webservices.md 56L tok~1200  WS/3層の共通機構（サンプル横断で共有）：(A)そのまま残す/参照/Build\配置・(B)WS切り離し・core 実用不可・MAX_PATH
@@ -336,6 +336,10 @@ APIリファレンスで足りる）。
 | ④ 取り出しに開発支援ツール（`Frameworks\Tools`）を追加＋ツール別ドキュメント新設（作者フィードバック・**2026-07-18**） | セットアップの ④取り出しは**サンプルだけ**を対象にしていたが、OpenTouryo は `Frameworks\Tools\` 配下（`Samples\` ではない）に GUI 開発支援ツールを同梱する。→ **④に「開発支援ツールも取り出す」を追加**：`DaoGen_Tool`（＝墨壺。D層自動生成＝`opentouryo-dao-generated`/`layer-d`）と `DPQuery_Tool`（動的クエリ試験＝`opentouryo-query-definition` の `PARAM` タグ）。両ツールもサンプルと同じ `Reference`+`HintPath` 方式で ⑤ と同じ張替。**実ミラーで確認した net48 の要注意点：`packages.config` が無く、3rd-party（`MySql.Data`/`Oracle.ManagedDataAccess`）含め全 HintPath が `..\..\Infrastructure\Build\` を指す＝全部ベンダ先へ張替**（core は `PackageReference`＋`Build_netcore100\net10.0\`）。WinExe/WinForms、net48（`*.csproj`）＋core（`*Core.csproj`＝`net10.0-windows7.0`）。→ **`samples/daogentool.md`・`samples/dpquerytool.md` を新設**（置き場所・ランタイム・張替手順・関連スキル・使い方の要点）。①「残件」の現存ファイル列挙も更新 |
 
 | 「残件」は本文でなく執筆者メモ（`<!-- -->`）にする（作者指摘・**2026-07-18**） | `project-setup` ① の「残件」（`samples/<name>.md` の整備状況＝ドキュメント TODO）が**可視の本文**に書かれていた。これはエージェントへの実行指示ではなく**執筆者向けのメタ情報**なので、`base2-customize`/`oauth2-client`/`project-transform` と同じく **`<!-- 執筆者メモ（Claude Code は読み込み時に除去）… -->`** へ移した。実行に効く一文（「専用 `.md` が無いサンプルも表＋`samples/webservices.md` で取り出せる」）だけ本文に残置。コメントは measure の実効（eff）・読み込みから除外＝予算に効かない（tok~4971→4882）。**方針**：スキル本文はエージェントが従う指示だけ、整備状況・将来 TODO・執筆意図は `<!-- -->` に置く（既存の慣行を横展開） |
+
+| ①サンプル選択が間引かれ 3層CS/WSClient_sample が選べなかった→全系列提示を明記（実環境レポート・**2026-07-18**） | ① の選択で、エージェントの提示が**4バケット（MVC / Web Forms / WinForms 2CS / CLI・バッチ）＋「Type something」に間引かれ、3層リッチクライアント（`WS_sample\WSClient_sample`）と WPF が選択肢から欠落**した。原因は**提示層のバケット化**（実質4択の chooser に押し込めるため系列を落とす）。表は全8系列を列挙済みで、既存注記「一部だけ出して決め打ちしない」だけでは防げなかった。→ **① 表直後を強い明示指示に差し替え**：「上表の全系列を必ず提示してユーザに選ばせる／系列をまとめて間引かない（実測で 3層CS・WPF が欠落）／**選択 UI が選択肢数を制限しても、収まらなければ全系列を番号付きリストで提示して番号で選ばせる**／派生は系列を選んだ後の枝でよいが系列そのものは全部見せる」。**やってはいけないこと**にも「サンプル選択で系列を間引く（固定4択に押し込めて WSClient_sample/WPF を落とす）」を追加。追記で cl100k が 5000 を超えたため、凡例の MVC 重複・`なし`行の重複・派生の列挙を刈って **tok~4997（目安内）** に収めた |
+
+| コピーバックが繰り返し抜ける→「短ルートをワークスペースに追加」方式へ転換（作者フィードバック・**2026-07-18**） | 前々項で「基盤ソースの引き込み（`xcopy` で深いリポへコピーバック）」を必須手順へ格上げしたが、**あいかわらずエージェントが実行しなかった**（2回目の実測）。作者提案：**もう `C:\otr` をワークスペースに追加すればよい**。→ 設計転換：コピーという抜けやすいステップ自体を**廃止**。基盤ソース `Frameworks\Infrastructure` は ZIP 展開時点で `C:\otr\OpenTouryo-<ref>\root\programs\CS\Frameworks\Infrastructure` に**既に在る**ので、深いリポへコピーせず、**短ルート `C:\otr` をワークスペースに追加して展開ツリーを直接編集・ビルド**する（VS Code「フォルダーをワークスペースに追加」／エージェントは絶対パスで直接読み書き）。「ソースが無くて始められない」も「コピー忘れ」も原理的に起きない（＝実行必須のアクションが無い）。コミットは差分 `base2-overlay/` だけ、展開ツリーは使い捨て。長パス有効化でリポ直下ビルドし分離自体を無くす選択肢も併記。反映：`setup-build/SKILL.md` §1 の ★ 節＋やってはいけないこと、`base2-customize/SKILL.md` の該当バレット（`xcopy` コピーバック例は削除）。サイズ：setup-build tok~3570・base2 tok~3133（目安内） |
 
 ### 4.4 作者から得た情報（コードからは読めない）
 

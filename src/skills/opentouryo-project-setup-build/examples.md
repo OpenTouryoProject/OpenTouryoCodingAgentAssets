@@ -8,7 +8,7 @@ WS の `bin\Debug` → `WS_sample\Build\` 配置）を織り込み済み。
 **雛形化する際は `$ref`・パス・標的ランタイム（net48）をパラメタ化**する。フラット化しない
 （配置維持）方針なら `build-app.ps1` の相対パスは配置に合わせて変える。
 
-- `setup-build.ps1` — 本スキル ①②③（ZIP取得 → net48 基盤ビルド → ベンダ）。短パス `C:\ot` でビルド、
+- `setup-build.ps1` — 本スキル ①②③（ZIP取得 → net48 基盤ビルド → ベンダ）。短パス `C:\otr` でビルド、
   `OpenTouryo.Business.dll` の実在で成否判定。
 - `build-app.ps1` — アプリ側の取り出し後ビルド（`opentouryo-project-setup` ④⑤ / `samples/webforms.md` 構成A）。
   WS をビルド**して `WS_sample\Build\` へ配置**、`nuget restore` → WebForms ビルド。vswhere で msbuild 解決。
@@ -21,11 +21,11 @@ WS の `bin\Debug` → `WS_sample\Build\` 配置）を織り込み済み。
 $ErrorActionPreference = 'Stop'
 $repo    = $PSScriptRoot
 $ref     = '03-20'                       # fixed tag; set per project (ask the user which tag; not a default)
-# Base build runs from a SHORT root (C:\ot), not <repo>\Temp: the legacy
+# Base build runs from a SHORT root (C:\otr), not <repo>\Temp: the legacy
 # net48 Business build writes a very long generated .resources filename;
 # under a deep repo path the fully-qualified path exceeds MAX_PATH (MSB3553).
 # Only scratch/build output lives here; vendored DLLs land in <repo>.
-$work    = 'C:\ot'
+$work    = 'C:\otr'
 $zip     = Join-Path $work "OpenTouryo-$ref.zip"
 $extract = Join-Path $work "OpenTouryo-$ref"
 $cs      = Join-Path $extract 'root\programs\CS'

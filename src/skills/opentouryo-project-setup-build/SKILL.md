@@ -38,30 +38,26 @@ PowerShell の `WebClient.DownloadFile()` で
 **作業ツリーの置き場所は MAX_PATH(260) を避けて選ぶ**（実測）。既定はリポジトリ直下の `Temp\` だが、
 **リポジトリ パスが深いと net48 Business ビルドが `MSB3553` で失敗する**：生成物
 `obj\...\MyBusinessApplicationExceptionMessageResource.ja-JP.resources` の完全修飾パスが 260 文字を超える。
-→ **深いリポでは短い作業ルート（例 `C:\ot\`）でビルドする**か、long path を有効化する。**ベンダ後の DLL だけが
+→ **深いリポでは短い作業ルート（例 `C:\otr\`）でビルドする**か、long path を有効化する。**ベンダ後の DLL だけが
 リポに入る**ので、作業ツリーの場所はリポジトリと無関係でよい（リポ直下に置くなら `Temp\` は ⑦ の `.gitignore` で除外）。
 
-### ★ 親クラス2 をカスタマイズする場合は「基盤ソースの引き込み」を必ず行う（実測で抜けやすい）
+### ★ 親クラス2 をカスタマイズするなら、短ルートの展開ツリーをワークスペースに加えて直接いじる（コピーバックは廃止）
 
-**親クラス2 をカスタマイズする（`base2-overlay/` がある、またはこれから作る）なら、短ルートでビルドしても
-`Frameworks\Infrastructure` をワークスペースへ引き込む手順を必ず実行する。** 短ルートで展開・ビルドしただけだと、
-**カスタマイズ対象の基盤ソース `root\programs\CS\Frameworks\Infrastructure`（特に `Business`）が使い捨ての作業ツリー
-（`C:\ot\...`）にしか無く、ワークスペースから見えない**（実測：この引き込みが実行されず抜けた）。オーバーレイの差分は
-この基盤ソースから起こし・当てるので、ワークスペースに無いと base2 カスタマイズが始められない。
+**親クラス2 をカスタマイズする（`base2-overlay/` がある、またはこれから作る）なら、短ルート `C:\otr\` を
+ワークスペースに追加し、そこの基盤ソースを直接編集・ビルドする。** カスタマイズ対象の基盤ソース
+`Frameworks\Infrastructure`（特に `Business`）は、ビルドのために展開した
+**`C:\otr\OpenTouryo-<ref>\root\programs\CS\Frameworks\Infrastructure` に既に在る**。
 
-**必ず実行する（省略しない）**：ビルド用の展開・ビルドは短ルート（`C:\ot\`）で行いつつ、**基盤ソース
-`Frameworks\Infrastructure` だけはワークスペースの `root\programs\CS\Frameworks\Infrastructure` にも展開（コピー）する**。
+以前は「これを深いリポへコピーバックする」手順にしていたが、**実測でこのコピーが繰り返し抜けた**。
+そこでコピーはやめ、**展開ツリーをそのまま作業場所にする**：短ルート `C:\otr` をワークスペースに追加する
+（VS Code なら「フォルダーをワークスペースに追加」。エージェントは絶対パス `C:\otr\...\Frameworks\Infrastructure` を
+直接読み書きしてよい）。こうすれば「ソースが無くて始められない」も「コピー忘れ」も起きない（基盤ソースは展開時点で在る）。
 
-```
-# 例：短ルートでビルド後、基盤ソースをワークスペースへ引き込む（存在＝必須で確認）
-xcopy /Y /E "C:\ot\OpenTouryo-<ref>\root\programs\CS\Frameworks\Infrastructure" ^
-            "<workspace>\root\programs\CS\Frameworks\Infrastructure\"
-```
-
-- **確認**：引き込み後、`<workspace>\root\programs\CS\Frameworks\Infrastructure\Business` が存在することを確かめる。
-  無ければ base2 カスタマイズは不可能なので、ここで止めて引き込みからやり直す。
-- `base2-overlay/` は従来どおり**差分のみコミット**、引き込んだ基盤ソースは `.gitignore`（⑦）で除外。取得元 `<ref>` は
-  **固定タグ**にする（`develop` は土台が動いて再現性を失う）。ビルド自体は短ルートで可。詳細は `opentouryo-base2-customize`。
+- **深いリポへコピーしない**（MAX_PATH でどのみち深いリポではビルドできない）。基盤ソースの作業実体は `C:\otr` 側、
+  **リポにコミットするのは差分 `base2-overlay/` だけ**（展開ツリーは使い捨て。`opentouryo-base2-customize`）。
+- 取得元 `<ref>` は**固定タグ**にする（`develop` は土台が動いて再現性を失う）。
+- 長パスを有効化できるなら、リポ直下で展開・ビルドして**分離自体を無くす**のも可（その場合この節は不要。
+  ただし `Frameworks/Infrastructure` はコミットせず `.gitignore`）。
 
 ## 2. 基盤ビルド
 
@@ -145,6 +141,6 @@ Community/Professional/Enterprise を網羅）。VS18 の BuildTools/Professiona
 - **アドホックなコマンド羅列で済ませる** — スクリプト化してリポジトリに残す
 - **作業ツリー `Temp/`（基盤ソース＝親クラス2 を含む）をコミットする** — `.gitignore` で除外
 - **`base2-overlay` があるのに `develop` で焼く** — 固定タグにする（再現性）
-- **★ 親クラス2 をカスタマイズするのに、短ルートでビルドしただけで `Frameworks\Infrastructure` をワークスペースへ
-  引き込まない** — 基盤ソースが使い捨てツリーにしか残らず base2 カスタマイズ不可（実測で抜けた）。§1 の引き込みを必ず実行し、
-  `<workspace>\...\Frameworks\Infrastructure\Business` の実在で確認する
+- **★ 親クラス2 をカスタマイズするのに、短ルートの展開ツリーをワークスペースに入れない** — 基盤ソースは
+  `C:\otr\OpenTouryo-<ref>\...\Frameworks\Infrastructure` に在る。深いリポへコピーせず、**短ルートをワークスペースに
+  追加して直接いじる**（§1。コピーバックは実測で繰り返し抜けたため廃止）

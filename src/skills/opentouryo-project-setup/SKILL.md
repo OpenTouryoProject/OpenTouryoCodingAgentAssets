@@ -49,12 +49,14 @@ metadata:
 | バッチ | `Bat_sample\SimpleBatch_sample`（再実行可 `RerunnableBatch_sample`〜`3`） | net48 / .NET 10.0 | なし |
 | CLI（コンソール） | `CLI_sample\Simple_CLI`（認証付 `DAG_Login_CLI` / `LIR_Login_CLI`） | net48 / .NET 10.0 | なし |
 
-**「WS/3層依存」列の凡例**：`なし`＝csproj で WS 参照無しを確認済み／`あり`＝WS DLL 参照
-あり（取り出し直後に missing-ref か `CS0246`。要 (A)/(B)。net48 MVC は `Crud1Controller` が `TestParameterValue` 等を使用）。
+**「WS/3層依存」列の凡例**：`なし`＝csproj で WS 参照無しを確認済み／`あり`＝WS DLL 参照あり
+（取り出し直後に missing-ref か `CS0246`。要 (A)/(B)）。
 
-**上表は代表的な起点で、系列には他の派生もある。** `2CS_sample` には機能デモ（`AsyncEvent_sample`＝net48 のみ /
-`CustCtrl_sample` / `GenDaoAndBatUpd_sample` / `TimeStamp_sample`）もある。**どの系列・派生を起点にするかは、
-候補を提示してユーザに選ばせる**（一部だけ出して決め打ちしない）。
+**サンプル選択では上表の全系列を必ず提示してユーザに選ばせる。系列をまとめて間引かない**
+（実測：4択にまとめて **3層リッチクライアント＝`WSClient_sample` と WPF が選択肢から欠落**した）。**選択 UI が
+選択肢数を制限しても、収まらなければ全系列を番号付きリストで提示して番号で選ばせる**（固定4択に押し込めて捨てない）。
+派生（`2CS_sample` の機能デモや `WSClient_sample` の他 variant 等）は**系列を選んだ後の枝**でよいが、
+系列そのものは全部見せる。
 
 **「WS/3層依存あり」のサンプルは取り出し直後 `CS0246`（または missing-ref）が残る**（`WS_sample` の
 `WSIFType_sample` / `WSServer_sample` に依存。依存元ソースは `Samples\WS_sample` に実在）。：
@@ -64,8 +66,7 @@ metadata:
   故に **(A) が本筋・(B) 非該当**。**※ core 版は `BinaryFormatter` 廃止で実質インプロセスのみ＝実用は net48 側**
   （`opentouryo-transmission` / §4.4）。
 
-**「WS/3層依存`なし`」 の行（2CS Win/WPF・Bat）はWS 参照無しを確認済み。
-故に **(A)・(B) 共に非該当**。到達点は「開ける状態」で as-is クリーンビルドは保証しない。
+**`なし` の行（2CS Win/WPF・Bat）は (A)・(B) 共に非該当。** 到達点は「開ける状態」で as-is クリーンビルドは保証しない。
 
 **専用の `samples/<サンプル>.md` が無いサンプルも、この表＋`samples/webservices.md` で起点として取り出せる。**
 
@@ -234,3 +235,5 @@ packages/
 - **Download→Build→ベンダをアドホックなコマンド羅列で済ませる** — スクリプト化して残す
 - **net48 サンプルを .NET 10.0 で、または Web Forms を core で使おうとする** — ランタイム対象外
 - **`LayerB.cs` / `LayerD.cs` を別 DLL 化しようとする** — サンプルは同梱ソースが前提
+- **サンプル選択で系列を間引く** — 固定4択に押し込めて **3層リッチクライアント（`WSClient_sample`）や WPF を
+  落とさない**（①。実測で欠落。UI 制限時は番号付きリストで全系列を出す）

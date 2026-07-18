@@ -93,26 +93,20 @@ metadata:
 - **取得元は固定タグに固定する**（`develop` は土台が動きオーバーレイの当たりがズレる。
   `project-setup` ②で固定タグを選ぶ）。
 - ビルド スクリプトは `3_Build_Business_*` の**前に**オーバーレイを展開ツリーへ上書きする
-  （`<extract>` は展開先。深いリポで MAX_PATH を避けるため短い作業ルート `C:\ot\...` のこともある。
+  （`<extract>` は展開先。深いリポで MAX_PATH を避けるため短い作業ルート `C:\otr\...` のこともある。
   `opentouryo-project-setup-build`）：
 
   ```
   xcopy /Y /E  base2-overlay\*  <extract>\root\programs\CS\
   ```
 
-- **★ 最初に基盤ソースをワークスペースへ引き込む（省略しない・実測で抜けやすい）。** 短い作業ルートで
-  展開・ビルドすると、直す元の `Frameworks/Infrastructure`（特に `Business`）が使い捨てツリー（`C:\ot\...`）にしか
-  残らず、ワークスペースから見えない。オーバーレイの差分はこの基盤ソースから起こし・当てるので、**カスタマイズを
-  始める前に `Frameworks/Infrastructure` をワークスペースへ展開（コピー）する**：
-
-  ```
-  xcopy /Y /E "C:\ot\OpenTouryo-<ref>\root\programs\CS\Frameworks\Infrastructure" ^
-              "<workspace>\root\programs\CS\Frameworks\Infrastructure\"
-  ```
-
-  引き込み後、**`<workspace>\...\Frameworks\Infrastructure\Business` の実在を確認**してから直し始める（無ければ
-  カスタマイズ不可なので引き込みからやり直す）。`.gitignore` で除外し、コミットするのは差分＝`base2-overlay/` だけ。
-  ビルド自体は短ルートで可（`opentouryo-project-setup-build` §1 と対）。
+- **★ 短ルートの展開ツリーをワークスペースに加え、そこの基盤ソースを直接いじる（コピーバックは廃止）。**
+  短い作業ルート（`C:\otr\`）で展開・ビルドすると、直す元の `Frameworks/Infrastructure`（特に `Business`）は
+  **`C:\otr\OpenTouryo-<ref>\root\programs\CS\Frameworks\Infrastructure` に在る**。以前は深いリポへコピーバックする
+  手順だったが**実測で繰り返し抜けた**ので、コピーはやめ、**この短ルートをワークスペースに追加**して
+  （VS Code なら「フォルダーをワークスペースに追加」）そこを作業場所にする。**編集した基盤ソースは差分を
+  `base2-overlay/` へ取り込んでコミット**（＝バージョン管理の実体は overlay。展開ツリーは `.gitignore` / 使い捨て）。
+  `opentouryo-project-setup-build` §1 と対。
 - こうすると DLL は **「固定タグ ＋ オーバーレイ」から再現可能**。リポジトリに残るのは修正差分だけ。
 - **置き場はアプリ リポジトリ同居**（`base2-overlay/` をコミット。`Temp/` は除外のまま、DLL はコミット）。
   1リポジトリで完結する。**複数アプリで親クラス2 を共有する場合は、纏め者の専用リポジトリに
