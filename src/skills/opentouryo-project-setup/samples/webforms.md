@@ -7,10 +7,10 @@
 
 `WebForms_Sample` は**3層構成**で、2層画面 `sampleScreen_cc.aspx.cs` が `using WSIFType_sample;` で WS 側の型
 （`TestParameterValue` / `TestReturnValue`）を掴むため、**取り出し直後は `CS0246` が残る**（実測）。
-解消の一般手順（**(A) 3層維持**＝WS も取り出してビルド・`Build\` 配置／**(B) 2層化**）は **`webservices.md`**。
+解消の一般手順（**(A) そのまま残す**＝WS も取り出してビルド・`Build\` 配置／**(B) WS 依存を切り離す**）は **`webservices.md`**。
 
 このサンプル固有の点：
-- **Web で WS をインプロセス利用**するので **(B) 2層化も選べる**。(B) の画面差し替えは
+- **Web で WS をインプロセス利用**するので **(B) 切り離しも選べる**。(B) の画面差し替えは
   `using WSIFType_sample;` → `using MyType;`（同名型が同梱 `AppCode\sample\Common\` にある）。詳細は `opentouryo-project-transform`。
 - HintPath は `..\..\..\WS_sample\Build\*.dll`（＝`Samples\WS_sample\Build`。`WS_sample` は `WebApp_sample` の**兄弟**）。
 

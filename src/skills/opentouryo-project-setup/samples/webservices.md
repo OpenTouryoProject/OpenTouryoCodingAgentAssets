@@ -16,7 +16,7 @@ HintPath 参照する。`WS_sample` は **`Samples\WS_sample`**（`WebApp_sample
 
 解消は用途で2通り。
 
-## (A) 3層のまま通す（WS も取り出してビルド・配置）
+## (A) そのまま残す（WS も取り出してビルド・配置）
 
 1. **取り出す** — `Samples\WS_sample\WSIFType_sample` と `WSServer_sample` を、`WS_sample\` 直下の相対配置を
    保って取り出す（`WSServer` は `..\WSIFType_sample` を ProjectReference）。WS クライアントが起点なら
@@ -36,9 +36,9 @@ HintPath 参照する。`WS_sample` は **`Samples\WS_sample`**（`WebApp_sample
 → 取り出し・参照張り替え・配置＝**セットアップ（④⑤）の範囲で完結**（transform 不要）。
 実機で通した参考スクリプトは `opentouryo-project-setup-build` の `examples.md`（`build-app.ps1`）。
 
-## (B) 2層で使う（WS を切り離す）
+## (B) WS 依存を切り離す
 
-WS/3層が不要なら、後工程 **`opentouryo-project-transform`** で WS 参照を外し `CS0246` を潰す。
+WS 依存が不要なら、後工程 **`opentouryo-project-transform`** で WS 参照を外し `CS0246` を潰す。
 画面が WS 側の型を `using` しているケースの差し替え等は**サンプル固有**（`<サンプル>.md`（同 `samples/` 配下） / transform）。
 
 ## ランタイム注意：core のリモート WS は実用不可

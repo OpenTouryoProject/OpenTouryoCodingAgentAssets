@@ -43,42 +43,33 @@ metadata:
 | --- | --- | --- | --- |
 | ASP.NET MVC | `WebApp_sample\MVC_Sample`（core は `Backend\MVC_Sample`） | net48 / .NET 10.0 | **net48:あり** / core:なし |
 | Web Forms | `WebApp_sample\WebForms_Sample` | **net48 のみ** | **あり（transform 前提）** |
-| Web サービス（バックエンド） | **別 repo** `ResourceServerTemplates`（`Backend\ASPNETWebService` の実体） | .NET 10.0 | 別 repo ‡ |
 | Windows Forms（2層C/S） | `2CS_sample\2CSClientWin_sample` | net48 / .NET 10.0 | なし |
 | WPF（2層C/S） | `2CS_sample\2CSClientWPF_sample` | net48 / .NET 10.0 | なし |
 | 3層リッチクライアント（WinForms/WPF・WS 経由） | `WS_sample\WSClient_sample\WSClientWin_sample`（`WPF`/`Win2`/`WinCone` も同階層） | net48（core は ※実用性なし） | **あり（構成上必須）** |
 | バッチ | `Bat_sample\SimpleBatch_sample`（再実行可 `RerunnableBatch_sample`〜`3`） | net48 / .NET 10.0 | なし |
-| CLI（コンソール） | `CLI_sample\Simple_CLI`（認証付 `DAG_Login_CLI` / `LIR_Login_CLI`） | net48 / .NET 10.0 | 未確認 † |
+| CLI（コンソール） | `CLI_sample\Simple_CLI`（認証付 `DAG_Login_CLI` / `LIR_Login_CLI`） | net48 / .NET 10.0 | なし |
 
-**「WS/3層依存」列の凡例**：`なし`＝実ミラー（`files/csharp/`）の csproj に WS 参照無しを確認済み／`あり`＝WS DLL 参照
-あり（取り出し直後に missing-ref か `CS0246`。要 (A)/(B)。net48 MVC は `Crud1Controller` が `TestParameterValue` 等を使用）／
-**`未確認 †`＝ミラー未収録**（`CLI_sample` 各種）で実物 csproj 未確認（＝下記「残件」）／
-**`別 repo ‡`＝OpenTouryo 本体のサンプルではなく別リポジトリ**で、この ZIP 取得フローの対象外。
-`Backend\ASPNETWebService`＝<https://github.com/OpenTouryoProject/ResourceServerTemplates>、
-`Frontend`（SPA フロント）＝<https://github.com/OpenTouryoProject/FrontendTemplates>（各 repo 側の手順で立ち上げる）。
+**「WS/3層依存」列の凡例**：`なし`＝csproj で WS 参照無しを確認済み／`あり`＝WS DLL 参照
+あり（取り出し直後に missing-ref か `CS0246`。要 (A)/(B)。net48 MVC は `Crud1Controller` が `TestParameterValue` 等を使用）。
 
 **上表は代表的な起点で、系列には他の派生もある。** `2CS_sample` には機能デモ（`AsyncEvent_sample`＝net48 のみ /
 `CustCtrl_sample` / `GenDaoAndBatUpd_sample` / `TimeStamp_sample`）もある。**どの系列・派生を起点にするかは、
 候補を提示してユーザに選ばせる**（一部だけ出して決め打ちしない）。
 
 **「WS/3層依存あり」のサンプルは取り出し直後 `CS0246`（または missing-ref）が残る**（`WS_sample` の
-`WSIFType_sample` / `WSServer_sample` に依存。依存元ソースは `Samples\WS_sample` に実在）。**確定該当（実ミラー確認）**：
-- **`WebForms_Sample`**（net48）— WS をインプロセス利用（2層化 (B) も可）。
+`WSIFType_sample` / `WSServer_sample` に依存。依存元ソースは `Samples\WS_sample` に実在）。：
+- **`WebForms_Sample`**（net48）— WS を利用（(B) WS 切り離しも可）。
 - **`MVC_Sample` の net48**（`Crud1Controller` が `TestParameterValue` 等の WS 型を使用。**core の MVC はなし**）。
 - **`WS_sample\WSClient_sample` 一式**（core は `Samples4NetCore\Legacy\...`）— 3層リッチクライアント＝構成上 WS 必須。
-  **(A) が本筋・(B) 非該当**。**※ core 版は `BinaryFormatter` 廃止で実質インプロセスのみ＝実用は net48 側**
+  故に **(A) が本筋・(B) 非該当**。**※ core 版は `BinaryFormatter` 廃止で実質インプロセスのみ＝実用は net48 側**
   （`opentouryo-transmission` / §4.4）。
 
-**`なし` の行（2CS Win/WPF・Bat）は実ミラーで WS 参照無しを確認済み。** 解消は用途で **(A) 3層維持／(B) 2層化**
-（下記「3層サンプルの扱い」。共通機構は `samples/webservices.md`）。到達点は「開ける状態」で as-is クリーンビルドは保証しない。
+**「WS/3層依存`なし`」 の行（2CS Win/WPF・Bat）はWS 参照無しを確認済み。
+故に **(A)・(B) 共に非該当**。到達点は「開ける状態」で as-is クリーンビルドは保証しない。
 
-**残件は2種類ある**（＝ご指摘の「未確認」）：
-1. **サンプル固有メモ `samples/<サンプル>.md` は、検証したサンプルから順に整備する**。現状あるのは
-   `samples/webforms.md` のみ。他サンプルは、この表＋`webservices.md` で起点として取り出せるが、**固有の癖が
-   見つかれば `samples/<name>.md` を起こす**（＝ドキュメントの残件。中身が無い＝未整備）。
-2. 表の **`未確認 †`（`CLI_sample`）は、ミラー未収録のため WS 依存を確定できていない**（＝検証の残件。実物 csproj
-   で確認する）。**`別 repo ‡`（`ASPNETWebService`＝ResourceServerTemplates／`Frontend`＝FrontendTemplates）は
-   別リポジトリで、このスキルの ZIP フロー対象外**（各 repo 側の手順に従う）。
+**残件**：**サンプル固有メモ `samples/<サンプル>.md` は、検証したサンプルから順に整備する**。現状あるのは
+`samples/webforms.md` のみ。他サンプルは、この表＋`webservices.md` で起点として取り出せるが、**固有の癖が
+見つかれば `samples/<name>.md` を起こす**（＝ドキュメントの残件。中身が無い＝未整備）。
 
 **WPF は P層フレームワークを持たない**（`opentouryo-layer-p-winforms-screen` 参照）。
 `2CS_sample\2CSClientWPF_sample` を参考に、画面は素の WPF として実装する。
@@ -152,9 +143,9 @@ VS エディションによる msbuild 解決、ベンダ元パスの起点、`b
 一部サンプルは 3層構成で、**他サンプルのビルド出力**（`WSServer_sample.dll` / `WSIFType_sample.dll` 等）に依存する
 （依存元ソースは `Samples\WS_sample` に実在。無いのはビルド出力だけ）。単体では as-is で通らないことがあるが、
 解消は2通り：
-- **(A) 3層のまま通す** — 依存元サンプルも取り出し、⑤と同じ要領で張り替えてビルドし、**その出力を参照先
+- **(A) そのまま残す** — 依存元サンプルも取り出し、⑤と同じ要領で張り替えてビルドし、**その出力を参照先
   （`WS_sample\Build\`）へ配置する**まで（`.sln` 直ビルドは `bin\Debug\` に出るので配置が要る＝実測）。**セットアップで完結**。
-- **(B) 2層で使う** — WS 依存を切り離す（**後工程 `opentouryo-project-transform`**）。
+- **(B) WS 依存を切り離す** — WS 参照を外す（**後工程 `opentouryo-project-transform`**）。
 
 **(A)/(B) の選択・層の削減・画面改変は、セットアップ中に判断を求めない**（開ける状態に達した後、利用者が
 俯瞰して決める）。**WS/3層の共通手順は `samples/webservices.md`、サンプル固有は `samples/<サンプル>.md`**
@@ -214,7 +205,7 @@ packages/
 セットアップが済んだら、**続けて構成変更（`opentouryo-project-transform`）を行うかをユーザに選ばせる**。
 早くフィードバックを得たいなら、セットアップ直後にその場で実行してよい（**任意**）。
 
-- 進む → `opentouryo-project-transform`（例：3層サンプルの2層化・サンプル固有コードの整理・`CS0246` 解消）
+- 進む → `opentouryo-project-transform`（例：WS 依存の切り離し・サンプル固有コードの整理・`CS0246` 解消）
 - 後回し → 何もしない。利用者がソリューションを俯瞰してから別途依頼する
 
 **セットアップの途中に構成変更の判断を割り込ませない。** 選ばせるのは「ソリューションが開ける状態」に達した後。

@@ -1,6 +1,6 @@
 ---
 name: opentouryo-project-transform
-description: "OpenTouryo プロジェクトをセットアップ後に用途へ合わせて変形（リストラクチャ）する後工程。取り出したサンプルから不要な層を削る（例：3層構成サンプルを2層で使う＝3層画面・WCF エンドポイント・他サンプル参照の除去）、サンプル固有コードの整理と、それに伴うビルドエラー（CS0246 等）の解消を扱う。ソリューションを開いて全体を俯瞰したうえで行う。取得・ビルド・参照張り替え・config でソリューションを開ける状態にするのは opentouryo-project-setup、既存構成の上で新規に業務コードを書くのは各層スキル（opentouryo-layer-* ほか）。2層化 / 3層を削る / 不要な層の削減 / サンプルの整理 / 変形 / リストラクチャ / CS0246 を伴う作業のときに使う。"
+description: "OpenTouryo プロジェクトをセットアップ後に用途へ合わせて変形（リストラクチャ）する後工程。取り出したサンプルから不要な依存を削る（例：WS 依存を切り離す＝3層画面・他サンプル参照の除去。＝俗に「2層化」）、サンプル固有コードの整理と、それに伴うビルドエラー（CS0246 等）の解消を扱う。ソリューションを開いて全体を俯瞰したうえで行う。取得・ビルド・参照張り替え・config でソリューションを開ける状態にするのは opentouryo-project-setup、既存構成の上で新規に業務コードを書くのは各層スキル（opentouryo-layer-* ほか）。WS 依存を切り離す / 2層化 / 3層を削る / 不要な依存の削減 / サンプルの整理 / 変形 / リストラクチャ / CS0246 を伴う作業のときに使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -45,11 +45,11 @@ metadata:
   断片を含む文字列を同一コマンドに混ぜると、安全ガードが断片（例 `/>` + 改行）を「システムパス削除」と
   誤検知してコマンド全体がブロックされることがある。
 
-## 3層構成サンプルを2層で使う（2層化）
+## WS 依存を切り離す（サンプルから WS を外す）
 
-一部サンプル（例：`WebForms_Sample`）は3層構成で、**ZIP に無い他サンプルのビルド出力**
-（`WSServer_sample.dll` / `WSIFType_sample.dll`）や WCF エンドポイントに依存する。
-2層で使うなら次を削る／直す。
+一部サンプル（例：`WebForms_Sample`）は WS 依存があり、**ZIP に無い他サンプルのビルド出力**
+（`WSServer_sample.dll` / `WSIFType_sample.dll`）に依存する。WS が不要なら次を削る／直す
+（「3層/2層」は呼び方の別で、判断軸は WS 依存の有無。core は通信制御を使ってもインプロセスのみ＝実質 2層になり得る）。
 
 ### 削る
 
@@ -60,14 +60,14 @@ metadata:
 
 > **WS 参照は `WSIFType_sample` / `WSServer_sample` だけではない**（実測）。WebForms の csproj は
 > **`MySql.Data.dll` / `Oracle.ManagedDataAccess.dll` も `WS_sample\Build\` を HintPath 参照**している。
-> `WS_sample` ごと消して完全に2層化するなら、**この2つの HintPath をベンダ先
+> `WS_sample` ごと消して WS 依存を完全に断つなら、**この2つの HintPath をベンダ先
 > （`OpenTouryoAssemblies\Build_net48\`）へ張り替える**（さもないと参照切れ。`opentouryo-project-setup` ⑤ /
 > `references/reference-rewrite.md` と同じ要領）。
 
 > **`Web.config` の endpoint（`system.serviceModel`）は削らない。** このサンプルの endpoint は
 > 3層固有（`WSServer_sample`）ではなく、**フレームワークの Transmission WCF 設定**
 > （`IWCFHTTPSvcForFx` / `IWCFTCPSvcForFx`）と `IJSONService`。`WSServer_sample` は DLL 参照で
-> インプロセス呼び出しされ、専用 endpoint を持たない。消しても2層化に不要なうえ、実行時構成を壊しかねない。
+> インプロセス呼び出しされ、専用 endpoint を持たない。消しても WS 依存の切り離しに不要なうえ、実行時構成を壊しかねない。
 
 ### 直す（見落としやすい罠）
 

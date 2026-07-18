@@ -148,7 +148,7 @@ opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実
 opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
 opentouryo-richclient-async       実効145L tok~2031  完了（リッチクライアントの非同期呼び出し）
 opentouryo-common-parts           実効118L tok~2047  完了（用途→共通部品のインデックス）
-opentouryo-project-setup          実効217L tok~4300  完了（立ち上げ入口。①〜⑦。③は build へ委譲。⑤⑥ の詳細を references/ へ退避＝目安内に回復。核心は inline）
+opentouryo-project-setup          実効225L tok~4802  完了（立ち上げ入口。①〜⑦。③は build へ委譲。⑤⑥ の詳細を references/ へ退避＝目安内。核心は inline。①表は全系列・WS依存列は csproj 確定値、別 repo〔ASPNETWebService/Frontend〕は対象外で表外）
                                   ├ references/reference-rewrite.md 26L tok~500  ⑤の edge case（接頭辞だけでない・Build_* 全 DLL＝MySql/Oracle 非復元・MAX_PATH フラット化）
                                   ├ references/resource-config.md   46L tok~900  ⑥の詳細（相対不可＝ResourceLoader・%VAR%展開／FxContainerization と別・パスキー一覧・綴りの罠・config二段）
                                   ├ samples/webservices.md 56L tok~1200  WS/3層の共通機構（サンプル横断で共有）：(A)取り出し/参照/Build\配置・(B)2層化・core 実用不可・MAX_PATH
@@ -325,7 +325,9 @@ APIリファレンスで足りる）。
 
 | ①表の「未確認」を実ミラーで確定＋残件の2分類（作者質問・**2026-07-18**） | 「未確認」＝`samples/` にファイルが無い残件か？との問い。整理：**「未確認」は WS/3層依存の検証軸で、`samples/` の有無とは別軸**。`files/csharp/` の csproj を調べて確定：**net48 MVC は WS 依存**（`Crud1Controller` が `TestParameterValue`/`TestReturnValue` を使用・csproj が `WSIFType_sample`/`WSServer_sample` 参照。**core MVC はなし**）／**2CS(Win/WPF)・Bat＝なし**（WS 参照無し確認）。→ 表の WS 列を確定値へ、凡例（なし/あり/未確認†）を追加。**CLI_sample 各種・`Backend\ASPNETWebService`・`Frontend` はミラーが README のみのスタブ**で実ソース未収録＝WS 依存を確定できず「未確認 †」。残件は2種と明記：①`samples/<name>.md` 未整備（ドキュメント。現状 webforms.md のみ）②`未確認 †`（検証。ミラー未収録で実物 csproj 要確認）。※ ミラー自体が部分的（一部サンプルは README スタブ）と判明 |
 
-| `ASPNETWebService`・`Frontend` は別リポジトリと判明（作者フィードバック・**2026-07-18**） | 前項で「ミラーが README のみのスタブ」と括っていた `Backend\ASPNETWebService`（Web サービス／リソースサーバ）と `Frontend`（SPA フロント）は、**ミラーの取り込み漏れではなく OpenTouryo 本体とは別のリポジトリ**だった：`ASPNETWebService`＝<https://github.com/OpenTouryoProject/ResourceServerTemplates>、`Frontend`＝<https://github.com/OpenTouryoProject/FrontendTemplates>。→ ①表・凡例・残件を切り分け：これらは**このスキルの ZIP 取得フロー対象外**の「`別 repo ‡`」（各 repo 側の手順で立ち上げ、URL を明記）。ミラー未収録の**検証残件「未確認 †」は `CLI_sample` 系だけ**に縮小。メモリ `reference-csharp-source-mirror` にも「ミラーの穴＝別リポジトリ」を追記 |
+| `ASPNETWebService`・`Frontend` は別リポジトリと判明→①表から除外、CLI は依存なし確定（作者フィードバック＋手修正・**2026-07-18**） | 前項で「ミラーが README のみのスタブ」と括っていた `Backend\ASPNETWebService`（Web サービス／リソースサーバ）と `Frontend`（SPA フロント）は、**ミラーの取り込み漏れではなく OpenTouryo 本体とは別のリポジトリ**だった：`ASPNETWebService`＝<https://github.com/OpenTouryoProject/ResourceServerTemplates>、`Frontend`＝<https://github.com/OpenTouryoProject/FrontendTemplates>。→ **作者の最終判断**：別リポジトリはそもそも「OpenTouryo から取り出すサンプル」ではないので **①表から完全に除外**（このスキルの ZIP フロー対象外。立ち上げは各 repo 側手順）。あわせて **`CLI_sample` は WS 依存なしを確定**（`なし`）。結果、**表に未検証行が無くなり `未確認 †` 区分は廃止**、凡例は `なし`／`あり` の2つ、「残件」は `samples/<name>.md` 未整備の1種類だけに単純化。メモリ `reference-csharp-source-mirror` にも「ミラーの穴＝別リポジトリ（URL）」を記録 |
+
+| (A)/(B) の呼称を層数ベース→WS 依存の有無ベースへ（作者フィードバック・**2026-07-18**） | 「(A) 3層のまま通す／(B) 2層で使う（2層化）」という**層数（2層/3層）ベースの呼称が混乱を招く**：core 版は通信制御（Transmission）を使っても `BinaryFormatter` 廃止で**インプロセスのみ＝実質2層**になり得るため、「WS を残す＝3層」が常に成り立たない。→ 判断軸を**WS 依存の有無**に統一し、**(A) そのまま残す／(B) WS 依存を切り離す**へ改称。反映先：`project-setup` SKILL.md（①凡例まわり・「3層サンプルの扱い」・完了後の transform 案内）、`samples/webservices.md`（(A)/(B) 見出し）、`samples/webforms.md`、`project-transform` SKILL.md（節見出し「WS 依存を切り離す」・本文の「2層化」表現・description。ただし `2層化`/`3層を削る` は検索語として description に温存、`3Tier` フォルダ名や `3層画面`・`2層画面` の実体名はそのまま） |
 
 ### 4.4 作者から得た情報（コードからは読めない）
 
