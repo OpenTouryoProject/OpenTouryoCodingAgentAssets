@@ -49,3 +49,15 @@ dotnet run --project "<repo>\MVC_Sample_Core\MVC_Sample" --urls http://localhost
 ```
 
 スモークは net48 と同様（未認証で 302→login、login 200、500＝resource/config 解決失敗）。**core は `InitConfiguration()` 必須**（⑦）。
+
+## デスクトップ（WinForms / 2CS・リッチクライアント）＝ exe
+
+Web ではないので HTTP スモークは無い。**exe を起動してプロセスが生存する（起動時クラッシュしない）ことを確認**する
+（初期化で resource/config・log4net を読むため、設定ミスは起動時例外として出る＝ここが検証点）。
+
+- 起動：net48＝`bin\Debug\<app>.exe`、core＝`dotnet run --project <proj>`（`net10.0-windows7.0`＝Windows 専用）。
+- `OT_RESOURCE_ROOT` をプロセスに渡す（未設定だと起動時に resource 解決失敗）。
+- **DB 依存操作は SQL Server 前提**（サンプルの接続文字列は SQL Server / Northwind）。ログイン・CRUD を試すなら DB を用意する。
+  起動生存だけの確認なら DB は不要なことが多い。
+- **3層リッチクライアント（`WSClient_*`）は WS サーバ側の起動も要る**（構成 (A)。`opentouryo-project-setup-core` /
+  その `samples/webservices.md`）。

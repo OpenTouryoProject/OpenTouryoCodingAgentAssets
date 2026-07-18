@@ -66,13 +66,15 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "3_Build_Business_net48 failed ($LASTEXITCODE)" }
 } finally { Pop-Location }
 
-# --- 2b. (optional) build Business.RichClient (2CS) — the bats DON'T ---
+# --- 2b. build Business.RichClient — the bats DON'T (needed for 2CS / rich client) ---
 # 3_Build_Business_net48 builds Business + CustomControl only. The 2CS classes
 # (MyBaseLogic2CS / MyFcBaseLogic2CS = OpenTouryo.Business.RichClient) live in a
-# separate sln that no 2_/3_ script builds. If base2 customizes 2CS, build it
-# here (outputs into Build_net48 so the vendor step below picks it up); otherwise
-# the 2CS change is compiled into nothing and silently dropped.
-if (Test-Path $overlay) {
+# separate sln that no 2_/3_ script builds. This DLL is a *plain dependency* of the
+# 2CS (2CSClientWin/WPF) and 3-tier rich-client (WSClient_*) SAMPLES — required
+# whenever such a sample is used, INDEPENDENT of base2 customization. Without it
+# those samples fail with CS0246. (This is the `setup-build-richclient.ps1` step.)
+$needRichClient = $true    # set true when the target sample is 2CS / rich client, OR base2 customizes 2CS
+if ($needRichClient -or (Test-Path $overlay)) {
     $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
     $msb = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild `
             -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1

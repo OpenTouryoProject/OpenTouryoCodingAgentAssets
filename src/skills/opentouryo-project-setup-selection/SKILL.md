@@ -30,6 +30,13 @@ metadata:
 **「WS/3層依存」列の凡例**：`なし`＝csproj で WS 参照無しを確認済み／`あり`＝WS DLL 参照あり
 （取り出し直後に missing-ref か `CS0246`。解消は ④⑤ の `opentouryo-project-setup-core`）。
 
+**★ RichClient 基盤の追加ビルドが要るサンプル（WS/3層依存とは別軸）**：**Windows Forms 2CS・WPF 2CS・
+3層リッチクライアント**（`2CSClientWin/WPF`・`WSClient_*`）は `OpenTouryo.Business.RichClient` を参照するが、
+③ が回す `2_/3_Build_*` サブセットには含まれない（別 sln `BusinessRichClient_*.sln` を追加ビルド。フル一式／`9_CICD.bat`
+なら出る。**base2 の有無と無関係・素の依存**）。
+→ これらを選んだら「同一ランタイムは ③ 流用でスキップ可」の例外＝**③ に RichClient 追加ビルドが必須**
+（`opentouryo-project-setup-build`）。バッチ・CLI・MVC・Web Forms は不要。
+
 **サンプル選択では上表の全系列を必ず提示してユーザに選ばせる。系列をまとめて間引かない**
 （実測：4択にまとめて **3層リッチクライアント＝`WSClient_sample` と WPF が選択肢から欠落**した）。**選択 UI が
 選択肢数を制限しても、収まらなければ全系列を番号付きリストで提示して番号で選ばせる**（固定4択に押し込めて捨てない）。

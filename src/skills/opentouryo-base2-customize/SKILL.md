@@ -35,9 +35,10 @@ metadata:
 - **★ `OpenTouryo.Business` と `OpenTouryo.Business.RichClient`（2CS）は別 sln＝ビルド経路が違う**（実測・net48 03-20）。
   `3_Build_Business_net48` がビルドするのは `Business_net48.sln`＝**`Business` + `CustomControl` だけ**。**2CS クラス
   （`MyBaseLogic2CS` / `MyFcBaseLogic2CS` ＝ `OpenTouryo.Business.RichClient`）は別の `BusinessRichClient_net48.sln`
-  を明示ビルドしないと生成されない**（`2_/3_` 標準フローも `Nuget_RichClient_net48.sln` も作らない＝出来るのは
-  `Framework.RichClient` まで）。**2CS を直しても標準フローだと無言で無視される**（エラーも出ない）。core も同構成で
-  同じ穴の可能性が高い（`BusinessRichClient_netcore100.sln` が別在。要確認）。→ 2CS を触るなら次項のビルドに一手足す。
+  を明示ビルドしないと生成されない**（`opentouryo-project-setup-build` が回す `2_/3_Build_*` サブセットも
+  `Nuget_RichClient_net48.sln` も作らない＝出来るのは `Framework.RichClient` まで。※本体のフル一式／`9_CICD.bat`
+  なら出る）。**2CS を直してもこのサブセットだと無言で無視される**（エラーも出ない）。core も同構成で
+  同じ穴（`BusinessRichClient_netcore100.sln` が別在）。→ 2CS を触るなら次項のビルドに一手足す。
 - **カスタマイズは「修正ファイルだけ」をオーバーレイとしてバージョン管理する**（後述の「バージョン管理」）。
   `opentouryo-project-setup-build` が展開する丸ごとのツリーはビルドの副産物で、そこを直接いじって放置する場所ではない。
 

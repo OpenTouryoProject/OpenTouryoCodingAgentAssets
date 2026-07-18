@@ -50,6 +50,10 @@ metadata:
 - **同一ランタイムなら ③ 基盤ビルドは流用**（`OpenTouryoAssemblies\Build_net48\` 等を再利用。再ビルド不要）。
   ③ を回すのはタグを変える／別ランタイムを足すときだけ（`opentouryo-project-setup-selection` で判断）。**別ランタイムを
   足すなら、そのランタイムの `Build_netcore100\` 等だけをビルド**（既存 ZIP 展開を再 DL せず流用してよい）。
+- **例外：2CS/リッチクライアント系（`2CSClientWin/WPF`・`WSClient_*`）は、同一ランタイム・同一タグでも ③ に追加ビルドが要る。**
+  これらは `OpenTouryo.Business.RichClient` を参照するが、③ が回す `2_/3_Build_*` サブセットには含まれない
+  （別 sln `BusinessRichClient_*.sln`。フル一式／`9_CICD.bat` なら出る＝本体の欠陥ではない。**base2 の有無と無関係**）。
+  → `opentouryo-project-setup-build` / `opentouryo-project-setup-selection`。
 - **同系列を別ランタイムで足すとフォルダ名が衝突する。** 例：net48 MVC が `MVC_Sample\` を占有済みで Core MVC も既定同名
   → **別名（`MVC_Sample_Core\` 等）で取り出す**（`.sln`・参照の相対パスも合わせる）。
 - ⑥ resource・⑦ `.gitignore` は既に整っていれば再張替不要（追加サンプル固有のキーだけ足す）。

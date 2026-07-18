@@ -79,9 +79,17 @@ call .\3_Build_Business_netcore100.bat < nul
 **このバッチ名（net48 / netcore100）が正**。本体の `99_BuildLibsAtOtherRepos*.bat` は陳腐化して
 `net45`〜`netcore30` を呼ぶので**参考にしない**。なお `2_Build_NuGet_net48.bat` は `Nuget_RichClient_net48.sln` も
 必ずビルドするので、RichClient を使わない標的でも `OpenTouryo.Framework.RichClient.dll` 等が生成される（無害。
-「標的ランタイムのバッチだけ」で絞れるのはランタイム粒度まで）。**ただし出来る RichClient は `Framework.RichClient` まで。
-`OpenTouryo.Business.RichClient`（2CS の親クラス2）は別 sln `BusinessRichClient_net48.sln` が要り、`2_/3_` 標準フローでは
-生成されない**（親クラス2 の 2CS カスタマイズ時に効く。`opentouryo-base2-customize`）。
+「標的ランタイムのバッチだけ」で絞れるのはランタイム粒度まで）。
+
+**★ 本スキルが回す `2_/3_Build_*` サブセットには `OpenTouryo.Business.RichClient` が含まれない＝別 sln の追加ビルドが要る（実測）。**
+**本体のフル一式**（`root\programs\CS` の各 bat を順次、またはまとめ役 **`root\programs\9_CICD.bat`**）を回せば
+Business.RichClient も含め**全部ビルドされる**。本スキルは標的を絞って速くするため `2_/3_Build_*` だけを回す方針で、
+そのサブセットに `BusinessRichClient_*.sln` が入っていないだけ（`2_/3_` で出る RichClient は `Framework.RichClient` まで＝
+本体の欠陥ではない）。**2CS（`2CSClientWin/WPF`）・3層リッチクライアント（`WSClient_*`）系のサンプルは
+`OpenTouryo.Business.RichClient`（`MyFcBaseLogic2CS` 等）を参照する**ので、`BusinessRichClient_net48.sln`
+（core は `_netcore100`）を追加でビルドしないと `CS0246`。**base2 カスタマイズの有無と無関係＝素の依存**
+（親クラス2 を 2CS カスタマイズする場合も同じ sln。`opentouryo-base2-customize`）。→ **RichClient 系サンプルなら ③ に
+このビルドを足す**（`examples.md` の 2b＝`setup-build-richclient.ps1` 相当。フル一式で回すなら不要）。
 
 ### エージェント/CI では PowerShell ラッパを既定にする（推奨）
 
