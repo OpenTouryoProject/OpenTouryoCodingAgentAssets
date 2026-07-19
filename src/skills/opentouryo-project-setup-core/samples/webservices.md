@@ -59,7 +59,7 @@ variant の csproj を見て分岐する**（実測：Win/WPF/WinCone は WS 依
 - **判定基準**：csproj に `WSServer_sample`/`WSIFType_sample` への参照があるか、`.cs` に WS 型（`TestParameterValue` /
   `TestReturnValue`）や `using WSIFType_sample;` があるか。加えて `<派生>_sample_all.sln` が同梱されているか。
 - **あり → 3層WSクライアント**：下記の **① クライアント ② `WSServer_sample`/`WSIFType_sample`（B・D層・型） ③ WS ホスト
-  `Frameworks\Infrastructure\ServiceInterface`** の3点を一式引き込む（クライアント単体では通信相手が居ない）。
+  `WS_sample\ServiceInterface`（源＝`Frameworks\Infrastructure\ServiceInterface`）** の3点を一式引き込む（クライアント単体では通信相手が居ない）。
 - **なし → 単独の P層 UI デモ**（例：`WSClientWin2_sample`＝UserControl 親子・フォーム間の戻り値受け渡し等）：**WS ホスト
   引き込みも ProjectReference 化も不要。源同梱の単一 `.sln` のまま `OpenTouryo.*` の DLL 参照だけ張り替えて完結**。
   config も app.config に絶対 resource パスが無ければ張替不要（Win2 は該当キー無し・ローカル Content の XML は出力コピー）。
@@ -92,21 +92,20 @@ WinCone＝WSIFType のみ）＝csproj を見て張り替える。
    `SqlTextFilePath`→`%OT_RESOURCE_ROOT%\Sql`・`SpRp_RsaCerFilePath`→`%OT_RESOURCE_ROOT%\X509\SHA256RSA_Server.cer`。
    **`FxXML*`（XML 定義）は `EmbeddedResource`＝張替不要**。
 
-### ③ WS ホスト `Frameworks\Infrastructure\ServiceInterface` も引き込む（実動の必須要素・見落とし注意）
-**これが無いとクライアントは通信相手が居ない。**`ServiceInterface` 配下の**ホスト アプリ**を引き込んで建てる。これは
-フレームワーク*ライブラリ*の改造ではない（配置・起動するだけ＝「Frameworks を取り込んで改造しない」禁止には当たらない）。
+### ③ WS ホスト `WS_sample\ServiceInterface`（源＝`Frameworks\Infrastructure\ServiceInterface`）も引き込む（実動の必須要素・見落とし注意）
+**これが無いとクライアントは通信相手が居ない。** 源は `Frameworks\Infrastructure\ServiceInterface` だが、**WS 一式を `WS_sample\`
+配下に集約**するため **`WS_sample\ServiceInterface\` に置く**（`WSClient_sample`/`WSIFType_sample`/`WSServer_sample` と兄弟）。
+これはフレームワーク*ライブラリ*の改造ではない（WS ホスト アプリを配置・起動するだけ＝「Frameworks を取り込んで改造しない」に当たらない）。
 - **既定は `ASPNETWebService`**（クライアント app.config が `FxXMLTMProtocolDefinition=TMProtocolDefinition2.xml`＝Web API
   経路を選択。`WCFService` は代替＝`TMProtocolDefinition.xml`）。通常は ASPNETWebService を建てれば足りる。
-- **引き込み位置**：`Frameworks\Infrastructure\ServiceInterface\` をリポ直下に置く（`Frameworks\...\ServiceInterface\<host>\`）。
-- **★ `_all.sln` のホスト参照の `..\` 段数を配置に合わせて直す**（そのままでは解決しない）。源の `_all.sln` は client から
-  `..\..\..\..\Frameworks\...\ServiceInterface\`（`Samples\` 階層＝programs\CS\ 前提で up 4）。**`Samples\` 段を落とす repo
-  では client がリポ直下から3階層になり up 4 は root を突き抜ける→ `..\..\..\Frameworks\...`（up 3）に1段減らす**（実測。
-  `Samples\` 階層を残す構成なら源のままで解決）。
+- **引き込み位置**：`WS_sample\ServiceInterface\<host>\`（`<host>`＝`ASPNETWebService`/`WCFService`）。
+- **★ `_all.sln` のホスト参照を新配置に張り替える**。源の `_all.sln` は client から `..\..\..\..\Frameworks\...\ServiceInterface\<host>\`
+  を参照するので、**`..\..\ServiceInterface\<host>\<host>.csproj` に直す**（client＝`WS_sample\WSClient_sample\<派生>\` から
+  `WS_sample\` へ up 2＝host と client は `WS_sample\` 内の兄弟）。
 - **参照**：ホストの `OpenTouryo.*`（ASPNETWebService＝Framework/Public/Public.Security、WCFService＝Business/Framework/Public）は
-  **DLL 参照**で `..\..\Build\` → ベンダ先 `OpenTouryoAssemblies\Build_net48\`（host は `Frameworks\...\ServiceInterface\<host>\`
-  ＝4階層なので `..\..\..\..\`）。**`WSServer_sample`/`WSIFType_sample` は ProjectReference**：旧 `...\WS_sample\Build\*.dll` を削除し
-  **`..\..\..\..\WS_sample\WSServer_sample\WSServer_sample.csproj`（同 `WSIFType_sample`）**（`Samples\` を畳む標準レイアウト＝
-  host 4階層＋WS_sample はリポ直下。実測 0 error）。
+  **DLL 参照**で `..\..\Build\` → ベンダ先 **`..\..\..\OpenTouryoAssemblies\Build_net48\`**（host は `WS_sample\ServiceInterface\<host>\`
+  ＝リポ直下から3階層）。**`WSServer_sample`/`WSIFType_sample` は ProjectReference**：旧 `...\WS_sample\Build\*.dll` を削除し
+  **`..\..\WSServer_sample\WSServer_sample.csproj`（同 `WSIFType_sample`）**（host は `WS_sample\` 内なので client と同じ `..\..\`）。
 - **★ ホスト config も resource パスを張り替える**（実 WS 稼働に必要。build だけなら不要・run-verify で要る）：
   `ASPNETWebService`/`WCFService` の **`app.config`** に `C:\root\files\resource\...` が**6キー**（`FxXMLMSGDefinition` /
   `FxXMLTCDefinition` / `FxXMLTMInProcessDefinition` / `FxLog4NetConfFile` / `SqlTextFilePath` / `SpRp_RsaCerFilePath`）＝
