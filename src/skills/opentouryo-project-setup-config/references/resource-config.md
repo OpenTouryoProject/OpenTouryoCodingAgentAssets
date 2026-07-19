@@ -24,7 +24,7 @@ IIS Express / w3wp のカレントはアプリ フォルダではないので、
 | --- | --- |
 | `FxLog4NetConfFile` | `%OT_RESOURCE_ROOT%\Log\SampleLogConf.xml` |
 | `FxXMLSPDefinition` / `FxXMLMSGDefinition` / `FxXMLSCDefinition` / `FxXMLTCDefinition` / `FxXMLTMProtocolDefinition` / `FxXMLTMInProcessDefinition` | `%OT_RESOURCE_ROOT%\Xml\*.xml`（XML 定義） |
-| `SqlTextFilePath` | `%OT_RESOURCE_ROOT%\Sql`（SQL 定義フォルダ） |
+| `SqlTextFilePath` | `%OT_RESOURCE_ROOT%\Sql`（SQL 定義フォルダ。**※同梱型は例外＝下記**） |
 | `SpRp_RsaCerFilePath` | `%OT_RESOURCE_ROOT%\X509\*.cer`（OAuth2 用証明書） |
 
 **`OT_RESOURCE_ROOT` はリポジトリ直下の `resource\` を指す環境変数**（変数名は任意。この例に統一）。
@@ -32,6 +32,16 @@ IIS Express / w3wp のカレントはアプリ フォルダではないので、
 クローンし直しても再実行で張り直せる。設定後は IIS Express / プロセスの再起動で反映する。
 **これはマシン/ユーザ全体に残る変更＝`SETUP-CHANGES.md` に記録する**（AGENTS.md ポリシー）。
 未設定のマシンでは exe/プロセスが起動時に resource 解決に失敗する（配布時は app 起動時に自己設定 or インストーラで設定）。
+
+## ★ 例外：SQL 定義を同梱する自己完結型サンプル（`.\Dao` 等）は張り替えない（実測）
+
+`%OT_RESOURCE_ROOT%` 化するのは**共有 `resource\` を絶対パスで参照しているキーだけ**。
+**`SqlTextFilePath=.\Dao` のような相対パスは意図的な設計＝そのまま残す**：`RerunnableBatch_sample`〜`3` は
+`Dao\*.sql/.xml` を `CopyToOutputDirectory` で `bin\Debug\Dao` へコピーする自己完結型で、
+`%OT_RESOURCE_ROOT%\Sql` に書き換えると**逆に壊れる**（SQL は `resource\` 側に無い）。
+同じバッチ系列でも `SimpleBatch_sample` は絶対パス（`C:\root\files\resource\Sql`）＝張り替え対象、と設計が分かれる。
+相対は CWD 依存なので、**コンソール exe を `bin\Debug` から実行する前提**（上の「相対パス不可」は
+IIS 等 CWD がアプリ フォルダでないプロセスの話。同梱型コンソールには当てはまらない）。
 
 ## ★ ログ定義（`resource\Log\*.xml`）の中の出力先パスも張り替える（見落とし注意・実測）
 

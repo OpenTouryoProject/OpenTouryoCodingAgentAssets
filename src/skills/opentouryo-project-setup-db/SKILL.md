@@ -57,6 +57,8 @@ WSL2 向けは `Start-Services_wsl2.ps1` / `Stop-Services_wsl2.ps1` もある。
 - **DBMS の選択は `actionType` の先頭**（`SQL%...` 等）＋対応する `ConnectionString_<code>`（`opentouryo-config` /
   `opentouryo-p-call-business`）。既定サンプルは SQL Server（`ConnectionString_SQL`）で動く。
 - **Oracle は本 Docker に含まれない**（サンプルの `ConnectionString_ODP`＝SCOTT/tiger は別途 Oracle を用意する）。
+- **サンプル固有の追加テーブルは Northwind に含まれない**：サンプル同梱の `CREATE *.sql` を別途流す
+  （例：`RerunnableBatch_sample` の `ORDERS2`＝同梱 `CREATE ORDERS2.sql`。`run-verify.md` のバッチ/CLI 節）。
 - 接続文字列を変える場合、機微情報の直書きを避ける方針は ⑥（`opentouryo-project-setup-config`）に従う。
 
 ## ★ グローバル変更として記録する

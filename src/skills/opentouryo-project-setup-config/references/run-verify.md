@@ -80,10 +80,15 @@ Web ではないので HTTP スモークは無い。**exe を起動してプロ�
 
 - **実行前にサンプルの `readme.txt` で必要なコマンド引数を確認する。** バッチ/CLI は**引数必須**のことがあり、
   無引数だと `Program.cs` の `argsDic["/DAP"]` 等で **`KeyNotFoundException`**（一見「実行失敗」だが実体は引数不足）。
-  例：`SimpleBatch_sample` は `readme.txt` に `/Dap SQL /Mode1 individual /Mode2 static /EXROLLBACK -`。
+  例：`SimpleBatch_sample` は `readme.txt` に `/Dap SQL /Mode1 individual /Mode2 static /EXROLLBACK -`
+  （`RerunnableBatch_sample` は引数不要）。
+- **DB スキーマ前提も確認する（サンプル同梱の `CREATE *.sql` を探して適用）。** 例：`RerunnableBatch_sample` は
+  Northwind に **`ORDERS2` テーブルが必要**（同梱 `CREATE ORDERS2.sql`）。`opentouryo-project-setup-db` が立てる
+  Northwind に**サンプル固有の追加テーブルは含まれない**＝同梱 SQL を別途流す。
 - **合格基準**：引数を与えて起動し、**framework 初期化（log4net 等）＋業務ロジック到達＝OK**（標準出力に処理結果、
   例「3件のデータがあります」）。**DB があれば結果（件数）まで確認**／無ければ初期化＋到達まで（上の「DB 依存は条件付き」）。
 - **★ exit code で判定しない。** サンプルは末尾で `Console.ReadKey()` を呼ぶため、**非対話（stdin リダイレクト）だと
-  成功分岐でも `InvalidOperationException` で exit code が非ゼロ**になる（業務処理は成功済み＝サンプルコード都合）。
+  成功分岐でも `InvalidOperationException` で exit code が非ゼロ**になる（業務処理は成功済み＝サンプルコード都合。
+  `SimpleBatch`/`RerunnableBatch` 系共通・実測）。
   **成否は標準出力で判定**する（`< nul` で stdin を与えても ReadKey 例外は避けられない。出力で見る）。
 
