@@ -3,9 +3,10 @@
 作業を再開するための記録。**アセットの内容ではなく、アセットを作る側の記録。**
 配布されるのは `src/` 配下のみで、このファイルは配布されない。
 
-最終更新: 2026-07-19（全34スキル。利用ガイド doc 0〜8・設定一覧まで確認し、整合性補正と
-新規スキル追加、ランタイム差（net48 / .NET 10.0）の反映を実施。project-setup を実走フィードバックで
-補正し、③基盤ビルドを project-setup-build へ分離、変形の後工程 project-transform も分離）
+最終更新: 2026-07-20（全34スキル。§3 インベントリを全スキル再計測して更新〔WS/ProjectReference・
+OT_Tools・命名規則・TFM 改修を反映〕。それ以前：利用ガイド doc 0〜8・設定一覧まで確認し整合性補正、
+新規スキル追加、ランタイム差（net48 / net10.0）の反映、③基盤ビルドを project-setup-build へ・
+変形の後工程 project-transform を分離）
 
 ---
 
@@ -139,53 +140,55 @@ Download→Build→ベンダは、その場のコマンド羅列にせず**セ�
 ## 3. 成果物の現状
 
 ```
-opentouryo-layer-p-mvc            実効300L tok~3710  完了
-opentouryo-layer-p-webforms-screen 実効144L tok~1904  完了（画面の新規作成）
-opentouryo-layer-p-webforms-event  実効174L tok~2935  完了（イベント実装）
-opentouryo-webforms-dialog         実効165L tok~2193  完了（子画面表示・ダイアログ）
-opentouryo-layer-p-winforms-screen 実効116L tok~1812  完了（画面の新規作成）
-opentouryo-layer-p-winforms-event  実効104L tok~1877  完了（イベント実装）
-opentouryo-p-call-business        実効163L tok~2307  完了（P層→B層呼出し・横断）
-opentouryo-richclient-async       実効145L tok~2031  完了（リッチクライアントの非同期呼び出し）
-opentouryo-common-parts           実効118L tok~2047  完了（用途→共通部品のインデックス）
-opentouryo-project-setup          実効 81L tok~2021  完了（**ファサード**。全体の流れ＝4スキルの呼び出し順のみ／既存への追加・再実行〔冪等性：同ランタイムは③流用・別ランタイムは片方だけ・同系列別ランタイムはフォルダ名衝突→別名・**2CS/RichClient は同ランタイムでも③追加ビルド要＝例外**〕／完了後（→transform）・コミット促し／全工程共通の禁止事項）
-opentouryo-project-setup-selection 実効 83L tok~2114  完了（①②。起点サンプル選択〔全系列を必ず提示・間引かない〕＋取得元 <ref>〔固定タグ番号はユーザ確認・develop〕。WS依存列は csproj 確定値・**RichClient 基盤要サンプル注記**〔2CS/WPF/3層〕。次は build/core）
-opentouryo-project-setup-build    実効153L tok~3805  完了（③。ZIP取得→ランタイム別バッチ→ベンダ。footgun＋偽の成功＋MAX_PATH短ルート＋PowerShell 既定推奨。短ルート展開ツリーをワークスペース化〔コピーバック廃止〕。**Business.RichClient は別 sln 追加ビルド＝2CS/RichClient サンプルなら必須・base2 非依存**）
-                                  └ examples.md ~230L        実機で通した as-built スクリプト3本（on-demand。setup-build.ps1 / setup-build-netcore.ps1 / build-app.ps1。雛形）。netcore は既存 extract 流用・netcore バッチのみ・Build_netcore100 の TFM 両サブフォルダをベンダ・NU1902〔log4net 3.2.0〕は本体側既知警告。setup-build 2b は BusinessRichClient sln を **`$needRichClient -or overlay`**〔2CS/RichClient サンプルなら overlay 無しでも必須〕、build-app に DaoGen/DPQuery ビルド
-opentouryo-project-setup-core     実効 61L tok~1308  完了（④⑤＝核心。取り出し〔+開発支援ツール〕・HintPath 張替・3層/WS の CS0246 解消〔(A)残す/(B)切離し〕。references/samples を保持）
-                                  ├ references/reference-rewrite.md 39L         ⑤の edge case（接頭辞だけでない・Build_* 全 DLL＝MySql/Oracle 非復元・MAX_PATH フラット化・net48 も PackageReference 併用時は restore）
-                                  ├ samples/webservices.md 56L tok~1200  WS/3層の共通機構（サンプル横断で共有）：(A)そのまま残す/参照/Build\配置・(B)WS切り離し・core 実用不可・MAX_PATH
-                                  ├ samples/webforms.md    38L tok~700   Web Forms 固有（cc 画面の CS0246・(B)画面差し替え・config二段・test*マスタ固有名）。共通は samples/webservices.md
-                                  ├ samples/daogentool.md  ~45L         開発支援ツール DaoGen_Tool（墨壺＝D層自動生成。Frameworks\Tools 配下・HintPath＋PackageReference 混在＝net48 も restore 要・Microsoft.Data.SqlClient）→ dao-generated
-                                  └ samples/dpquerytool.md ~45L         開発支援ツール DPQuery_Tool（動的クエリ試験＝PARAM タグ。取り出し/張替は daogentool.md と同じ）→ query-definition
-opentouryo-project-setup-config   実効 76L tok~1637  完了（⑥⑦。resource 移設・config パス張替〔%OT_RESOURCE_ROOT%〕・.gitignore・接続文字列/InitConfiguration/nuget restore/sessionState=StateServer・ビルド/実行検証。references を保持）
-                                  ├ references/resource-config.md   46L tok~900  ⑥の詳細（相対不可＝ResourceLoader・%VAR%展開／FxContainerization と別・パスキー一覧・綴りの罠・config二段）
-                                  └ references/run-verify.md        ~60L         ⑦の実行確認。net48 Web＝IIS Express（SSL 回避・`/path` は Web.config のある内側・Ping/login スモーク・500＝resource/config 失敗）／core Web＝Kestrel（dotnet run は launchSettings 優先＝ASPNETCORE_URLS 無視。--urls で固定）／デスクトップ WinForms/2CS＝exe 起動でプロセス生存確認・DB 依存は SQL Server 前提・3層は WS サーバ要
-opentouryo-project-setup-db       実効 75L tok~1472  完了（**選択式**の環境構築。LocalServicesOnDocker で SQL Server/MySQL/PostgreSQL/Redis/MongoDB を Docker 起動。既定が サンプル接続文字列と一致〔SQL 1433/sa/seigi@123/Northwind＝ConnectionString_SQL、MySQL＝ConnectionString_MCN〕。Oracle は対象外。Docker 変更は SETUP-CHANGES.md 記録。既存 DB あれば不要）
-opentouryo-project-transform      実効106L tok~2100  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消。実機E2E反映：改行LF/非対話PSガード・2層化のDB DLL付替・test*マスタ警告・csproj剪定手法。実行は任意）
-opentouryo-layer-b               実効292L tok~4134  完了
-opentouryo-layer-d             実効149L tok~2216  完了（Dao 3系統の使い分け・入口）
-opentouryo-dao-custom          実効151L tok~2015  完了
-opentouryo-dao-common          実効128L tok~1775  完了
-opentouryo-dao-generated       実効144L tok~1885  完了
-opentouryo-query-definition    実効278L tok~2895  完了
-opentouryo-message             実効127L tok~1585  完了
-opentouryo-shared-property     実効 73L tok~ 779  完了
-opentouryo-screen-transition   実効116L tok~1473  完了
-opentouryo-transaction-control 実効125L tok~1651  完了
-opentouryo-transmission        実効120L tok~1572  完了
-opentouryo-exception           実効289L tok~4264  完了
-opentouryo-logging             実効166L tok~2114  完了
-opentouryo-config              実効195L tok~2631  完了
-opentouryo-auth                実効309L tok~4953  完了 ★上限に貼り付いている
-opentouryo-oauth2-client       実効263L tok~2851  完了
-opentouryo-project-policy      実効156L tok~2675  完了（親クラス2 の挙動・運用ルールの確認手順＝読む側）
-opentouryo-base2-customize     実効145L tok~3735  完了（親クラス2 のカスタマイズ＝纏め者向け・作る側。オーバーレイ+固定タグ。短ルート展開ツリーをワークスペース化。★2CS=Business.RichClient は別 sln〔BusinessRichClient_*.sln〕要ビルド／overlay 適用は Copy-Item＋UTF-8 BOM 保持／overlay はファイル丸ごと差替＝パッチでない）
+opentouryo-layer-p-mvc            実効302L tok~3687  完了
+opentouryo-layer-p-webforms-screen 実効146L tok~1891  完了（画面の新規作成）
+opentouryo-layer-p-webforms-event  実効177L tok~2935  完了（イベント実装）
+opentouryo-webforms-dialog         実効166L tok~2193  完了（子画面表示・ダイアログ）
+opentouryo-layer-p-winforms-screen 実効117L tok~1812  完了（画面の新規作成）
+opentouryo-layer-p-winforms-event  実効106L tok~1878  完了（イベント実装）
+opentouryo-p-call-business        実効191L tok~2784  完了（P層→B層呼出し・横断）
+opentouryo-richclient-async       実効148L tok~2110  完了（リッチクライアントの非同期呼び出し）
+opentouryo-common-parts           実効129L tok~2351  完了（用途→共通部品のインデックス）
+opentouryo-project-setup          実効 99L tok~2617  完了（**ファサード**。全体の流れ＝4スキル＋選択式 db の呼び出し順／既存への追加・再実行〔冪等性・**2CS/RichClient は同ランタイムでも③追加ビルド要＝例外**〕／**配置・命名の固定規則**〔net48=元名・core は net48版が在れば `_Core`・net48 のみ/net10.0 のみは無印・WS 系は `WS_sample\` 階層維持・開発支援ツールは `OT_Tools\` 配下〕／完了後（→transform）・コミット促し／全工程共通の禁止事項〔例外：WS ホスト ServiceInterface は引き込む〕）
+opentouryo-project-setup-selection 実効105L tok~2856  完了（①②。起点サンプル選択〔全系列を必ず提示・**派生も提示**・名前で決め打ちしない〕＋取得元 <ref>〔固定タグ番号はユーザ確認・develop〕。**CLI=net10.0 のみ／Web Forms=net48 のみ／WSClient variant は csproj で判断〔Win2 は WS 非依存の単独 P層〕**。RichClient 基盤要サンプル注記〔2CS/WPF/3層〕）
+opentouryo-project-setup-build    実効169L tok~4350  完了（③。ZIP取得→ランタイム別バッチ→ベンダ。footgun＋偽の成功＋MAX_PATH短ルート＋PowerShell 既定。短ルート展開ツリーをワークスペース化。**Business.RichClient は別 sln＝2CS/RichClient なら必須・base2 非依存**。生成 .ps1 は `scripts/` 配下・CWD 非依存）
+                                  └ examples.md 実効233L tok~4044  実機 as-built スクリプト3本（setup-build/setup-build-netcore/build-app。netcore は extract 流用・TFM 両サブフォルダをベンダ。**build-app は WS を ProjectReference で同ソリューション一括ビルドに改訂**〔copy-to-Build 廃止〕。ツールは `OT_Tools\`）
+opentouryo-project-setup-core     実効 73L tok~1635  完了（④⑤＝核心。取り出し〔+開発支援ツール→`OT_Tools\`・**csproj Include とファイル実体を毎回照合**〕・HintPath 張替・WS/3層の扱い。references/samples を保持）
+                                  ├ references/reference-rewrite.md 実効54L tok~1295  ⑤の edge case（Build_* 全 DLL＝MySql/Oracle 非復元・**WSServer/WSIFType は ProjectReference＝DLL張替の対象外**・net48 も PackageReference 併用時 restore・MAX_PATH）
+                                  ├ samples/webservices.md 実効152L tok~4407  WS/3層の共通機構＋**WSClient 4 variant 実測表**〔依存形3種・config 0〜2・ClickOnce〕。**参照方式＝FW は DLL／サンプル B・D・型は ProjectReference**・WS ホスト ServiceInterface 引き込み・`_all.sln` 雛形差替・core 実用不可
+                                  ├ samples/webforms.md    実効42L tok~881   Web Forms 固有（cc 画面 CS0246・(A)=WS を ProjectReference/(B)画面差し替え・config二段・test*マスタ固有名）
+                                  ├ samples/daogentool.md  実効39L tok~912   開発支援ツール DaoGen_Tool（墨壺＝D層自動生成。`OT_Tools\` 配下・HintPath＋PackageReference 混在＝restore 要）→ dao-generated
+                                  └ samples/dpquerytool.md 実効35L tok~798   開発支援ツール DPQuery_Tool（PARAM タグ。取り出し/張替は daogentool.md と同じ）→ query-definition
+opentouryo-project-setup-config   実効 83L tok~1846  完了（⑥⑦。resource 移設・config パス張替〔%OT_RESOURCE_ROOT%〕・.gitignore・接続文字列/InitConfiguration/StateServer・ビルド/実行検証。references を保持）
+                                  ├ references/resource-config.md   実効84L tok~1876  ⑥の詳細（相対不可・%VAR%展開・パスキー一覧・**自己完結型 `.\Dao` は張替しない例外**・log4net PatternString・綴りの罠・config二段）
+                                  └ references/run-verify.md        実効97L tok~2085  ⑦実行確認（net48 IIS Express／core Kestrel／デスクトップ exe 生存／**Batch・CLI 引数・Console.ReadKey・DB 条件付き**／3層は WS ホスト ServiceInterface 起動）
+opentouryo-project-setup-db       実効 76L tok~1472  完了（**選択式**の環境構築。LocalServicesOnDocker で SQL Server/MySQL/PostgreSQL/Redis/MongoDB を Docker 起動。既定が サンプル接続文字列と一致〔SQL 1433/sa/seigi@123/Northwind＝ConnectionString_SQL、MySQL＝ConnectionString_MCN〕。Oracle は対象外。Docker 変更は SETUP-CHANGES.md 記録。既存 DB あれば不要）
+opentouryo-project-transform      実効101L tok~2263  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消。実機E2E反映：改行LF/非対話PSガード・2層化のDB DLL付替・test*マスタ警告・csproj剪定手法。実行は任意）
+opentouryo-layer-b               実効293L tok~4133  完了
+opentouryo-layer-d             実効151L tok~2239  完了（Dao 3系統の使い分け・入口）
+opentouryo-dao-custom          実効205L tok~2928  完了
+opentouryo-dao-common          実効143L tok~2096  完了
+opentouryo-dao-generated       実効157L tok~2112  完了
+opentouryo-query-definition    実効343L tok~4109  完了
+opentouryo-message             実効140L tok~1760  完了
+opentouryo-shared-property     実効 75L tok~ 779  完了
+opentouryo-screen-transition   実効119L tok~1485  完了
+opentouryo-transaction-control 実効129L tok~1652  完了
+opentouryo-transmission        実効141L tok~2063  完了
+opentouryo-exception           実効298L tok~4407  完了
+opentouryo-logging             実効167L tok~2114  完了
+opentouryo-config              実効200L tok~2746  完了
+opentouryo-auth                実効312L tok~4952  完了 ★上限に貼り付いている
+opentouryo-oauth2-client       実効266L tok~2853  完了
+opentouryo-project-policy      実効170L tok~3238  完了（親クラス2 の挙動・運用ルールの確認手順＝読む側）
+opentouryo-base2-customize     実効148L tok~3772  完了（親クラス2 のカスタマイズ＝纏め者向け・作る側。オーバーレイ+固定タグ。短ルート展開ツリーをワークスペース化。★2CS=Business.RichClient は別 sln〔BusinessRichClient_*.sln〕要ビルド／overlay 適用は Copy-Item＋UTF-8 BOM 保持／overlay はファイル丸ごと差替＝パッチでない）
 ```
 
-**全30スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全34スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
-計測は `scratchpad/measure.py` 相当のスクリプトで行う（見積り式：ASCII 1/4字 + 非ASCII 1/1.1字）。
+計測は `scratchpad/measure.py` 相当のスクリプトで行う（見積り式：ASCII 1/4字 + 非ASCII 1/1.1字。
+tiktoken 生値はこれより約1.3倍〔日本語過大計上〕なので、上表は見積り式で統一）。
+値は 2026-07-20 に全スキル再計測して更新（WS/ProjectReference・OT_Tools・命名規則・TFM 改修を反映）。
 
 **`opentouryo-auth` は 約4,950トークンで上限 5,000 に接している。**
 これ以上の加筆は分割とセットで考えること。外部 IdP 連携を `opentouryo-oauth2-client` として
@@ -193,9 +196,9 @@ opentouryo-base2-customize     実効145L tok~3735  完了（親クラス2 の�
 
 相互リンクしている（B層 → D層 → クエリ定義、全層 → 例外、P層3種 → auth、
 auth → oauth2-client、setup → config / project-policy、など）。
-`AGENTS.md` は実効216行（圧縮後）。横断事実（DBMS 差・名前空間・ランタイム差・セットアップ）の
-追記で一度229行まで膨らみ、冗長プロースを圧縮して戻した。目安200行はわずかに超えるが、
-残りは27スキルの一覧表と非推奨リファレンス表が中心で、これ以上は load-bearing な情報を削ることになる。
+`AGENTS.md` は tok~3403（スキル一覧表は README〔GitHub リンク〕へ移設済み＝§4.3 2026-07-19。
+常時ロード枠を約1000 節約）。残るのは横断事実（DBMS 差・名前空間・ランタイム差・セットアップ）と
+非推奨リファレンス表が中心で、これ以上は load-bearing な情報を削ることになる。スキル一覧と使いどころは README 参照。
 
 **残るのは各スキル内の TODO（プロジェクト固有の値・未確認の論点）と AGENTS.md の TODO。**
 
@@ -259,6 +262,10 @@ APIリファレンスで足りる）。
 （`[Obsolete]` はビルド警告止まりで素通りするため）。
 
 ### 4.3 実装から判明した仕様（推測では当たらないもの）
+
+**凡例（この節で使う記号）**：
+- セットアップ工程番号は固定＝**①②**サンプル/取得元選択・**③**基盤ビルド・**④⑤**取り出し/参照張替・**⑥⑦**resource/config・検証・**〔選択式〕**DB（§3・facade と同じ番号）。
+- 一方、英字/数値のレポート項目ラベル（`A/B`・`K/L`・`(1)(2)`・`①〜` 等）は**各行スコープ**で、同じ記号でも別行では別内容を指す＝内容は各行内（`K（スキル）＝…`）または見出しの〔〕で明示している。
 
 | 項目 | 内容 |
 | --- | --- |
@@ -365,11 +372,11 @@ APIリファレンスで足りる）。
 | 再実行（.NET 10.0 / Core MVC 追加）で判明した core・混在ランタイム系5件（作者報告・**2026-07-19**。B〔冪等性〕は前回更新で解消済み） | **D**：`examples.md` に netcore100 の例が無く net48 専用だった → **`setup-build-netcore.ps1` 雛形を追加**（既存 ZIP 展開を再 DL せず流用・netcore バッチのみ・`Build_netcore100\` の TFM 両サブフォルダをベンダ）。混在ランタイム repo〔net48 済みで .NET10.0 だけ後追加〕に対応。**E**：`run-verify.md` が net48/IIS Express 専用 → **core＝Kestrel（`dotnet run`）節を追加**。`dotnet run` は **launchSettings.json の applicationUrl を優先**し `ASPNETCORE_URLS` を無視する〔実測：5080 指定でも 5219 起動〕→ `--urls`/`--launch-profile` で固定 or launchSettings のポートを使う。**F**：ファサード冪等性節に「**同系列を別ランタイムで足すとフラット化フォルダ名が衝突**〔net48 MVC が `MVC_Sample\` 占有・Core MVC も同名〕→ 別名 `MVC_Sample_Core\`」を追加。**minor**：`reference-rewrite.md` に「`Build_netcore100\` は **TFM サブフォルダ2種**〔`net10.0\`＝Web/MVC/Bat/CLI、`net10.0-windows7.0\`＝WinForms/WPF・2CS〕」を明記（ミラーの csproj TargetFramework で確認）。**G〔本体側〕**：Core MVC が **log4net 3.2.0** を参照し `NU1902`〔GHSA-4f7c-pmjv-c25w・中〕が出る（ビルドは通る）→ 本体のバージョン更新検討事項。スキルは examples.md に「既知警告・セットアップ側で差し替えない」と注記（net48 系では出ない core 固有） |
 
 | 再実行（2CS/WinForms・net48・既存流用）で判明した3件（作者報告・**2026-07-19**） | **H（最重要）**：「同一ランタイムなら ③ 流用でスキップ可」が **2CS/リッチクライアント系で破綻**。ミラー確認：`2CSClientWin/WPF`・`GenDaoAndBatUpd`・`WSClient_*` 全種が `OpenTouryo.Business.RichClient` を参照するが `2_/3_Build_net48` は生成しない（別 sln `BusinessRichClient_net48.sln` 必須）＝**base2 カスタマイズと無関係の素の依存**。従来 examples.md の 2b ブロックが `if (Test-Path $overlay)`〔base2 がある時だけ〕でガードされ、setup-build も「親クラス2 の 2CS カスタマイズ時に効く」位置づけだったのが誤解の元。→ **(a) ファサード冪等性節に「2CS/RichClient は同ランタイム・同タグでも ③ に追加ビルド要」の例外**、**(b) setup-build を「RichClient 系サンプルなら必須・base2 と無関係」に格上げ**（★節に）、**(c) examples.md 2b を `$needRichClient -or overlay` に変え overlay 非依存化**（`setup-build-richclient.ps1` 相当）。**I**：selection の系列表に「**RichClient 基盤の追加ビルドが要る**（WinForms 2CS・WPF 2CS・3層リッチクライアント。WS/3層依存とは別軸）」の注記を追加。**J**：run-verify.md に**デスクトップ（WinForms/2CS）検証**節＝exe 起動→プロセス生存（起動時クラッシュ無し）、DB 依存操作は SQL Server 前提、3層は WS サーバ起動も要。**※当初「本体が Business.RichClient を出さないパッケージング設計」と書いたが誤り＝下行で訂正** |
-| 【訂正】H は本体の欠陥ではない＝スキルのサブセット選択が原因（作者指摘・**2026-07-19**） | 前行で「標準基盤ビルドが `Business.RichClient` を出さない」を本体側要因としたのは**誤り**。作者指摘：**`root\programs\CS` の各 bat を順次回せば（まとめ役 `root\programs\9_CICD.bat` でも）Business.RichClient も含め全部ビルドされる**。本スキルは**標的を絞って速くするため `2_/3_Build_*` サブセットだけを回す方針**なので、そのサブセットに `BusinessRichClient_*.sln` が入っていないだけ（＝本体の欠陥ではない。`9_CICD.bat` を使わない設計自体は妥当）。→ 4スキルの「標準フロー」表現を「③ が回す `2_/3_Build_*` サブセット（フル一式／`9_CICD.bat` なら出る）」へ訂正（setup-build ★節・facade 例外・selection 注記・base2）。開発元への報告事項は無し（挙動は仕様どおり） |
+| 【訂正】H〔基盤ビルドが `Business.RichClient` を出さない件〕は本体の欠陥ではない＝スキルのサブセット選択が原因（作者指摘・**2026-07-19**） | 前行で「標準基盤ビルドが `Business.RichClient` を出さない」を本体側要因としたのは**誤り**。作者指摘：**`root\programs\CS` の各 bat を順次回せば（まとめ役 `root\programs\9_CICD.bat` でも）Business.RichClient も含め全部ビルドされる**。本スキルは**標的を絞って速くするため `2_/3_Build_*` サブセットだけを回す方針**なので、そのサブセットに `BusinessRichClient_*.sln` が入っていないだけ（＝本体の欠陥ではない。`9_CICD.bat` を使わない設計自体は妥当）。→ 4スキルの「標準フロー」表現を「③ が回す `2_/3_Build_*` サブセット（フル一式／`9_CICD.bat` なら出る）」へ訂正（setup-build ★節・facade 例外・selection 注記・base2）。開発元への報告事項は無し（挙動は仕様どおり） |
 
 | 再実行（WPF 2CS・net48・既存流用）＝新規欠陥ゼロ（作者報告・**2026-07-19**） | WPF 2CS は WinForms 2CS とほぼ同一で一発通過（フラット化・参照張替・`SqlTextFilePath` 1点張替・`/t:restore`・起動スモーク）。**新規 Issue は無し**。**J（デスクトップ実行検証）は前ターンで対処済み**（`run-verify.md` のデスクトップ節）を再確認＝WPF も同節でカバー。見出しに `WPF` を明示追記。**C（MySql/Oracle の元 HintPath がサンプルで割れる）も対処済み**（reference-rewrite.md）。任意改善として selection に「**WPF 2CS ≒ WinForms 2CS 同一手順**（desktop・RichClient 要・`SqlTextFilePath` 1点）」の一言を追加。※報告者の `Select-String -SimpleMatch 'C:\root'` 取りこぼしはエージェント側の検査コマンド不備（`C:\\root` エスケープ or `.Contains` を使う）で、スキル／本体の欠陥ではない＝doc 変更なし |
 
-| Issue `skill-issue_netcore-richclient-windows-tfm.md`：netcore の RichClient 欠落は Business/Dam* ごと（作者報告・**2026-07-19**。net10.0 WinForms 2CS で実測） | H の netcore 版の精度不足。前回「2CS/RichClient は `Business.RichClient` が別ビルド（core は `_netcore100`）」と書いたが、**netcore は欠落範囲が広い**：標準 `2_/3_Build_netcore100` 直後の `Build_netcore100\net10.0-windows7.0\` に **`OpenTouryo.Business` と `Dam*`（DamManagedOdp/DamMySQL/DamPstGrS）まで無い**（`net10.0\` 側にはある）。`3_Build_BusinessRichClient_netcore100.bat` でこれらと `Business.RichClient` が揃う。core 2CS csproj は `OpenTouryo.Business` も `net10.0-windows7.0\` から参照するので、`Business.RichClient.dll` だけ拾うと `OpenTouryo.Business` で `CS0246`。→ **対処＝`net10.0-windows7.0\` フォルダを丸ごと再ベンダ**。net48 は TFM 分岐が無く欠けるのは `Business.RichClient` のみ（＝本体の欠陥ではない・記述の過小表現の修正）。反映：build SKILL ★節に netcore 段落／facade 例外／selection 注記／`reference-rewrite.md` の netcore TFM 節に「⚠ net10.0-windows7.0 は標準直後だと不完全＝丸ごと再ベンダ」／`examples.md` setup-build-netcore.ps1 に `$needRichClient` ガードの `3_Build_BusinessRichClient_netcore100.bat` ステップ＋Windows TFM 側 Business.dll の実在チェック。**J 追補**：run-verify デスクトップ節に GUI 合否基準（数秒生存＝startup OK・DB 依存は SQL Server 前提）を追記。開発元への本体 Issue は無し |
+| Issue `skill-issue_netcore-richclient-windows-tfm.md`：netcore の RichClient 欠落は Business/Dam* ごと（作者報告・**2026-07-19**。net10.0 WinForms 2CS で実測） | H〔RichClient は別 sln で追加ビルド要〕の netcore 版の精度不足。前回「2CS/RichClient は `Business.RichClient` が別ビルド（core は `_netcore100`）」と書いたが、**netcore は欠落範囲が広い**：標準 `2_/3_Build_netcore100` 直後の `Build_netcore100\net10.0-windows7.0\` に **`OpenTouryo.Business` と `Dam*`（DamManagedOdp/DamMySQL/DamPstGrS）まで無い**（`net10.0\` 側にはある）。`3_Build_BusinessRichClient_netcore100.bat` でこれらと `Business.RichClient` が揃う。core 2CS csproj は `OpenTouryo.Business` も `net10.0-windows7.0\` から参照するので、`Business.RichClient.dll` だけ拾うと `OpenTouryo.Business` で `CS0246`。→ **対処＝`net10.0-windows7.0\` フォルダを丸ごと再ベンダ**。net48 は TFM 分岐が無く欠けるのは `Business.RichClient` のみ（＝本体の欠陥ではない・記述の過小表現の修正）。反映：build SKILL ★節に netcore 段落／facade 例外／selection 注記／`reference-rewrite.md` の netcore TFM 節に「⚠ net10.0-windows7.0 は標準直後だと不完全＝丸ごと再ベンダ」／`examples.md` setup-build-netcore.ps1 に `$needRichClient` ガードの `3_Build_BusinessRichClient_netcore100.bat` ステップ＋Windows TFM 側 Business.dll の実在チェック。**J 追補〔デスクトップ実行検証〕**：run-verify デスクトップ節に GUI 合否基準（数秒生存＝startup OK・DB 依存は SQL Server 前提）を追記。開発元への本体 Issue は無し |
 | 同 Issue ファイルに J の追記 Issue が追加（合否基準の正式化・作者報告・**2026-07-19**。net48/.NET10 の WinForms/WPF 2CS 4例で実測） | GUI サンプルは HTTP エンドポイントが無く「起動する」以上の合否基準が未定義だった。→ run-verify デスクトップ節を**正式基準に強化**：**合格**＝exe を `OT_RESOURCE_ROOT` を渡して起動し **5–7s 生存＋初期画面**＝startup OK／**NG**＝起動直後の異常終了・未処理例外（resource/config 疑い）／**対象外**＝ログイン以降の DB 依存操作（`SqlTextFilePath` の SQL・SQL Server(Northwind)。DB 未起動での失敗はセットアップ不備でない＝Web の /Ping と同扱い）。**非対話チェックの雛形**（`Start-Process -PassThru`→`Start-Sleep 6`→`HasExited` 判定→`Kill()`）と **exe の具体パス**（net48＝`bin\Debug\<app>.exe`、core＝`bin\Debug\net10.0-windows7.0\<app>.exe`）を追加。本体 Issue 無し |
 
 | グローバル変更の記録規約を新設（作者提案・**2026-07-19**） | 「repo 外＝マシン/ユーザ全体に残る変更を伴うスキルは変更ログを残すべき」との提案。横断監査で対象を特定：**config**（`OT_RESOURCE_ROOT` User 環境変数・ASP.NET State Service 起動）／**build**（短ルート `C:\otr\` 作成・long path `LongPathsEnabled` レジストリ・VS 導入/PATH）／**base2**（`C:\otr\` 作業ツリー）。誤検知（config の `FxContainerization` は読み取り機構、logging/richclient/transmission の「サービス」は WS 用語）は除外。置き場は作者選択で **規約→AGENTS.md／ログ→別ファイル**：`src/instructions/AGENTS.md` の「プロジェクト ポリシー」に **### マシン/ユーザ全体に残る変更は `SETUP-CHANGES.md` に記録する**（種別/対象/値/日付/巻き戻し・コミットする・AGENTS.md 自体には書かない〔再インストールで上書き〕・対象例と該当3スキルを列挙）を追加。常時ロードで効くので各スキルは**短ポインタのみ**（重複回避）：resource-config〔OT_RESOURCE_ROOT＋未設定マシンは起動失敗の配布注意も併記〕・config ⑦〔State Service〕・build §1〔C:\otr／long path〕。実ログ `SETUP-CHANGES.md` は target 側で生成する運用（アセット repo には置かない）。AGENTS.md tok~4422（常時ロード枠内） |
@@ -380,11 +387,11 @@ APIリファレンスで足りる）。
 
 | 生成スクリプトの置き場を `scripts/` に明示（作者報告・**2026-07-19**） | 生成した `.ps1`（`setup-build.ps1`/`build-app*.ps1`/`setup-build-netcore.ps1`/`…-richclient*.ps1` 等 多数）が**リポジトリ ルートに散乱**していた。スキルは「スクリプト化して残す」とだけ言い、置き場が未指定だったのが原因。→ **`opentouryo-project-setup-build`** に「生成 `.ps1` は `scripts/` に置く（ルート直置きしない）」を明記＋やってはいけないこと更新。**雛形の `$repo` を親参照に修正**：`scripts/` 配下だと `$PSScriptRoot` が `scripts\` を指すため `$repo = Split-Path -Parent $PSScriptRoot`（相対 HintPath・ベンダ先はルート基準）。`examples.md` の3スクリプト（setup-build / setup-build-netcore / build-app）の `$repo` を全て修正＋冒頭に配置注記。`.gitignore`（⑦）は `scripts/` を除外しないので従来どおりコミットされる。**追記**：`$PSScriptRoot` 基準なので**どのカレントディレクトリからでも実行可**（examples 全行で CWD 相対パス無し・`.\` は `Push-Location $cs` 内のみ確認）。前提＝`.ps1` として実行〔貼り付け実行だと `$PSScriptRoot` 空〕・`scripts\` はルート直下1階層〔`Split-Path -Parent` が1階層前提〕を setup-build/examples に明記 |
 
-| 再実行（Batch・net48）で判明した K/L＋DB 条件付き訂正（作者報告・**2026-07-19**。**DB 依存操作が初めて実測で通った**：localhost SQL Server/Northwind で SelectCount 3件） | **K（スキル）**：run-verify に Batch/CLI の検証手順・合否基準が無かった（Web＋デスクトップまではあった）。→ **`run-verify.md` に「バッチ/CLI」節を追加**：(a) 実行前にサンプルの `readme.txt` で**必要な引数を確認**（無引数だと `argsDic["/DAP"]` 等で `KeyNotFoundException`＝引数不足。SimpleBatch は `/Dap SQL /Mode1 individual /Mode2 static /EXROLLBACK -`）、(b) 合否＝framework 初期化＋業務ロジック到達（出力「3件のデータがあります」等）、DB があれば結果件数まで、(c) **exit code で判定しない**（下記 L）。**L（本体＝サンプルコード。OpenTouryo への Issue 候補）**：`SimpleBatch_sample` が末尾で `Console.ReadKey()`（Program.cs 79/85）を呼ぶため、**非対話（stdin リダイレクト）だと成功でも `InvalidOperationException` で exit code 非ゼロ**（業務処理は成功済み）。ミラー確認：**`RerunnableBatch_sample`/2/3 も全て `Console.ReadKey` あり**（＝バッチ サンプル全般。無人実行前提のバッチに ReadKey は不適切→コンソール有無で分岐 or 削除が望ましい、が本体側指摘）。スキルは「成否は標準出力で判定」で回避。**訂正**：これまでの「DB 依存は対象外」を**条件付き**へ（DB があれば結果まで確認／無ければ対象外）＝desktop 節も同様に修正。**本体 Issue 候補は L**（久々の本体側指摘） |
+| 再実行（Batch・net48）で判明した K〔run-verify に Batch/CLI 検証手順〕/L〔`Console.ReadKey` で exit code 不信〕＋DB 条件付き訂正（作者報告・**2026-07-19**。**DB 依存操作が初めて実測で通った**：localhost SQL Server/Northwind で SelectCount 3件） | **K（スキル）**：run-verify に Batch/CLI の検証手順・合否基準が無かった（Web＋デスクトップまではあった）。→ **`run-verify.md` に「バッチ/CLI」節を追加**：(a) 実行前にサンプルの `readme.txt` で**必要な引数を確認**（無引数だと `argsDic["/DAP"]` 等で `KeyNotFoundException`＝引数不足。SimpleBatch は `/Dap SQL /Mode1 individual /Mode2 static /EXROLLBACK -`）、(b) 合否＝framework 初期化＋業務ロジック到達（出力「3件のデータがあります」等）、DB があれば結果件数まで、(c) **exit code で判定しない**（下記 L）。**L（本体＝サンプルコード。OpenTouryo への Issue 候補）**：`SimpleBatch_sample` が末尾で `Console.ReadKey()`（Program.cs 79/85）を呼ぶため、**非対話（stdin リダイレクト）だと成功でも `InvalidOperationException` で exit code 非ゼロ**（業務処理は成功済み）。ミラー確認：**`RerunnableBatch_sample`/2/3 も全て `Console.ReadKey` あり**（＝バッチ サンプル全般。無人実行前提のバッチに ReadKey は不適切→コンソール有無で分岐 or 削除が望ましい、が本体側指摘）。スキルは「成否は標準出力で判定」で回避。**訂正**：これまでの「DB 依存は対象外」を**条件付き**へ（DB があれば結果まで確認／無ければ対象外）＝desktop 節も同様に修正。**本体 Issue 候補は L**（久々の本体側指摘） |
 
 | 派生（variant）も勝手に決め打ちされた＝選択を2段階に明文化（作者報告・**2026-07-19**） | 前回「①系列を全部提示」を直したが、**その1段深い派生レベルで再発**：バッチ系列を選んだ後、`RerunnableBatch_sample`/2/3・`SimpleBatch_sample` の中から **`SimpleBatch_sample` が無選択で選ばれた**。原因＝selection の旧文「派生は系列を選んだ後の枝**でよい**」が「代表を自動で選んでよい」と解釈された。→ **selection を「サンプル選択は2段階」に書き換え**：①系列を全部提示、②**選んだ系列に複数のサンプルがあれば派生も提示して選ばせる（代表を1つに決め打ちしない）**。例列挙（バッチ＝Simple/Rerunnable〜3、WSClient＝Win/WPF/Win2/WinCone、2CS＝機能デモ各種）。派生が1つのときだけ確認不要。やってはいけないことにも「派生を勝手に1つに決め打ちする」を追加。selection tok~2426（目安内） |
 
-| RerunnableBatch 実測で判明した N＋K/L 補強（作者報告・**2026-07-19**。DB稼働・ORDERS2既存で 830行 INSERT 成功＝「DB があれば結果まで」の実例） | **N（スキル）**：⑥ resource-config の「相対パス不可／絶対→`%OT_RESOURCE_ROOT%`」原則を素直に適用すると **`RerunnableBatch_sample`〜3 の `SqlTextFilePath=.\Dao`（相対・意図的設計）を書き換えて壊す**危険。ミラー確認：Rerunnable 3種は `.\Dao`＋`Dao\*.sql/.xml` を `CopyToOutputDirectory` で `bin\Debug\Dao` へコピーする自己完結型（SQL は resource\ 側に無い）。SimpleBatch のみ絶対パス（`C:\root\files\resource\Sql`）＝張り替え対象。→ **`resource-config.md` に「★ 例外：SQL 同梱の自己完結型（`.\Dao` 等）は張り替えない」節を追加**（張り替え対象＝共有 resource\ を絶対パスで参照するキーだけ。相対＝`bin\Debug` から実行前提。「相対不可」は IIS 等 CWD がアプリ外のプロセスの話と整理）＋キー一覧の `SqlTextFilePath` 行に例外参照。**K補強**：Rerunnable は引数不要だが **DB スキーマ前提**（Northwind に `ORDERS2`、同梱 `CREATE ORDERS2.sql`）→ run-verify バッチ/CLI 節に「同梱 `CREATE *.sql` を確認・適用」を追加、**setup-db にも「サンプル固有テーブルは Northwind に含まれない＝同梱 SQL を流す」**を追記（db tok~1472）。**L確定**：Rerunnable でも `Console.ReadKey()`（79/136/145）実測確認＝バッチ variant 共通で確定（run-verify に「Simple/Rerunnable 系共通・実測」明記）。**追記（2026-07-19）**：skill-issue ファイルの N/K/L に sample2 の再確認→さらに **Issue L を「バッチ全4 variant で確認」に更新**（`_sample3` を「推定」→確認済みに昇格）。ミラーで sample2/sample3 とも同一を確認（`Console.ReadKey` 79/136/145、`SqlTextFilePath=.\Dao`、`CREATE ORDERS2.sql` 同梱、Rerunnable 3種は 830行 INSERT）＝実測エビデンスが Simple＋Rerunnable×3 の**全4 variant** に。**追記（2026-07-19・.NET10 補強）**：skill-issue に core 側の再確認が加わり **N/L は net48/.NET10 両ランタイムで確定**。ミラー確認＝core ReadKey は SimpleBatch L86/92・Rerunnable×3 L86/143/152、`SqlTextFilePath` は Simple 絶対 `C:/root/files/resource/Sql`／Rerunnable×3 相対 `./Dao`（**core はスラッシュ**、net48 は `.\`）。→ **スキル反映**：resource-config の N 例外を「`.` 始まりの相対（net48 `.\`／core `./`）」＋出力先（core は `bin\Debug\net10.0-windows7.0\Dao`）＋「net48/.NET10 共通の規則」に一般化。run-verify の L に exit code `0xE0434352`/-532462766・「両ランタイムで実測」を明記。config スキル本体（SKILL.md）不変＝tok 影響なし |
+| RerunnableBatch 実測で判明した N〔相対 `.\Dao` は張替しない〕＋K〔同梱 `CREATE *.sql` の適用〕/L〔`ReadKey` は Rerunnable も同様〕補強（作者報告・**2026-07-19**。DB稼働・ORDERS2既存で 830行 INSERT 成功＝「DB があれば結果まで」の実例） | **N（スキル）**：⑥ resource-config の「相対パス不可／絶対→`%OT_RESOURCE_ROOT%`」原則を素直に適用すると **`RerunnableBatch_sample`〜3 の `SqlTextFilePath=.\Dao`（相対・意図的設計）を書き換えて壊す**危険。ミラー確認：Rerunnable 3種は `.\Dao`＋`Dao\*.sql/.xml` を `CopyToOutputDirectory` で `bin\Debug\Dao` へコピーする自己完結型（SQL は resource\ 側に無い）。SimpleBatch のみ絶対パス（`C:\root\files\resource\Sql`）＝張り替え対象。→ **`resource-config.md` に「★ 例外：SQL 同梱の自己完結型（`.\Dao` 等）は張り替えない」節を追加**（張り替え対象＝共有 resource\ を絶対パスで参照するキーだけ。相対＝`bin\Debug` から実行前提。「相対不可」は IIS 等 CWD がアプリ外のプロセスの話と整理）＋キー一覧の `SqlTextFilePath` 行に例外参照。**K補強**：Rerunnable は引数不要だが **DB スキーマ前提**（Northwind に `ORDERS2`、同梱 `CREATE ORDERS2.sql`）→ run-verify バッチ/CLI 節に「同梱 `CREATE *.sql` を確認・適用」を追加、**setup-db にも「サンプル固有テーブルは Northwind に含まれない＝同梱 SQL を流す」**を追記（db tok~1472）。**L確定**：Rerunnable でも `Console.ReadKey()`（79/136/145）実測確認＝バッチ variant 共通で確定（run-verify に「Simple/Rerunnable 系共通・実測」明記）。**追記（2026-07-19）**：skill-issue ファイルの N/K/L に sample2 の再確認→さらに **Issue L を「バッチ全4 variant で確認」に更新**（`_sample3` を「推定」→確認済みに昇格）。ミラーで sample2/sample3 とも同一を確認（`Console.ReadKey` 79/136/145、`SqlTextFilePath=.\Dao`、`CREATE ORDERS2.sql` 同梱、Rerunnable 3種は 830行 INSERT）＝実測エビデンスが Simple＋Rerunnable×3 の**全4 variant** に。**追記（2026-07-19・.NET10 補強）**：skill-issue に core 側の再確認が加わり **N/L は net48/.NET10 両ランタイムで確定**。ミラー確認＝core ReadKey は SimpleBatch L86/92・Rerunnable×3 L86/143/152、`SqlTextFilePath` は Simple 絶対 `C:/root/files/resource/Sql`／Rerunnable×3 相対 `./Dao`（**core はスラッシュ**、net48 は `.\`）。→ **スキル反映**：resource-config の N 例外を「`.` 始まりの相対（net48 `.\`／core `./`）」＋出力先（core は `bin\Debug\net10.0-windows7.0\Dao`）＋「net48/.NET10 共通の規則」に一般化。run-verify の L に exit code `0xE0434352`/-532462766・「両ランタイムで実測」を明記。config スキル本体（SKILL.md）不変＝tok 影響なし |
 
 | O：CLI は .NET 10.0 のみ（net48 はドロップ）だが selection 系列表が「net48 / .NET 10.0」と誤記（作者報告・**2026-07-19**） | selection の系列表・提示表が CLI を net48/.NET10 と表示していたが実態は **.NET 10.0 専用**。ミラー確認：net48 `Samples\CLI_sample\{Simple_CLI,DAG_Login_CLI,LIR_Login_CLI}` は **csproj 無し・README のみ**（`Simple_CLI\README.md`：「Sharpromptが.NET Fxのサポート終了したので…ドロップした」）。.NET10 `Samples4NetCore\Legacy\CLI_sample\*\*\*.csproj` は3本とも実在。→ **selection の系列表 CLI 行を「.NET 10.0 のみ」に是正**＋表下に「★ CLI は .NET 10.0 のみ（net48 はドロップ／Sharprompt が .NET Fx 終了。Web Forms が net48 のみ、の逆）」注記＋やってはいけないことを「ランタイム対象外の組合せ（Web Forms を core／CLI を net48／net48 専用を core）」に一般化。selection tok~2562（目安内）。本体側の欠陥ではない（依存ライブラリ都合の意図的ドロップ） |
 
@@ -406,8 +413,9 @@ APIリファレンスで足りる）。
 
 | WSClient の「Win 実測を variant 全体に一般化」を「csproj を見て判断」へ寄せる＋取りこぼしファイル確認（作者フィードバック 1〜5・**2026-07-19**） | 前項で Win2 を個別是正したが、根因＝「Win の挙動を variant 全体の決め打ちに一般化」がまだ残る。→ **webservices.md の 3層CS 節を判定ゲート方式に再構成**：見出しを「まず csproj を見て『3層WSクライアントか単独 P層か』判定する」に変え、**名前（Win/WPF/Win2/WinCone）で決め打ちせず csproj の `WSServer_sample`/`WSIFType_sample` 参照・WS 型使用・`_all.sln` 有無で分岐**（あり→client＋server＋host 一式／なし→単一 sln で DLL 参照だけ張替。Win2 は後者）と明記。**実ビルドは Win のみ／WPF・WinCone はミラー確認済み・未ビルド**の但し書きも追加（点1）。**config「2キーだけ」→「app.config に絶対パスが在るキーを張替（variant で有無・数が違う）」に緩和**（点3）。**selection**：WS/3層依存内訳を「Win/WPF/WinCone＝WS 必須／WSClient の variant は依存構造が異なる＝名前で決めず csproj で判断」に是正（点2。tok~3503）。**core SKILL ④**：**取り出し後、csproj の `<Compile>`/`<EmbeddedResource>`/`<None>`/`<Content>` の Include を実ファイルと突き合わせ欠落確認**（サブツリー選択展開で `Properties\AssemblyInfo.cs` 等を取りこぼす実測。点4。tok~1745）。**点5（CLI net48/net10.0 表記）は既に修正済み**（表本体・★注記とも「net10.0 のみ」）＝再掲は解消済み。根因の共通解＝「variant 差は csproj を見て判断」（ランタイム・WS 依存・config 各軸で同原則） |
 
-| WSClientWPF 追加で新規 A/B・裏付け C/D/E（作者報告・**2026-07-19**。WPF 5プロジェクト 0 error） | WPF は Win と同じ5プロジェクト WS 構成（WSServer/WSIFType 参照・AsyncFunc・TMProtocol XML あり）＝判定ゲートが正しく「該当側」に分岐した実証。**新規反映**：**A/B（sln）**＝ミラー確認で**源の `_all.sln` は全 variant 3プロジェクトのみ**（client＋2ホスト。WSServer/WSIFType 無し・client は DLL 参照）＋**SolutionConfigurationPlatforms が variant で違う**（Win/WinCone=8種〔.NET/AnyCPU/Mixed/x86〕・WPF=4種〔AnyCPU/x86〕）。→ webservices.md の sln 手順を「**動く5プロジェクト `_all.sln` を雛形にコピーし client 行〔名前・パス・GUID〕だけ差し替え、共有4プロジェクトは流用**。雛形が無い初回だけ源3プロジェクト sln に WSServer/WSIFType 追加＋client を ProjectReference 化」に変更（platform 手編集を回避＝再現性）。**C（config）**＝実測が Win=2/WPF=1〔SqlTextFilePath のみ〕/Win2=0 とバラつき＝「絶対パスが在るキーだけ張替」の裏付け強化→config 節に 0/1/2 と WPF=1 を明記。**D（取りこぼし）**＝`Properties\AssemblyInfo.cs` 漏れが Win2・WPF 連続再現→④ の欠落確認に「2サンプルで再現」追記。**E（variant 非同質）**＝Win/WPF=5プロジェクト側・Win2=単独 P層側＝判定ゲート方針を再確認。**実ビルド済みを Win→Win/WPF に更新**（WinCone のみ未検証）。core tok~1776。ミラー裏取り済み |
-| 取り出しフォルダ命名を決め打ち規則に固定＝エージェントに判断させない（作者の現行構成提示・**2026-07-19**） | 実環境の現行構成（2CSClientWin_sample＋_Core、MVC_Sample＋_Core、SimpleBatch/Rerunnable×3＋各_Core、WebForms_Sample〔net48 のみ無印〕、Simple_CLI〔.NET10 のみ無印〕、WS_sample 階層維持）から命名規則を抽出。従来のファサード記述は「別名（`MVC_Sample_Core` 等）」止まり＝命名がエージェント任せだった。→ **`opentouryo-project-setup` の冪等性節を4規則に固定**：①net48 は元名のまま ②core は**衝突する net48 が在るときだけ `_Core` 接尾辞**（MVC_Sample_Core 等） ③net48 のみ（WebForms_Sample）・.NET10 のみ（Simple_CLI）は無印 ④WS 系は `WS_sample\` 階層維持（フラット化しない→webservices.md）。現行構成の全エントリと一致を確認。facade tok~2650（frontmatter 除く・目安内） |
+| WSClientWPF 追加で新規 A〔源 `_all.sln` は3プロジェクト〕/B〔platform セットが variant 差〕・裏付け C〔config キー数の variant 差〕/D〔取りこぼし再現〕/E〔variant 非同質〕（作者報告・**2026-07-19**。WPF 5プロジェクト 0 error） | WPF は Win と同じ5プロジェクト WS 構成（WSServer/WSIFType 参照・AsyncFunc・TMProtocol XML あり）＝判定ゲートが正しく「該当側」に分岐した実証。**新規反映**：**A/B（sln）**＝ミラー確認で**源の `_all.sln` は全 variant 3プロジェクトのみ**（client＋2ホスト。WSServer/WSIFType 無し・client は DLL 参照）＋**SolutionConfigurationPlatforms が variant で違う**（Win/WinCone=8種〔.NET/AnyCPU/Mixed/x86〕・WPF=4種〔AnyCPU/x86〕）。→ webservices.md の sln 手順を「**動く5プロジェクト `_all.sln` を雛形にコピーし client 行〔名前・パス・GUID〕だけ差し替え、共有4プロジェクトは流用**。雛形が無い初回だけ源3プロジェクト sln に WSServer/WSIFType 追加＋client を ProjectReference 化」に変更（platform 手編集を回避＝再現性）。**C（config）**＝実測が Win=2/WPF=1〔SqlTextFilePath のみ〕/Win2=0 とバラつき＝「絶対パスが在るキーだけ張替」の裏付け強化→config 節に 0/1/2 と WPF=1 を明記。**D（取りこぼし）**＝`Properties\AssemblyInfo.cs` 漏れが Win2・WPF 連続再現→④ の欠落確認に「2サンプルで再現」追記。**E（variant 非同質）**＝Win/WPF=5プロジェクト側・Win2=単独 P層側＝判定ゲート方針を再確認。**実ビルド済みを Win→Win/WPF に更新**（WinCone のみ未検証）。core tok~1776。ミラー裏取り済み |
+
+| WSClientWinCone 完了＝WS 系4 variant 全実測（ClickOnce・第3依存形・config 4/4 確定。作者報告・**2026-07-19**。5proj 0 error） | 4 variant すべて実ビルド到達。**新規反映**：**ClickOnce（新規・重要）**＝WinCone は `SignManifests=true`＋thumbprint＋`.pfx`＋`GenerateManifests=true`（"Cone"）で素の `/t:Build` が **`MSB3482`（No certificates found）で署名失敗**。→ webservices.md に「★ ClickOnce variant（WinCone）＝`SignManifests=false` で回避（到達点はビルド/オープンまで＝publish 目的外・repo 内 csproj 変更のみ＝SETUP-CHANGES 不要）。`.pfx`/`Properties\app.manifest` も取り出す」を追加。**第3依存形**＝WinCone は **client が WSIFType のみ参照**（WSServer は client 非参照・PackageReference 無し）＝依存形は3種（Win/WPF=両参照・Win2=無・WinCone=WSIFType のみ）→ ①手順を「client が参照する WS プロジェクトは variant による」に、判定節に **4 variant 実測表**（client の WS 参照／config キー数／構成／特記）を新設。**config 4/4 確定**＝Win=2・WPF=1・WinCone=1・Win2=0＝「2キー決め打ちは誤り・app.config に在るものだけ張替」を4/4 で確定（③config を4 variant 完全データに）。**④の突き合わせを「毎回必須」に格上げ**＝取りこぼしは非決定的（Win2/WPF で漏れ・WinCone で漏れず）＝漏れた時だけ対処では不可（core tok~1823）。実ビルド済み＝Win/WPF/WinCone（＋Win2 単独）＝**4 variant 完了**。ミラー裏取り済み（WinCone csproj ClickOnce・WSIFType のみ・.pfx/app.manifest・app.config SpRp 1件） || 取り出しフォルダ命名を決め打ち規則に固定＝エージェントに判断させない（作者の現行構成提示・**2026-07-19**） | 実環境の現行構成（2CSClientWin_sample＋_Core、MVC_Sample＋_Core、SimpleBatch/Rerunnable×3＋各_Core、WebForms_Sample〔net48 のみ無印〕、Simple_CLI〔.NET10 のみ無印〕、WS_sample 階層維持）から命名規則を抽出。従来のファサード記述は「別名（`MVC_Sample_Core` 等）」止まり＝命名がエージェント任せだった。→ **`opentouryo-project-setup` の冪等性節を4規則に固定**：①net48 は元名のまま ②core は**衝突する net48 が在るときだけ `_Core` 接尾辞**（MVC_Sample_Core 等） ③net48 のみ（WebForms_Sample）・.NET10 のみ（Simple_CLI）は無印 ④WS 系は `WS_sample\` 階層維持（フラット化しない→webservices.md）。現行構成の全エントリと一致を確認。facade tok~2650（frontmatter 除く・目安内） |
 
 | 命名規則の `_Core` 判定を「実衝突」→「net48 版の存在（固定属性）」に明確化（作者質問・**2026-07-19**） | 「net48 と衝突するときだけ `_Core`」が (a) repo 内で実際に今ぶつかる時 か (b) そのサンプルに net48 版が存在する時 か曖昧との指摘。→ **(b) に確定**（(a) は順序依存＝core を先に入れると無印で置き→後で net48 追加時に既存 core を改名する判断が発生＝方針「判断させない」に反する）。**判定材料＝そのサンプルが net48（`Samples\`）にも在るか、という選択時点で確定する固定属性**。core は net48 を repo に入れる前から `_Core`、順序不問・後改名なし。.NET10 のみ（Simple_CLI＝net48 版なし）は無印。facade の該当箇所を「net48 版が“存在する”とき（両ランタイム対応サンプル）／repo にいま入れたかは無関係」と書き換え |
 

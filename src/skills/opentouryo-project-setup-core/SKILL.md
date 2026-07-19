@@ -19,9 +19,10 @@ metadata:
 サンプルに同梱されたソース**なので、それごと取り出す（別 DLL ではない）。
 
 **★ 取り出し後、csproj の `<Compile>`/`<EmbeddedResource>`/`<None>`/`<Content>` の `Include` を実ファイルと突き合わせて
-欠落確認する**（実測の落とし穴）：ZIP の**サブツリーだけを選択展開**すると、下位フォルダの単一ファイル
-（例 `Properties\AssemblyInfo.cs`）を取りこぼすことがある＝csproj が参照しているのにファイルが無く**ビルド失敗**
-（実測：`WSClientWin2_sample`・`WSClientWPF_sample` の2サンプルで再現）。フォルダごと取り出す・展開漏れを Include と照合する、で防ぐ。
+欠落確認する（毎回必須）**：ZIP の**サブツリーだけを選択展開**すると、下位フォルダの単一ファイル
+（例 `Properties\AssemblyInfo.cs`、ClickOnce の `.pfx`/`app.manifest`）を取りこぼすことがある＝csproj が参照しているのに
+ファイルが無く**ビルド失敗**。**取りこぼしは非決定的**（実測：`WSClientWin2_sample`・`WSClientWPF_sample` で漏れ・
+`WSClientWinCone_sample` で漏れず）＝「漏れた時だけ対処」では取りこぼすので**毎回 Include と実体を照合**する。
 
 **開発支援ツールも一緒に取り出す。** `Frameworks\Tools\` 配下（`Samples\` ではない）の `DaoGen_Tool`
 （墨壺＝D層自動生成）と `DPQuery_Tool`（動的クエリ試験）を取り出し対象に含める（DAO 自動生成・動的 SQL は標準ワークフロー）。

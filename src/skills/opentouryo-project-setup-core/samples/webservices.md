@@ -65,9 +65,18 @@ variant の csproj を見て分岐する**（実測：Win/WPF/WinCone は WS 依
   config も app.config に絶対 resource パスが無ければ張替不要（Win2 は該当キー無し・ローカル Content の XML は出力コピー）。
   ※ただし `Business.RichClient` は参照するので ③ の RichClient 追加ビルドは要る（**WS 軸と RichClient 軸は別**）。
 
-**実ビルドで通したのは `WSClientWin_sample`・`WSClientWPF_sample`（タグ 03-20・ともに 0 error/0 warning）**。
-`WSClientWinCone_sample` は未検証（ミラーで WS 依存は確認済み・構造は同型）。以下は「3層WSクライアント」と判定した
-variant の手順。②の取り出しとサンプル間 ProjectReference 化は上の (A) 節、①③は下記。
+**★ WSClient 4 variant の実測表（タグ 03-20・4種すべて実ビルド済み。依存形は3種＝名前で決め打ち不可の決定版）**：
+
+| variant | client の WS 参照 | config 絶対パスキー | 構成 | 特記 |
+| --- | --- | --- | --- | --- |
+| `WSClientWin_sample` | WSServer＋WSIFType | 2（`SqlTextFilePath`＋`SpRp_RsaCerFilePath`） | 5proj | — |
+| `WSClientWPF_sample` | WSServer＋WSIFType | 1（`SqlTextFilePath`） | 5proj | — |
+| `WSClientWinCone_sample` | **WSIFType のみ**（WSServer は client 非参照） | 1（`SpRp_RsaCerFilePath`） | 5proj | **ClickOnce＝署名で MSB3482→下記** |
+| `WSClientWin2_sample` | なし（WS 非依存） | 0 | 単一 sln | 単独 P層 UI デモ |
+
+以下は「3層WSクライアント」（上表の 5proj 側＝Win/WPF/WinCone）の手順。②の取り出しとサンプル間 ProjectReference 化は
+上の (A) 節、①③は下記。**client が参照する WS プロジェクトは variant による**（Win/WPF＝WSServer＋WSIFType、
+WinCone＝WSIFType のみ）＝csproj を見て張り替える。
 
 ### ① クライアント（WSClientWin/WPF/WinCone）
 1. **配置**：`WS_sample\` をリポ直下に置き（他サンプル同様 `Samples\` 段は落とす）、**`WS_sample\` の内部階層
@@ -76,11 +85,12 @@ variant の手順。②の取り出しとサンプル間 ProjectReference 化は
    ★ **`Samples\` 段を落とすと `_all.sln` のホスト参照がずれる**（源は `Samples\` 前提）→ 下の ③「引き込み位置」で調整。
 2. **⑤ 参照は2種類**：`OpenTouryo.*`（Business/Business.RichClient/Framework/Framework.RichClient/Public）＋`Newtonsoft.Json`
    は **DLL 参照**で 元 `..\..\..\..\Frameworks\Infrastructure\Build\` → **`..\..\..\OpenTouryoAssemblies\Build_net48\`**（3階層）。
-   **`WSServer_sample`/`WSIFType_sample` は ProjectReference**（旧 `..\..\Build\*.dll` の DLL 参照を削除し `.csproj` へ。(A)2）。
-3. **⑥⑦ config は app.config に絶対 resource パスが在るキーを** `%OT_RESOURCE_ROOT%` 化する（**variant により該当キーの
-   有無・数が違う**＝app.config を見て判断。実測：Win=2・WPF=1・Win2=0 とバラける）。`WSClientWin_sample` は2キー＝
-   `SqlTextFilePath`→`%OT_RESOURCE_ROOT%\Sql`・`SpRp_RsaCerFilePath`→`%OT_RESOURCE_ROOT%\X509\SHA256RSA_Server.cer`、
-   `WSClientWPF_sample` は `SqlTextFilePath` の1件のみ（`SpRp_Rsa` 無し）。**`FxXML*`（XML 定義）は `EmbeddedResource`＝張替不要**。
+   **client が参照する WS プロジェクト（上表）を ProjectReference**（旧 `..\..\Build\*.dll` の DLL 参照を削除し `.csproj` へ。(A)2）。
+3. **⑥⑦ config は app.config に絶対 resource パスが在るキーだけを** `%OT_RESOURCE_ROOT%` 化する（**「2キー決め打ち」は誤り
+   ＝variant で全部違う**。実測4/4：Win=2〔`SqlTextFilePath`＋`SpRp_RsaCerFilePath`〕・WPF=1〔`SqlTextFilePath`〕・
+   WinCone=1〔`SpRp_RsaCerFilePath`〕・Win2=0。app.config を見て在るものだけ張り替える）。張替先は
+   `SqlTextFilePath`→`%OT_RESOURCE_ROOT%\Sql`・`SpRp_RsaCerFilePath`→`%OT_RESOURCE_ROOT%\X509\SHA256RSA_Server.cer`。
+   **`FxXML*`（XML 定義）は `EmbeddedResource`＝張替不要**。
 
 ### ③ WS ホスト `Frameworks\Infrastructure\ServiceInterface` も引き込む（実動の必須要素・見落とし注意）
 **これが無いとクライアントは通信相手が居ない。**`ServiceInterface` 配下の**ホスト アプリ**を引き込んで建てる。これは
@@ -115,6 +125,15 @@ variant の手順。②の取り出しとサンプル間 ProjectReference 化は
   （名前・パス・GUID）だけ差し替える**（共有4プロジェクト＝WCFService/ASPNETWebService/WSServer/WSIFType は GUID・パスを
   そのまま流用）。**最初の WS client で雛形が無いときだけ**、源の3プロジェクト `_all.sln` に WSServer/WSIFType を追加＋client の
   DLL 参照を ProjectReference 化する（追加行は既存インデント＝タブに合わせる）。※先の版で「`_all.sln` 削除・単一 sln」としたのは誤り。
+
+### ★ ClickOnce variant（`WSClientWinCone_sample`）＝署名で `MSB3482` になる
+WinCone は ClickOnce デプロイ版（"Cone"）で csproj に **`SignManifests=true`＋`ManifestCertificateThumbprint`＋`ManifestKeyFile`
+（`.pfx`）＋`GenerateManifests=true`** を持つ。素の `msbuild /t:Build` は**マニフェスト署名**が走り、証明書がローカル ストアに
+無いと **`MSB3482`（No certificates were found）でビルド失敗**（他4プロジェクトは署名前に成功）。
+- **回避＝csproj の `<SignManifests>` を `false` にする**（到達点は「ビルド/オープン可能」＝ClickOnce publish は目的外）。
+  **repo 内 csproj の変更のみ＝マシン全体の変更ではない**（`SETUP-CHANGES.md` 追記は不要）。
+- **ClickOnce 固有ファイルも取り出す**：`<派生>_TemporaryKey.pfx`・`Properties\app.manifest`（`BaseApplicationManifest`）。
+  漏れると別エラー（④ の Include 突き合わせで拾う）。
 
 ### 到達点
 - **セットアップの到達点＝5プロジェクトが開けて 0 error でビルドできる**（クライアント〔P〕＋WSServer〔B・D〕＋WSIFType〔型〕
