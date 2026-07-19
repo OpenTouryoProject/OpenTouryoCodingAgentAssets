@@ -59,8 +59,10 @@ core 版 `Samples4NetCore\Legacy\WS_sample\WSClient_sample\` は起点として�
 `Frameworks\Infrastructure\ServiceInterface`**。②の取り出しとサンプル間 ProjectReference 化は上の (A) 節、①③は下記。
 
 ### ① クライアント（WSClientWin/WPF/…）
-1. **配置＝フラット化しない。**元階層 `WS_sample\WSClient_sample\<派生>\` を維持（`WSServer_sample`/`WSIFType_sample` への
-   **ProjectReference の相対パス**を保つため。MAX_PATH は `long path` で回避＝フラット化しない）。
+1. **配置**：`WS_sample\` をリポ直下に置き（他サンプル同様 `Samples\` 段は落とす）、**`WS_sample\` の内部階層
+   （`WSClient_sample\<派生>\`・`WSIFType_sample`・`WSServer_sample`）は保つ**（内部をフラット化しない＝サンプル間
+   `ProjectReference` の相対パスを保つため。MAX_PATH は `long path` で回避）。**結果、client はリポ直下から3階層**。
+   ★ **`Samples\` 段を落とすと `_all.sln` のホスト参照がずれる**（源は `Samples\` 前提）→ 下の ③「引き込み位置」で調整。
 2. **⑤ 参照は2種類**：`OpenTouryo.*`（Business/Business.RichClient/Framework/Framework.RichClient/Public）＋`Newtonsoft.Json`
    は **DLL 参照**で 元 `..\..\..\..\Frameworks\Infrastructure\Build\` → **`..\..\..\OpenTouryoAssemblies\Build_net48\`**（3階層）。
    **`WSServer_sample`/`WSIFType_sample` は ProjectReference**（旧 `..\..\Build\*.dll` の DLL 参照を削除し `.csproj` へ。(A)2）。
@@ -72,15 +74,29 @@ core 版 `Samples4NetCore\Legacy\WS_sample\WSClient_sample\` は起点として�
 フレームワーク*ライブラリ*の改造ではない（配置・起動するだけ＝「Frameworks を取り込んで改造しない」禁止には当たらない）。
 - **既定は `ASPNETWebService`**（クライアント app.config が `FxXMLTMProtocolDefinition=TMProtocolDefinition2.xml`＝Web API
   経路を選択。`WCFService` は代替＝`TMProtocolDefinition.xml`）。通常は ASPNETWebService を建てれば足りる。
-- **引き込み位置**：`_all.sln` は client から `..\..\..\..\Frameworks\Infrastructure\ServiceInterface\` を参照するので、
-  **`Frameworks\Infrastructure\ServiceInterface\` の相対位置を保って引き込む**（保てば `_all.sln` の参照はそのまま解決）。
+- **引き込み位置**：`Frameworks\Infrastructure\ServiceInterface\` をリポ直下に置く（`Frameworks\...\ServiceInterface\<host>\`）。
+- **★ `_all.sln` のホスト参照の `..\` 段数を配置に合わせて直す**（そのままでは解決しない）。源の `_all.sln` は client から
+  `..\..\..\..\Frameworks\...\ServiceInterface\`（`Samples\` 階層＝programs\CS\ 前提で up 4）。**`Samples\` 段を落とす repo
+  では client がリポ直下から3階層になり up 4 は root を突き抜ける→ `..\..\..\Frameworks\...`（up 3）に1段減らす**（実測。
+  `Samples\` 階層を残す構成なら源のままで解決）。
 - **参照**：ホストの `OpenTouryo.*`（ASPNETWebService＝Framework/Public/Public.Security、WCFService＝Business/Framework/Public）は
-  **DLL 参照**で `..\..\Build\` → ベンダ先 `OpenTouryoAssemblies\Build_net48\`（深さは配置に合わせる）。
-  **`WSServer_sample`/`WSIFType_sample` は ProjectReference**（旧 `...\Samples\WS_sample\Build\*.dll` を削除し `.csproj` へ。(A)2）。
-- **復元**：`ASPNETWebService` は `packages.config`＝`nuget restore`、`WCFService` は `PackageReference`＝`msbuild /t:Restore`。
+  **DLL 参照**で `..\..\Build\` → ベンダ先 `OpenTouryoAssemblies\Build_net48\`（host は `Frameworks\...\ServiceInterface\<host>\`
+  ＝4階層なので `..\..\..\..\`）。**`WSServer_sample`/`WSIFType_sample` は ProjectReference**：旧 `...\WS_sample\Build\*.dll` を削除し
+  **`..\..\..\..\WS_sample\WSServer_sample\WSServer_sample.csproj`（同 `WSIFType_sample`）**（`Samples\` を畳む標準レイアウト＝
+  host 4階層＋WS_sample はリポ直下。実測 0 error）。
+- **★ ホスト config も resource パスを張り替える**（実 WS 稼働に必要。build だけなら不要・run-verify で要る）：
+  `ASPNETWebService`/`WCFService` の **`app.config`** に `C:\root\files\resource\...` が**6キー**（`FxXMLMSGDefinition` /
+  `FxXMLTCDefinition` / `FxXMLTMInProcessDefinition` / `FxLog4NetConfFile` / `SqlTextFilePath` / `SpRp_RsaCerFilePath`）＝
+  `%OT_RESOURCE_ROOT%\...` 化する。**ASPNETWebService は `Web.config` の `<appSettings file="app.config">` で app.config を
+  実行時マージ**（`Web.config` だけ見ると絶対パスが無く見落とす）。綴りは ASPNETWebService=`Xml`／WCFService=`XML`（`resource-config.md` の綴り罠）。
+- **復元**：`WCFService` は `PackageReference`＝`msbuild /t:Restore`。**`ASPNETWebService` は `packages.config`＝要注意**：
+  `_all.sln` 一括 `nuget restore` はパッケージをソリューション ディレクトリ（client 側）に入れるが、`ASPNETWebService.csproj`
+  の HintPath / `.targets` インポートは **csproj 相対 `packages\...`**（`Microsoft.Data.SqlClient.SNI.targets` 等）。
+  → **`nuget restore <asp>\packages.config -PackagesDirectory <asp>\packages` で project 直下へ別途復元**する（実測。
+  さもないと `.targets` 不明でビルド失敗）。
 - **`.sln` は 3層一式の `<派生>_sample_all.sln` を使う**（client＋WCFService＋ASPNETWebService。**ProjectReference のため
-  `WSIFType_sample`・`WSServer_sample` も同ソリューションに含める**＝無ければ追加）。※先の版で「`_all.sln` 削除・単一 sln」
-  としたのは誤り。ServiceInterface を引き込めば `_all.sln` の参照は解決する。
+  `WSIFType_sample`・`WSServer_sample` も同ソリューションに含める**＝無ければ追加。**追加行は既存行のインデントに合わせる**
+  ＝このサンプルの `ProjectConfigurationPlatforms` は**タブ2個**）。※先の版で「`_all.sln` 削除・単一 sln」としたのは誤り。
 
 ### 到達点
 - **セットアップの到達点＝5プロジェクトが開けて 0 error でビルドできる**（クライアント〔P〕＋WSServer〔B・D〕＋WSIFType〔型〕
