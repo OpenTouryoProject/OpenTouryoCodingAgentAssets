@@ -26,6 +26,9 @@ HintPath が他サンプルのビルド出力（`..\..\..\WS_sample\Build\...`�
 `OpenTouryo.*` と同様にベンダ先へ張り替える。**触らないのは NuGet 復元される 3rd-party だけ**
 （net48＝`packages.config`、core＝`PackageReference`）。
 
+**※ 例外＝`WSServer_sample`/`WSIFType_sample` は DLL 張替の対象外**（ベンダ先 `Build_*\` に含まれない＝サンプル自身の
+B・D層/型）。これらは **ProjectReference に切り替える**（`WS_sample\Build\*.dll` の DLL 参照は削除。`samples/webservices.md`）。
+
 **⚠ `MySql.Data` / `Oracle.ManagedDataAccess` の「元」HintPath はサンプルで割れる**（実測。機械的な一括置換だと外す）：
 - **MVC(net48)**：`..\..\..\..\Frameworks\Infrastructure\Build\`（DamMySQL 等と同じ場所）
 - **WebForms**：`..\..\..\WS_sample\Build\`（3層構成で WS 側を指す。ただし同じ csproj 内でも `OpenTouryo.DamMySQL`

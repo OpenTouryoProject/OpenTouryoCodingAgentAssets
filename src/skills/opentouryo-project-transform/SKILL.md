@@ -47,8 +47,8 @@ metadata:
 
 ## WS 依存を切り離す（サンプルから WS を外す）
 
-一部サンプル（例：`WebForms_Sample`）は WS 依存があり、**ZIP に無い他サンプルのビルド出力**
-（`WSServer_sample.dll` / `WSIFType_sample.dll`）に依存する。WS が不要なら次を削る／直す
+一部サンプル（例：`WebForms_Sample`）は WS 依存があり、**他サンプルの B・D層/型**（`WSServer_sample` /
+`WSIFType_sample`。(A) 構成では ProjectReference＝`samples/webservices.md`）に依存する。WS が不要なら次を削る／直す
 （「3層/2層」は呼び方の別で、判断軸は WS 依存の有無。core は通信制御を使ってもインプロセスのみ＝実質 2層になり得る）。
 
 ### 削る
@@ -66,13 +66,13 @@ metadata:
 
 > **`Web.config` の endpoint（`system.serviceModel`）は削らない。** このサンプルの endpoint は
 > 3層固有（`WSServer_sample`）ではなく、**フレームワークの Transmission WCF 設定**
-> （`IWCFHTTPSvcForFx` / `IWCFTCPSvcForFx`）と `IJSONService`。`WSServer_sample` は DLL 参照で
+> （`IWCFHTTPSvcForFx` / `IWCFTCPSvcForFx`）と `IJSONService`。`WSServer_sample` は参照（(A)＝ProjectReference）で
 > インプロセス呼び出しされ、専用 endpoint を持たない。消しても WS 依存の切り離しに不要なうえ、実行時構成を壊しかねない。
 
 ### 直す（見落としやすい罠）
 
-**2層画面が WS 側 DLL の型を掴んでいることがある。** `sampleScreen_cc.aspx.cs` は
-`using WSIFType_sample;` で `TestParameterValue` / `TestReturnValue` を **WS の DLL から**解決している。
+**2層画面が WS 側（`WSIFType_sample`）の型を掴んでいることがある。** `sampleScreen_cc.aspx.cs` は
+`using WSIFType_sample;` で `TestParameterValue` / `TestReturnValue` を **WS 側の参照から**解決している。
 同名クラスがサンプル同梱ソース（`AppCode\sample\Common\`、`using MyType;`）にもあるので、
 `using WSIFType_sample;` → `using MyType;` に差し替える。
 

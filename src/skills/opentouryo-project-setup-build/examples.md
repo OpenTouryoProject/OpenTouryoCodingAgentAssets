@@ -3,8 +3,9 @@
 実環境（WebForms_Sample / net48 / 固定タグ `03-20` / 深いリポ パス）で**実際に通した2本**。
 本スキルが推奨する「生成スクリプトをリポジトリに残す・`.bat` より PowerShell ラッパ」の具体例で、
 既知の落とし穴（MAX_PATH＝短い作業ルート、exit code 不信＝DLL 実在で判定、`.\`＋`< nul`、
-WS の `bin\Debug` → `WS_sample\Build\` 配置、**2CS＝`Business.RichClient` の別 sln**、
-**ツールの `PackageReference` restore**）を織り込み済み。
+**2CS＝`Business.RichClient` の別 sln**、**ツールの `PackageReference` restore**）を織り込み済み。
+（※`build-app.ps1` は参照方式の更新に合わせて改訂：`WSServer_sample`/`WSIFType_sample` は ProjectReference＝
+1ソリューション一括ビルド。旧「WS を別ビルドして `WS_sample\Build\` へコピー」は不要。`samples/webservices.md`。）
 
 **これらは `scripts/` フォルダに置く**（ルート直置きにしない）。そのため各スクリプトの `$repo` は
 **スクリプトの親＝リポジトリ ルート**を指す（`$repo = Split-Path -Parent $PSScriptRoot`。`$PSScriptRoot` は `scripts\` 自身）。
@@ -22,7 +23,8 @@ WS の `bin\Debug` → `WS_sample\Build\` 配置、**2CS＝`Business.RichClient`
   `OpenTouryo.Business.dll` の実在で成否判定。**親クラス2 をカスタマイズするなら任意ブロック**（overlay 適用＋
   2CS の `Business.RichClient` ビルド）を有効化する。
 - `build-app.ps1` — アプリ側の取り出し後ビルド（`opentouryo-project-setup` ④⑤ / `samples/webforms.md` 構成A）。
-  WS をビルド**して `WS_sample\Build\` へ配置**、`nuget restore` → WebForms ビルド。vswhere で msbuild 解決。
+  `nuget restore` → WebForms ソリューションを一括ビルド（`WSServer_sample`/`WSIFType_sample` は ProjectReference＝
+  同ソリューションで同時に建つ）。vswhere で msbuild 解決。
   **開発支援ツールを取り出しているなら任意ブロック**（DaoGen/DPQuery のビルド）で欠落参照を早期に炙り出す。
 
 ## `setup-build.ps1`（ZIP取得 → net48 基盤ビルド → ベンダ）
@@ -174,15 +176,24 @@ if ($needRichClient -and
 > ビルドで **`NU1902`（脆弱性・中）** が出ることがある。**ビルドは通る**。本体のバージョン更新待ちの既知事項なので、
 > セットアップ側で無理に差し替えない（差し替えると本体構成から乖離する）。
 
-## `build-app.ps1`（WS ビルド＋`Build\` 配置 → restore → WebForms ビルド → ツール）
+## `build-app.ps1`（restore → WebForms ソリューションを一括ビルド → ツール）
+
+**参照方式（更新）**：`WSServer_sample`/`WSIFType_sample` は **ProjectReference**（サンプル自身の B・D層/型＝P・B・D 並行開発。
+`samples/webservices.md`）。よって**WS を別ビルドして `WS_sample\Build\` へ DLL コピーする旧手順は不要**＝WebForms
+ソリューションに WS 2プロジェクトを含めて一括ビルドすれば WS も同時に建つ。`MySql.Data`/`Oracle`（3rd-party）だけは
+DLL 参照のままベンダ先 `Build_net48\` を指す（`references/reference-rewrite.md`）。
 
 ```powershell
 # Build the WebForms sample (3-layer, WS in-process) against the vendored
 # OpenTouryo base DLLs. Reproducible from a fresh clone:
-#   1. build WS (WSServer builds WSIFType) and refresh WS_sample\Build
-#   2. nuget restore + build the WebForms solution
-#   3. (optional) build the dev tools taken out under Tools\
+#   1. nuget restore + build the WebForms solution (WSServer/WSIFType are
+#      ProjectReferences in the .sln -> built in-solution; no copy to Build\)
+#   2. (optional) build the dev tools taken out under OT_Tools\
 # Prereq: run setup-build.ps1 once first (populates OpenTouryoAssemblies\).
+# Prereq: the .sln includes WSIFType_sample/WSServer_sample and the WebForms
+#   csproj references them via <ProjectReference> (DLL HintPath to WS_sample\Build
+#   removed); OpenTouryo.* -> OpenTouryoAssemblies\Build_net48 (all projects);
+#   MySql.Data/Oracle.ManagedDataAccess -> the vendor folder. See webservices.md.
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path -Parent $PSScriptRoot   # scripts\ に置く前提＝親がリポジトリ ルート
 
@@ -192,39 +203,24 @@ $msb = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild `
         -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
 if (-not $msb) { throw "MSBuild not found (install VS Build Tools / Community)" }
 
-$vendor  = Join-Path $repo 'OpenTouryoAssemblies\Build_net48'
-$wsRoot  = Join-Path $repo 'WS_sample'
-$wsBuild = Join-Path $wsRoot 'Build'
-$nuget   = Join-Path $repo 'tools\nuget.exe'
+$nuget = Join-Path $repo 'tools\nuget.exe'
 
-# --- 1. build WS layer and refresh WS_sample\Build ---
-# `.sln` build outputs to each project's bin\Debug; WS_sample\Build is NOT
-# created by the sln build, so copy the DLLs there (that is where WebForms
-# references them). Also place the two DB DLLs from the vendor folder.
-& $msb (Join-Path $wsRoot 'WSServer_sample\WSServer_sample.sln') /p:Configuration=Debug /nologo /v:m
-if ($LASTEXITCODE -ne 0) { throw "WS build failed ($LASTEXITCODE)" }
-New-Item -ItemType Directory -Force -Path $wsBuild | Out-Null
-Copy-Item (Join-Path $wsRoot 'WSIFType_sample\bin\Debug\WSIFType_sample.dll') $wsBuild -Force
-Copy-Item (Join-Path $wsRoot 'WSServer_sample\bin\Debug\WSServer_sample.dll') $wsBuild -Force
-Copy-Item (Join-Path $vendor 'MySql.Data.dll')               $wsBuild -Force
-Copy-Item (Join-Path $vendor 'Oracle.ManagedDataAccess.dll') $wsBuild -Force
-
-# --- 2. restore + build WebForms ---
+# --- 1. restore + build the WebForms solution (WS built in-solution via ProjectReference) ---
 $wfSln = Join-Path $repo 'WebForms_Sample\WebForms_Sample.sln'
 & $nuget restore $wfSln   # msbuild /t:restore won't restore packages.config
 if ($LASTEXITCODE -ne 0) { throw "nuget restore failed ($LASTEXITCODE)" }
 & $msb $wfSln /p:Configuration=Debug /nologo /v:m
 if ($LASTEXITCODE -ne 0) { throw "WebForms build failed ($LASTEXITCODE)" }
 
-# --- 3. (optional) build the dev tools (DaoGen_Tool / DPQuery_Tool) ---
-# Taken out under Frameworks\Tools (flattened here to repo root). Their csproj
+# --- 2. (optional) build the dev tools (DaoGen_Tool / DPQuery_Tool) ---
+# Taken out from Frameworks\Tools and grouped under OT_Tools\. Their csproj
 # MIX <Reference>+HintPath (OpenTouryo.* / MySql.Data / Oracle -> rewrite to the
-# vendor folder in ⑤) with <PackageReference> (Microsoft.Data.SqlClient etc.).
-# PackageReference needs a restore even on net48 (no packages.config); skipping
-# it -> CS0234 on `using Microsoft.Data.SqlClient;`. Building them here surfaces
-# that at setup time. (Assumes their HintPaths were already rewritten.)
+# vendor folder in ⑤; 2 levels deep => ..\..\) with <PackageReference>
+# (Microsoft.Data.SqlClient etc.). PackageReference needs a restore even on net48
+# (no packages.config); skipping it -> CS0234 on `using Microsoft.Data.SqlClient;`.
+# Building them here surfaces that at setup time. (HintPaths already rewritten.)
 foreach ($tool in 'DaoGen_Tool','DPQuery_Tool') {
-    $toolSln = Join-Path $repo "$tool\$tool.sln"
+    $toolSln = Join-Path $repo "OT_Tools\$tool\$tool.sln"
     if (-not (Test-Path $toolSln)) { continue }
     & $msb $toolSln /t:restore,build /p:Configuration=Debug /nologo /v:m
     if ($LASTEXITCODE -ne 0) { throw "$tool build failed ($LASTEXITCODE)" }

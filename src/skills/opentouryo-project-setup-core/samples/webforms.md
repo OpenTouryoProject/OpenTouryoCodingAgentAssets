@@ -7,12 +7,16 @@
 
 `WebForms_Sample` は**3層構成**で、2層画面 `sampleScreen_cc.aspx.cs` が `using WSIFType_sample;` で WS 側の型
 （`TestParameterValue` / `TestReturnValue`）を掴むため、**取り出し直後は `CS0246` が残る**（実測）。
-解消の一般手順（**(A) そのまま残す**＝WS も取り出してビルド・`Build\` 配置／**(B) WS 依存を切り離す**）は **`webservices.md`**。
+解消の一般手順（**(A) そのまま残す**＝WS も取り出し `WSServer_sample`/`WSIFType_sample` を **ProjectReference** 化／
+**(B) WS 依存を切り離す**）は **`webservices.md`**。
 
 このサンプル固有の点：
 - **Web で WS をインプロセス利用**するので **(B) 切り離しも選べる**。(B) の画面差し替えは
   `using WSIFType_sample;` → `using MyType;`（同名型が同梱 `AppCode\sample\Common\` にある）。詳細は `opentouryo-project-transform`。
-- HintPath は `..\..\..\WS_sample\Build\*.dll`（＝`Samples\WS_sample\Build`。`WS_sample` は `WebApp_sample` の**兄弟**）。
+- (A) の場合、csproj の `WSServer_sample`/`WSIFType_sample` は元 `..\..\..\WS_sample\Build\*.dll`（DLL 参照）だが、
+  **その `<Reference>`+HintPath を削除して `.csproj` への `<ProjectReference>` に切り替える**（webservices.md の原則）。
+  同じ csproj の `MySql.Data`/`Oracle.ManagedDataAccess`（同じく WS_sample\Build を指す）は**サンプルでなく 3rd-party
+  なので ProjectReference にはできない＝ベンダ先 `Build_net48\` への DLL 参照に張り替える**（`references/reference-rewrite.md`）。
 
 ## config は二段構成（初見で `Web.config` を探して迷う）
 

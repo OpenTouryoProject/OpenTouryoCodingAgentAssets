@@ -47,10 +47,11 @@ HintPath は2階層＝`..\..\`。`samples/daogentool.md` / `samples/dpquerytool.
 
 ## 3層（WCF/WS）サンプルの扱い
 
-一部サンプルは**他サンプルのビルド出力**（`WSServer_sample.dll` / `WSIFType_sample.dll`）に依存する
-（依存元ソースは `Samples\WS_sample` に実在。無いのはビルド出力だけ）。as-is で通らないことがあり、解消は2通り：
-- **(A) そのまま残す** — 依存元サンプルも取り出し⑤同様に張り替えてビルドし、**出力を参照先 `WS_sample\Build\` へ
-  配置する**（`.sln` 直ビルドは `bin\Debug\` に出る＝実測。要配置）。**セットアップで完結**。
+一部サンプルは **`WSServer_sample`（B・D層）/ `WSIFType_sample`（受け渡し型）** に依存する（ソースは `Samples\WS_sample`
+に実在。元は `WS_sample\Build\*.dll` への DLL 参照だが出力が無く `CS0246`）。**フレームワーク `OpenTouryo.*` は DLL 参照の
+ままだが、この2つ（サンプル自身の B・D・型）は ProjectReference に切り替える**（P・B・D を並行開発する対象だから）。解消は2通り：
+- **(A) そのまま残す** — 依存元サンプルも取り出し、**`WSServer_sample`/`WSIFType_sample` を ProjectReference にして
+  1ソリューションでビルド**（旧「`WS_sample\Build\` へ DLL 配置」は不要）。**セットアップで完結**。詳細＝`samples/webservices.md`。
 - **(B) WS 依存を切り離す** — WS 参照を外す（**後工程 `opentouryo-project-transform`**）。
 
 **(A)/(B) の選択・層の削減・画面改変は、セットアップ中に判断を求めない**（開ける状態の後に利用者が決める）。
