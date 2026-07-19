@@ -58,8 +58,16 @@ metadata:
   （別ビルド。フル一式／`9_CICD.bat` なら出る＝本体の欠陥ではない。**base2 の有無と無関係**）。**netcore は欠落が広く、
   `net10.0-windows7.0\` の `Business`/`Dam*` ごと無い→フォルダ丸ごと再ベンダ**（net48 は `Business.RichClient` のみ）。
   → `opentouryo-project-setup-build` / `opentouryo-project-setup-selection`。
-- **同系列を別ランタイムで足すとフォルダ名が衝突する。** 例：net48 MVC が `MVC_Sample\` を占有済みで Core MVC も既定同名
-  → **別名（`MVC_Sample_Core\` 等）で取り出す**（`.sln`・参照の相対パスも合わせる）。
+- **フォルダ名は判断させず固定規則にする（実測構成に準拠）：**
+  - **net48 は元のサンプル名のまま**（`MVC_Sample` / `WebForms_Sample` / `SimpleBatch_sample` / `2CSClientWin_sample`）。
+  - **core（.NET10）は、そのサンプルに net48 版が“存在する”とき（＝両ランタイム対応サンプル）だけ接尾辞 `_Core` を付ける**
+    （`MVC_Sample_Core` / `SimpleBatch_sample_Core` / `RerunnableBatch_sample2_Core` / `2CSClientWPF_sample_Core`）。
+    **判定は「そのサンプルが net48（`Samples\`）にも在るか」という固定属性**で行う＝**repo にいま net48 を入れたかは無関係**
+    （まだ net48 を入れていなくても core は最初から `_Core`。順序に依らず名前を一意に決め、後から改名しない）。
+    `.sln`・参照の相対パスも `_Core` 名に合わせる。
+  - **net48 のみ（`WebForms_Sample`）・.NET10 のみ（`Simple_CLI`＝net48 版が存在しない）は無印**（接尾辞を付けない）。
+  - **WS 系は `WS_sample\`（`WSClient_sample\` / `WSIFType_sample` / `WSServer_sample`）の階層を保つ**（フラット化しない。
+    `opentouryo-project-setup-core` の `samples/webservices.md`）。
 - ⑥ resource・⑦ `.gitignore` は既に整っていれば再張替不要（追加サンプル固有のキーだけ足す）。
 
 ## 完了後（任意）：構成変更へ進むか選ぶ
