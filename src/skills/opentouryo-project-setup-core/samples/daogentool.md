@@ -16,12 +16,14 @@
 
 ## 取り出しと参照張り替え（⑤ と同じ要領）
 
-1. `DaoGen_Tool` フォルダをリポジトリへコピー（例：`Tools\DaoGen_Tool`）。
-2. **参照は `HintPath` と `PackageReference` が混在する。両方を面倒みる**（相対 `..\` の数は配置に合わせる）。
+1. `DaoGen_Tool` フォルダを **`OT_Tools\DaoGen_Tool\`** に置く（`DaoGen_Tool`/`DPQuery_Tool` は **`OT_Tools\` 配下に
+   まとめる**＝リポ直下に散らさない。配置はこの1通りに固定）。
+2. **参照は `HintPath` と `PackageReference` が混在する。両方を面倒みる**（配置が `OT_Tools\<tool>\`＝ルートから2階層なので
+   ベンダ先 HintPath は `..\..\`）。
    - **`<Reference>`+HintPath**（`OpenTouryo.Public` / `MySql.Data` / `Oracle.ManagedDataAccess`）→ ベンダ先へ張り替える。
-     net48 は `..\..\Infrastructure\Build\` → `..\OpenTouryoAssemblies\Build_net48\`（末尾フォルダ名も変わる。
+     net48 は `..\..\Infrastructure\Build\` → **`..\..\OpenTouryoAssemblies\Build_net48\`**（末尾フォルダ名も変わる。
      `MySql.Data`/`Oracle` も NuGet 非復元なので対象。→ `references/reference-rewrite.md`）。
-     core は `OpenTouryo.*` を `..\OpenTouryoAssemblies\Build_netcore100\net10.0\` へ。
+     core は `OpenTouryo.*` を **`..\..\OpenTouryoAssemblies\Build_netcore100\net10.0\`** へ。
    - **`<PackageReference>`（net48 も持つ。`packages.config` は無い）→ ビルド前に restore する**
      （`msbuild -t:restore` / `nuget restore` / `dotnet restore`）。**`Microsoft.Data.SqlClient` 等がここにある**ので、
      復元しないと `using Microsoft.Data.SqlClient;` が **`CS0234`**（＝「参照が無い」ように見えるが実体は復元漏れ）。
