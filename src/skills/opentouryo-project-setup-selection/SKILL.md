@@ -23,7 +23,7 @@ metadata:
 | Web Forms | `WebApp_sample\WebForms_Sample` | **net48 のみ** | **あり（transform 前提）** |
 | Windows Forms（2層C/S） | `2CS_sample\2CSClientWin_sample` | net48 / net10.0 | なし |
 | WPF（2層C/S） | `2CS_sample\2CSClientWPF_sample` | net48 / net10.0 | なし |
-| 3層リッチクライアント（WinForms/WPF・WS 経由） | `WS_sample\WSClient_sample\WSClientWin_sample`（`WPF`/`Win2`/`WinCone` も同階層） | net48（core は ※実用性なし） | **あり（構成上必須）** |
+| 3層リッチクライアント（WinForms/WPF・WS 経由） | `WS_sample\WSClient_sample\WSClientWin_sample`（`WPF`/`WinCone` も同階層で WS 依存あり。**`Win2` は例外＝WS 非依存の単独 P層 UI デモ**） | net48（core は ※実用性なし） | **あり**（Win/WPF/WinCone。**Win2 はなし**） |
 | バッチ | `Bat_sample\SimpleBatch_sample`（再実行可 `RerunnableBatch_sample`〜`3`） | net48 / net10.0 | なし |
 | CLI（コンソール） | `CLI_sample\Simple_CLI`（認証付 `DAG_Login_CLI` / `LIR_Login_CLI`） | **net10.0 のみ** | なし |
 
@@ -51,7 +51,7 @@ config は `SqlTextFilePath` の1点張替で足りることが多い（④⑤�
    選択肢から欠落**した）。選択 UI が選択肢数を制限しても、収まらなければ**全系列を番号付きリストで提示**する。
 2. **選んだ系列に複数のサンプル（派生/variant）があれば、それも提示して選ばせる**（**勝手に代表を1つに決めない**。
    実測：バッチ系列で `SimpleBatch_sample` が無選択で選ばれた）。例：バッチ＝`SimpleBatch_sample` /
-   `RerunnableBatch_sample`〜`3`／`WSClient_sample`＝`Win`/`WPF`/`Win2`/`WinCone`／**`2CS_sample` の機能デモ＝
+   `RerunnableBatch_sample`〜`3`／`WSClient_sample`＝`Win`/`WPF`/`WinCone`（3層WS）・`Win2`（WS 非依存の単独 P層 UI デモ）／**`2CS_sample` の機能デモ＝
    `CustCtrl_sample` / `GenDaoAndBatUpd_sample` / `TimeStamp_sample`（いずれも net48・net10.0 両対応）・
    `AsyncEvent_sample`（net48 のみ）**。派生が1つだけなら確認不要。どれが良いか不明なら候補の違いを添えて委ねる。
 3. **派生ごとに対応ランタイムが違うことがある。勝手にランタイムを落とさない**（実測：2CS 機能デモ
@@ -61,8 +61,10 @@ config は `SqlTextFilePath` の1点張替で足りることが多い（④⑤�
 **「WS/3層依存あり」の内訳**（取り出し直後 `CS0246` が残る。依存元ソースは `Samples\WS_sample` に実在）：
 - **`WebForms_Sample`**（net48）— WS を利用（core 化の (B) 切り離しも可）。
 - **`MVC_Sample` の net48**（`Crud1Controller` が `TestParameterValue` 等の WS 型を使用。**core の MVC はなし**）。
-- **`WS_sample\WSClient_sample` 一式**（core は `Samples4NetCore\Legacy\...`）— 3層リッチクライアント＝構成上 WS 必須。
+- **`WS_sample\WSClient_sample` の Win/WPF/WinCone**（core は `Samples4NetCore\Legacy\...`）— 3層リッチクライアント＝構成上 WS 必須。
   **※ core 版は `BinaryFormatter` 廃止で実質インプロセスのみ＝実用は net48 側**（`opentouryo-transmission`）。
+  **※ WSClient の各 variant は依存構造が異なる**（`Win2` は WS 非依存の単独 P層）。**名前で決めず、取り出し時に csproj の
+  `WSServer_sample`/`WSIFType_sample` 参照・WS 型使用の有無で判断する**（④⑤＝`opentouryo-project-setup-core` の `samples/webservices.md`）。
 
 解消手順（(A) そのまま残す／(B) WS 依存を切り離す）は ④⑤＝`opentouryo-project-setup-core` の「3層サンプルの扱い」
 （共通機構は同スキルの `samples/webservices.md`）。到達点は「開ける状態」で as-is クリーンビルドは保証しない。

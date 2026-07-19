@@ -51,14 +51,25 @@ WS 依存が不要なら、後工程 **`opentouryo-project-transform`** で WS �
 （インプロセスのみ）。**3層リッチクライアント（`WSClient_sample`）を実用するなら net48 側**を使う。
 core 版 `Samples4NetCore\Legacy\WS_sample\WSClient_sample\` は起点として勧めない（`opentouryo-transmission` / §4.4）。
 
-## 3層CS（WSClient）＝クライアント＋WS ホストをセットで引き込む（決め打ち・判断させない）
+## 3層CS（WSClient）＝まず csproj を見て「3層WSクライアントか単独 P層か」判定する
 
-3層リッチクライアント `WS_sample\WSClient_sample\<WSClientWin/WPF/Win2/WinCone>_sample`（net48）は、
-**クライアント単体では通信相手が居らず 3層として動かない**。実動に要る3点を一式引き込む（実測：WSClientWin_sample・
-タグ 03-20）：**① クライアント ② 業務ロジック `WSServer_sample`/`WSIFType_sample` ③ WS ホスト
-`Frameworks\Infrastructure\ServiceInterface`**。②の取り出しとサンプル間 ProjectReference 化は上の (A) 節、①③は下記。
+**`WSClient_sample\` 配下でも variant ごとに依存構造が違う。名前（Win/WPF/Win2/WinCone）で決め打ちせず、必ず対象
+variant の csproj を見て分岐する**（実測：Win/WPF/WinCone は WS 依存あり、Win2 は WS 依存なし）：
 
-### ① クライアント（WSClientWin/WPF/…）
+- **判定基準**：csproj に `WSServer_sample`/`WSIFType_sample` への参照があるか、`.cs` に WS 型（`TestParameterValue` /
+  `TestReturnValue`）や `using WSIFType_sample;` があるか。加えて `<派生>_sample_all.sln` が同梱されているか。
+- **あり → 3層WSクライアント**：下記の **① クライアント ② `WSServer_sample`/`WSIFType_sample`（B・D層・型） ③ WS ホスト
+  `Frameworks\Infrastructure\ServiceInterface`** の3点を一式引き込む（クライアント単体では通信相手が居ない）。
+- **なし → 単独の P層 UI デモ**（例：`WSClientWin2_sample`＝UserControl 親子・フォーム間の戻り値受け渡し等）：**WS ホスト
+  引き込みも ProjectReference 化も不要。源同梱の単一 `.sln` のまま `OpenTouryo.*` の DLL 参照だけ張り替えて完結**。
+  config も app.config に絶対 resource パスが無ければ張替不要（Win2 は該当キー無し・ローカル Content の XML は出力コピー）。
+  ※ただし `Business.RichClient` は参照するので ③ の RichClient 追加ビルドは要る（**WS 軸と RichClient 軸は別**）。
+
+**実ビルドで通したのは `WSClientWin_sample`（タグ 03-20）**。`WSClientWPF_sample`/`WSClientWinCone_sample` はミラーで WS 依存を
+確認済みだが未ビルド（構造は同型）。以下は「3層WSクライアント」と判定した variant の手順。②の取り出しとサンプル間
+ProjectReference 化は上の (A) 節、①③は下記。
+
+### ① クライアント（WSClientWin/WPF/WinCone）
 1. **配置**：`WS_sample\` をリポ直下に置き（他サンプル同様 `Samples\` 段は落とす）、**`WS_sample\` の内部階層
    （`WSClient_sample\<派生>\`・`WSIFType_sample`・`WSServer_sample`）は保つ**（内部をフラット化しない＝サンプル間
    `ProjectReference` の相対パスを保つため。MAX_PATH は `long path` で回避）。**結果、client はリポ直下から3階層**。
@@ -66,7 +77,8 @@ core 版 `Samples4NetCore\Legacy\WS_sample\WSClient_sample\` は起点として�
 2. **⑤ 参照は2種類**：`OpenTouryo.*`（Business/Business.RichClient/Framework/Framework.RichClient/Public）＋`Newtonsoft.Json`
    は **DLL 参照**で 元 `..\..\..\..\Frameworks\Infrastructure\Build\` → **`..\..\..\OpenTouryoAssemblies\Build_net48\`**（3階層）。
    **`WSServer_sample`/`WSIFType_sample` は ProjectReference**（旧 `..\..\Build\*.dll` の DLL 参照を削除し `.csproj` へ。(A)2）。
-3. **⑥⑦ config は2キーだけ** `%OT_RESOURCE_ROOT%` 化：`SqlTextFilePath`→`%OT_RESOURCE_ROOT%\Sql`、
+3. **⑥⑦ config は app.config に絶対 resource パスが在るキーを** `%OT_RESOURCE_ROOT%` 化する（**variant により該当キーの
+   有無・数が違う**＝csproj/app.config を見て判断）。`WSClientWin_sample` は該当2キー＝`SqlTextFilePath`→`%OT_RESOURCE_ROOT%\Sql`・
    `SpRp_RsaCerFilePath`→`%OT_RESOURCE_ROOT%\X509\SHA256RSA_Server.cer`。**`FxXML*`（XML 定義）は `EmbeddedResource`＝張替不要**。
 
 ### ③ WS ホスト `Frameworks\Infrastructure\ServiceInterface` も引き込む（実動の必須要素・見落とし注意）

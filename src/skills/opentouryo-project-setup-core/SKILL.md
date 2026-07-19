@@ -18,6 +18,11 @@ metadata:
 対象サンプルのフォルダを新規リポジトリへコピーする。**`LayerB.cs` / `LayerD.cs` は
 サンプルに同梱されたソース**なので、それごと取り出す（別 DLL ではない）。
 
+**★ 取り出し後、csproj の `<Compile>`/`<EmbeddedResource>`/`<None>`/`<Content>` の `Include` を実ファイルと突き合わせて
+欠落確認する**（実測の落とし穴）：ZIP の**サブツリーだけを選択展開**すると、下位フォルダの単一ファイル
+（例 `Properties\AssemblyInfo.cs`）を取りこぼすことがある＝csproj が参照しているのにファイルが無く**ビルド失敗**。
+フォルダごと取り出す・展開漏れを Include と照合する、で防ぐ。
+
 **開発支援ツールも一緒に取り出す。** `Frameworks\Tools\` 配下（`Samples\` ではない）の `DaoGen_Tool`
 （墨壺＝D層自動生成）と `DPQuery_Tool`（動的クエリ試験）を取り出し対象に含める（DAO 自動生成・動的 SQL は標準ワークフロー）。
 **取り出し先は `OT_Tools\DaoGen_Tool\` / `OT_Tools\DPQuery_Tool\` に固定**（`OT_Tools\` 配下にまとめる。
