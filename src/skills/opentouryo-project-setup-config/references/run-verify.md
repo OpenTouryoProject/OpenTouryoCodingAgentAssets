@@ -73,8 +73,10 @@ Web ではないので HTTP スモークは無い。**exe を起動してプロ�
   $p.Kill()   # 生存＝startup OK
   ```
 
-- **3層リッチクライアント（`WSClient_*`）は WS サーバ側の起動も要る**（構成 (A)。`opentouryo-project-setup-core` /
-  その `samples/webservices.md`）。
+- **3層リッチクライアント（`WSClient_*`）は WS ホスト側の起動も要る**：WS ホスト＝`Frameworks\Infrastructure\
+  ServiceInterface`（既定 `ASPNETWebService`＝クライアントが `TMProtocolDefinition2` を使用）を **IIS Express で起動**
+  してからクライアント exe を起動し、WS 越し（`protocol="2"`）に呼べることを確認する。ホストの引き込み・張替は
+  `opentouryo-project-setup-core` の `samples/webservices.md`（③ WS ホスト節）。ホスト未起動ならインプロセス兼用で開ける。
 
 ## バッチ / CLI（コンソール）＝ exe（引数あり）
 

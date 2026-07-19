@@ -47,28 +47,40 @@ WS 依存が不要なら、後工程 **`opentouryo-project-transform`** で WS �
 （インプロセスのみ）。**3層リッチクライアント（`WSClient_sample`）を実用するなら net48 側**を使う。
 core 版 `Samples4NetCore\Legacy\WS_sample\WSClient_sample\` は起点として勧めない（`opentouryo-transmission` / §4.4）。
 
-## WSClient_sample（クライアント側）の取り出し＝以下で決め打つ（判断させない）
+## 3層CS（WSClient）＝クライアント＋WS ホストをセットで引き込む（決め打ち・判断させない）
 
 3層リッチクライアント `WS_sample\WSClient_sample\<WSClientWin/WPF/Win2/WinCone>_sample`（net48）は、
-毎回の判断を避けて**次を固定手順**とする（実測：WSClientWin_sample・タグ 03-20 でクリーンビルド 0 error）。
+**クライアント単体では通信相手が居らず 3層として動かない**。実動に要る3点を一式引き込む（実測：WSClientWin_sample・
+タグ 03-20）：**① クライアント ② 業務ロジック `WSServer_sample`/`WSIFType_sample` ③ WS ホスト
+`Frameworks\Infrastructure\ServiceInterface`**。②の取り出しと `WS_sample\Build\` への配置は上の (A) 節、①③は下記。
 
-1. **配置＝フラット化しない。元の階層 `WS_sample\WSClient_sample\<派生>\` を維持する**（下の MAX_PATH 節の
-   フラット化は WSClient には適用しない）。理由：WSServer/WSIFType の DLL を `..\..\Build\`（＝`WS_sample\Build\`）で
-   参照するため、フラット化するとこの相対参照が壊れる。MAX_PATH が問題なら**フラット化ではなく `long path` 有効化**で回避。
-2. **⑤ 参照張り替えは2系統だけ**：
-   - `OpenTouryo.*`（Business/Business.RichClient/Framework/Framework.RichClient/Public）＋ `Newtonsoft.Json` の
-     HintPath を、元 `..\..\..\..\Frameworks\Infrastructure\Build\` → **`..\..\..\OpenTouryoAssemblies\Build_net48\`**
-     に張り替える（3階層深い配置なので `..\..\..\`）。
-   - `WSIFType_sample` / `WSServer_sample` の HintPath **`..\..\Build\` はそのまま維持**（張り替えない）。
-3. **`.sln` は単一プロジェクトの `<派生>_sample.sln` を使い、`<派生>_sample_all.sln` は削除する**。`_all.sln` は
-   `..\..\..\..\Frameworks\Infrastructure\ServiceInterface\WCFService` / `ASPNETWebService` の**ソース プロジェクトを参照**
-   する（DLL 参照方針では存在しない＝そのままでは開けない・ビルドできない）。DLL 参照で完結する単一 `.sln` を残す。
-4. **⑥⑦ config は2キーだけ `%OT_RESOURCE_ROOT%` 化**：`SqlTextFilePath`（→`%OT_RESOURCE_ROOT%\Sql`）と
-   `SpRp_RsaCerFilePath`（→`%OT_RESOURCE_ROOT%\X509\SHA256RSA_Server.cer`）。**`FxXML*`（XML 定義）は張り替え不要**
-   （csproj で `EmbeddedResource` 化され、ファイル名指定＝パス参照ではない）。詳細は `references/resource-config.md`。
-5. **到達点は「開ける・ビルドが通る」まで**。実際に WS モード（`protocol="2"`）で動かすには WS ホスト
-   （ASPNETWebService/IIS）の別途起動が要るが**セットアップ範囲外**（クライアントはインプロセス兼用）。
-   検証は exe 生成＋起動生存まで（`references/run-verify.md` デスクトップ節）。
+### ① クライアント（WSClientWin/WPF/…）
+1. **配置＝フラット化しない。**元階層 `WS_sample\WSClient_sample\<派生>\` を維持（`..\..\Build\`＝`WS_sample\Build\` の
+   WSServer/WSIFType DLL 参照を保つため。MAX_PATH は `long path` で回避＝フラット化しない）。
+2. **⑤ 参照張り替えは2系統だけ**：`OpenTouryo.*`（Business/Business.RichClient/Framework/Framework.RichClient/Public）＋
+   `Newtonsoft.Json` を 元 `..\..\..\..\Frameworks\Infrastructure\Build\` → **`..\..\..\OpenTouryoAssemblies\Build_net48\`**
+   （3階層）。`WSIFType_sample`/`WSServer_sample` の `..\..\Build\` は**維持**。
+3. **⑥⑦ config は2キーだけ** `%OT_RESOURCE_ROOT%` 化：`SqlTextFilePath`→`%OT_RESOURCE_ROOT%\Sql`、
+   `SpRp_RsaCerFilePath`→`%OT_RESOURCE_ROOT%\X509\SHA256RSA_Server.cer`。**`FxXML*`（XML 定義）は `EmbeddedResource`＝張替不要**。
+
+### ③ WS ホスト `Frameworks\Infrastructure\ServiceInterface` も引き込む（実動の必須要素・見落とし注意）
+**これが無いとクライアントは通信相手が居ない。**`ServiceInterface` 配下の**ホスト アプリ**を引き込んで建てる。これは
+フレームワーク*ライブラリ*の改造ではない（配置・起動するだけ＝「Frameworks を取り込んで改造しない」禁止には当たらない）。
+- **既定は `ASPNETWebService`**（クライアント app.config が `FxXMLTMProtocolDefinition=TMProtocolDefinition2.xml`＝Web API
+  経路を選択。`WCFService` は代替＝`TMProtocolDefinition.xml`）。通常は ASPNETWebService を建てれば足りる。
+- **引き込み位置**：`_all.sln` は client から `..\..\..\..\Frameworks\Infrastructure\ServiceInterface\` を参照するので、
+  **`Frameworks\Infrastructure\ServiceInterface\` の相対位置を保って引き込む**（保てば `_all.sln` の参照はそのまま解決）。
+- **参照張り替え**：ホストの `OpenTouryo.*`（ASPNETWebService＝Framework/Public/Public.Security、WCFService＝
+  Business/Framework/Public）の `..\..\Build\` → ベンダ先 `OpenTouryoAssemblies\Build_net48\`。`WSServer_sample`/`WSIFType_sample`
+  の `...\Samples\WS_sample\Build\` → 引き込んだ `WS_sample\Build\`。**深さは配置に合わせる**（張替先は上記2箇所で固定）。
+- **復元**：`ASPNETWebService` は `packages.config`＝`nuget restore`、`WCFService` は `PackageReference`＝`msbuild /t:Restore`。
+- **`.sln` は 3層一式の `<派生>_sample_all.sln` を使う**（client＋WCFService＋ASPNETWebService を束ねる）。
+  **※先の版で「`_all.sln` 削除・単一 sln」としたのは誤り**。ServiceInterface を引き込めば `_all.sln` の参照は解決する。
+
+### 到達点
+- **セットアップの到達点＝3プロジェクトが開けて 0 error でビルドできる**（クライアント＋WSServer/WSIFType＋ServiceInterface）。
+- **WS モード（`protocol="2"`）実動の確認は run-verify**：ASPNETWebService を IIS Express で起動 → クライアント exe から
+  WS 越しに呼べること（`references/run-verify.md`）。ホスト未起動でもクライアントはインプロセス兼用で開ける。
 
 ## MAX_PATH(260)
 

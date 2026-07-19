@@ -87,6 +87,8 @@ metadata:
 - **`OpenTouryo.*` を `ProjectReference` にする** — 基盤はバイナリ提供が前提。DLL 参照にする
 - **基盤（`Frameworks/Infrastructure/*`）を導入リポジトリに取り込んで改造する** — 纏め者の領分
   （`opentouryo-project-policy` / `opentouryo-base2-customize`）。導入プロジェクトはビルド済み DLL を参照するだけ
+  （**例外：3層CS の WS ホスト `Frameworks\Infrastructure\ServiceInterface`（ASPNETWebService/WCFService）は実動に
+  必須なので引き込む＝改造ではなくホストとして配置・起動する。`opentouryo-project-setup-core` の `samples/webservices.md`**）
 - **作業ツリー `Temp/`（基盤ソース＝親クラス2 を含む）をコミットする** — `.gitignore` で除外する（⑦）
 - **Download→Build→ベンダをアドホックなコマンド羅列で済ませる** — スクリプト化して残す（③）
 - **net48 サンプルを net10.0 で、または Web Forms を core で使おうとする** — ランタイム対象外
