@@ -60,7 +60,8 @@ Web ではないので HTTP スモークは無い。**exe を起動してプロ�
 **NG**＝resource/config・参照解決の失敗を疑う（stderr / イベントログ）。
 **このスモークで見ないもの（対象外）**：ログイン以降の **DB 依存操作**（`SqlTextFilePath` の SQL 実行・接続文字列先の
 SQL Server(Northwind) 等）。DB 未起動で業務操作が失敗しても**セットアップの不備ではない**（Web の `/Ping`・Crud が
-DB 前提でタイムアウトするのと同じ扱い）。
+DB 前提でタイムアウトするのと同じ扱い）。DB 依存まで確認したいなら、選択式 `opentouryo-project-setup-db` で
+Docker 一式を立てられる（既定が SQL Server/Northwind と一致）。
 
 - exe の場所：net48＝`bin\Debug\<app>.exe`、core＝`bin\Debug\net10.0-windows7.0\<app>.exe`（`dotnet run --project <proj>` でも可）。
 - **非対話チェック**（起動生存を機械判定）：

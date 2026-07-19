@@ -3,7 +3,7 @@
 作業を再開するための記録。**アセットの内容ではなく、アセットを作る側の記録。**
 配布されるのは `src/` 配下のみで、このファイルは配布されない。
 
-最終更新: 2026-07-18（全33スキル。利用ガイド doc 0〜8・設定一覧まで確認し、整合性補正と
+最終更新: 2026-07-19（全34スキル。利用ガイド doc 0〜8・設定一覧まで確認し、整合性補正と
 新規スキル追加、ランタイム差（net48 / .NET 10.0）の反映を実施。project-setup を実走フィードバックで
 補正し、③基盤ビルドを project-setup-build へ分離、変形の後工程 project-transform も分離）
 
@@ -161,6 +161,7 @@ opentouryo-project-setup-core     実効 61L tok~1308  完了（④⑤＝核心�
 opentouryo-project-setup-config   実効 76L tok~1637  完了（⑥⑦。resource 移設・config パス張替〔%OT_RESOURCE_ROOT%〕・.gitignore・接続文字列/InitConfiguration/nuget restore/sessionState=StateServer・ビルド/実行検証。references を保持）
                                   ├ references/resource-config.md   46L tok~900  ⑥の詳細（相対不可＝ResourceLoader・%VAR%展開／FxContainerization と別・パスキー一覧・綴りの罠・config二段）
                                   └ references/run-verify.md        ~60L         ⑦の実行確認。net48 Web＝IIS Express（SSL 回避・`/path` は Web.config のある内側・Ping/login スモーク・500＝resource/config 失敗）／core Web＝Kestrel（dotnet run は launchSettings 優先＝ASPNETCORE_URLS 無視。--urls で固定）／デスクトップ WinForms/2CS＝exe 起動でプロセス生存確認・DB 依存は SQL Server 前提・3層は WS サーバ要
+opentouryo-project-setup-db       実効 73L tok~1400  完了（**選択式**の環境構築。LocalServicesOnDocker で SQL Server/MySQL/PostgreSQL/Redis/MongoDB を Docker 起動。既定が サンプル接続文字列と一致〔SQL 1433/sa/seigi@123/Northwind＝ConnectionString_SQL、MySQL＝ConnectionString_MCN〕。Oracle は対象外。Docker 変更は SETUP-CHANGES.md 記録。既存 DB あれば不要）
 opentouryo-project-transform      実効106L tok~2100  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消。実機E2E反映：改行LF/非対話PSガード・2層化のDB DLL付替・test*マスタ警告・csproj剪定手法。実行は任意）
 opentouryo-layer-b               実効292L tok~4134  完了
 opentouryo-layer-d             実効149L tok~2216  完了（Dao 3系統の使い分け・入口）
@@ -372,6 +373,8 @@ APIリファレンスで足りる）。
 | 同 Issue ファイルに J の追記 Issue が追加（合否基準の正式化・作者報告・**2026-07-19**。net48/.NET10 の WinForms/WPF 2CS 4例で実測） | GUI サンプルは HTTP エンドポイントが無く「起動する」以上の合否基準が未定義だった。→ run-verify デスクトップ節を**正式基準に強化**：**合格**＝exe を `OT_RESOURCE_ROOT` を渡して起動し **5–7s 生存＋初期画面**＝startup OK／**NG**＝起動直後の異常終了・未処理例外（resource/config 疑い）／**対象外**＝ログイン以降の DB 依存操作（`SqlTextFilePath` の SQL・SQL Server(Northwind)。DB 未起動での失敗はセットアップ不備でない＝Web の /Ping と同扱い）。**非対話チェックの雛形**（`Start-Process -PassThru`→`Start-Sleep 6`→`HasExited` 判定→`Kill()`）と **exe の具体パス**（net48＝`bin\Debug\<app>.exe`、core＝`bin\Debug\net10.0-windows7.0\<app>.exe`）を追加。本体 Issue 無し |
 
 | グローバル変更の記録規約を新設（作者提案・**2026-07-19**） | 「repo 外＝マシン/ユーザ全体に残る変更を伴うスキルは変更ログを残すべき」との提案。横断監査で対象を特定：**config**（`OT_RESOURCE_ROOT` User 環境変数・ASP.NET State Service 起動）／**build**（短ルート `C:\otr\` 作成・long path `LongPathsEnabled` レジストリ・VS 導入/PATH）／**base2**（`C:\otr\` 作業ツリー）。誤検知（config の `FxContainerization` は読み取り機構、logging/richclient/transmission の「サービス」は WS 用語）は除外。置き場は作者選択で **規約→AGENTS.md／ログ→別ファイル**：`src/instructions/AGENTS.md` の「プロジェクト ポリシー」に **### マシン/ユーザ全体に残る変更は `SETUP-CHANGES.md` に記録する**（種別/対象/値/日付/巻き戻し・コミットする・AGENTS.md 自体には書かない〔再インストールで上書き〕・対象例と該当3スキルを列挙）を追加。常時ロードで効くので各スキルは**短ポインタのみ**（重複回避）：resource-config〔OT_RESOURCE_ROOT＋未設定マシンは起動失敗の配布注意も併記〕・config ⑦〔State Service〕・build §1〔C:\otr／long path〕。実ログ `SETUP-CHANGES.md` は target 側で生成する運用（アセット repo には置かない）。AGENTS.md tok~4422（常時ロード枠内） |
+
+| 新スキル `opentouryo-project-setup-db`（選択式の DB/データストア構築・作者提案・**2026-07-19**） | 環境（データストア）構築が既存スキルに無く、⑦ config の接続確認・run-verify の DB 依存操作の前提が満たせなかった。作者が実運用で使う **LocalServicesOnDocker**（NetDevInfraWGinOSSConsortium）で SQL Server/MySQL/PostgreSQL/Redis/MongoDB を Docker 起動する**選択式（任意）**スキルを新設。WebFetch＋ミラー突合で**既定が OpenTouryo サンプルの接続文字列と一致**を確認（SQL 1433/sa/`seigi@123`/Northwind＝`ConnectionString_SQL`、MySQL 3306/root/`seigi@123`/test＝`ConnectionString_MCN`。同系プロジェクトで設計が揃っている）。多くは無改変で接続可。**Oracle は本 Docker に無い**（`ConnectionString_ODP`＝SCOTT/tiger は別途）。Docker のコンテナ/ボリューム/ネットワーク `common_link` は**グローバル変更＝`SETUP-CHANGES.md` に記録**（前項ポリシー）。位置づけ＝**必須ではなく選択式**（既存 DB あれば不要）。反映：ファサード flow に「（選択式）データストア」行／README ①群／AGENTS 表／config ⑦・run-verify から相互参照。install.ps1 で拾えることを実測。全33→34スキル |
 
 ### 4.4 作者から得た情報（コードからは読めない）
 
@@ -706,7 +709,7 @@ skills-ref validate ./src/skills/opentouryo-layer-d
 
 ## 7. 次にやること
 
-**このリポジトリ側の作業は残っていない。** 全33スキル、`AGENTS.md`（アーキテクチャ節を含む）、
+**このリポジトリ側の作業は残っていない。** 全34スキル、`AGENTS.md`（アーキテクチャ節を含む）、
 インストーラまで書き終えた。利用ガイド（doc 0〜8・動的クエリ・D層自動生成・設定一覧）も
 一通り確認し、整合性の補正と新規スキル（dialog / p-call-business / richclient-async /
 common-parts / project-policy ほか）への反映を済ませた。

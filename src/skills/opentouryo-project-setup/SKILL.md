@@ -29,12 +29,15 @@ metadata:
 ③  基盤 DLL をビルドして OpenTouryoAssemblies\ へベンダ         → opentouryo-project-setup-build
 ④⑤ サンプルを取り出し、.csproj の OpenTouryo.* HintPath を張替  → opentouryo-project-setup-core
 ⑥⑦ resource 移設・config パス張替・.gitignore・ビルド／実行検証 → opentouryo-project-setup-config
+（選択式）ローカルのデータストア（DB 等）を Docker で用意          → opentouryo-project-setup-db
 ```
 
 - **①② `opentouryo-project-setup-selection`** — 起点サンプル（全系列を提示）と `<ref>`（固定タグ/develop）を決める。
 - **③ `opentouryo-project-setup-build`** — ②の `<ref>` と標的ランタイムで基盤をビルド→ベンダ。1回で再利用可。
 - **④⑤ `opentouryo-project-setup-core`** — サンプル（＋開発支援ツール）を取り出し、参照をベンダ先へ張り替える。核心。
 - **⑥⑦ `opentouryo-project-setup-config`** — resource を移設し config を環境変数方式へ、`.gitignore`、ビルド／実行で検証。
+- **（選択式）`opentouryo-project-setup-db`** — ローカルのデータストア（SQL Server 等）を Docker で用意する。⑦ の接続確認・
+  実行検証の DB 依存操作の前提を満たす。**既存 DB があれば不要**。
 
 **基盤（OpenTouryo フレームワーク）はバイナリ提供が前提。** ビルドした DLL を参照する
 （`opentouryo-common-parts` / `AGENTS.md` の「クラスの階層と修正可否」）。**親クラス2 をカスタマイズする**なら

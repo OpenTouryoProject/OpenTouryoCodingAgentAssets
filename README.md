@@ -18,6 +18,7 @@ src/
     opentouryo-project-setup-build/     ③ 基盤 DLL のビルドとベンダ（タグ更新の焼き直しにも単独で）
     opentouryo-project-setup-core/      ④⑤ 取り出しと参照張り替え（HintPath・CS0246 解消）
     opentouryo-project-setup-config/    ⑥⑦ resource 移設・config 張替・.gitignore・検証
+    opentouryo-project-setup-db/        （選択式）ローカルのデータストアを Docker で用意（LocalServicesOnDocker）
     opentouryo-project-transform/       セットアップ後の変形（2層化・サンプル整理・CS0246 解消）
     opentouryo-project-policy/          プロジェクト方針（親クラス2 の挙動）の確認
     opentouryo-base2-customize/         親クラス2（基盤 Business 層）のカスタマイズ（纏め者向け）

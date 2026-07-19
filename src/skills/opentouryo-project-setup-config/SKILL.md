@@ -30,7 +30,9 @@ metadata:
 
 ## ⑦ .gitignore・残りの構成と検証
 
-- 接続文字列（`ConnectionString_SQL` ほか。DBMS 選択は `actionType` 先頭。`opentouryo-p-call-business`）
+- 接続文字列（`ConnectionString_SQL` ほか。DBMS 選択は `actionType` 先頭。`opentouryo-p-call-business`）。
+  **接続先のローカル DB が無ければ（選択式）`opentouryo-project-setup-db`** で Docker 一式を立てられる（既定はサンプルの
+  `ConnectionString_SQL` と一致）。
 - **core は `GetConfigParameter.InitConfiguration()` が必須**（`opentouryo-config`）
 - **net48（`packages.config`）は msbuild の前に `nuget restore <sln>` が必須**（`/t:restore` では不可。
   `nuget.exe` は ZIP の `root\programs\nuget.exe` を流用）。core は `dotnet restore`（`dotnet build` に含む）。

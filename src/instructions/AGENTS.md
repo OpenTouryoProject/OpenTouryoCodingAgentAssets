@@ -283,6 +283,7 @@ TODO
 | `opentouryo-project-setup-build` | ③ 基盤（フレームワーク）DLL をローカルでビルドして `OpenTouryoAssemblies\` へベンダするとき（タグ更新時の焼き直しにも単独で使う） |
 | `opentouryo-project-setup-core` | ④⑤ サンプル（＋開発支援ツール）の取り出しと `OpenTouryo.*` HintPath の張り替え（3層/WS の CS0246 解消も） |
 | `opentouryo-project-setup-config` | ⑥⑦ resource 移設・config パス張替（`%OT_RESOURCE_ROOT%`）・`.gitignore`・ビルド／実行検証 |
+| `opentouryo-project-setup-db` | （選択式）ローカルのデータストア（SQL Server 等）を Docker で用意するとき（LocalServicesOnDocker。⑦ の接続・実行検証の DB 前提。既存 DB があれば不要） |
 | `opentouryo-project-transform` | セットアップ後、取り出したサンプルを用途へ合わせて変形するとき（不要な層の削減＝2層化・サンプル固有コードの整理・CS0246 の解消） |
 
 ## 参考資料
