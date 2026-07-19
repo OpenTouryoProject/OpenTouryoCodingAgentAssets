@@ -10,7 +10,7 @@
 - ソース：**`Frameworks\Tools\DaoGen_Tool`**（`Samples\` ではない。基盤ツリー配下）。
 - WinExe（WinForms の GUI）。`AssemblyName` は `OpenTouryo.DaoGen_Tool`。
 - net48：`DaoGen_Tool.csproj` / `.sln`（msbuild）。
-- .NET 10.0：`DaoGen_ToolCore.csproj` / `.sln`（`net10.0-windows7.0`＝Windows 専用。`dotnet build`）。
+- net10.0：`DaoGen_ToolCore.csproj` / `.sln`（`net10.0-windows7.0`＝Windows 専用。`dotnet build`）。
 
 標的サンプルのランタイムに合わせてどちらかを使えばよい（DAO 生成が目的なので net48 版だけでも足りる）。
 

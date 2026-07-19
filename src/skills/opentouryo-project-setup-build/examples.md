@@ -110,10 +110,10 @@ if ((Test-Path $overlay) -and
 Get-ChildItem $vendor -Filter 'OpenTouryo.*.dll' | Select-Object -ExpandProperty Name
 ```
 
-## `setup-build-netcore.ps1`（.NET 10.0 基盤ビルド → ベンダ）
+## `setup-build-netcore.ps1`（net10.0 基盤ビルド → ベンダ）
 
 net48 版と同型で、回すバッチが `*_netcore100` になる。**混在ランタイム repo（net48 は既にベンダ済みで
-.NET 10.0 だけ後から足す）では、既存の ZIP 展開ツリーを再 DL せず流用し、netcore のバッチだけ回す**。
+net10.0 だけ後から足す）では、既存の ZIP 展開ツリーを再 DL せず流用し、netcore のバッチだけ回す**。
 ベンダ先 `Build_netcore100\` は **TFM サブフォルダ（`net10.0\` と `net10.0-windows7.0\`）を両方含む**ので丸ごとコピーする。
 
 ```powershell
@@ -136,7 +136,7 @@ if (-not (Test-Path $cs)) {
     Expand-Archive -Path $zip -DestinationPath $work -Force
 }
 
-# --- 2. 基盤ビルド（.NET 10.0 のバッチだけ。SDK の dotnet build を使う）---
+# --- 2. 基盤ビルド（net10.0 のバッチだけ。SDK の dotnet build を使う）---
 Push-Location $cs
 try {
     cmd /c ".\2_Build_NuGet_netcore100.bat    < nul"

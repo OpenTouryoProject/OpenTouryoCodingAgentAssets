@@ -1,6 +1,6 @@
 ---
 name: opentouryo-common-parts
-description: "OpenTouryo が Public 名前空間に用意している共通部品（ユーティリティ）を用途から探す。自作する前にここを見る。文字列のチェック（StringChecker / FormatChecker）と変換（StringConverter / FormatConverter）、エンコード・サニタイズ（CustomEncode の HtmlEncode / UrlEncode / Base64 / 16進）、文字コード（JIS2k4Checker / CheckCharCode）、暗号・ハッシュ・署名・JWT（GetHash / GetPassword / SymmetricCryptography / DigitalSign / JWS / JWE）、圧縮とリソース（Zipper / ResourceLoader / EmbeddedResourceLoader）、DTO 変換（DataToPoco / PocoToPoco / DataToDictionary）、診断（StackFrameOperator）、配列（ArrayOperator）、レイトバインド（Latebind）などを扱う。Security は独立アセンブリ、Zipper / UnZipper / BinarySerialize / Win32 は net48 専用（.NET 10.0 では未ビルド）といったランタイム差も示す。共通部品 / ユーティリティ / 部品を探す / 車輪の再発明を避ける / 文字列チェック / エンコード / ハッシュ / 暗号 / Zip / サニタイズ を伴う作業のときに使う。"
+description: "OpenTouryo が Public 名前空間に用意している共通部品（ユーティリティ）を用途から探す。自作する前にここを見る。文字列のチェック（StringChecker / FormatChecker）と変換（StringConverter / FormatConverter）、エンコード・サニタイズ（CustomEncode の HtmlEncode / UrlEncode / Base64 / 16進）、文字コード（JIS2k4Checker / CheckCharCode）、暗号・ハッシュ・署名・JWT（GetHash / GetPassword / SymmetricCryptography / DigitalSign / JWS / JWE）、圧縮とリソース（Zipper / ResourceLoader / EmbeddedResourceLoader）、DTO 変換（DataToPoco / PocoToPoco / DataToDictionary）、診断（StackFrameOperator）、配列（ArrayOperator）、レイトバインド（Latebind）などを扱う。Security は独立アセンブリ、Zipper / UnZipper / BinarySerialize / Win32 は net48 専用（net10.0 では未ビルド）といったランタイム差も示す。共通部品 / ユーティリティ / 部品を探す / 車輪の再発明を避ける / 文字列チェック / エンコード / ハッシュ / 暗号 / Zip / サニタイズ を伴う作業のときに使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -52,7 +52,7 @@ metadata:
 **暗号処理を自作しない。** 豊富に揃っている。詳細はソース参照。
 
 **`Public.Security` は独立したアセンブリ**（`Public.Security` プロジェクト）。参照設定が要る。
-**net48 / .NET 10.0 の両対応**（core では `IdentityImpersonation` と CNG ベースの ECDH 鍵交換
+**net48 / net10.0 の両対応**（core では `IdentityImpersonation` と CNG ベースの ECDH 鍵交換
 だけ未ビルド）。
 
 | クラス | 用途 |
@@ -72,13 +72,13 @@ metadata:
 
 | クラス | 用途 | ランタイム |
 | --- | --- | --- |
-| `Zipper` / `UnZipper` | ZIP 圧縮・展開 | **net48 のみ**（.NET 10.0 では未ビルド） |
-| `BinarySerialize` | バイナリ シリアライズ | **net48 のみ**（.NET 10.0 では未ビルド） |
-| `DeflateCompression` | Deflate 圧縮 | net48 / .NET 10.0 |
-| `ResourceLoader` / `EmbeddedResourceLoader` | ファイル / 埋め込みリソースの読み込み | net48 / .NET 10.0 |
-| `ExponentialBackoff` | 指数バックオフ（リトライ） | net48 / .NET 10.0 |
+| `Zipper` / `UnZipper` | ZIP 圧縮・展開 | **net48 のみ**（net10.0 では未ビルド） |
+| `BinarySerialize` | バイナリ シリアライズ | **net48 のみ**（net10.0 では未ビルド） |
+| `DeflateCompression` | Deflate 圧縮 | net48 / net10.0 |
+| `ResourceLoader` / `EmbeddedResourceLoader` | ファイル / 埋め込みリソースの読み込み | net48 / net10.0 |
+| `ExponentialBackoff` | 指数バックオフ（リトライ） | net48 / net10.0 |
 
-**`Zipper` / `UnZipper` / `BinarySerialize` は `.NET 10.0`（core）のプロジェクトでビルド対象から
+**`Zipper` / `UnZipper` / `BinarySerialize` は `net10.0`（core）のプロジェクトでビルド対象から
 除外されている。** core では使えないので、圧縮は `DeflateCompression` か標準ライブラリを使う。
 `Win32` / `WinProc` 名前空間（Windows API ラッパ）も net48 専用。
 
@@ -124,5 +124,5 @@ metadata:
   `ArrayOperator` に移動している（`AGENTS.md` の非推奨一覧）
 - **`GetPasswordHashV1` を使う** — 非推奨。`GetPasswordHashV2`
 - **メソッドのシグネチャを推測で書く** — API リファレンス（＝ソース）で確認する
-- **`.NET 10.0` で `Zipper` / `UnZipper` / `BinarySerialize` / `Win32` を使う** — core では
+- **`net10.0` で `Zipper` / `UnZipper` / `BinarySerialize` / `Win32` を使う** — core では
   ビルド対象外。net48 専用。core では別手段を使う

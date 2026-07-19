@@ -34,7 +34,7 @@
 - **500 が出たら resource パス／config 解決の失敗を疑う**（フレームワーク初期化で XML 定義・log4net を
   `%OT_RESOURCE_ROOT%` から読む＝ここが実行時検証の勘所。⑥ / `references/resource-config.md`）。
 
-## core（.NET 10.0）＝ Kestrel（`dotnet run`）
+## core（net10.0）＝ Kestrel（`dotnet run`）
 
 core は IIS Express ではなく Kestrel。**`dotnet run` は `Properties\launchSettings.json` の `applicationUrl` を優先する**ため、
 `ASPNETCORE_URLS` を環境変数で与えても**無視される**ことがある（実測：`5080` を渡したが profile の `5219` で起動）。
@@ -88,7 +88,7 @@ Web ではないので HTTP スモークは無い。**exe を起動してプロ�
 - **合格基準**：引数を与えて起動し、**framework 初期化（log4net 等）＋業務ロジック到達＝OK**（標準出力に処理結果、
   例「3件のデータがあります」）。**DB があれば結果（件数）まで確認**／無ければ初期化＋到達まで（上の「DB 依存は条件付き」）。
 - **★ exit code で判定しない。** サンプルは末尾で `Console.ReadKey()` を呼ぶため、**非対話（stdin リダイレクト）だと
-  成功分岐でも `InvalidOperationException` で exit code が非ゼロ**になる（業務処理は成功済み＝サンプルコード都合。
-  `SimpleBatch`/`RerunnableBatch` 系共通・実測）。
+  成功分岐でも `InvalidOperationException` で exit code が非ゼロ**（`0xE0434352` / -532462766）になる（業務処理は
+  成功済み＝サンプルコード都合。`SimpleBatch`/`RerunnableBatch` 系共通・**net48/net10.0 両ランタイムで実測**）。
   **成否は標準出力で判定**する（`< nul` で stdin を与えても ReadKey 例外は避けられない。出力で見る）。
 

@@ -1,6 +1,6 @@
 ---
 name: opentouryo-config
-description: "OpenTouryo の構成ファイルを読み書きする。GetConfigParameter による設定値の取得（GetConfigValue / GetConnectionString / GetAnyConfigValue / GetAnyConfigSection）、.NET Framework 4.8 の app.config・web.config と .NET 10.0 の appsettings.json の違い、core 系で必須の InitConfiguration、appSettings / connectionStrings セクション、コンテナ・モード（FxContainerization）による環境変数の優先、Fx で始まるフレームワークの設定キー、XML 定義ファイル（SPDefinition / MSGDefinition / SCDefinition / TCDefinition / TMProtocolDefinition / TMInProcessDefinition）を扱う。設定 / 構成ファイル / app.config / web.config / appsettings.json / 接続文字列 / 環境変数 を伴う作業のときに使う。"
+description: "OpenTouryo の構成ファイルを読み書きする。GetConfigParameter による設定値の取得（GetConfigValue / GetConnectionString / GetAnyConfigValue / GetAnyConfigSection）、net48 の app.config・web.config と net10.0 の appsettings.json の違い、core 系で必須の InitConfiguration、appSettings / connectionStrings セクション、コンテナ・モード（FxContainerization）による環境変数の優先、Fx で始まるフレームワークの設定キー、XML 定義ファイル（SPDefinition / MSGDefinition / SCDefinition / TCDefinition / TMProtocolDefinition / TMInProcessDefinition）を扱う。設定 / 構成ファイル / app.config / web.config / appsettings.json / 接続文字列 / 環境変数 を伴う作業のときに使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -29,7 +29,7 @@ string path = GetConfigParameter.GetConfigValue("FxLog4NetConfFile");
 string conn = GetConfigParameter.GetConnectionString("ConnectionString_SQL");
 ```
 
-| メソッド | 読む場所 | net48 | .NET 10.0 |
+| メソッド | 読む場所 | net48 | net10.0 |
 | --- | --- | --- | --- |
 | `GetConfigValue(key)` | `appSettings` セクション | ○ | ○ |
 | `GetConnectionString(key)` | `connectionStrings` セクション | ○ | ○ |
@@ -44,7 +44,7 @@ string conn = GetConfigParameter.GetConnectionString("ConnectionString_SQL");
 
 **設定の置き場所が根本的に違う。** 読み出す API は同じでも、書く先が違う。
 
-| | .NET Framework 4.8 | .NET 10.0 |
+| | net48 | net10.0 |
 | --- | --- | --- |
 | 構成ファイル | `app.config` / `web.config` | `appsettings.json` |
 | 内部で使うもの | `ConfigurationManager` | `IConfiguration` |

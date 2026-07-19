@@ -15,7 +15,7 @@ SQL 定義の書き方（タグ・`@` パラメタ・ユーザパラメタ・`PA
 - ソース：**`Frameworks\Tools\DPQuery_Tool`**（`Samples\` ではない。基盤ツリー配下）。
 - WinExe（WinForms の GUI）。`AssemblyName` は `OpenTouryo.DPQuery_Tool`。
 - net48：`DPQuery_Tool.csproj` / `.sln`（msbuild）。
-- .NET 10.0：`DPQuery_ToolCore.csproj` / `.sln`（`net10.0-windows7.0`＝Windows 専用。`dotnet build`）。
+- net10.0：`DPQuery_ToolCore.csproj` / `.sln`（`net10.0-windows7.0`＝Windows 専用。`dotnet build`）。
 
 ## 取り出しと参照張り替え（⑤ と同じ要領）
 

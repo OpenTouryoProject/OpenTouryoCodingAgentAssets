@@ -36,11 +36,14 @@ IIS Express / w3wp のカレントはアプリ フォルダではないので、
 ## ★ 例外：SQL 定義を同梱する自己完結型サンプル（`.\Dao` 等）は張り替えない（実測）
 
 `%OT_RESOURCE_ROOT%` 化するのは**共有 `resource\` を絶対パスで参照しているキーだけ**。
-**`SqlTextFilePath=.\Dao` のような相対パスは意図的な設計＝そのまま残す**：`RerunnableBatch_sample`〜`3` は
-`Dao\*.sql/.xml` を `CopyToOutputDirectory` で `bin\Debug\Dao` へコピーする自己完結型で、
-`%OT_RESOURCE_ROOT%\Sql` に書き換えると**逆に壊れる**（SQL は `resource\` 側に無い）。
-同じバッチ系列でも `SimpleBatch_sample` は絶対パス（`C:\root\files\resource\Sql`）＝張り替え対象、と設計が分かれる。
-相対は CWD 依存なので、**コンソール exe を `bin\Debug` から実行する前提**（上の「相対パス不可」は
+**`SqlTextFilePath` が `.` 始まりの相対（net48＝`.\Dao`／core＝`./Dao`）なら意図的な設計＝そのまま残す**：
+`RerunnableBatch_sample`〜`3` は `Dao\*.sql/.xml` を `CopyToOutputDirectory` で出力先（`bin\Debug\Dao`、
+core は `bin\Debug\net10.0-windows7.0\Dao`）へコピーする自己完結型で、`%OT_RESOURCE_ROOT%\Sql` に書き換えると
+**逆に壊れる**（SQL は `resource\` 側に無い）。同じバッチ系列でも `SimpleBatch_sample` は絶対パス
+（net48＝`C:\root\files\resource\Sql`／core＝`C:/root/files/resource/Sql`）＝張り替え対象、と設計が分かれる。
+**判定の目安**：`SqlTextFilePath` が `.\`／`./` 始まり かつ csproj が `Dao\*.sql/.xml` を `CopyToOutputDirectory`
+しているなら自己完結型＝張替不要（**net48/net10.0 共通の規則**。net48 は `.\` バックスラッシュ、core は `./` スラッシュ
+だが挙動・判定は同一）。相対は CWD 依存なので、**コンソール exe を出力フォルダから実行する前提**（上の「相対パス不可」は
 IIS 等 CWD がアプリ フォルダでないプロセスの話。同梱型コンソールには当てはまらない）。
 
 ## ★ ログ定義（`resource\Log\*.xml`）の中の出力先パスも張り替える（見落とし注意・実測）

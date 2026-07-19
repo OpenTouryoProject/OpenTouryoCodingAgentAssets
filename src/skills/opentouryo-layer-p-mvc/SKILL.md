@@ -1,6 +1,6 @@
 ---
 name: opentouryo-layer-p-mvc
-description: "OpenTouryo の P層を ASP.NET MVC（.NET Framework 4.8）／ASP.NET Core MVC（.NET 10.0）で実装する。コントローラの基底クラス（MyBaseMVController / MyBaseMVControllerCore）、アクションメソッドの書き方、ControllerName / ActionName / UserInfo プロパティ、引数クラスを介した B層の呼び出しとアクション名による自動振り分け、フレームワークが提供するフィルタ（OnActionExecuting / OnActionExecutionAsync / OnException / MyMVCCoreFilterAttribute）、Forms 認証と Cookie 認証、Startup での構成を扱う。MVC / コントローラ / アクション / ASP.NET Core / Razor / 画面 / Web 画面 を伴う作業のときに使う。Web Forms は opentouryo-layer-p-webforms、Windows Forms は opentouryo-layer-p-winforms を使う。"
+description: "OpenTouryo の P層を ASP.NET MVC（net48）／ASP.NET Core MVC（net10.0）で実装する。コントローラの基底クラス（MyBaseMVController / MyBaseMVControllerCore）、アクションメソッドの書き方、ControllerName / ActionName / UserInfo プロパティ、引数クラスを介した B層の呼び出しとアクション名による自動振り分け、フレームワークが提供するフィルタ（OnActionExecuting / OnActionExecutionAsync / OnException / MyMVCCoreFilterAttribute）、Forms 認証と Cookie 認証、Startup での構成を扱う。MVC / コントローラ / アクション / ASP.NET Core / Razor / 画面 / Web 画面 を伴う作業のときに使う。Web Forms は opentouryo-layer-p-webforms、Windows Forms は opentouryo-layer-p-winforms を使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -11,7 +11,7 @@ metadata:
 
 ## このスキルの適用範囲
 
-コントローラの実装。**ASP.NET MVC（net48）と ASP.NET Core MVC（.NET 10.0）の両方**を扱う。
+コントローラの実装。**ASP.NET MVC（net48）と ASP.NET Core MVC（net10.0）の両方**を扱う。
 
 - Web Forms → `opentouryo-layer-p-webforms-screen` / `-event`
 - Windows Forms（リッチクライアント）→ `opentouryo-layer-p-winforms-screen` / `-event`
@@ -35,7 +35,7 @@ metadata:
 
 ## 実装場所
 
-| 階層 | net48 | .NET 10.0 | 修正 |
+| 階層 | net48 | net10.0 | 修正 |
 | --- | --- | --- | --- |
 | 画面コード親クラス1 | `BaseMVController` | `BaseMVControllerCore` | **不可**（バイナリ提供） |
 | 画面コード親クラス2 | `MyBaseMVController` | `MyBaseMVControllerCore` + `MyMVCCoreFilterAttribute` | **不可**（バイナリ提供） |
@@ -130,7 +130,7 @@ this.ActionName = "SelectCount"
 
 ### フィルタの構成がランタイムで違う
 
-| | net48（`MyBaseMVController`） | .NET 10.0（`MyBaseMVControllerCore`） |
+| | net48（`MyBaseMVController`） | net10.0（`MyBaseMVControllerCore`） |
 | --- | --- | --- |
 | アクション前後 | `OnActionExecuting` / `OnActionExecuted`（同期） | **`OnActionExecutionAsync`**（非同期・前後を統合） |
 | 結果前後 | `OnResultExecuting` / `OnResultExecuted` | — |
@@ -192,7 +192,7 @@ public ActionResult Logout()
 `RedirectFromLoginPage` の第2引数は Cookie を永続化するかどうか。**セキュリティを考慮して
 `false` を推奨。**
 
-### .NET 10.0（Cookie 認証）
+### net10.0（Cookie 認証）
 
 `FormsAuthentication` は存在しない。`ClaimsPrincipal` を作って `SignInAsync()` する。
 
@@ -276,9 +276,9 @@ GetConfigParameter.InitConfiguration(configuration);
 （`Touryo.Infrastructure.Framework.StdMigration`）。`UserInfoHandle` が内部で
 `MyHttpContext.Current.Session` を見るため、呼ばないと動かない。**先頭の `_` は誤記ではない。**
 
-## net48 と .NET 10.0 の差（まとめ）
+## net48 と net10.0 の差（まとめ）
 
-| | net48 | .NET 10.0 |
+| | net48 | net10.0 |
 | --- | --- | --- |
 | 親クラス1 / 2 | `BaseMVController` / `MyBaseMVController` | `BaseMVControllerCore` / `MyBaseMVControllerCore` |
 | 認証 | Forms 認証 | Cookie 認証 |

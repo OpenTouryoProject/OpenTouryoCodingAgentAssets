@@ -1,6 +1,6 @@
 ---
 name: opentouryo-auth
-description: "OpenTouryo で認証済みユーザの情報を保持する。ユーザ情報クラス（UserInfo / MyUserInfo）、UserInfoHandle によるセッションへの格納・取得（SetUserInformation / GetUserInformation / DeleteUserInformation）、.NET の認証との組み合わせ方、ログインから P層・B層へユーザ情報が流れる経路を扱う。P層フレームワークごとの差異（Web Forms と MVC は Forms 認証、ASP.NET Core MVC は Cookie 認証 + ClaimsPrincipal + Startup での構成）と、net48 / .NET 10.0 の API 差も扱う。認証 / ログイン / ログアウト / ユーザ情報 / MyUserInfo / UserInfoHandle / セッション / Forms認証 / Cookie認証 / ClaimsPrincipal / FormsAuthentication を伴う作業のときに使う。"
+description: "OpenTouryo で認証済みユーザの情報を保持する。ユーザ情報クラス（UserInfo / MyUserInfo）、UserInfoHandle によるセッションへの格納・取得（SetUserInformation / GetUserInformation / DeleteUserInformation）、.NET の認証との組み合わせ方、ログインから P層・B層へユーザ情報が流れる経路を扱う。P層フレームワークごとの差異（Web Forms と MVC は Forms 認証、ASP.NET Core MVC は Cookie 認証 + ClaimsPrincipal + Startup での構成）と、net48 / net10.0 の API 差も扱う。認証 / ログイン / ログアウト / ユーザ情報 / MyUserInfo / UserInfoHandle / セッション / Forms認証 / Cookie認証 / ClaimsPrincipal / FormsAuthentication を伴う作業のときに使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -69,7 +69,7 @@ public class MyUserInfo : UserInfo
 | メソッド | 用途 |
 | --- | --- |
 | `SetUserInformation(userInfo)` | セッションへ格納（ログイン時） |
-| `GetUserInformation<T>()` | セッションから取得（**.NET 10.0 専用**） |
+| `GetUserInformation<T>()` | セッションから取得（**net10.0 専用**） |
 | `GetUserInformation()` | セッションから取得（**net48 専用**） |
 | `DeleteUserInformation()` | セッションから削除（ログアウト時） |
 
@@ -78,16 +78,16 @@ public class MyUserInfo : UserInfo
 **同名だがシグネチャが違い、`#if` で切り替わる。** 両対応のコードを書くときの罠。
 
 ```csharp
-// .NET 10.0（core 系）: ジェネリック版のみ
+// net10.0（core 系）: ジェネリック版のみ
 MyUserInfo ui = UserInfoHandle.GetUserInformation<MyUserInfo>();
 
-// .NET Framework 4.8: 非ジェネリック版のみ。キャストする
+// net48: 非ジェネリック版のみ。キャストする
 MyUserInfo ui = (MyUserInfo)UserInfoHandle.GetUserInformation();
 ```
 
 内部の保存方式も違う。
 
-| | net48 | .NET 10.0 |
+| | net48 | net10.0 |
 | --- | --- | --- |
 | 保存 | `Session[key]` にオブジェクトのまま | **JSON にシリアライズ** |
 | 取得 | キャスト | JSON からデシリアライズ |
@@ -163,7 +163,7 @@ Session が有効
   ■ 執筆者向け：分配は完了済み（このスキルは約4,950トークンで目安5,000内）。
     各方式の実装詳細は P層スキルへ分配した:
       Web Forms  → opentouryo-layer-p-webforms-screen
-      MVC / Core → opentouryo-layer-p-mvc（net48 / .NET 10.0 のランタイム差として1スキル）
+      MVC / Core → opentouryo-layer-p-mvc（net48 / net10.0 のランタイム差として1スキル）
       WinForms   → opentouryo-layer-p-winforms-screen（static ユーザ情報）
     この節（下の比較表と ①②③ の要約）は「どのスキルを読めばよいか」の地図として意図的に残す。
     MyUserInfo / UserInfoHandle・ユーザ情報の流れ・「.NET 認証＋OpenTouryo ユーザ情報の両方が必要」
@@ -172,7 +172,7 @@ Session が有効
 
 **② の `MyUserInfo` + `UserInfoHandle` は3方式で共通。① の .NET 側だけが違う。**
 
-| | ① Web Forms（net48） | ② MVC（net48） | ③ ASP.NET Core MVC（.NET 10.0） |
+| | ① Web Forms（net48） | ② MVC（net48） | ③ ASP.NET Core MVC（net10.0） |
 | --- | --- | --- | --- |
 | コントローラの基底 | `MyBaseController` | `MyBaseMVController` | `MyBaseMVControllerCore` |
 | .NET 側の認証 | **Forms 認証** | **Forms 認証**（①と同じ） | **Cookie 認証** |
@@ -204,10 +204,10 @@ Session が有効
 - 認可はサイト全体が `<authorization><deny users="?" /></authorization>`、
   パス単位の例外は `<location path="...">`
 
-### ② MVC（net48）／③ ASP.NET Core MVC（.NET 10.0）
+### ② MVC（net48）／③ ASP.NET Core MVC（net10.0）
 
 **詳細は `opentouryo-layer-p-mvc` を参照。** 実装例、`web.config` と `Startup.cs` の構成、
-net48 と .NET 10.0 の差をそちらに記述している。
+net48 と net10.0 の差をそちらに記述している。
 
 要点だけ再掲する。
 

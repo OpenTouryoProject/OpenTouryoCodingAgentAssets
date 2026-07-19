@@ -14,21 +14,25 @@ metadata:
 
 ## ① 取り出すサンプルを選ぶ
 
-**作りたいものに合うサンプルが起点になる。** パスの接頭辞は **net48＝`Samples\`／.NET 10.0＝`Samples4NetCore\`**
+**作りたいものに合うサンプルが起点になる。** パスの接頭辞は **net48＝`Samples\`／net10.0＝`Samples4NetCore\`**
 （Web 系は `Samples4NetCore\Backend\`、2CS/Bat/CLI/WS 系は `Samples4NetCore\Legacy\`）。下表は各系列の起点。
 
 | 作りたいもの | サンプル（系列\起点） | ランタイム | WS/3層依存 |
 | --- | --- | --- | --- |
-| ASP.NET MVC | `WebApp_sample\MVC_Sample`（core は `Backend\MVC_Sample`） | net48 / .NET 10.0 | **net48:あり** / core:なし |
+| ASP.NET MVC | `WebApp_sample\MVC_Sample`（core は `Backend\MVC_Sample`） | net48 / net10.0 | **net48:あり** / core:なし |
 | Web Forms | `WebApp_sample\WebForms_Sample` | **net48 のみ** | **あり（transform 前提）** |
-| Windows Forms（2層C/S） | `2CS_sample\2CSClientWin_sample` | net48 / .NET 10.0 | なし |
-| WPF（2層C/S） | `2CS_sample\2CSClientWPF_sample` | net48 / .NET 10.0 | なし |
+| Windows Forms（2層C/S） | `2CS_sample\2CSClientWin_sample` | net48 / net10.0 | なし |
+| WPF（2層C/S） | `2CS_sample\2CSClientWPF_sample` | net48 / net10.0 | なし |
 | 3層リッチクライアント（WinForms/WPF・WS 経由） | `WS_sample\WSClient_sample\WSClientWin_sample`（`WPF`/`Win2`/`WinCone` も同階層） | net48（core は ※実用性なし） | **あり（構成上必須）** |
-| バッチ | `Bat_sample\SimpleBatch_sample`（再実行可 `RerunnableBatch_sample`〜`3`） | net48 / .NET 10.0 | なし |
-| CLI（コンソール） | `CLI_sample\Simple_CLI`（認証付 `DAG_Login_CLI` / `LIR_Login_CLI`） | net48 / .NET 10.0 | なし |
+| バッチ | `Bat_sample\SimpleBatch_sample`（再実行可 `RerunnableBatch_sample`〜`3`） | net48 / net10.0 | なし |
+| CLI（コンソール） | `CLI_sample\Simple_CLI`（認証付 `DAG_Login_CLI` / `LIR_Login_CLI`） | **net10.0 のみ** | なし |
 
 **「WS/3層依存」列の凡例**：`なし`＝csproj で WS 参照無しを確認済み／`あり`＝WS DLL 参照あり
 （取り出し直後に missing-ref か `CS0246`。解消は ④⑤ の `opentouryo-project-setup-core`）。
+
+**★ CLI は net10.0 のみ（net48 はドロップ）**：net48 の `CLI_sample\*`（Simple/DAG_Login/LIR_Login）は
+**csproj が無く README だけ**（`Sharprompt` が .NET Fx サポートを終了したため本体が net48 版をドロップ）。
+CLI を選んだら **net10.0（`Samples4NetCore\Legacy\CLI_sample\`）** を起点にする（Web Forms が net48 のみ、の逆）。
 
 **★ RichClient 基盤の追加ビルドが要るサンプル（WS/3層依存とは別軸）**：**Windows Forms 2CS・WPF 2CS・
 3層リッチクライアント**（`2CSClientWin/WPF`・`WSClient_*`）は `OpenTouryo.Business.RichClient` を参照するが、
@@ -47,8 +51,12 @@ config は `SqlTextFilePath` の1点張替で足りることが多い（④⑤�
    選択肢から欠落**した）。選択 UI が選択肢数を制限しても、収まらなければ**全系列を番号付きリストで提示**する。
 2. **選んだ系列に複数のサンプル（派生/variant）があれば、それも提示して選ばせる**（**勝手に代表を1つに決めない**。
    実測：バッチ系列で `SimpleBatch_sample` が無選択で選ばれた）。例：バッチ＝`SimpleBatch_sample` /
-   `RerunnableBatch_sample`〜`3`／`WSClient_sample`＝`Win`/`WPF`/`Win2`/`WinCone`／`2CS_sample`＝機能デモ各種。
-   派生が1つだけなら確認不要。どれが良いか不明なら候補の違いを添えてユーザに委ねる。
+   `RerunnableBatch_sample`〜`3`／`WSClient_sample`＝`Win`/`WPF`/`Win2`/`WinCone`／**`2CS_sample` の機能デモ＝
+   `CustCtrl_sample` / `GenDaoAndBatUpd_sample` / `TimeStamp_sample`（いずれも net48・net10.0 両対応）・
+   `AsyncEvent_sample`（net48 のみ）**。派生が1つだけなら確認不要。どれが良いか不明なら候補の違いを添えて委ねる。
+3. **派生ごとに対応ランタイムが違うことがある。勝手にランタイムを落とさない**（実測：2CS 機能デモ
+   `CustCtrl`/`GenDaoAndBatUpd`/`TimeStamp` を「net10.0 のみ」と誤提示＝net48 が実在するのに欠落）。**各派生の
+   ランタイムは、その派生フォルダに csproj があるか（net48＝`Samples\`配下／net10.0＝`Samples4NetCore\`配下）で判断**する。
 
 **「WS/3層依存あり」の内訳**（取り出し直後 `CS0246` が残る。依存元ソースは `Samples\WS_sample` に実在）：
 - **`WebForms_Sample`**（net48）— WS を利用（core 化の (B) 切り離しも可）。
@@ -90,4 +98,5 @@ config は `SqlTextFilePath` の1点張替で足りることが多い（④⑤�
 - **系列を選んだ後、派生（variant）を勝手に1つに決め打ちする** — 複数あるなら提示して選ばせる
   （実測：バッチで `SimpleBatch_sample` が無選択で選ばれた）。派生が1つのときだけ確認不要
 - **固定タグの例示 `03-20` を既定値として勝手に使う** — どのタグかを必ずユーザに確認する
-- **net48 サンプルを .NET 10.0 で、または Web Forms を core で選ぼうとする** — ランタイム対象外
+- **ランタイム対象外の組合せを選ぶ** — Web Forms を core で／**CLI を net48 で**（net48 CLI は csproj 無し＝
+  net10.0 のみ）／net48 専用サンプルを net10.0 で、は不可

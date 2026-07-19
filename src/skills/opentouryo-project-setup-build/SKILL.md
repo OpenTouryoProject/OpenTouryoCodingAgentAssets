@@ -1,6 +1,6 @@
 ---
 name: opentouryo-project-setup-build
-description: "OpenTouryo の基盤（フレームワーク）DLL をローカルでビルドし、導入リポジトリの OpenTouryoAssemblies\\ へベンダするための手順。GitHub から指定 <ref>（固定タグ または develop）の ZIP を取得し、root/programs/CS の 2_/3_Build_* バッチを標的ランタイム分だけ実行して、Build_net48 / Build_netcore100 をベンダする。この Download→Build→ベンダを1本のセットアップ スクリプトに生成して実行する（.bat より PowerShell ラッパを推奨。非対話実行の落とし穴を回避）。net48 / .NET 10.0 両対応。基盤ビルド / DLL 生成 / アセンブリのベンダ / OpenTouryoAssemblies / タグ更新で焼き直し / 再ビルド を伴う作業のときに使う。新規立ち上げ全体は opentouryo-project-setup（このスキルはその ③ の実装）、親クラス2 のカスタマイズは opentouryo-base2-customize。"
+description: "OpenTouryo の基盤（フレームワーク）DLL をローカルでビルドし、導入リポジトリの OpenTouryoAssemblies\\ へベンダするための手順。GitHub から指定 <ref>（固定タグ または develop）の ZIP を取得し、root/programs/CS の 2_/3_Build_* バッチを標的ランタイム分だけ実行して、Build_net48 / Build_netcore100 をベンダする。この Download→Build→ベンダを1本のセットアップ スクリプトに生成して実行する（.bat より PowerShell ラッパを推奨。非対話実行の落とし穴を回避）。net48 / net10.0 両対応。基盤ビルド / DLL 生成 / アセンブリのベンダ / OpenTouryoAssemblies / タグ更新で焼き直し / 再ビルド を伴う作業のときに使う。新規立ち上げ全体は opentouryo-project-setup（このスキルはその ③ の実装）、親クラス2 のカスタマイズは opentouryo-base2-customize。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -31,7 +31,7 @@ metadata:
 | 入力 | 意味 |
 | --- | --- |
 | `<ref>` | 取得元。**固定タグ**（安定運用。具体的なタグは**ユーザに確認**。`03-20` はあくまで例示で既定値ではない）または **`develop`**（最新追従）。呼び出し元／ユーザが決める |
-| 標的ランタイム | net48 / .NET 10.0 / 両方。**選んだサンプルが対象とするランタイムだけ**をビルドする |
+| 標的ランタイム | net48 / net10.0 / 両方。**選んだサンプルが対象とするランタイムだけ**をビルドする |
 | `base2-overlay/` の有無 | 親クラス2 をカスタマイズしているか（あれば固定タグ必須。後述） |
 
 ## 1. ZIP 取得（`git clone` ではない）
@@ -75,7 +75,7 @@ PowerShell の `WebClient.DownloadFile()` で
 call .\2_Build_NuGet_net48.bat    < nul
 call .\3_Build_Business_net48.bat < nul
 
-# .NET 10.0 標的はこの2本だけ
+# net10.0 標的はこの2本だけ
 call .\2_Build_NuGet_netcore100.bat    < nul
 call .\3_Build_Business_netcore100.bat < nul
 ```
@@ -97,7 +97,7 @@ Business.RichClient も含め**全部ビルドされる**。本スキルは標�
 （親クラス2 を 2CS カスタマイズする場合も同じ sln。`opentouryo-base2-customize`）。→ **RichClient 系サンプルなら ③ に
 このビルドを足す**（`examples.md` の 2b＝`setup-build-richclient.ps1` 相当。フル一式で回すなら不要）。
 
-**★ netcore は欠落範囲がさらに広い（実測・03-20/.NET10）。** `net10.0-windows7.0` では、標準 `2_/3_Build_netcore100`
+**★ netcore は欠落範囲がさらに広い（実測・03-20/net10.0）。** `net10.0-windows7.0` では、標準 `2_/3_Build_netcore100`
 直後の `Build_netcore100\net10.0-windows7.0\` に **`OpenTouryo.Business` と `Dam*`（`DamManagedOdp`/`DamMySQL`/`DamPstGrS`）
 まで無い**（`net10.0\` 側にはある）。`3_Build_BusinessRichClient_netcore100.bat` がこれらと `Business.RichClient` を
 まとめて生成するので、**`net10.0-windows7.0\` フォルダを丸ごと再ベンダ**する（`Business.RichClient.dll` だけ拾うと

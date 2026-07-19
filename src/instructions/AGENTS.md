@@ -77,7 +77,7 @@ Git 操作は人が手動で行う。
 <!-- TODO: OpenTouryo 本体のバージョンと IDE を埋める。ランタイムは確定済み。 -->
 
 - OpenTouryo: TODO
-- ランタイム: .NET Framework 4.8（net48）/ .NET 10.0
+- ランタイム: net48 / net10.0
 - IDE: TODO
 
 ランタイムで書き方が変わる箇所がある（差異は各スキルに記述）。主な差異：XML 定義ファイルは共通、
@@ -129,7 +129,7 @@ B層  --new LayerD(this.GetDam()) / new CmnDao(this.GetDam())-->  D層
 - **P層 → B層は `CallController.Invoke()`。** 直接 `new` せず**サービス論理名**を渡す（URL や
   クラス名ではない）。実体解決は定義ファイルが行い、インプロセス⇄Web サービスをコード無変更で
   切り替えられる（`opentouryo-transmission`）。**ただしリモート（Web サービス）は net48 専用**、
-  `.NET 10.0` はインプロセスのみ（`BinarySerialize` が core に無い）
+  `net10.0` はインプロセスのみ（`BinarySerialize` が core に無い）
 - **B層 → D層は `this.GetDam()` を渡して Dao を生成する。** 接続・トランザクションは B層が持つ
   （D層は自前で接続を開かない）
 - **P層から D層を直接呼ばない**（トランザクション境界は B層）。層をまたぐ引数・戻り値は
@@ -238,7 +238,7 @@ TODO
 
 <!-- TODO: このプロジェクト固有の具体的なコマンドを埋める。ランタイム別の一般則は下記。 -->
 
-- ビルド: net48 は msbuild（非 SDK csproj・VS Build Tools 前提）、.NET 10.0 は `dotnet build`
+- ビルド: net48 は msbuild（非 SDK csproj・VS Build Tools 前提）、net10.0 は `dotnet build`
 - テスト: TODO
 - 実行: TODO
 

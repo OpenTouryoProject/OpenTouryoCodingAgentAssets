@@ -1,6 +1,6 @@
 ---
 name: opentouryo-layer-p-webforms-screen
-description: "OpenTouryo の P層を ASP.NET Web Forms（.NET Framework 4.8）で新規作成する。画面コードクラス（.aspx.cs、MyBaseController の派生）の作り方、クラス階層（BaseController / MyBaseController）、ページロード処理の UOC メソッド（UOC_FormInit / UOC_FormInit_PostBack は実装必須）、UOC_CMN 系との分界、this.UserInfo / ContentPageFileNoEx / GetMasterWebControl などの使えるメンバ、Forms 認証とログイン画面（IsNoSession / FxSessionAbandon）・ログアウトを扱う。Web Forms / aspx / 画面作成 / コンテンツページ / マスタページ / ページロード / ログイン画面 を伴う作業のときに使う。コントロールのイベント実装は opentouryo-layer-p-webforms-event、B層呼び出しは opentouryo-p-call-business を使う。"
+description: "OpenTouryo の P層を ASP.NET Web Forms（net48）で新規作成する。画面コードクラス（.aspx.cs、MyBaseController の派生）の作り方、クラス階層（BaseController / MyBaseController）、ページロード処理の UOC メソッド（UOC_FormInit / UOC_FormInit_PostBack は実装必須）、UOC_CMN 系との分界、this.UserInfo / ContentPageFileNoEx / GetMasterWebControl などの使えるメンバ、Forms 認証とログイン画面（IsNoSession / FxSessionAbandon）・ログアウトを扱う。Web Forms / aspx / 画面作成 / コンテンツページ / マスタページ / ページロード / ログイン画面 を伴う作業のときに使う。コントロールのイベント実装は opentouryo-layer-p-webforms-event、B層呼び出しは opentouryo-p-call-business を使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -11,7 +11,7 @@ metadata:
 
 ## このスキルの適用範囲
 
-**画面コードクラス（`.aspx.cs`）を新規に作る。** **.NET Framework 4.8 のみ**（Web Forms は Core に無い）。
+**画面コードクラス（`.aspx.cs`）を新規に作る。** **net48 のみ**（Web Forms は Core に無い）。
 
 - コントロールのイベント実装 → `opentouryo-layer-p-webforms-event`
 - B層の呼び出し → `opentouryo-p-call-business`

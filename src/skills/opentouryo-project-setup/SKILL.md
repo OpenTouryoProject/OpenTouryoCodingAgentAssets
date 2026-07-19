@@ -1,6 +1,6 @@
 ---
 name: opentouryo-project-setup
-description: "OpenTouryo を使う新規プロジェクトをゼロから立ち上げる（セットアップ）ときの入口＝ファサード。手順を順序で4スキルに分け、全体の流れと呼び出し順だけをここで示す：①②サンプル選択・取得元＝opentouryo-project-setup-selection、③基盤ビルドとベンダ＝opentouryo-project-setup-build、④⑤取り出しと参照張り替え＝opentouryo-project-setup-core、⑥⑦resource 移設・config・検証＝opentouryo-project-setup-config。net48 / .NET 10.0 の両対応。プロジェクト作成 / セットアップ / 新規立ち上げ / サンプルから始める / 参照設定 / DLL 参照 / OpenTouryoAssemblies を伴う作業の入口に使う。既存プロジェクトでコードを書くのは各層スキル、構成キーの詳細は opentouryo-config を使う。"
+description: "OpenTouryo を使う新規プロジェクトをゼロから立ち上げる（セットアップ）ときの入口＝ファサード。手順を順序で4スキルに分け、全体の流れと呼び出し順だけをここで示す：①②サンプル選択・取得元＝opentouryo-project-setup-selection、③基盤ビルドとベンダ＝opentouryo-project-setup-build、④⑤取り出しと参照張り替え＝opentouryo-project-setup-core、⑥⑦resource 移設・config・検証＝opentouryo-project-setup-config。net48 / net10.0 の両対応。プロジェクト作成 / セットアップ / 新規立ち上げ / サンプルから始める / 参照設定 / DLL 参照 / OpenTouryoAssemblies を伴う作業の入口に使う。既存プロジェクトでコードを書くのは各層スキル、構成キーの詳細は opentouryo-config を使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -18,7 +18,7 @@ metadata:
 - 既存プロジェクトでコードを書く → 各層スキル（`opentouryo-layer-*` / `opentouryo-p-*` ほか）
 - 構成ファイル・設定キーの詳細 → `opentouryo-config`
 
-**両ランタイム対応**（.NET Framework 4.8 / .NET 10.0）。エージェントが全工程を実行する。
+**両ランタイム対応**（net48 / net10.0）。エージェントが全工程を実行する。
 
 ## 全体の流れ（7ステップ ＝ 4スキル）
 
@@ -81,6 +81,6 @@ metadata:
   （`opentouryo-project-policy` / `opentouryo-base2-customize`）。導入プロジェクトはビルド済み DLL を参照するだけ
 - **作業ツリー `Temp/`（基盤ソース＝親クラス2 を含む）をコミットする** — `.gitignore` で除外する（⑦）
 - **Download→Build→ベンダをアドホックなコマンド羅列で済ませる** — スクリプト化して残す（③）
-- **net48 サンプルを .NET 10.0 で、または Web Forms を core で使おうとする** — ランタイム対象外
+- **net48 サンプルを net10.0 で、または Web Forms を core で使おうとする** — ランタイム対象外
 
 各工程固有の禁止事項は、それぞれのサブスキルに置く。
