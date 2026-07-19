@@ -65,9 +65,9 @@ variant の csproj を見て分岐する**（実測：Win/WPF/WinCone は WS 依
   config も app.config に絶対 resource パスが無ければ張替不要（Win2 は該当キー無し・ローカル Content の XML は出力コピー）。
   ※ただし `Business.RichClient` は参照するので ③ の RichClient 追加ビルドは要る（**WS 軸と RichClient 軸は別**）。
 
-**実ビルドで通したのは `WSClientWin_sample`（タグ 03-20）**。`WSClientWPF_sample`/`WSClientWinCone_sample` はミラーで WS 依存を
-確認済みだが未ビルド（構造は同型）。以下は「3層WSクライアント」と判定した variant の手順。②の取り出しとサンプル間
-ProjectReference 化は上の (A) 節、①③は下記。
+**実ビルドで通したのは `WSClientWin_sample`・`WSClientWPF_sample`（タグ 03-20・ともに 0 error/0 warning）**。
+`WSClientWinCone_sample` は未検証（ミラーで WS 依存は確認済み・構造は同型）。以下は「3層WSクライアント」と判定した
+variant の手順。②の取り出しとサンプル間 ProjectReference 化は上の (A) 節、①③は下記。
 
 ### ① クライアント（WSClientWin/WPF/WinCone）
 1. **配置**：`WS_sample\` をリポ直下に置き（他サンプル同様 `Samples\` 段は落とす）、**`WS_sample\` の内部階層
@@ -78,8 +78,9 @@ ProjectReference 化は上の (A) 節、①③は下記。
    は **DLL 参照**で 元 `..\..\..\..\Frameworks\Infrastructure\Build\` → **`..\..\..\OpenTouryoAssemblies\Build_net48\`**（3階層）。
    **`WSServer_sample`/`WSIFType_sample` は ProjectReference**（旧 `..\..\Build\*.dll` の DLL 参照を削除し `.csproj` へ。(A)2）。
 3. **⑥⑦ config は app.config に絶対 resource パスが在るキーを** `%OT_RESOURCE_ROOT%` 化する（**variant により該当キーの
-   有無・数が違う**＝csproj/app.config を見て判断）。`WSClientWin_sample` は該当2キー＝`SqlTextFilePath`→`%OT_RESOURCE_ROOT%\Sql`・
-   `SpRp_RsaCerFilePath`→`%OT_RESOURCE_ROOT%\X509\SHA256RSA_Server.cer`。**`FxXML*`（XML 定義）は `EmbeddedResource`＝張替不要**。
+   有無・数が違う**＝app.config を見て判断。実測：Win=2・WPF=1・Win2=0 とバラける）。`WSClientWin_sample` は2キー＝
+   `SqlTextFilePath`→`%OT_RESOURCE_ROOT%\Sql`・`SpRp_RsaCerFilePath`→`%OT_RESOURCE_ROOT%\X509\SHA256RSA_Server.cer`、
+   `WSClientWPF_sample` は `SqlTextFilePath` の1件のみ（`SpRp_Rsa` 無し）。**`FxXML*`（XML 定義）は `EmbeddedResource`＝張替不要**。
 
 ### ③ WS ホスト `Frameworks\Infrastructure\ServiceInterface` も引き込む（実動の必須要素・見落とし注意）
 **これが無いとクライアントは通信相手が居ない。**`ServiceInterface` 配下の**ホスト アプリ**を引き込んで建てる。これは
@@ -106,9 +107,14 @@ ProjectReference 化は上の (A) 節、①③は下記。
   の HintPath / `.targets` インポートは **csproj 相対 `packages\...`**（`Microsoft.Data.SqlClient.SNI.targets` 等）。
   → **`nuget restore <asp>\packages.config -PackagesDirectory <asp>\packages` で project 直下へ別途復元**する（実測。
   さもないと `.targets` 不明でビルド失敗）。
-- **`.sln` は 3層一式の `<派生>_sample_all.sln` を使う**（client＋WCFService＋ASPNETWebService。**ProjectReference のため
-  `WSIFType_sample`・`WSServer_sample` も同ソリューションに含める**＝無ければ追加。**追加行は既存行のインデントに合わせる**
-  ＝このサンプルの `ProjectConfigurationPlatforms` は**タブ2個**）。※先の版で「`_all.sln` 削除・単一 sln」としたのは誤り。
+- **`.sln`＝3層一式の `_all.sln`。ただし源の `_all.sln` は全 variant で client＋WCFService＋ASPNETWebService の3プロジェクトのみ**
+  （WSServer/WSIFType を含まず・client 側は `..\..\Build\*.dll` の DLL 参照）＝**ProjectReference 化には WSServer/WSIFType の
+  2プロジェクト追加が必須**。さらに **`SolutionConfigurationPlatforms` が variant で違う**（実測：Win/WinCone＝8種
+  〔Debug/Release × .NET/Any CPU/Mixed/x86〕、WPF＝4種〔Debug/Release × Any CPU/x86〕）。
+  → **推奨手順：既に動く 5プロジェクトの `_all.sln`（repo 内の別 WS client）を雛形にコピーし、client の project 行
+  （名前・パス・GUID）だけ差し替える**（共有4プロジェクト＝WCFService/ASPNETWebService/WSServer/WSIFType は GUID・パスを
+  そのまま流用）。**最初の WS client で雛形が無いときだけ**、源の3プロジェクト `_all.sln` に WSServer/WSIFType を追加＋client の
+  DLL 参照を ProjectReference 化する（追加行は既存インデント＝タブに合わせる）。※先の版で「`_all.sln` 削除・単一 sln」としたのは誤り。
 
 ### 到達点
 - **セットアップの到達点＝5プロジェクトが開けて 0 error でビルドできる**（クライアント〔P〕＋WSServer〔B・D〕＋WSIFType〔型〕
