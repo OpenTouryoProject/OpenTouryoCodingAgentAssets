@@ -52,6 +52,20 @@ Git 操作は人が手動で行う。
   必要になったら install.ps1 に設定の配布を追加することを検討する。
 -->
 
+### マシン/ユーザ全体に残る変更は `SETUP-CHANGES.md` に記録する
+
+セットアップ等で**リポジトリの外＝マシン/ユーザ全体に残る変更**を行ったら、対象リポジトリ直下の
+**`SETUP-CHANGES.md`** に追記する（`種別 ／ 対象 ／ 値 ／ 実施日 ／ 巻き戻し方法`）。監査と巻き戻しのため。
+`SETUP-CHANGES.md` はコミットする（`.gitignore` で除外しない）。**AGENTS.md 自体には書かない**
+（インストーラが再生成で上書きするため）。対象となる変更の例：
+
+- **環境変数**（例：`OT_RESOURCE_ROOT` を User に設定 → 削除で戻す）
+- **Windows サービスの起動**（例：ASP.NET State Service → `aspnet_state-stop.bat` で停止）
+- **リポジトリ外のファイル/ディレクトリ**（例：短い作業ルート `C:\otr\` の作成 → 削除可）
+- **PATH / レジストリ / ソフトウェア導入**（例：long path 有効化 `LongPathsEnabled=1` → `0`、VS Build Tools 導入）
+
+これらを伴うスキル：`opentouryo-project-setup-build`（③）／`opentouryo-project-setup-config`（⑥⑦）／`opentouryo-base2-customize`。
+
 ### その他のポリシー
 
 <!-- TODO: レビュー体制、ブランチ運用、成果物の扱いなど、プロジェクト固有のルールを追記する。 -->

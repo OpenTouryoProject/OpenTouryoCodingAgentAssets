@@ -40,6 +40,7 @@ PowerShell の `WebClient.DownloadFile()` で
 `obj\...\MyBusinessApplicationExceptionMessageResource.ja-JP.resources` の完全修飾パスが 260 文字を超える。
 → **深いリポでは短い作業ルート（例 `C:\otr\`）でビルドする**か、long path を有効化する。**ベンダ後の DLL だけが
 リポに入る**ので、作業ツリーの場所はリポジトリと無関係でよい（リポ直下に置くなら `Temp\` は ⑦ の `.gitignore` で除外）。
+**リポ外 `C:\otr\` の作成や long path 有効化（`LongPathsEnabled` レジストリ）はマシン全体の変更＝`SETUP-CHANGES.md` に記録**（AGENTS.md ポリシー）。
 
 ### ★ 親クラス2 をカスタマイズするなら、短ルートの展開ツリーをワークスペースに加えて直接いじる（コピーバックは廃止）
 

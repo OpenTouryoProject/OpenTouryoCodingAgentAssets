@@ -55,12 +55,23 @@ dotnet run --project "<repo>\MVC_Sample_Core\MVC_Sample" --urls http://localhost
 Web ではないので HTTP スモークは無い。**exe を起動してプロセスが生存する（起動時クラッシュしない）ことを確認**する
 （初期化で resource/config・log4net を読むため、設定ミスは起動時例外として出る＝ここが検証点）。
 
-**合否基準**：起動して**数秒生存すれば startup OK**（初期化例外を通過）。即時終了・未処理例外ダイアログは NG＝
-resource/config を疑う。ログイン/CRUD など**DB 依存操作の合否は SQL Server 前提**なので、DB 未用意なら「起動生存」までで可。
+**合格基準**：exe を **`OT_RESOURCE_ROOT` を渡して起動**し、**数秒（目安 5–7s）プロセスが生存**して初期画面
+（ログイン等）が出れば **startup OK**（初期化＝resource/config 解決を通過）。起動直後に異常終了・未処理例外ダイアログは
+**NG**＝resource/config・参照解決の失敗を疑う（stderr / イベントログ）。
+**このスモークで見ないもの（対象外）**：ログイン以降の **DB 依存操作**（`SqlTextFilePath` の SQL 実行・接続文字列先の
+SQL Server(Northwind) 等）。DB 未起動で業務操作が失敗しても**セットアップの不備ではない**（Web の `/Ping`・Crud が
+DB 前提でタイムアウトするのと同じ扱い）。
 
-- 起動：net48＝`bin\Debug\<app>.exe`、core＝`dotnet run --project <proj>`（`net10.0-windows7.0`＝Windows 専用）。
-- `OT_RESOURCE_ROOT` をプロセスに渡す（未設定だと起動時に resource 解決失敗）。
-- **DB 依存操作は SQL Server 前提**（サンプルの接続文字列は SQL Server / Northwind）。ログイン・CRUD を試すなら DB を用意する。
-  起動生存だけの確認なら DB は不要なことが多い。
+- exe の場所：net48＝`bin\Debug\<app>.exe`、core＝`bin\Debug\net10.0-windows7.0\<app>.exe`（`dotnet run --project <proj>` でも可）。
+- **非対話チェック**（起動生存を機械判定）：
+
+  ```powershell
+  $env:OT_RESOURCE_ROOT = "<repo>\resource"
+  $p = Start-Process "<exe>" -PassThru
+  Start-Sleep -Seconds 6
+  if ($p.HasExited) { throw "起動直後に終了（startup NG）＝resource/config を確認" }
+  $p.Kill()   # 生存＝startup OK
+  ```
+
 - **3層リッチクライアント（`WSClient_*`）は WS サーバ側の起動も要る**（構成 (A)。`opentouryo-project-setup-core` /
   その `samples/webservices.md`）。

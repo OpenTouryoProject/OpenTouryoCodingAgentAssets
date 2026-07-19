@@ -37,7 +37,8 @@ metadata:
 - **セッション状態は `StateServer` のまま残す**（`InProc` に変えない）。StateServer は**セッションを
   シリアライズ可能に保ち、後の変更（out-of-proc 化・スケールアウト）が効く**（InProc にすると失う）。net48 は
   **ASP.NET State Service を起動**して使う（`root\files\bat\aspnet_state-stat.bat` で起動。未起動だと実行できない
-  ＝ビルドは通る）。**core は StateServer 非対応**なので必要なら Redis 等。
+  ＝ビルドは通る。**サービス起動はマシン全体の変更＝`SETUP-CHANGES.md` に記録**〔停止は `aspnet_state-stop.bat`〕）。
+  **core は StateServer 非対応**なので必要なら Redis 等。
 - ビルドが通り、実行できることを確認する（net48＝msbuild／core＝`dotnet build`）。**ビルド成功＝動く、ではない**
   （初期化は `%OT_RESOURCE_ROOT%` を読むので実行して初めて ⑥ の成否が分かる）。WebForms の IIS Express 実行確認
   （SSL 回避・スモーク・500 の見方）は `references/run-verify.md`
