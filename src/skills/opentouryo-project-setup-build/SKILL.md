@@ -101,7 +101,14 @@ Business.RichClient も含め**全部ビルドされる**。本スキルは標�
 直後の `Build_netcore100\net10.0-windows7.0\` に **`OpenTouryo.Business` と `Dam*`（`DamManagedOdp`/`DamMySQL`/`DamPstGrS`）
 まで無い**（`net10.0\` 側にはある）。`3_Build_BusinessRichClient_netcore100.bat` がこれらと `Business.RichClient` を
 まとめて生成するので、**`net10.0-windows7.0\` フォルダを丸ごと再ベンダ**する（`Business.RichClient.dll` だけ拾うと
-`OpenTouryo.Business` で `CS0246` が残る）。**net48 は TFM 分岐が無く、欠けるのは `Business.RichClient` のみ**。
+`OpenTouryo.Business` で `CS0246` が残る）。**net48 は TFM 分岐が無く、欠けるのは `Business.RichClient` のみ**
+（ただし `CustCtrl_sample` を使うなら加えて `CustomControl.RichClient`＝次項）。
+
+**★ `CustCtrl_sample`（WinForms カスタムコントロール デモ・net48）は `OpenTouryo.CustomControl.RichClient` も要る（実測）。**
+標準ベンダ `Build_net48\` には **WebForms 版 `OpenTouryo.CustomControl.dll` しか無い**ことがあり、WinForms 版
+`OpenTouryo.CustomControl.RichClient.dll` が漏れる（`Business.RichClient` と同型の第2例）。**どの `.sln` にも含まれない**ので、
+`Frameworks\Infrastructure\CustomControl\RichClient\CustomControl.RichClient_net48.csproj` を**単体ビルド**して `Build_net48\` へ
+ベンダする（`.dll`/`.pdb`/`.xml`）。**netcore 側は元々揃っている**（net48 のみの漏れ）。
 
 ### エージェント/CI では PowerShell ラッパを既定にする（推奨）
 

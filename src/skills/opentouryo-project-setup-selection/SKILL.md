@@ -41,6 +41,8 @@ CLI を選んだら **net10.0（`Samples4NetCore\Legacy\CLI_sample\`）** を起
 → これらを選んだら「同一ランタイムは ③ 流用でスキップ可」の例外＝**③ に RichClient 追加ビルドが必須**
 （`opentouryo-project-setup-build`）。バッチ・CLI・MVC・Web Forms は不要。**netcore は `net10.0-windows7.0\` の
 `Business`/`Dam*` ごと欠けるのでフォルダ丸ごと再ベンダ**（net48 は `Business.RichClient` のみ）。
+**★ `CustCtrl_sample`（2CS 機能デモ）はさらに `OpenTouryo.CustomControl.RichClient`（WinForms 版）も要る**＝net48 の
+標準ベンダに漏れがち（`CustomControl.RichClient_net48.csproj` を単体ビルド。netcore は揃う。詳細は build スキル）。
 
 **WPF 2CS は WinForms 2CS とほぼ同一手順**（実測）：デスクトップ exe・RichClient 基盤要・取り出し／参照張替は同じで、
 config は `SqlTextFilePath` の1点張替で足りることが多い（④⑤＝`opentouryo-project-setup-core`、⑥⑦＝`-config`）。

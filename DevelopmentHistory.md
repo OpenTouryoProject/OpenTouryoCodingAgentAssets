@@ -419,6 +419,8 @@ APIリファレンスで足りる）。
 
 | 命名規則の `_Core` 判定を「実衝突」→「net48 版の存在（固定属性）」に明確化（作者質問・**2026-07-19**） | 「net48 と衝突するときだけ `_Core`」が (a) repo 内で実際に今ぶつかる時 か (b) そのサンプルに net48 版が存在する時 か曖昧との指摘。→ **(b) に確定**（(a) は順序依存＝core を先に入れると無印で置き→後で net48 追加時に既存 core を改名する判断が発生＝方針「判断させない」に反する）。**判定材料＝そのサンプルが net48（`Samples\`）にも在るか、という選択時点で確定する固定属性**。core は net48 を repo に入れる前から `_Core`、順序不問・後改名なし。.NET10 のみ（Simple_CLI＝net48 版なし）は無印。facade の該当箇所を「net48 版が“存在する”とき（両ランタイム対応サンプル）／repo にいま入れたかは無関係」と書き換え |
 
+| 2CS 機能デモ7本 完了＋新規落とし穴〔CustCtrl は `CustomControl.RichClient`（WinForms 版）が標準ベンダに漏れ〕（作者報告・**2026-07-20**。7本 0 error） | CustCtrl/GenDaoAndBatUpd/TimeStamp（net48＋_Core）＋AsyncEvent（net48・WinForms/WPF の2 exe）を取り出し。**新規（重要）＝CustCtrl は `OpenTouryo.CustomControl.RichClient`（WinForms 版）を参照**するが、標準ベンダ `Build_net48\` には **WebForms 版 `OpenTouryo.CustomControl.dll` しか無い**ことがあり漏れる（`Business.RichClient`＝H と同型の**第2の RichClient 欠落**）。ミラー確認：`Frameworks\Infrastructure\CustomControl\RichClient\CustomControl.RichClient_net48.csproj` は実在するが**どの `.sln` にも含まれない**＝標準サブセットで出ない → **csproj 単体ビルドして `Build_net48\` へベンダ**（`.dll`/`.pdb`/`.xml`）。**netcore は元々揃う**（net48 のみの漏れ）。→ **build SKILL** の ③ RichClient 節に第2例として追記（tok~4565）、**selection** の RichClient 注記にも CustCtrl 用の一言（tok~2934）。**裏付け**：ZIP サブフォルダ取りこぼし（Dao/Business/Common/Properties 欠落）を **④の Include 照合（毎回必須）で検出**＝当該手順が再度奏功。⑥ resource 移設は不要（デモは埋め込み or `.\Dao` で自己完結＝「絶対パスが在るキーだけ張替」通り0件）。AsyncEvent は2 exe 構成で HintPath 2階層（`..\..\`） |
+
 ### 4.4 作者から得た情報（コードからは読めない）
 
 **これらは実装を読んでも分からない。** 失うと再取得できない。
