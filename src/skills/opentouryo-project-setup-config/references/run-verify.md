@@ -58,10 +58,9 @@ Web ではないので HTTP スモークは無い。**exe を起動してプロ�
 **合格基準**：exe を **`OT_RESOURCE_ROOT` を渡して起動**し、**数秒（目安 5–7s）プロセスが生存**して初期画面
 （ログイン等）が出れば **startup OK**（初期化＝resource/config 解決を通過）。起動直後に異常終了・未処理例外ダイアログは
 **NG**＝resource/config・参照解決の失敗を疑う（stderr / イベントログ）。
-**このスモークで見ないもの（対象外）**：ログイン以降の **DB 依存操作**（`SqlTextFilePath` の SQL 実行・接続文字列先の
-SQL Server(Northwind) 等）。DB 未起動で業務操作が失敗しても**セットアップの不備ではない**（Web の `/Ping`・Crud が
-DB 前提でタイムアウトするのと同じ扱い）。DB 依存まで確認したいなら、選択式 `opentouryo-project-setup-db` で
-Docker 一式を立てられる（既定が SQL Server/Northwind と一致）。
+**DB 依存操作は条件付き**（`SqlTextFilePath` の SQL 実行・接続文字列先の SQL Server(Northwind) 等）：**DB があれば
+結果（件数など）まで確認する**／**無ければ対象外**（未起動の失敗は Web の `/Ping`・Crud の DB 前提タイムアウトと同扱いで、
+セットアップの不備ではない）。DB は選択式 `opentouryo-project-setup-db` で立てられる（既定が SQL Server/Northwind と一致）。
 
 - exe の場所：net48＝`bin\Debug\<app>.exe`、core＝`bin\Debug\net10.0-windows7.0\<app>.exe`（`dotnet run --project <proj>` でも可）。
 - **非対話チェック**（起動生存を機械判定）：
@@ -76,3 +75,15 @@ Docker 一式を立てられる（既定が SQL Server/Northwind と一致）。
 
 - **3層リッチクライアント（`WSClient_*`）は WS サーバ側の起動も要る**（構成 (A)。`opentouryo-project-setup-core` /
   その `samples/webservices.md`）。
+
+## バッチ / CLI（コンソール）＝ exe（引数あり）
+
+- **実行前にサンプルの `readme.txt` で必要なコマンド引数を確認する。** バッチ/CLI は**引数必須**のことがあり、
+  無引数だと `Program.cs` の `argsDic["/DAP"]` 等で **`KeyNotFoundException`**（一見「実行失敗」だが実体は引数不足）。
+  例：`SimpleBatch_sample` は `readme.txt` に `/Dap SQL /Mode1 individual /Mode2 static /EXROLLBACK -`。
+- **合格基準**：引数を与えて起動し、**framework 初期化（log4net 等）＋業務ロジック到達＝OK**（標準出力に処理結果、
+  例「3件のデータがあります」）。**DB があれば結果（件数）まで確認**／無ければ初期化＋到達まで（上の「DB 依存は条件付き」）。
+- **★ exit code で判定しない。** サンプルは末尾で `Console.ReadKey()` を呼ぶため、**非対話（stdin リダイレクト）だと
+  成功分岐でも `InvalidOperationException` で exit code が非ゼロ**になる（業務処理は成功済み＝サンプルコード都合）。
+  **成否は標準出力で判定**する（`< nul` で stdin を与えても ReadKey 例外は避けられない。出力で見る）。
+

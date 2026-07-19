@@ -21,6 +21,11 @@ metadata:
 再セットアップに使う）。模範：MultiPurposeAuthSite の `root/programs/3_BuildLibsAtOtherRepos.bat`
 （固定タグ）/ `3_BuildLibsAtOtherReposInTimeOfDev.bat`（develop）。
 
+**生成した `.ps1` は `scripts/` フォルダに置く**（リポジトリ ルート直置きにしない＝ルートが散らかる）。
+**スクリプト内の `$repo` はルート＝スクリプトの親**にする：`$repo = Split-Path -Parent $PSScriptRoot`
+（`$PSScriptRoot` は `scripts\` 自身を指すため。相対 `HintPath` やベンダ先はルート基準なので親を採る）。
+`$PSScriptRoot` 基準なので**どのカレントディレクトリからでも実行可**（`.ps1` として実行すること・`scripts\` はルート直下1階層）。
+
 ### 入力
 
 | 入力 | 意味 |
@@ -155,7 +160,7 @@ Community/Professional/Enterprise を網羅）。VS18 の BuildTools/Professiona
 
 - **`git clone` で取ってくる** — ZIP 取得（`archive/<ref>.zip`）にする。作業ツリーはコミットしない
 - **標的でないランタイムまでビルドする** — 標的サンプルのランタイム分だけ回す（両対応が要るときだけ4本）
-- **アドホックなコマンド羅列で済ませる** — スクリプト化してリポジトリに残す
+- **アドホックなコマンド羅列で済ませる** — スクリプト化して **`scripts/` に**残す（ルート直置きにしない）
 - **作業ツリー `Temp/`（基盤ソース＝親クラス2 を含む）をコミットする** — `.gitignore` で除外
 - **`base2-overlay` があるのに `develop` で焼く** — 固定タグにする（再現性）
 - **★ 親クラス2 をカスタマイズするのに、短ルートの展開ツリーをワークスペースに入れない** — 基盤ソースは

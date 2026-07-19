@@ -6,6 +6,14 @@
 WS の `bin\Debug` → `WS_sample\Build\` 配置、**2CS＝`Business.RichClient` の別 sln**、
 **ツールの `PackageReference` restore**）を織り込み済み。
 
+**これらは `scripts/` フォルダに置く**（ルート直置きにしない）。そのため各スクリプトの `$repo` は
+**スクリプトの親＝リポジトリ ルート**を指す（`$repo = Split-Path -Parent $PSScriptRoot`。`$PSScriptRoot` は `scripts\` 自身）。
+
+`$PSScriptRoot` は**スクリプト ファイルの場所**を指し**カレントディレクトリに依存しない**ので、
+`cd scripts; .\setup-build.ps1` でもルートから `.\scripts\setup-build.ps1` でも同じく動く。ただし
+**(1) `.ps1` ファイルとして実行する**（コンソールへ貼り付け実行だと `$PSScriptRoot` が空＝`$repo` が壊れる。dot-source は可）／
+**(2) `scripts\` はリポジトリ ルート直下の1階層**に置く（`Split-Path -Parent` が1階層だけ上がる前提。深くしない）。
+
 **雛形化する際は `$ref`・パス・標的ランタイム（net48）をパラメタ化**する。フラット化しない
 （配置維持）方針なら相対パスは配置に合わせて変える。**as-built の雛形なので、環境に合わせて調整する**
 （Configuration・restore 方式・msbuild 解決など）。
@@ -23,7 +31,7 @@ WS の `bin\Debug` → `WS_sample\Build\` 配置、**2CS＝`Business.RichClient`
 # Download archive/<ref>.zip -> build net48 base -> vendor to
 # OpenTouryoAssemblies\Build_net48. Idempotent; re-run to refresh a tag.
 $ErrorActionPreference = 'Stop'
-$repo    = $PSScriptRoot
+$repo    = Split-Path -Parent $PSScriptRoot   # scripts\ に置く前提＝親がリポジトリ ルート
 $ref     = '03-20'                       # fixed tag; set per project (ask the user which tag; not a default)
 # Base build runs from a SHORT root (C:\otr), not <repo>\Temp: the legacy
 # net48 Business build writes a very long generated .resources filename;
@@ -110,7 +118,7 @@ net48 版と同型で、回すバッチが `*_netcore100` になる。**混在�
 
 ```powershell
 $ErrorActionPreference = 'Stop'
-$repo    = $PSScriptRoot
+$repo    = Split-Path -Parent $PSScriptRoot   # scripts\ に置く前提＝親がリポジトリ ルート
 $ref     = '03-20'                       # net48 と同じタグに揃える（ask the user; not a default）
 $work    = 'C:\otr'
 $extract = Join-Path $work "OpenTouryo-$ref"
@@ -176,7 +184,7 @@ if ($needRichClient -and
 #   3. (optional) build the dev tools taken out under Tools\
 # Prereq: run setup-build.ps1 once first (populates OpenTouryoAssemblies\).
 $ErrorActionPreference = 'Stop'
-$repo = $PSScriptRoot
+$repo = Split-Path -Parent $PSScriptRoot   # scripts\ に置く前提＝親がリポジトリ ルート
 
 # --- resolve msbuild (VS 2019/2022/18) via vswhere ---
 $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
