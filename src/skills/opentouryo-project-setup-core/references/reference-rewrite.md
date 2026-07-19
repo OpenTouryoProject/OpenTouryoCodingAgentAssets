@@ -45,6 +45,13 @@ net48 は 3rd-party＝`packages.config` が典型だが、**非SDK net48 csproj 
 復元しないと `using Microsoft.Data.SqlClient;` が `CS0234` になる（＝参照欠落に見えるが実体は復元漏れ。ベンダ先 DLL への
 HintPath 追加でも compile は通るが、`Microsoft.Data.SqlClient` は SNI ネイティブを要するので restore が正道）。
 
+## 非SDK csproj を直ビルドするなら `Platform` に注意（`Any CPU` ≠ `AnyCPU`）
+
+非SDK net48 csproj を **`.csproj` 直叩き**で `msbuild X.csproj /p:Platform="Any CPU"` すると **「OutputPath が設定されていません」で失敗**する
+ことがある（実測）。csproj の `PropertyGroup` 条件は **`'$(Platform)'=='AnyCPU'`（空白なし）** で書かれており、`Any CPU`（空白あり）だと
+どの条件にも当たらず `OutputPath` 未定義になるため。→ **`.sln` 経由でビルドする**（sln が `Any CPU`↔`AnyCPU` を解決する）か、
+直叩きなら **`/p:Platform=AnyCPU`（空白なし）** を渡す。
+
 ## 深いリポは MAX_PATH(260)
 
 `Samples\WebApp_sample\...` の相対配置を保つと、`nuget restore` がパッケージ内部の深いパス

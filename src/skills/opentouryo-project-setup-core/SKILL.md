@@ -18,11 +18,12 @@ metadata:
 対象サンプルのフォルダを新規リポジトリへコピーする。**`LayerB.cs` / `LayerD.cs` は
 サンプルに同梱されたソース**なので、それごと取り出す（別 DLL ではない）。
 
-**★ 取り出し後、csproj の `<Compile>`/`<EmbeddedResource>`/`<None>`/`<Content>` の `Include` を実ファイルと突き合わせて
-欠落確認する（毎回必須）**：ZIP の**サブツリーだけを選択展開**すると、下位フォルダの単一ファイル
-（例 `Properties\AssemblyInfo.cs`、ClickOnce の `.pfx`/`app.manifest`）を取りこぼすことがある＝csproj が参照しているのに
-ファイルが無く**ビルド失敗**。**取りこぼしは非決定的**（実測：`WSClientWin2_sample`・`WSClientWPF_sample` で漏れ・
-`WSClientWinCone_sample` で漏れず）＝「漏れた時だけ対処」では取りこぼすので**毎回 Include と実体を照合**する。
+**★ サブツリー展開は `/**`（再帰）を使う。`/*`（非再帰）は下位フォルダを丸ごと落とす（実測・決定的）。**
+ZIP の**サブツリーだけを選択展開**するとき、`unzip ".../<sample>/*"` のような**非再帰 glob だと `Dao\`/`Business\`/`Common\`/
+`Properties\` などサブフォルダが丸ごと欠落**する（glob 依存の決定的挙動。ランダムではない）。`/**` で再帰展開する。
+**★ さらに、取り出し後は csproj の `<Compile>`/`<EmbeddedResource>`/`<None>`/`<Content>` の `Include` を実ファイルと
+突き合わせて欠落確認する（毎回必須）**＝展開方法に依らず漏れ（`Properties\AssemblyInfo.cs`、ClickOnce の `.pfx`/`app.manifest` 等）を
+確実に拾う。csproj が参照しているのにファイルが無いと**ビルド失敗**する。
 
 **開発支援ツールも一緒に取り出す。** `Frameworks\Tools\` 配下（`Samples\` ではない）の `DaoGen_Tool`
 （墨壺＝D層自動生成）と `DPQuery_Tool`（動的クエリ試験）を取り出し対象に含める（DAO 自動生成・動的 SQL は標準ワークフロー）。

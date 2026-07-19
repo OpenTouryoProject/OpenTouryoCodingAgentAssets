@@ -64,7 +64,10 @@ metadata:
     （`MVC_Sample_Core` / `SimpleBatch_sample_Core` / `RerunnableBatch_sample2_Core` / `2CSClientWPF_sample_Core`）。
     **判定は「そのサンプルが net48（`Samples\`）にも在るか」という固定属性**で行う＝**repo にいま net48 を入れたかは無関係**
     （まだ net48 を入れていなくても core は最初から `_Core`。順序に依らず名前を一意に決め、後から改名しない）。
-    `.sln`・参照の相対パスも `_Core` 名に合わせる。
+    **★ `_Core` を付けるのはフォルダ名だけ。内側の `.csproj`/`.sln`/`AssemblyName` は原名のまま変えない**
+    （実測：`2CSClientWPF_sample_Core\2CSClientWPF_sample.csproj`）。**内側名やアセンブリ名を `_Core` にリネームしない**——
+    `SqlTextFilePath` が `<アセンブリ名>.Dao` 形式（埋め込みリソースの名前空間。例 `GenDaoAndBatUpd_sample.Dao`）のサンプルは、
+    アセンブリ名が変わると SQL 定義解決が**実行時に壊れる**。sln の参照パスは新フォルダ位置に合わせるが、プロジェクト名は変えない。
   - **net48 のみ（`WebForms_Sample`）・.NET10 のみ（`Simple_CLI`＝net48 版が存在しない）は無印**（接尾辞を付けない）。
   - **WS 系は `WS_sample\`（`WSClient_sample\` / `WSIFType_sample` / `WSServer_sample`）の階層を保つ**（フラット化しない。
     `opentouryo-project-setup-core` の `samples/webservices.md`）。

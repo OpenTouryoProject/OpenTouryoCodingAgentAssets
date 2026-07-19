@@ -93,4 +93,7 @@ Web ではないので HTTP スモークは無い。**exe を起動してプロ�
   成功分岐でも `InvalidOperationException` で exit code が非ゼロ**（`0xE0434352` / -532462766）になる（業務処理は
   成功済み＝サンプルコード都合。`SimpleBatch`/`RerunnableBatch` 系共通・**net48/net10.0 両ランタイムで実測**）。
   **成否は標準出力で判定**する（`< nul` で stdin を与えても ReadKey 例外は避けられない。出力で見る）。
+- **★ 認証付き CLI（`DAG_Login_CLI`/`LIR_Login_CLI`）の非対話スモークは `--help`（exit 0）で見る。** 引数無しの既定
+  （RootCommand）ハンドラは `Prompt.Confirm(...)`（Sharprompt）で**対話待ちにブロック**し、`login` サブコマンドは
+  **IdP（`MultiPurposeAuthSite:44300`）稼働が前提**。よって実 OAuth フローはセットアップ範囲外＝到達点は「ビルド＋`--help` OK」まで。
 

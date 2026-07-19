@@ -33,6 +33,8 @@ metadata:
 **★ CLI は net10.0 のみ（net48 はドロップ）**：net48 の `CLI_sample\*`（Simple/DAG_Login/LIR_Login）は
 **csproj が無く README だけ**（`Sharprompt` が .NET Fx サポートを終了したため本体が net48 版をドロップ）。
 CLI を選んだら **net10.0（`Samples4NetCore\Legacy\CLI_sample\`）** を起点にする（Web Forms が net48 のみ、の逆）。
+**依存差＝CLI で一般化しない**：`Simple_CLI` は純テンプレ（OpenTouryo 依存なし＝⑤ 張替不要）だが、認証付き
+`DAG_Login_CLI`/`LIR_Login_CLI` は **OpenTouryo 依存あり**（Framework/Public/Public.Security・net10.0）＝⑤ HintPath 張替が要る。
 
 **★ RichClient 基盤の追加ビルドが要るサンプル（WS/3層依存とは別軸）**：**Windows Forms 2CS・WPF 2CS・
 3層リッチクライアント**（`2CSClientWin/WPF`・`WSClient_*`）は `OpenTouryo.Business.RichClient` を参照するが、
@@ -41,8 +43,8 @@ CLI を選んだら **net10.0（`Samples4NetCore\Legacy\CLI_sample\`）** を起
 → これらを選んだら「同一ランタイムは ③ 流用でスキップ可」の例外＝**③ に RichClient 追加ビルドが必須**
 （`opentouryo-project-setup-build`）。バッチ・CLI・MVC・Web Forms は不要。**netcore は `net10.0-windows7.0\` の
 `Business`/`Dam*` ごと欠けるのでフォルダ丸ごと再ベンダ**（net48 は `Business.RichClient` のみ）。
-**★ `CustCtrl_sample`（2CS 機能デモ）はさらに `OpenTouryo.CustomControl.RichClient`（WinForms 版）も要る**＝net48 の
-標準ベンダに漏れがち（`CustomControl.RichClient_net48.csproj` を単体ビルド。netcore は揃う。詳細は build スキル）。
+**★ `CustCtrl_sample`（2CS 機能デモ）はさらに `OpenTouryo.CustomControl.RichClient`（WinForms 版）も要る**＝`BusinessRichClient_net48.sln`
+に同梱だが net48 のベンダ コピーで漏れがち（追加ビルド後に sln の全出力を照合。netcore は揃う。詳細は build スキル）。
 
 **WPF 2CS は WinForms 2CS とほぼ同一手順**（実測）：デスクトップ exe・RichClient 基盤要・取り出し／参照張替は同じで、
 config は `SqlTextFilePath` の1点張替で足りることが多い（④⑤＝`opentouryo-project-setup-core`、⑥⑦＝`-config`）。
