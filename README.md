@@ -10,47 +10,7 @@ Assets used by coding agents utilizing OpenTouryo
 ```
 src/
   instructions/AGENTS.md        概要・規約（常時コンテキストに載る / これが原本）
-  skills/                        （用途・利用者で分類。アルファベット順ではない）
-
-    # ── ① 立ち上げ・構成（初期設定：立ち上げ担当／纏め者。主に一度きり）──
-    opentouryo-project-setup/           新規プロジェクトの立ち上げ（入口＝ファサード。全体の流れと呼び出し順）
-    opentouryo-project-setup-selection/ ①② サンプル選択・取得元（固定タグ/develop）
-    opentouryo-project-setup-build/     ③ 基盤 DLL のビルドとベンダ（タグ更新の焼き直しにも単独で）
-    opentouryo-project-setup-core/      ④⑤ 取り出しと参照張り替え（HintPath・CS0246 解消）
-    opentouryo-project-setup-config/    ⑥⑦ resource 移設・config 張替・.gitignore・検証
-    opentouryo-project-setup-db/        （選択式）ローカルのデータストアを Docker で用意（LocalServicesOnDocker）
-    opentouryo-project-transform/       セットアップ後の変形（2層化・サンプル整理・CS0246 解消）
-    opentouryo-project-policy/          プロジェクト方針（親クラス2 の挙動）の確認
-    opentouryo-base2-customize/         親クラス2（基盤 Business 層）のカスタマイズ（纏め者向け）
-
-    # ── ② 各層のコード実装（日常常用：アプリ開発者）──
-    opentouryo-layer-p-mvc/             P層：ASP.NET MVC / ASP.NET Core MVC
-    opentouryo-layer-p-webforms-screen/ P層：Web Forms 画面の新規作成
-    opentouryo-layer-p-webforms-event/  P層：Web Forms イベント実装
-    opentouryo-webforms-dialog/         P層：Web Forms 子画面（ダイアログ）表示
-    opentouryo-layer-p-winforms-screen/ P層：Windows Forms 画面の新規作成
-    opentouryo-layer-p-winforms-event/  P層：Windows Forms イベント実装
-    opentouryo-p-call-business/         P層から B層を呼び出す（横断）
-    opentouryo-richclient-async/        リッチクライアントの非同期呼び出し（WinForms / WPF）
-    opentouryo-layer-b/                 B層（業務ロジック層）の実装
-    opentouryo-layer-d/                 D層の全体像と Dao 3系統の使い分け
-    opentouryo-dao-custom/              個別Dao
-    opentouryo-dao-common/              共通Dao（CmnDao）
-    opentouryo-dao-generated/           自動生成Dao
-    opentouryo-query-definition/        SQL定義ファイル（静的 .sql / 動的 .xml）
-
-    # ── ③ 制御・定義／横断機能（機能利用：必要になったとき参照）──
-    opentouryo-message/                 メッセージ（MSGDefinition.xml）
-    opentouryo-shared-property/         共有情報（SPDefinition.xml）
-    opentouryo-transaction-control/     トランザクション制御（TCDefinition.xml）
-    opentouryo-screen-transition/       画面遷移制御（SCDefinition.xml）
-    opentouryo-transmission/            通信制御（サービス論理名による呼び出し）
-    opentouryo-exception/               例外処理方式
-    opentouryo-logging/                 ログ出力
-    opentouryo-config/                  構成ファイル
-    opentouryo-auth/                    認証・ユーザ情報
-    opentouryo-oauth2-client/           外部IdP連携（OAuth2 / OIDC クライアント）
-    opentouryo-common-parts/            共通部品（ユーティリティ）を用途から探す
+  skills/                       全34スキル（用途別の一覧・使いどころは下の「スキル一覧」節）
 install/
   install.ps1                   対象リポジトリへのインストーラ
 docs/
@@ -60,6 +20,60 @@ docs/
 **インストラクション**（概要）と**スキル**（具体的なコードの書き方）に分かれている。
 前者は常にコンテキストへ載り、後者はエージェントが必要と判断したときだけ読まれる。
 使い分けの基準は [docs/authoring.md](docs/authoring.md) を参照。
+
+## スキル一覧
+
+用途・利用者で分類（アルファベット順ではない）。**エージェントは各スキルの `description` で自動的に選ぶ**ので、この表は
+主に人が俯瞰するための索引。
+
+### ① 立ち上げ・構成（初期設定：立ち上げ担当／纏め者。主に一度きり）
+
+| スキル | 使いどころ |
+| --- | --- |
+| `opentouryo-project-setup` | 新規プロジェクトをゼロから立ち上げるときの**入口＝ファサード**（全体の流れと呼び出し順のみ） |
+| `opentouryo-project-setup-selection` | ①② 起点サンプルの選択（全系列を提示）と取得元 `<ref>`（固定タグ / develop）の決定 |
+| `opentouryo-project-setup-build` | ③ 基盤 DLL をローカルでビルドして `OpenTouryoAssemblies\` へベンダ（タグ更新の焼き直しにも単独で） |
+| `opentouryo-project-setup-core` | ④⑤ サンプル（＋開発支援ツール）の取り出しと `OpenTouryo.*` HintPath 張替（3層/WS の CS0246 解消も） |
+| `opentouryo-project-setup-config` | ⑥⑦ resource 移設・config パス張替（`%OT_RESOURCE_ROOT%`）・`.gitignore`・ビルド／実行検証 |
+| `opentouryo-project-setup-db` | （選択式）ローカルのデータストア（SQL Server 等）を Docker で用意（LocalServicesOnDocker。既存 DB があれば不要） |
+| `opentouryo-project-transform` | セットアップ後、取り出したサンプルを用途へ変形（2層化・サンプル整理・CS0246 解消） |
+| `opentouryo-project-policy` | 「このプロジェクトではどうなっているか」（親クラス2 の実装で決まる仕様）が分からないとき |
+| `opentouryo-base2-customize` | **纏め者が**親クラス2（基盤 Business 層）の共通処理をカスタマイズするとき（アプリ開発者は使わない） |
+
+### ② 各層のコード実装（日常常用：アプリ開発者）
+
+| スキル | 使いどころ |
+| --- | --- |
+| `opentouryo-layer-p-mvc` | ASP.NET MVC / ASP.NET Core MVC のコントローラを実装するとき |
+| `opentouryo-layer-p-webforms-screen` | Web Forms の画面を新規作成するとき |
+| `opentouryo-layer-p-webforms-event` | Web Forms のコントロールのイベントを実装するとき |
+| `opentouryo-webforms-dialog` | Web Forms で子画面（ダイアログ・モーダル/モードレス）を表示するとき |
+| `opentouryo-layer-p-winforms-screen` | Windows Forms の画面を新規作成するとき |
+| `opentouryo-layer-p-winforms-event` | Windows Forms のコントロールのイベントを実装するとき |
+| `opentouryo-p-call-business` | P層から B層を呼ぶとき（引数クラス・`DoBusinessLogic`・`ErrorFlag`） |
+| `opentouryo-richclient-async` | リッチクライアント（WinForms / WPF）で B層を非同期に呼ぶとき |
+| `opentouryo-layer-b` | 業務ロジックを実装するとき |
+| `opentouryo-layer-d` | D層の全体像と Dao 3系統の使い分け |
+| `opentouryo-dao-custom` | 個別Dao（業務固有のデータアクセス）を実装するとき |
+| `opentouryo-dao-common` | 共通Dao（`CmnDao`）で単発の SQL を実行するとき |
+| `opentouryo-dao-generated` | 自動生成Dao（テーブル単位の CRUD・楽観排他）を使うとき |
+| `opentouryo-query-definition` | SQL 定義ファイル（`.sql` / `.xml`）を書くとき |
+
+### ③ 制御・定義／横断機能（機能利用：必要になったとき参照）
+
+| スキル | 使いどころ |
+| --- | --- |
+| `opentouryo-message` | メッセージを定義・取得するとき（`MSGDefinition.xml`） |
+| `opentouryo-shared-property` | 共有情報を定義・取得するとき（`SPDefinition.xml`） |
+| `opentouryo-transaction-control` | トランザクション パターンを定義するとき（`TCDefinition.xml`） |
+| `opentouryo-screen-transition` | 画面遷移制御を定義するとき（`SCDefinition.xml`。Web Forms 専用） |
+| `opentouryo-transmission` | 通信制御（サービス論理名で B層を呼ぶ）を扱うとき |
+| `opentouryo-exception` | 例外を扱うとき。層を問わず参照する |
+| `opentouryo-logging` | ログを出力するとき |
+| `opentouryo-config` | 設定値を読むとき、構成ファイルを書くとき |
+| `opentouryo-auth` | 認証・ユーザ情報を扱うとき |
+| `opentouryo-oauth2-client` | 外部 IdP と連携するとき（OAuth2 / OIDC のクライアント＝RP） |
+| `opentouryo-common-parts` | ユーティリティ（文字列チェック・エンコード等）を自作する前に既存の共通部品を探すとき |
 
 ## スキルの互換性
 

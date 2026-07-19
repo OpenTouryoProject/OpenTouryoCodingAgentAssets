@@ -247,44 +247,12 @@ TODO
 
 ## スキル
 
-具体的な実装手順は以下のスキルに記述されている。該当する作業に着手する前に読むこと。
+具体的な実装手順は各スキル（`SKILL.md`）に記述されている。該当する作業に着手する前に、該当スキルを読むこと。
 
-| スキル | 使いどころ |
-| --- | --- |
-| `opentouryo-layer-p-mvc` | ASP.NET MVC / ASP.NET Core MVC のコントローラを実装するとき |
-| `opentouryo-layer-p-webforms-screen` | Web Forms の画面を新規作成するとき |
-| `opentouryo-layer-p-webforms-event` | Web Forms のコントロールのイベントを実装するとき |
-| `opentouryo-webforms-dialog` | Web Forms で子画面（ダイアログ・モーダル/モードレス）を表示するとき |
-| `opentouryo-layer-p-winforms-screen` | Windows Forms の画面を新規作成するとき |
-| `opentouryo-layer-p-winforms-event` | Windows Forms のコントロールのイベントを実装するとき |
-| `opentouryo-p-call-business` | P層から B層を呼ぶとき（引数クラス・`DoBusinessLogic`・`ErrorFlag`） |
-| `opentouryo-richclient-async` | リッチクライアント（WinForms / WPF）で B層を非同期に呼ぶとき |
-| `opentouryo-layer-b` | 業務ロジックを実装するとき |
-| `opentouryo-layer-d` | D層の全体像と Dao 3系統の使い分け |
-| `opentouryo-dao-custom` | 個別Dao（業務固有のデータアクセス）を実装するとき |
-| `opentouryo-dao-common` | 共通Dao（`CmnDao`）で単発の SQL を実行するとき |
-| `opentouryo-dao-generated` | 自動生成Dao（テーブル単位の CRUD・楽観排他）を使うとき |
-| `opentouryo-query-definition` | SQL 定義ファイル（`.sql` / `.xml`）を書くとき |
-| `opentouryo-message` | メッセージを定義・取得するとき（`MSGDefinition.xml`） |
-| `opentouryo-shared-property` | 共有情報を定義・取得するとき（`SPDefinition.xml`） |
-| `opentouryo-transaction-control` | トランザクション パターンを定義するとき（`TCDefinition.xml`） |
-| `opentouryo-screen-transition` | 画面遷移制御を定義するとき（`SCDefinition.xml`。Web Forms 専用） |
-| `opentouryo-transmission` | 通信制御（サービス論理名で B層を呼ぶ）を扱うとき |
-| `opentouryo-exception` | 例外を扱うとき。層を問わず参照する |
-| `opentouryo-logging` | ログを出力するとき |
-| `opentouryo-config` | 設定値を読むとき、構成ファイルを書くとき |
-| `opentouryo-auth` | 認証・ユーザ情報を扱うとき |
-| `opentouryo-oauth2-client` | 外部 IdP と連携するとき（OAuth2 / OIDC のクライアント＝RP） |
-| `opentouryo-project-policy` | 「このプロジェクトではどうなっているか」（親クラス2 の実装で決まる仕様）が分からないとき |
-| `opentouryo-base2-customize` | **纏め者が**親クラス2（基盤 Business 層 `Frameworks/Infrastructure/Business`）の共通処理をカスタマイズするとき（アプリ開発者は使わない） |
-| `opentouryo-common-parts` | ユーティリティ（文字列チェック・エンコード・ハッシュ・圧縮など）を自作する前に、既存の共通部品を探すとき |
-| `opentouryo-project-setup` | 新規プロジェクトをゼロから立ち上げるときの**入口＝ファサード**（全体の流れと呼び出し順のみ。手順は下の4スキルへ委譲） |
-| `opentouryo-project-setup-selection` | ①② 起点サンプルの選択（全系列を提示）と取得元 `<ref>`（固定タグ / develop）の決定 |
-| `opentouryo-project-setup-build` | ③ 基盤（フレームワーク）DLL をローカルでビルドして `OpenTouryoAssemblies\` へベンダするとき（タグ更新時の焼き直しにも単独で使う） |
-| `opentouryo-project-setup-core` | ④⑤ サンプル（＋開発支援ツール）の取り出しと `OpenTouryo.*` HintPath の張り替え（3層/WS の CS0246 解消も） |
-| `opentouryo-project-setup-config` | ⑥⑦ resource 移設・config パス張替（`%OT_RESOURCE_ROOT%`）・`.gitignore`・ビルド／実行検証 |
-| `opentouryo-project-setup-db` | （選択式）ローカルのデータストア（SQL Server 等）を Docker で用意するとき（LocalServicesOnDocker。⑦ の接続・実行検証の DB 前提。既存 DB があれば不要） |
-| `opentouryo-project-transform` | セットアップ後、取り出したサンプルを用途へ合わせて変形するとき（不要な層の削減＝2層化・サンプル固有コードの整理・CS0246 の解消） |
+**利用可能なスキルは各 `SKILL.md` の `description` から自動的に認識される**ので、この文書に一覧は持たない
+（配置先：`.claude/skills/`〔Claude Code〕/ `.github/skills/`〔Copilot〕/ `.agents/skills/`〔agents〕）。
+**全スキルの一覧と「使いどころ」**（用途別・3分類）は README を参照：
+<https://github.com/OpenTouryoProject/OpenTouryoCodingAgentAssets/blob/main/README.md>（「スキル一覧」節）。
 
 ## 参考資料
 

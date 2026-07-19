@@ -376,6 +376,8 @@ APIリファレンスで足りる）。
 
 | 新スキル `opentouryo-project-setup-db`（選択式の DB/データストア構築・作者提案・**2026-07-19**） | 環境（データストア）構築が既存スキルに無く、⑦ config の接続確認・run-verify の DB 依存操作の前提が満たせなかった。作者が実運用で使う **LocalServicesOnDocker**（NetDevInfraWGinOSSConsortium）で SQL Server/MySQL/PostgreSQL/Redis/MongoDB を Docker 起動する**選択式（任意）**スキルを新設。WebFetch＋ミラー突合で**既定が OpenTouryo サンプルの接続文字列と一致**を確認（SQL 1433/sa/`seigi@123`/Northwind＝`ConnectionString_SQL`、MySQL 3306/root/`seigi@123`/test＝`ConnectionString_MCN`。同系プロジェクトで設計が揃っている）。多くは無改変で接続可。**Oracle は本 Docker に無い**（`ConnectionString_ODP`＝SCOTT/tiger は別途）。Docker のコンテナ/ボリューム/ネットワーク `common_link` は**グローバル変更＝`SETUP-CHANGES.md` に記録**（前項ポリシー）。位置づけ＝**必須ではなく選択式**（既存 DB あれば不要）。反映：ファサード flow に「（選択式）データストア」行／README ①群／AGENTS 表／config ⑦・run-verify から相互参照。install.ps1 で拾えることを実測。全33→34スキル |
 
+| AGENTS.md のスキル表を README リンクへ置換／README を表形式（使いどころ）に（作者提案・**2026-07-19**） | 「エージェントは各 `SKILL.md` の `description` で自動認識するので、AGENTS.md〔常時ロード〕に 34 行の表を持つのは重複」との指摘（妥当）。→ **AGENTS.md `## スキル` の表を撤去**し、「description で自動認識・配置先・**一覧と使いどころは README 参照**（GitHub blob リンク）」の短い案内に置換。**README には `## スキル一覧` を新設**し、これまでのグループ分け（①立ち上げ・構成／②各層のコード実装／③制御・定義・横断）を**3つの表〔スキル｜使いどころ〕**にして使いどころを明記（AGENTS の良質な使いどころ文を移設）。構成ツリーの巨大なスキル列挙は1行に圧縮。効果：**AGENTS.md tok~4422→3403**（常時ロード枠を約1000 節約）。README に全34スキルが揃うことを `grep` で確認（欠落0）。リンクは target 配置の AGENTS.md からも辿れるよう GitHub の絶対 URL |
+
 ### 4.4 作者から得た情報（コードからは読めない）
 
 **これらは実装を読んでも分からない。** 失うと再取得できない。
