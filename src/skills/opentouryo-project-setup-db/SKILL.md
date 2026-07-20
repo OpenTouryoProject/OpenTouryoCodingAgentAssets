@@ -25,22 +25,39 @@ Docker でまとめて立てる構成。<https://github.com/NetDevInfraWGinOSSCo
 
 ## 取得と起動・停止
 
-リポジトリを clone し、**用途に合う起動スクリプトを実行**する。
+**clone 先は必ずユーザに確認する**（マシン固有＝エージェントが決めない）。**プロジェクト repo の外**に置くこと
+（マシン全体のインフラ。成果物 repo に取り込むと汚染＋`.gitignore` 問題になる）を前提に、具体パスをユーザに聞いてから
+clone する。clone したら**用途に合う起動スクリプトを実行**する。
+
+- **起動前プリフライト**：立てるポートを既存プロセスが握っていないか確認する
+  （例：`Test-NetConnection localhost -Port 1433`。ネイティブ SQL Server 等と衝突する）。塞がっていれば
+  **このスキルはスキップ**（既存 DB を使う）。
+- **初回は数分**：SQL Server 2022（約 1.5GB）含む 5 イメージを pull する（時間・帯域・ディスクに余裕を）。
 
 ```powershell
-# Windows（Rancher Desktop）— DB 初期化の完了を待つ .ps1 を推奨（.bat は待たない）
-.\Start-Services.ps1        # 起動（初期化待ち）
-.\Stop-Services.ps1         # 停止
+# Windows（Rancher Desktop）— DB 初期化完了を待つ .ps1 を推奨（.bat は待たない）
+.\Start-Services.ps1              # 起動＋各 DB 準備完了待ち＋localhost 到達確認（既定 = up）
+.\Start-Services.ps1 ps           # 稼働状況（logs でログ追尾）
+.\Start-Services.ps1 -NoPause     # 非対話（エージェント/CI）向け。入力ﾘﾀﾞｲﾚｸﾄ時は自動抑止だが明示が安全
+.\Stop-Services.ps1               # 停止（内部で Start-Services.ps1 down）
 ```
+
+`Start-Services.ps1` は `up`/`down`/`ps`/`logs`＋`-NoWait`/`-NoPause` を持ち、DB 準備完了待ち・破損時の自動作り直し
+（永続無しゆえ無害）・localhost 到達確認まで実装済み。2行しか使わないのはもったいない。
 
 ```bash
-# WSL2 — 共有ネットワークを作ってから compose
-docker network create --driver bridge common_link
-docker compose up -d        # 起動
-docker compose down         # 停止（-v でボリュームも削除＝データ全消し）
+# WSL2 — common_link を作ってから compose（★ 既存なら作らない＝2回目の create エラー回避）
+docker network inspect common_link >/dev/null 2>&1 || docker network create --driver bridge common_link
+docker compose up -d              # 起動
+docker compose down               # 停止（4 DB は永続無しで毎回リセット＝後述）
 ```
 
-WSL2 向けは `Start-Services_wsl2.ps1` / `Stop-Services_wsl2.ps1` もある。状態確認は `docker compose ps` / `logs`。
+WSL2 は冪等な `Start-Services_wsl2.ps1` / `Stop-Services_wsl2.ps1` の利用を推奨（手動 compose なら network は上記の冪等形で）。
+
+- **★ 起動と停止は同じ系統でペアにする。** Rancher/Docker Desktop 系（`Start-Services.ps1`＝Windows ネイティブ docker）と
+  WSL2 直（`Start-Services_wsl2.ps1`＝WSL 内 docker）は **docker インスタンスが別**で、コンテナも別々に存在する。
+  片方で `up` して他方で `down` してもコンテナが見えず止まらない（＝二重起動やポート衝突の元）。
+  **`Start-Services.ps1`↔`Stop-Services.ps1`／`Start-Services_wsl2.ps1`↔`Stop-Services_wsl2.ps1` を必ず対で使う**（系統を跨がない）。
 
 ## OpenTouryo との噛み合わせ（既定が一致）
 
@@ -57,15 +74,27 @@ WSL2 向けは `Start-Services_wsl2.ps1` / `Stop-Services_wsl2.ps1` もある。
 - **DBMS の選択は `actionType` の先頭**（`SQL%...` 等）＋対応する `ConnectionString_<code>`（`opentouryo-config` /
   `opentouryo-p-call-business`）。既定サンプルは SQL Server（`ConnectionString_SQL`）で動く。
 - **Oracle は本 Docker に含まれない**（サンプルの `ConnectionString_ODP`＝SCOTT/tiger は別途 Oracle を用意する）。
-- **サンプル固有の追加テーブルは Northwind に含まれない**：サンプル同梱の `CREATE *.sql` を別途流す
+- **サンプル固有の追加テーブルは Northwind に含まれない**：同梱 `CREATE *.sql` を別途流す
   （例：`RerunnableBatch_sample` の `ORDERS2`＝同梱 `CREATE ORDERS2.sql`。`run-verify.md` のバッチ/CLI 節）。
+  **毎起動で消える**（下の「データは毎回リセット」）。
 - 接続文字列を変える場合、機微情報の直書きを避ける方針は ⑥（`opentouryo-project-setup-config`）に従う。
+
+## ★ データは毎回リセット（永続設定なし）
+
+**この compose は 4 DB とも永続ボリュームを使っていない**（`docker-compose.yml` で mysql/postgres/sqlserver/mongo の
+data マウントはコメントアウト）。**`-v` を付けなくても `down`→`up` でデータは残らない**（新コンテナ＝新規ボリューム）。
+**残るのは `redis` だけ**（`./redis/data` をホストマウント）。「何が消えて何が残るか」をこの一点で押さえる。
+
+- **Northwind の基本表は自動**：SQL Server は起動のたび `sqlserver/init/start-up.sh` が `CREATE DATABASE Northwind`＋
+  `instnwnd.sql` を流し直す（＝基本表は毎回そろう。データ準備完了は `.ps1` がセンチネル表で待つ）。
+- **サンプル固有表は手動・都度**：`instnwnd.sql` に無い表（例 `ORDERS2`）は**毎起動で消える → 起動のたびに流し直す**
+  （＝「一度流せば済む」ではない）。この非対称（基本表＝自動／固有表＝手動）を前提に運用する。
 
 ## ★ グローバル変更として記録する
 
 Docker の**コンテナ・ボリューム・ネットワーク（`common_link`）はマシン全体に残る変更**。**`SETUP-CHANGES.md` に記録**する
 （AGENTS.md ポリシー）。例：`docker network common_link = 作成 ／ docker network rm common_link`、
-`docker compose (LocalServicesOnDocker) = 起動 ／ docker compose down（-v でデータも削除）`。
+`docker compose (LocalServicesOnDocker) = 起動 ／ docker compose down（停止。4 DB は永続無しで毎回リセット、redis のみ ./redis/data に残る）`。
 
 ## やってはいけないこと
 
