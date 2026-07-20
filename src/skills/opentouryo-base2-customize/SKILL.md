@@ -58,7 +58,7 @@ metadata:
 
 | フック / 拡張点 | クラス | 何をする所 |
 | --- | --- | --- |
-| `UOC_ConnectionOpen` | `MyFcBaseLogic` | **DBMS / 接続の選択**（`actionType.Split('%')[0]` で Dam を選び `ConnectionString_<code>` をロード）。`opentouryo-p-call-business`。※ここを1 DBMS 固定に簡素化すると、**B層が渡す `actionType` の DB プレフィックスによる切替が無効化される**（意図的なら可。纏め者が意識する） |
+| `UOC_ConnectionOpen` | `MyFcBaseLogic`（＋2CS `MyFcBaseLogic2CS`）。**同ロジックが `[Obsolete]` の `MyBaseLogic`/`MyBaseLogic2CS` にも重複** | **DBMS / 接続の選択**（`parameterValue.ActionType.Split('%')[0]` で Dam を選び `ConnectionString_<code>` をロード）。`opentouryo-p-call-business`。※1 DBMS 固定に簡素化すると **`ActionType` の DB プレフィックス切替が無効化**（意図的なら可）。**★ 片方だけ直すと deprecated 双子の旧分岐が DLL に残る**（例：`ConnectionString_ODP` 残存）→ DLL から消すなら**4クラス全部**直す |
 | `UOC_PreAction` / `UOC_AfterAction` / `UOC_AfterTransaction` | `MyBaseLogic` / `MyFcBaseLogic` | 業務ロジックの前後・トランザクション後の共通処理（認証チェック・ログ等） |
 | `UOC_ABEND` | `MyBaseController` / `MyFcBaseLogic` | **例外→共通エラー画面**への振替 |
 | `addControlEvent` | `MyBaseController` / `MyBaseControllerWin` | **コントロール・イベントの結線を追加**（対応コントロール／イベントを増やす）。`opentouryo-layer-p-webforms-event` / `-winforms-event` |
@@ -75,15 +75,25 @@ metadata:
 
 **具体はソースを読む。** 上表は入口で、実際の分岐・既定値は `Frameworks/Infrastructure/Business/` の各クラスにある。
 
+### DBMS を足す/減らすときの"面"（チェックリスト）
+
+`UOC_ConnectionOpen` の分岐を触るだけでは不完全。**4点を揃える**（どれか残すと半端に生き続ける）：
+①ロジック分岐（上記**4クラス全部**）／②csproj の `<Reference>`+`HintPath`（例 `OpenTouryo.DamManagedOdp`。RichClient の
+net48・netcore 両方）／③ベンダされる Dam DLL 自体（`Build_*` から外す）／④config の `ConnectionString_<code>` キー（サンプル側）。
+
 ## 変更 → 反映のループ
 
 1. 対象 `My*` を **`base2-overlay/`（バージョン管理された修正差分。後述）** で編集する
    （override 実装 / 定数 / メッセージ）。
 2. ビルド スクリプトが**オーバーレイを固定タグの展開ツリーへ上書き**してから
    **`3_Build_Business_net48` / `3_Build_Business_netcore100`** でビルドする
-   （親クラス1 のビルド `2_Build_NuGet_*` が先に要る）。**2CS（`MyBaseLogic2CS` / `MyFcBaseLogic2CS`）を触ったら、
-   `3_Build_Business_*` に加えて `BusinessRichClient_net48.sln`（core は `_netcore100`）も別途ビルドする**
-   （さもないと 2CS の変更が無言で無視される。前述）。
+   （親クラス1 のビルド `2_Build_NuGet_*` が先に要る）。**この overlay 適用は `opentouryo-project-setup-build` の生成
+   スクリプトが担う**（その `examples.md` の **`1b` ブロック**。「任意」表記だが overlay があれば必須＝見落とさない）。
+   **2CS（`MyBaseLogic2CS` / `MyFcBaseLogic2CS`）を触ったら、`3_Build_Business_*` に加えて `BusinessRichClient_net48.sln`
+   （core は `_netcore100`）も別途ビルドする**（さもないと 2CS の変更が無言で無視される。前述）。
+   **★ この RichClient sln は非SDK・`HintPath` のみ＝`/t:restore` が壊れる（`/t:build` 単体で）。かつ net48/netcore が
+   `obj\` を共有し、netcore の restore 残骸で net48 ビルドが落ちる→ビルド前に `Business\RichClient\obj\` と
+   `CustomControl\RichClient\obj\` の `project.assets.json`・`*.nuget.*` を消す**（実装は `opentouryo-project-setup-build` の `examples.md` `2b`）。
 3. 生成された `OpenTouryo.Business.dll`（2CS を直したなら `OpenTouryo.Business.RichClient.dll` も）を導入プロジェクトへ配布
    （`opentouryo-project-setup-build` のベンダ先 `OpenTouryoAssemblies\Build_*`）。
 4. 依存アプリを再ビルドして反映。**破壊的変更（シグネチャ・挙動）は全依存アプリに波及**する。
@@ -128,6 +138,8 @@ metadata:
   （VS Code なら「フォルダーをワークスペースに追加」）そこを作業場所にする。**編集した基盤ソースは差分を
   `base2-overlay/` へ取り込んでコミット**（＝バージョン管理の実体は overlay。展開ツリーは `.gitignore` / 使い捨て）。
   `opentouryo-project-setup-build` §1 と対。
+  **★ 正典は1本**：展開ツリーは固定タグから再生成し、**overlay 適用が唯一の変更経路**。展開ツリーを直接いじってよいのは
+  編集の"作業場"としてで、**直したら必ず `base2-overlay/` へ取り込む**（overlay に無い直接編集は再抽出で消える＝一次成果にしない）。
 - こうすると DLL は **「固定タグ ＋ オーバーレイ」から再現可能**。リポジトリに残るのは修正差分だけ。
 - **置き場はアプリ リポジトリ同居**（`base2-overlay/` をコミット。`Temp/` は除外のまま、DLL はコミット）。
   1リポジトリで完結する。**複数アプリで親クラス2 を共有する場合は、纏め者の専用リポジトリに
@@ -143,6 +155,8 @@ metadata:
 - **override の約束を壊さない。** 親クラス1 が呼ぶ前提のフックなので、`base` 呼び出しの要否や
   戻り値の約束を勝手に変えない。
 - ランタイム差（net48 / core）で分かれる箇所は両方を保つ（`#if NETCOREAPP` 等。`AGENTS.md`）。
+  **※ upstream は同じ ODP 分岐でもガードが4クラスで不揃い**（`#if NETCOREAPP2_0` 等の旧ガードが混在。net10 は
+  `NETCOREAPP2_0` 未定義で実質無効）＝直すとき既定の `#if` を鵜呑みにせず、対象ランタイムで実際に有効か確認する。
 
 ## やってはいけないこと
 

@@ -92,7 +92,22 @@ if ($needRichClient -or (Test-Path $overlay)) {
     $msb = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild `
             -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
     $brc = Join-Path $cs 'Frameworks\Infrastructure\BusinessRichClient_net48.sln'
-    & $msb $brc /t:restore,build /p:Configuration=Release /nologo /v:m   # match the base bats' config
+    # This sln is NON-SDK, HintPath-only (no PackageReference). `/t:restore` FAILS with
+    # "Microsoft.NuGet.targets ... does not reference .NETFramework,Version=v4.8" -> build WITHOUT restore.
+    # Also: the net48 & netcore RichClient csproj SHARE one obj\ . A prior netcore SDK restore
+    # leaves obj\project.assets.json / obj\*.nuget.* that break THIS net48 build with the same
+    # error -> purge them first. (This is why RichClient was built in isolation at C:\otr\rc.)
+    # NOTE the paths: RichClient lives under Business\ AND CustomControl\ (verified as-built) --
+    # NOT directly under Infrastructure\. Both obj\ dirs must be purged.
+    foreach ($rcObj in @(
+        (Join-Path $cs 'Frameworks\Infrastructure\Business\RichClient\obj'),
+        (Join-Path $cs 'Frameworks\Infrastructure\CustomControl\RichClient\obj'))) {
+        if (Test-Path $rcObj) {
+            Get-ChildItem $rcObj -Filter 'project.assets.json' -EA SilentlyContinue | Remove-Item -Force -EA SilentlyContinue
+            Get-ChildItem $rcObj -Filter '*.nuget.*'          -EA SilentlyContinue | Remove-Item -Force -EA SilentlyContinue
+        }
+    }
+    & $msb $brc /t:build /p:Configuration=Release /nologo /v:m   # NO restore (non-SDK sln); build only
     if ($LASTEXITCODE -ne 0) { throw "BusinessRichClient build failed ($LASTEXITCODE)" }
 }
 
