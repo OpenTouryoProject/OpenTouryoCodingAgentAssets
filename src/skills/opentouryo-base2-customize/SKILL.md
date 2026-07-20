@@ -46,10 +46,11 @@ metadata:
 
 | 層 | 主なクラス | 役割 |
 | --- | --- | --- |
-| P層 | `Presentation/MyBaseController`（Web Forms・**abstract**）／`MyBaseMVController(Core)`（MVC）／`RichClient/Presentation/MyBaseControllerWin`（WinForms・具象） | 画面共通処理・イベント結線・例外→画面 |
-| B層 | `Business/MyBaseLogic`・`MyFcBaseLogic`／`RichClient/Business/MyBaseLogic2CS`・`MyFcBaseLogic2CS`（**★2CS は別 sln**） | 業務ロジックのライフサイクル・接続・トランザクション |
+| P層 | `Presentation/MyBaseController`（Web Forms・**abstract**）／`MyBaseMVController(Core)`（MVC）／`Presentation/MyBaseAsyncApiController(Core)`（**Web API**・`ActionFilterAttribute`）／`RichClient/Presentation/MyBaseControllerWin`（WinForms・具象） | 画面/API 共通処理・イベント結線・認証・例外→画面/ログ |
+| B層 | `Business/MyBaseLogic`・`MyFcBaseLogic`／`RichClient/Business/MyBaseLogic2CS`・`MyFcBaseLogic2CS`（**★2CS は別 sln**）／`RichClient/Asynchronous/MyBaseAsyncFunc`（非同期親クラス2） | 業務ロジックのライフサイクル・接続・トランザクション |
+| 引数/戻り値 | `Common/MyParameterValue`・`MyReturnValue`（＝**引数/戻り値の親クラス2**。`BaseParameterValue`/`BaseReturnValue` を継承） | B層メソッドで運ぶ引数/戻り値に共通項目を足す。**WS 対応で `[Serializable]`** |
 | D層 | `Dao/MyBaseDao`（＋ `CmnDao`） | クエリ実行の共通処理 |
-| 共通 | `Util/MyLiteral`・`MyUserInfo`・`MyCmnFunction`／`Exceptions/MyBusiness*ExceptionMessage` | 接頭辞・ユーザ情報・共通関数・例外メッセージ |
+| 共通 | `Util/MyLiteral`・`MyUserInfo`・`MyCmnFunction`・`MySubsysInfo`・`MyAttribute`／`RichClient/Util/RcMyCmnFunction`／`Exceptions/MyBusiness*ExceptionMessage` | 接頭辞・ユーザ情報・共通関数・サブシステム情報・カスタム属性・例外メッセージ |
 
 ## 主な差し込み点（override / 拡張ポイント）
 
@@ -66,6 +67,11 @@ metadata:
 | `%1` / `%2` 置換 | `MyBaseController` | メッセージ埋め込み（実装は Web Forms 側にしかない点に注意）。`opentouryo-message` |
 | 事前定義の例外メッセージ | `MyBusinessApplicationExceptionMessage` / `MyBusinessSystemExceptionMessage`（＋ `.resx`） | 纏め者が事前に用意する例外メッセージ（XML 採番とは別系統）。`opentouryo-exception` / `opentouryo-message` |
 | ユーザ情報 | `MyUserInfo` | プロジェクトのユーザ情報の構造。`opentouryo-auth` |
+| `AuthenticateAsync`/`OnAuthorizationAsync`・`OnActionExecuting/Executed`・例外フィルタ | `MyBaseAsyncApiController`（net48）/ **同名 Core 版** | **Web API の認証（`EnumHttpAuthHeader`＝Basic/Bearer）・権限/閉塞チェックの stub・`ACCESS` ログ・例外ログ**。`★必要であれば…` に業務共通の引継ぎ情報（Claim）を足す。`opentouryo-auth` |
+| 引数/戻り値の共通項目 | `MyParameterValue` / `MyReturnValue` | 全 B層呼び出しで運ぶ共通引数（ユーザ情報等）・戻り値の器。**`[Serializable]` を外さない**（WS で転送） |
+| 非同期処理の前後（`UOC_*`） | `MyBaseAsyncFunc`（RichClient 非同期） | WPF/WinForms の非同期処理の前後・スレッド数管理・画面ロック（`CanOutPutLog` でログ抑止可） |
+| WinForms のイベント結線／エラー表示 | `RcMyCmnFunction` | `MyBaseControllerWin` が使う接頭辞→イベント結線と `ShowErrorMessageWin/WPF`。接頭辞対応を増やすならここも |
+| サブシステム情報／カスタム属性 | `MySubsysInfo`（`SubsysInfo` 継承・`SubsysID` enum）／`MyAttribute`（`MyAttributeA/B/C`） | 案件のサブシステム区分・独自メタ属性を**継承／追加で拡張**（override ではない。テンプレートを自由に育てる） |
 
 **具体はソースを読む。** 上表は入口で、実際の分岐・既定値は `Frameworks/Infrastructure/Business/` の各クラスにある。
 

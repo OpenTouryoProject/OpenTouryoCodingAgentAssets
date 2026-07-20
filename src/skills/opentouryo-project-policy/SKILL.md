@@ -39,6 +39,8 @@ OpenTouryo には**フレームワークが決めず、親クラス2（業務フ
 | `ACCESS` / `SQLTRACE` ログの書式 | カンマ区切り | `opentouryo-logging` |
 | 追加された接頭辞 | `PREFIX_OF_CHECK_BOX` のみ | `opentouryo-layer-p-webforms-event` |
 | P層イベント対応の拡張 | `CheckBox` のみ追加 | `opentouryo-layer-p-webforms-event` / `-winforms-event` |
+| Web API の認証方式 | 既定 `EnumHttpAuthHeader.None`（認証なし）。Bearer は JWT 検証の雛形のみ | `opentouryo-auth` |
+| `MyParameterValue`/`MyReturnValue` の共通項目 | 既定は共通引数（ユーザ情報等）のみ | `opentouryo-p-call-business` |
 
 ### B. 運用ルール（コードに無い。聞くしかない）
 
@@ -100,6 +102,10 @@ B（運用ルール）
 | 追加された接頭辞 | `Util/MyLiteral.cs` | `PREFIX_OF_*` 定数 |
 | P層イベント対応の拡張<br>（対応コントロール・イベント） | `Presentation/MyBaseController.cs`<br>`RichClient/Presentation/MyBaseControllerWin.cs` | `addControlEvent()` に追加された結線（既定外があるか） |
 | 認証・ユーザ情報の復元 | `Presentation/MyBaseController.cs` | `GetUserInfo()` |
+| Web API の認証方式・ログ書式 | `Presentation/MyBaseAsyncApiController.cs`<br>（Core は `...Core.cs`） | `GetUserInfoAsync` の `EnumHttpAuthHeader` 分岐（Basic/Bearer/None）・`OnActionExecuting/Executed` の `ACCESS` ログ |
+| 引数/戻り値に足した共通項目 | `Common/MyParameterValue.cs`<br>`Common/MyReturnValue.cs` | `Base*Value` に追加したプロパティ（全 B層で運ぶ共通引数・戻り値） |
+| 非同期処理（リッチ）の共通挙動 | `RichClient/Asynchronous/MyBaseAsyncFunc.cs` | `UOC_*` の override・`CanOutPutLog`（ログ抑止） |
+| サブシステム区分・独自メタ属性 | `Util/MySubsysInfo.cs`（`SubsysID` enum）<br>`Util/MyAttribute.cs`（`MyAttributeA/B/C`） | 案件で足したサブシステム区分・独自属性の項目 |
 | 事前定義された例外メッセージ | `Exceptions/MyBusinessApplicationExceptionMessage.cs`<br>`Exceptions/MyBusinessSystemExceptionMessage.cs` | 定義済みの `messageID` プロパティ（`.resx` 対応。纏め者が採番） |
 
 P層は処理方式ごとにファイルが違う。**使っている方式のものを読む。**
@@ -109,6 +115,8 @@ P層は処理方式ごとにファイルが違う。**使っている方式の�
 | Web Forms | `Presentation/MyBaseController.cs` |
 | ASP.NET MVC | `Presentation/MyBaseMVController.cs` |
 | ASP.NET Core MVC | `Presentation/MyBaseMVControllerCore.cs` |
+| Web API（net48） | `Presentation/MyBaseAsyncApiController.cs` |
+| Web API（Core） | `Presentation/MyBaseAsyncApiControllerCore.cs` |
 | Windows Forms | `RichClient/Presentation/MyBaseControllerWin.cs` |
 
 B層も同様。リッチクライアント（2層C/S）は `RichClient/Business/MyFcBaseLogic2CS.cs`。
