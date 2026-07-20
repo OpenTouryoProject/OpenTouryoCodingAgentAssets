@@ -71,7 +71,8 @@ metadata:
   - **net48 のみ（`WebForms_Sample`）・.NET10 のみ（`Simple_CLI`＝net48 版が存在しない）は無印**（接尾辞を付けない）。
   - **WS 系は `WS_sample\` に集約**（`WSClient_sample\` / `WSIFType_sample` / `WSServer_sample` ＋ WS ホスト
     `ServiceInterface\`＝源は `Frameworks\Infrastructure\ServiceInterface`）。内部階層は保つ（フラット化しない。
-    `opentouryo-project-setup-core` の `samples/webservices.md`）。
+    `opentouryo-project-setup-core` の `samples/webservices.md`）。**`WSClientWin2_sample` が WS 非依存でも配置は
+    `WSClient_sample\` 配下のまま＝例外を作らない**（WS 非依存は参照の話で、置き場所は WSClient 派生と一律）。
   - **開発支援ツールは `OT_Tools\` 配下にまとめる**（`OT_Tools\DaoGen_Tool\` / `OT_Tools\DPQuery_Tool\`。リポ直下に
     散らさない。HintPath は2階層＝`..\..\`。`samples/daogentool.md` / `dpquerytool.md`）。
 - ⑥ resource・⑦ `.gitignore` は既に整っていれば再張替不要（追加サンプル固有のキーだけ足す）。

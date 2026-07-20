@@ -64,6 +64,9 @@ variant の csproj を見て分岐する**（実測：Win/WPF/WinCone は WS 依
   引き込みも ProjectReference 化も不要。源同梱の単一 `.sln` のまま `OpenTouryo.*` の DLL 参照だけ張り替えて完結**。
   config も app.config に絶対 resource パスが無ければ張替不要（Win2 は該当キー無し・ローカル Content の XML は出力コピー）。
   ※ただし `Business.RichClient` は参照するので ③ の RichClient 追加ビルドは要る（**WS 軸と RichClient 軸は別**）。
+  **★ 配置は例外にしない**：WS 非依存でも Win2 も他 variant と同じく **`WS_sample\WSClient_sample\WSClientWin2_sample\`** に置く
+  （源の階層維持＝リポ直下に出さない）。WS 非依存なのは「参照の張替」の話で、置き場所は WSClient 派生と一律。よって
+  `OpenTouryo.*` の HintPath は他 variant と同じ **3階層 `..\..\..\OpenTouryoAssemblies\Build_net48\`**（トップ直下＝`..\` にしない）。
 
 **★ WSClient 4 variant の実測表（タグ 03-20・4種すべて実ビルド済み。依存形は3種＝名前で決め打ち不可の決定版）**：
 
