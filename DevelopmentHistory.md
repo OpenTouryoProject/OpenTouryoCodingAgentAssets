@@ -425,6 +425,10 @@ APIリファレンスで足りる）。
 
 | WS ホスト ServiceInterface の配置を `WS_sample\ServiceInterface\` に集約（作者指示・**2026-07-20**） | 源 `Frameworks\Infrastructure\ServiceInterface` を、WS 一式（client/WSIFType/WSServer）と同じ **`WS_sample\` 配下（`WS_sample\ServiceInterface\<host>\`）** に置く方針へ。効果：Frameworks ツリーの部分取り込みが消え WS 関連が1箇所に集約、参照も短く一様に。**相対パス再計算**（host が4→3階層に）：host の `OpenTouryo.*` DLL＝`..\..\..\OpenTouryoAssemblies\Build_net48\`（4→3）、host→`WSServer/WSIFType` ProjectReference＝`..\..\WSServer_sample\...`（4→2＝client と同じ `..\..\`）、`_all.sln` の client→host 参照＝源 `..\..\..\..\Frameworks\...\ServiceInterface\` を **`..\..\ServiceInterface\<host>\<host>.csproj`** に張替（両者 `WS_sample\` 内の兄弟＝up2）。反映：**webservices.md** §③ 見出し・引き込み位置・_all.sln 参照・OpenTouryo/ProjectReference 段数、判定節の③、**facade** の WS 集約規則＋禁止例外注記、**run-verify** の WS ホスト起動、を `WS_sample\ServiceInterface` に統一（facade tok~2813）。旧「Samples\ を畳むと `..\` 段数がずれる」注記は新配置で不要になり削除 |
 
+| アセット repo 内の `files/`（本体ソースミラー）を削除＝裏取りは実クローン2箇所を正に（作者指示・**2026-07-20**） | 「`files` を削除。以降は `D:\git\local\OpenTouryoProject\OpenTouryoDocuments` と `C:\otr` を参照」。→ 裏取り根拠を差し替え：**C# 実ソース＝`C:\otr\OpenTouryo-03-20\root\programs\CS\`**（旧 `files/csharp/` 置換。`Frameworks\Infrastructure\{Framework,Business,Public,CustomControl,ServiceInterface}`・`Samples\{2CS_sample,Bat_sample,CLI_sample,WS_sample,WebApp_sample}`・`Samples4NetCore\{Backend,Frontend,Legacy}`・`*_Build_*.bat` を実在確認）、**ドキュメント＝`D:\git\local\OpenTouryoProject\OpenTouryoDocuments\documents\`**。実クローンは旧ミラーより rich＝`Build_net48\`/`Build_netcore100\` 出力や `BusinessRichClient_net48.sln` 等の .sln も現物で確認できる（以前 A-1 で「ミラーに sln が無い」不確定が出た問題は解消）。反映：**§6.1 参照元**を新2ルートの表＋主要参照先パスに書換（`files/csharp/*` 表記を廃止）、memory `reference-csharp-source-mirror` を更新。**注**：`src/skills` 配下は元々 `files/csharp` を直接参照しておらず（grep 0件）**スキル本文の修正は不要**。設定/ログスキルの `C:\root\files\resource\…` は実行時インストールパスで無関係＝不変。過去 §4.3/§4.5 ログ中の `files/csharp` 表記は履歴として残す |
+
+| 全24項目フルラン（`03-20`・完全新規リポ・全 0 error）で判明した DL/エンコード系の落とし穴（作者レポート `OTRVCAS\Reporting.md`・**2026-07-20**） | 全サンプル（MVC/WebForms/2CS×4/バッチ×8/CLI×3/WSClient 4 variant＋MVC・WebForms の WS 依存 net48 群）を実機で 0 error ビルド完走。**新規に踏んだ落とし穴2件をスキルへ反映**：**#1（重要）`WebClient.DownloadFile()` が GitHub codeload に 404**＝既定 TLS が古い（`HEAD` は 200 で紛らわしい）。→ **build SKILL §1＋examples.md の DL 2箇所**を `Invoke-WebRequest`＋`[Net.ServicePointManager]::SecurityProtocol=Tls12` に変更。**#2 `.ps1` の日本語コメントが `powershell.exe`(WinPS 5.1) で構文破壊**＝BOM 無しを Windows-1252 で読み、UTF-8 全角コメントが直後の文（`$ref='03-20'`）を巻き込み無効化→`$ref` 空→`archive/.zip` 取得で**「DL 404」に化ける**（原因特定困難）。既存の `.bat` 全角破損注記に**並ぶ `.ps1` 版注記を追加**（ASCII 化／BOM 付き保存／`pwsh` 実行のいずれか。雛形は ASCII 済み）。**#6 補強**：MSYS 経由 msbuild で `/nologo`→`C:/Program Files/Git/nologo`・`/p:`→`MSB1008` のスイッチ変換（既存の `.bat`/`cmd //c` 注記を msbuild スイッチにも一般化）。**既記載で再確認された分**（追加編集不要）：#3 WSClient の `Newtonsoft.Json` も Build フォルダ参照（webservices.md ⑤「2種」に既載）、#4 WinCone ClickOnce `MSB3482`→`SignManifests=false`、#5 ASPNETWebService の `packages.config` は project 直下復元（いずれもレポート「スキル記載通り」）。build SKILL tok~4935（追記後、要点圧縮で目安内）。**本体（OpenTouryo）の不具合ではなく非対話セットアップ固有の落とし穴**（レポート結論と一致） |
+
 ### 4.4 作者から得た情報（コードからは読めない）
 
 **これらは実装を読んでも分からない。** 失うと再取得できない。
@@ -707,25 +711,28 @@ APIリファレンスで足りる）。
 
 ### 6.1 参照元（すべて `.gitignore` 済み）
 
-| ディレクトリ | 中身 | 取得元 |
+**2026-07-20：アセット repo 内の `files/`（本体ソースミラー）は削除。** 以降の裏取りは下記の**実クローン2箇所**を正とする（作者指示）。
+旧 `files/csharp/…` パスは下表の実体に読み替える。
+
+| 参照ルート | 中身 | 備考 |
 | --- | --- | --- |
-| `files/` | OpenTouryo 本体ソース一式（2,868ファイル） | https://github.com/OpenTouryoProject/OpenTouryo |
-| `documents/` | 旧ドキュメント（`.doc` / `.xls` / `.xlsx`） | https://github.com/OpenTouryoProject/OpenTouryoDocuments |
-| `reference/` | （現状は空） | — |
+| `C:\otr\OpenTouryo-03-20\root\programs\CS\` | OpenTouryo 本体の C# 実ソース（タグ 03-20 クローン） | 旧 `files/csharp/` の置換。旧ミラーより rich＝`Build_net48\`/`Build_netcore100\` 出力や `BusinessRichClient_net48.sln` 等の .sln も実在 |
+| `D:\git\local\OpenTouryoProject\OpenTouryoDocuments\documents\` | ドキュメント（`0_Introduction`/`1_User_Guide`/`2_Tutorial`/`document_map.xlsx`） | 旧版は 2016年版で古い（4.1参照） |
 
-**アセットの記述は `files/` の実ソースを正とする。** `documents/` は 2016年版で古い（4.1参照）。
+**アセットの記述は上記実ソースを正とする。** 推定で書かず、まず grep/ls して実物で確認する。
 
-主要な参照先：
+主要な参照先（`CS` = `C:\otr\OpenTouryo-03-20\root\programs\CS`）：
 
 ```
-files/csharp/Frameworks/Infrastructure/Framework/     フレームワーク（親クラス1・触らない層）
-files/csharp/Frameworks/Infrastructure/Business/      業務フレームワーク（親クラス2・纏め者がカスタマイズ）
-files/csharp/Frameworks/Infrastructure/Public/        基盤部品（Db / Log / Util / Str …）
-files/csharp/Samples4NetCore/Backend/MVC_Sample/      .NET 10.0 系の実例（最重要）
-files/csharp/Samples/                                 net48 系の実例
-files/else/resource/Sql/                              自動生成SQL・クエリ定義の実例
-files/else/resource/Test/dpq/                         動的パラメタライズドクエリのタグ実例（318ファイル）
+CS\Frameworks\Infrastructure\Framework\      フレームワーク（親クラス1・触らない層）
+CS\Frameworks\Infrastructure\Business\       業務フレームワーク（親クラス2・纏め者がカスタマイズ）
+CS\Frameworks\Infrastructure\Public\         基盤部品（Db / Log / Util / Str …）
+CS\Frameworks\Infrastructure\ServiceInterface\{ASPNETWebService,WCFService}   3層CS の WS ホスト源
+CS\Samples4NetCore\Backend\MVC_Sample\       .NET 10.0 系の実例（最重要）
+CS\Samples\                                  net48 系の実例（2CS_sample / Bat_sample / CLI_sample / WS_sample / WebApp_sample）
 ```
+
+※ 設定/ログスキル中の `C:\root\files\resource\…` は**実行時インストールパス**でソースとは無関係（今回の削除と混同しない）。
 
 ### 6.2 `.doc` の読み方
 

@@ -36,9 +36,11 @@ metadata:
 
 ## 1. ZIP 取得（`git clone` ではない）
 
-PowerShell の `WebClient.DownloadFile()` で
 `https://github.com/OpenTouryoProject/OpenTouryo/archive/<ref>.zip` を取得し、
 **作業ツリー `OpenTouryo-<ref>\`** に展開する（基盤ソースを含むビルド用の作業場）。
+**取得は `Invoke-WebRequest` を使い、事前に TLS1.2 を明示する**
+（`[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12`）。
+`WebClient.DownloadFile()` は既定 TLS が古く **GitHub codeload に 404**（`HEAD` は 200 が返るので原因が紛れる＝実測）。
 
 **作業ツリーの置き場所は MAX_PATH(260) を避けて選ぶ**（実測）。既定はリポジトリ直下の `Temp\` だが、
 **リポジトリ パスが深いと net48 Business ビルドが `MSB3553` で失敗する**：生成物
@@ -126,10 +128,14 @@ Business.RichClient も含め**全部ビルドされる**。本スキルは標�
 - **末尾 `pause`** — バッチ末尾に `pause` があり、非対話だと入力待ちで止まる → `< nul` で標準入力を塞ぐ。
 - **`.\` を明示** — `NoDefaultCurrentDirectoryInExePath=1` の環境では `.\` 無しの `call` が「認識されない」で失敗。
 - **.bat のコメント／`echo` は ASCII 限定** — UTF-8（`chcp 65001`）だと全角コメント行を `cmd` が破損させ、`%変数%` 展開ごと壊す。
+- **`.ps1` を `powershell.exe`（WinPS 5.1）で実行するなら日本語コメントは ASCII 化／BOM 付き保存／`pwsh`(PS7) 実行のいずれか**
+  （実測）。BOM 無しを 5.1 は Windows-1252 で読み、UTF-8 全角コメントが**直後の文を巻き込んで無効化**（`$ref` が空→
+  `archive/.zip` を取得＝**「DL 404」に化けて**原因が紛れる）。`examples.md` の雛形はコメントを ASCII 化済み。
 - **`if(...)` ブロック内 `echo` の未エスケープ `)`** — ブロックが早期に閉じ、後続の `goto :error` が無条件実行される
   （＝ビルド成功でも Step 3 で必ず失敗して見える）。`echo` 内の `)` は `^)` にエスケープする。
-- **Bash/MSYS 経由の `cmd //c ".\x.bat"`** — Windows 絶対パス引数が MSYS に変換され、`cmd` の `if exist "D:\..."` が
-  実在フォルダを MISSING と誤判定する。**PowerShell の `cmd /c` から実行する**と正常（上の推奨）。
+- **Bash/MSYS 経由の `cmd //c ".\x.bat"`／`msbuild /p:...`** — Windows パス風の引数が MSYS に変換される。`.bat` では
+  `cmd` の `if exist "D:\..."` が実在フォルダを MISSING と誤判定し、**`msbuild` では `/nologo` が `C:/Program Files/Git/nologo` に、
+  `/p:` が別プロジェクト指定に化けて `MSB1008`**（実測）。**PowerShell から `cmd /c`／`& $msb` で実行する**と正常（上の推奨）。
 - **exit code は両方向に信用できない（偽の成功）** — これらのバッチは末尾 `pause` で、**msbuild が失敗しても
   バッチ自体は exit 0** を返す（`MSB3553` 等で失敗しても `cmd /c` の戻りは 0）。前述の未エスケープ `)` は逆に
   「偽の失敗」。**成否は exit code ではなく、生成物 DLL の実在で判定する**（下の §3 の確認を必ず行う）。

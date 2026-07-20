@@ -50,8 +50,11 @@ $overlay = Join-Path $repo 'base2-overlay'   # present only when customizing 親
 New-Item -ItemType Directory -Force -Path $work | Out-Null
 if (-not (Test-Path $extract)) {
     if (-not (Test-Path $zip)) {
-        (New-Object System.Net.WebClient).DownloadFile(
-            "https://github.com/OpenTouryoProject/OpenTouryo/archive/$ref.zip", $zip)
+        # WebClient.DownloadFile() defaults to an old TLS and gets 404 from GitHub
+        # codeload (a HEAD returns 200, so it looks like the URL is fine -> misleading).
+        # Force TLS 1.2 and use Invoke-WebRequest instead.
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Invoke-WebRequest -Uri "https://github.com/OpenTouryoProject/OpenTouryo/archive/$ref.zip" -OutFile $zip
     }
     Expand-Archive -Path $zip -DestinationPath $work -Force
 }
@@ -132,8 +135,9 @@ $needRichClient = $true   # 標的が 2CS / rich client（TFM net10.0-windows7.0
 if (-not (Test-Path $cs)) {
     $zip = Join-Path $work "OpenTouryo-$ref.zip"
     if (-not (Test-Path $zip)) {
-        (New-Object System.Net.WebClient).DownloadFile(
-            "https://github.com/OpenTouryoProject/OpenTouryo/archive/$ref.zip", $zip)
+        # See setup-build.ps1: WebClient's old TLS default 404s on GitHub codeload.
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Invoke-WebRequest -Uri "https://github.com/OpenTouryoProject/OpenTouryo/archive/$ref.zip" -OutFile $zip
     }
     Expand-Archive -Path $zip -DestinationPath $work -Force
 }
