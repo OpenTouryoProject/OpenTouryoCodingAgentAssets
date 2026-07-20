@@ -20,8 +20,9 @@ OpenTouryo には**フレームワークが決めず、親クラス2（業務フ
 **推測で書かない。** 確認するか、人に聞く。
 
 - **具体的タスク無しで起動されたら**（検証実行など）、確認したい項目をユーザに尋ねるか取り下げる（空振りで ③ テンプレを出さない）。
-- **確認できた事実は残す**：確定した親クラス2 の仕様（未改変・`User`→`ReadCommitted` 等）はプロジェクト方針ノート等へ
-  記録し、次タスクで再確認を省く（**AGENTS.md はインストーラ再生成で上書き・`SETUP-CHANGES.md` はマシン変更用**なので、そこには書かない）。
+- **確認できた事実は残す**：確定した親クラス2 の仕様（未改変・`User`→`ReadCommitted` 等）は **repo 直下 `PROJECT-POLICY.md`
+  （コミット・全エージェント可視）**へ記録し、次タスクで再確認を省く（**AGENTS.md はインストーラ再生成で上書き・`SETUP-CHANGES.md`
+  はマシン変更用**なので不可。**Claude 固有メモリはリポ外＝他エージェントから見えない**ので使わない）。
 
 このスキルは親クラス2 を**読んで確認する側**（アプリ開発者向け）。親クラス2 を**カスタマイズする側**
 （纏め者向け）は `opentouryo-base2-customize`。
@@ -84,10 +85,13 @@ B（運用ルール）
 元ソース（`Temp/` か `C:\otr\` の展開ツリー）で既定値を確認する。
 **★ overlay 機構がある構成で該当クラスが overlay に無ければ、纏め者は未改変＝既定値がこのプロジェクトの仕様と確定してよい**
 （「やってはいけないこと」の『既定値を仕様として書くな』の**明示例外**。ただし既定値の取得には元ソースが要る＝下記手順）。
+**`base2-overlay/` 自体が無い（overlay 機構未使用＝DLL 参照のみ）構成も同様に未改変とみなす**（stock ビルドの既定値＝仕様。
+厳密な改変有無は `build-ref.txt`／纏め者確認で担保）。
 
 **★ 展開ツリーが無い（クローン直後・セッションでクリア済み等）＝最頻ケースの手順（DLL しか無くても従う）：**
 1. `<ref>`（固定タグ）を突き止める。repo に記録があれば（`OpenTouryoAssemblies\build-ref.txt` 等のマニフェスト＝
-   `opentouryo-project-setup-build` が残す）それを使う。**無ければ纏め者/ユーザにタグを聞く**（`develop` なら再現不可＝要確認）。
+   `opentouryo-project-setup-build` が残す）それを使う。**マニフェストは古い構築物には無いことがある**：その場合、展開ツリー
+   `C:\otr\OpenTouryo-<ref>` が残っていれば**フォルダ名から `<ref>` を読める**。**それも無ければ纏め者/ユーザに聞く**（`develop` なら再現不可）。
 2. 上流を取得：`https://github.com/OpenTouryoProject/OpenTouryo/archive/<ref>.zip` を展開し、
    **`root/programs/CS/Frameworks/Infrastructure/Business/`** を読む（② の確認地図はここからの相対）。
 3. `<ref>` も取れず上流も見られないなら → ③ で纏め者に聞く。
@@ -107,7 +111,7 @@ B（運用ルール）
 | `MyUserInfo` の項目 | `Util/MyUserInfo.cs` | プロパティの一覧 |
 | `%1`/`%2` の置換 | `Presentation/MyBaseController.cs` | `UOC_ABEND(BusinessApplicationException, FxEventArgs)` の中の `Replace("%1", ...)` |
 | `User` の振替先 | `Business/MyFcBaseLogic.cs` | `UOC_ConnectionOpen` の `if (iso == DbEnum.IsolationLevelEnum.User)` |
-| DBMS 選択方式（接続文字列の**キー自体は config を先に見る**＝`opentouryo-config`） | `Business/MyFcBaseLogic.cs` | `UOC_ConnectionOpen` の `actionType.Split('%')[0]` による Dam 選択と `GetConnectionString("...")`。`actionType` は自由文字列でフレームワークが読むのは `[0]` のみ＝DBMS は複数系統ありうる |
+| DBMS 選択方式（接続文字列の**キー自体は config を先に見る**＝`opentouryo-config`） | `Business/MyFcBaseLogic.cs`（2CS は `…2CS.cs`） | `UOC_ConnectionOpen` の `parameterValue.ActionType.Split('%')[0]`（**PascalCase プロパティ**。grep 注意）による Dam 選択と `GetConnectionString("...")`。`ActionType` は自由文字列でフレームワークが読むのは `[0]` のみ＝DBMS は複数系統ありうる。**対応 Dam は `#if` でランタイム別**（OLE/ODB/ODP=net48・NPS=core） |
 | 例外の振替・リスロー | `Business/MyFcBaseLogic.cs` | `UOC_ABEND` の3つのオーバーロード |
 | `ACCESS` ログの書式 | `Business/MyFcBaseLogic.cs` | `UOC_PreAction` / `UOC_AfterAction` / `UOC_ABEND` の `LogIF` 呼び出し |
 | `SQLTRACE` ログの書式 | `Dao/MyBaseDao.cs` | `UOC_PreQuery` / `UOC_AfterQuery` |
@@ -131,7 +135,9 @@ P層は処理方式ごとにファイルが違う。**使っている方式の�
 | Web API（Core） | `Presentation/MyBaseAsyncApiControllerCore.cs` |
 | Windows Forms | `RichClient/Presentation/MyBaseControllerWin.cs` |
 
-B層も同様。リッチクライアント（2層C/S）は `RichClient/Business/MyFcBaseLogic2CS.cs`。
+**★ 上表で `Business/MyFcBaseLogic.cs` を指す4行（`User` 振替・DBMS 選択・例外振替・`ACCESS` ログ）は、2層C/S では
+同名メソッドを持つ `RichClient/Business/MyFcBaseLogic2CS.cs` を読む**（構成が 2CS なら `MyFcBaseLogic.cs` ではなくこちら。
+分離レベル/トランザクション/ロールバック挙動が違う＝`opentouryo-base2-customize`）。**片方だけ読んで結論しない。**
 
 **`MyBaseLogic` / `MyBaseLogic2CS` は非推奨クラス。** `grep` で先にヒットしがちだが、
 読むのは `MyFcBaseLogic` / `MyFcBaseLogic2CS`（`AGENTS.md` の非推奨一覧を参照）。
