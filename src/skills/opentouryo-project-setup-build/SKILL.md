@@ -171,6 +171,9 @@ Community/Professional/Enterprise を網羅）。VS18 の BuildTools/Professiona
 少なくとも **`OpenTouryo.Business.dll`**（Business ビルドの生成物で、`MSB3553` 等で最も失敗しやすい）が
 ベンダ先にあることを確かめる。無ければビルドは失敗している（ビルド出力を確認する）。
 
+**★ ベンダした `<ref>`・ランタイム・実施日を `OpenTouryoAssemblies\build-ref.txt` に記録しコミット**（無いと後で
+`opentouryo-project-policy` が上流ソースを引けない）。
+
 ## やってはいけないこと
 
 - **`git clone` で取ってくる** — ZIP 取得（`archive/<ref>.zip`）にする。作業ツリーはコミットしない

@@ -19,6 +19,10 @@ OpenTouryo には**フレームワークが決めず、親クラス2（業務フ
 
 **推測で書かない。** 確認するか、人に聞く。
 
+- **具体的タスク無しで起動されたら**（検証実行など）、確認したい項目をユーザに尋ねるか取り下げる（空振りで ③ テンプレを出さない）。
+- **確認できた事実は残す**：確定した親クラス2 の仕様（未改変・`User`→`ReadCommitted` 等）はプロジェクト方針ノート等へ
+  記録し、次タスクで再確認を省く（**AGENTS.md はインストーラ再生成で上書き・`SETUP-CHANGES.md` はマシン変更用**なので、そこには書かない）。
+
 このスキルは親クラス2 を**読んで確認する側**（アプリ開発者向け）。親クラス2 を**カスタマイズする側**
 （纏め者向け）は `opentouryo-base2-customize`。
 
@@ -33,7 +37,7 @@ OpenTouryo には**フレームワークが決めず、親クラス2（業務フ
 | `MyUserInfo` が持つ項目 | `UserName` / `IPAddress` の2つだけ | `opentouryo-auth` |
 | メッセージの `%1`/`%2` 置換 | **Web Forms のみ**実装がある | `opentouryo-message` |
 | `User` 分離レベルの振替先 | `ReadCommitted` | `opentouryo-layer-b` |
-| 接続文字列のキー / 使う DBMS | `ConnectionString_SQL` ほか | `opentouryo-config` |
+| 接続文字列のキー（→ **config を先に見る**）/ DBMS 選択（→ 親クラス2） | キーは `ConnectionString_SQL` ほか＝config 直読み。DBMS は `actionType` 接頭辞ごとで**単一に決まらない** | `opentouryo-config` |
 | `UOC_ABEND` での例外の振替 | 振替の IF 文は雛形のみ。一般例外はリスロー | `opentouryo-exception` |
 | 事前定義された例外メッセージ | `SAMPLE_ERROR` のみ | `opentouryo-exception` / `opentouryo-message` |
 | `ACCESS` / `SQLTRACE` ログの書式 | カンマ区切り | `opentouryo-logging` |
@@ -73,18 +77,26 @@ B（運用ルール）
 | 見る場所 | 中身 |
 | --- | --- |
 | `base2-overlay/Frameworks/Infrastructure/Business/` | **このプロジェクトが実際に変えた親クラス2**（修正差分だけ・コミット済み。まず読む）。`opentouryo-base2-customize` |
-| `Temp/OpenTouryo-<ref>/root/programs/CS/Frameworks/Infrastructure/Business/` | 親クラス2 の**元ソース**（既定値の確認用）。`.gitignore` 対象で**ローカルにしか無い**（新規クローンには無い） |
-| `OpenTouryoAssemblies/Build_*/OpenTouryo.Business*.dll` | **ビルド済みバイナリ**（ソースではない。これしか読めなければ ③ へ） |
+| 展開ツリー `Temp/OpenTouryo-<ref>/...` **または短ルート `C:\otr\OpenTouryo-<ref>\...`**（いずれも `root/programs/CS/Frameworks/Infrastructure/Business/`） | 親クラス2 の**元ソース**（既定値の確認用）。**どちらも使い捨て**（`.gitignore`／セッションでクリア）＝**ローカルにしか無い**（新規クローンには無い。短ルートは MAX_PATH 回避で `setup-build` が使う） |
+| `OpenTouryoAssemblies/Build_*/OpenTouryo.Business*.dll` | **ビルド済みバイナリ**（ソースではない） |
 
 **まず `base2-overlay/` を読む**（既定から何を変えたかが分かる）。そこに無い項目は既定のままなので、
-元ソース（Temp 側）で既定値を確認する。**Temp が無い（クローン直後など）なら、固定タグの本家ソースを
-見るか、③ で纏め者に聞く。**
+元ソース（`Temp/` か `C:\otr\` の展開ツリー）で既定値を確認する。
+**★ overlay 機構がある構成で該当クラスが overlay に無ければ、纏め者は未改変＝既定値がこのプロジェクトの仕様と確定してよい**
+（「やってはいけないこと」の『既定値を仕様として書くな』の**明示例外**。ただし既定値の取得には元ソースが要る＝下記手順）。
+
+**★ 展開ツリーが無い（クローン直後・セッションでクリア済み等）＝最頻ケースの手順（DLL しか無くても従う）：**
+1. `<ref>`（固定タグ）を突き止める。repo に記録があれば（`OpenTouryoAssemblies\build-ref.txt` 等のマニフェスト＝
+   `opentouryo-project-setup-build` が残す）それを使う。**無ければ纏め者/ユーザにタグを聞く**（`develop` なら再現不可＝要確認）。
+2. 上流を取得：`https://github.com/OpenTouryoProject/OpenTouryo/archive/<ref>.zip` を展開し、
+   **`root/programs/CS/Frameworks/Infrastructure/Business/`** を読む（② の確認地図はここからの相対）。
+3. `<ref>` も取れず上流も見られないなら → ③ で纏め者に聞く。
 
 上記レイアウトでないプロジェクトでは、ファイル名（`MyFcBaseLogic.cs` / `MyUserInfo.cs` /
 `MyBaseController.cs` 等）でリポジトリ内を検索する。アセンブリは `Touryo.Infrastructure.Business`、
 名前空間は `Touryo.Infrastructure.Business.*`（本家では `Frameworks/Infrastructure/Business/`）。
 
-`.dll` しか読めなければソースは提供されていない。→ ③ へ。
+**`.dll` しか無くても即 ③ ではない**：上の上流取得（固定タグ ZIP）で既定値は読める。それも不可なら → ③ へ。
 
 ### ② 読む（確認地図）
 
@@ -95,7 +107,7 @@ B（運用ルール）
 | `MyUserInfo` の項目 | `Util/MyUserInfo.cs` | プロパティの一覧 |
 | `%1`/`%2` の置換 | `Presentation/MyBaseController.cs` | `UOC_ABEND(BusinessApplicationException, FxEventArgs)` の中の `Replace("%1", ...)` |
 | `User` の振替先 | `Business/MyFcBaseLogic.cs` | `UOC_ConnectionOpen` の `if (iso == DbEnum.IsolationLevelEnum.User)` |
-| DBMS 選択方式 / 接続文字列 | `Business/MyFcBaseLogic.cs` | `UOC_ConnectionOpen` の `actionType.Split('%')[0]` による Dam 選択と `GetConnectionString("...")` |
+| DBMS 選択方式（接続文字列の**キー自体は config を先に見る**＝`opentouryo-config`） | `Business/MyFcBaseLogic.cs` | `UOC_ConnectionOpen` の `actionType.Split('%')[0]` による Dam 選択と `GetConnectionString("...")`。`actionType` は自由文字列でフレームワークが読むのは `[0]` のみ＝DBMS は複数系統ありうる |
 | 例外の振替・リスロー | `Business/MyFcBaseLogic.cs` | `UOC_ABEND` の3つのオーバーロード |
 | `ACCESS` ログの書式 | `Business/MyFcBaseLogic.cs` | `UOC_PreAction` / `UOC_AfterAction` / `UOC_ABEND` の `LogIF` 呼び出し |
 | `SQLTRACE` ログの書式 | `Dao/MyBaseDao.cs` | `UOC_PreQuery` / `UOC_AfterQuery` |
