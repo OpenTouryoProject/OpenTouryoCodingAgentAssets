@@ -91,9 +91,9 @@ net48・netcore 両方）／③ベンダされる Dam DLL 自体（`Build_*` か
    スクリプトが担う**（その `examples.md` の **`1b` ブロック**。「任意」表記だが overlay があれば必須＝見落とさない）。
    **2CS（`MyBaseLogic2CS` / `MyFcBaseLogic2CS`）を触ったら、`3_Build_Business_*` に加えて `BusinessRichClient_net48.sln`
    （core は `_netcore100`）も別途ビルドする**（さもないと 2CS の変更が無言で無視される。前述）。
-   **★ この RichClient sln は非SDK・`HintPath` のみ＝`/t:restore` が壊れる（`/t:build` 単体で）。かつ net48/netcore が
-   `obj\` を共有し、netcore の restore 残骸で net48 ビルドが落ちる→ビルド前に `Business\RichClient\obj\` と
-   `CustomControl\RichClient\obj\` の `project.assets.json`・`*.nuget.*` を消す**（実装は `opentouryo-project-setup-build` の `examples.md` `2b`）。
+   **★ この RichClient sln は非SDK＝`/t:restore` が壊れる（`/t:build` 単体）。かつ net48/netcore が `obj\` を共有し
+   netcore の restore 残骸で net48 が落ちる→`Business\RichClient\obj`・`CustomControl\RichClient\obj` の残骸を消す**
+   （実装・正本は `opentouryo-project-setup-build` の `examples.md` `2b`）。
 3. 生成された `OpenTouryo.Business.dll`（2CS を直したなら `OpenTouryo.Business.RichClient.dll` も）を導入プロジェクトへ配布
    （`opentouryo-project-setup-build` のベンダ先 `OpenTouryoAssemblies\Build_*`）。
 4. 依存アプリを再ビルドして反映。**破壊的変更（シグネチャ・挙動）は全依存アプリに波及**する。
@@ -167,3 +167,5 @@ net48・netcore 両方）／③ベンダされる Dam DLL 自体（`Build_*` か
 - **Temp の展開物（`project-setup` の副産物）を直接編集して放置する** — 修正は `base2-overlay/` に残す
   （展開ツリーへの適用はビルド スクリプトが行う）
 - **破壊的変更を告知なく入れる** — 依存アプリの再ビルドが要る。影響範囲を見てから
+- **差し込み点の選択肢を固定4択に畳んで落とす**（実測：`%1/%2`・Web API 認証等が脱落）— 上表を**全部**提示、
+  UI が絞るなら番号付きリストで（AGENTS.md「選択肢は間引かない」の複製＝AGENTS.md 欠落時も効く）
