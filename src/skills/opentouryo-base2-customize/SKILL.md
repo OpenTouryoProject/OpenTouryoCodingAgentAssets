@@ -9,6 +9,8 @@ metadata:
 
 # 親クラス2（基盤 Business 層）のカスタマイズ
 
+> 📋 **コピー元**：`references/snippets.md`（B/D/P層 UOC override・addControlEvent・引数戻り値/例外定数）。
+
 <!-- 執筆者メモ（Claude Code は読み込み時に除去）：纏め者向けスキル。読者はアプリ開発者ではない。
      first-cut は「どこを・どう直し・どうビルド/配布するか」の地図＋差し込み点＋境界に絞る。
      クラス個別の詳細は Frameworks/Infrastructure/Business のソースを読む（project-policy と対）。 -->

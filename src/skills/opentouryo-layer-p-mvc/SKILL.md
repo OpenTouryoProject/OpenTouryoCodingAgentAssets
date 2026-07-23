@@ -9,6 +9,8 @@ metadata:
 
 # P層（ASP.NET MVC / ASP.NET Core MVC）
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（コントローラ骨格・アクション・DoBusinessLogicAsync・net48/Core 差。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 コントローラの実装。**ASP.NET MVC（net48）と ASP.NET Core MVC（net10.0）の両方**を扱う。
@@ -54,38 +56,10 @@ metadata:
 
 ## コントローラの書き方
 
-```csharp
-using Touryo.Infrastructure.Public.Db;
-
-[Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]  // Core
-public class Crud1Controller : MyBaseMVControllerCore   // net48 は MyBaseMVController
-{
-    [HttpPost]
-    public async Task<IActionResult> SelectCount(CrudViewModel model)
-    {
-        // 引数クラスを生成する
-        TestParameterValue pv = new TestParameterValue(
-            this.ControllerName,   // 画面名
-            "-",                   // コントロール名（MVC には無いので "-"）
-            this.ActionName,       // メソッド名 → B層で UOC_SelectCount に振り分けられる
-            actionType,
-            this.UserInfo);
-
-        // B層を呼び出す
-        LayerB layerB = new LayerB();
-        TestReturnValue rv = (TestReturnValue)await layerB.DoBusinessLogicAsync(
-            pv, DbEnum.IsolationLevelEnum.ReadCommitted);
-
-        // 業務例外は戻り値で返る（opentouryo-exception 参照）
-        if (rv.ErrorFlag)
-        {
-            // rv.ErrorMessageID / ErrorMessage / ErrorInfo を使う
-        }
-
-        return View(model);
-    }
-}
-```
+`MyBaseMVControllerCore`（net48 は `MyBaseMVController`）を継承し、アクションで
+引数クラス（コントロール名は `"-"`・`this.ControllerName`/`this.ActionName`/`this.UserInfo`）→
+`DoBusinessLogicAsync` → `ErrorFlag` 判定 → `return View(model)`。
+**コントローラ全文は `references/snippets.md`**。
 
 ### 使えるプロパティ
 

@@ -9,6 +9,8 @@ metadata:
 
 # 共通Dao（CmnDao）
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（CmnDao 生成・SQLFileName/SQLText・実行。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 フレームワークが提供する `CmnDao` の使い方。**自分で書くクラスではない。**

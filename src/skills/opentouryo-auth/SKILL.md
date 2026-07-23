@@ -9,6 +9,8 @@ metadata:
 
 # 認証とユーザ情報
 
+> 📋 **コピー元**：`references/snippets.md`（UserInfoHandle・MyUserInfo・認証方式差）。
+
 ## このスキルの適用範囲
 
 **OpenTouryo の認証実装の主眼は「認証済みユーザの情報をどう保持するか」。** 認証そのものの
@@ -31,16 +33,7 @@ OpenTouryo を使う全アプリケーションが対象。
 
 ### 既定のテンプレートが持つ項目は2つだけ
 
-```csharp
-[Serializable()]
-public class MyUserInfo : UserInfo
-{
-    public MyUserInfo(string userName, string ipAddress)
-
-    public string UserName  { get; set; }   // ← setter がある
-    public string IPAddress { get; set; }   // ← setter がある
-}
-```
+既定は `UserName` / `IPAddress` の2プロパティのみ（`[Serializable()]`・`MyUserInfo(userName, ipAddress)`。骨格は `references/snippets.md`）。
 
 **どちらも setter を持つ。** 生成後に代入できる（Windows Forms のログインはこれを使う。
 `opentouryo-layer-p-winforms-screen` 参照）。
@@ -75,15 +68,8 @@ public class MyUserInfo : UserInfo
 
 ### 取得 API がランタイムで違う
 
-**同名だがシグネチャが違い、`#if` で切り替わる。** 両対応のコードを書くときの罠。
-
-```csharp
-// net10.0（core 系）: ジェネリック版のみ
-MyUserInfo ui = UserInfoHandle.GetUserInformation<MyUserInfo>();
-
-// net48: 非ジェネリック版のみ。キャストする
-MyUserInfo ui = (MyUserInfo)UserInfoHandle.GetUserInformation();
-```
+**同名だがシグネチャが違い、`#if` で切り替わる**（net10.0＝`GetUserInformation<MyUserInfo>()`、net48＝
+`(MyUserInfo)GetUserInformation()`）。両対応のコードを書くときの罠。コードは `references/snippets.md`。
 
 内部の保存方式も違う。
 

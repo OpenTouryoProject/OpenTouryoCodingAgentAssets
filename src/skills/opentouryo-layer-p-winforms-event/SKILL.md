@@ -9,6 +9,8 @@ metadata:
 
 # P層（Windows Forms）：イベント処理の実装
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（UOC_btnXXX_Click(RcFxEventArgs)・6接頭辞・隠しボタン DoClick。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 **コントロールのイベントハンドラ（UOC メソッド）を実装する。**

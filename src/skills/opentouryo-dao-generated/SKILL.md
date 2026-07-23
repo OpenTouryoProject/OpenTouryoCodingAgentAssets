@@ -9,6 +9,8 @@ metadata:
 
 # 自動生成Dao
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（Dao生成・CRUD呼出・S/Dメソッド・PK_/Set_forUPD プロパティ・楽観排他。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 **D層自動生成ツール（墨壺）がテーブル単位で生成する Dao** の使い方。
@@ -37,27 +39,9 @@ SQL を直接書く。**参照系なら、ビューを作れば**自動生成の
 
 ## 書き方
 
-クラス名は `Dao<テーブル名>`。B層から `this.GetDam()` を渡して生成する。
-
-```csharp
-DaoShippers genDao = new DaoShippers(this.GetDam());
-
-// 参照（主キー指定）
-genDao.PK_ShipperID = testParameter.Shipper.ShipperID;
-DataTable dt = new DataTable();
-genDao.S2_Select(dt);
-
-// 更新（WHERE = 主キー、SET = Set_x_forUPD）
-genDao.PK_ShipperID           = testParameter.Shipper.ShipperID;
-genDao.Set_CompanyName_forUPD = testParameter.Shipper.CompanyName;
-genDao.Set_Phone_forUPD       = testParameter.Shipper.Phone;
-int count = genDao.S3_Update();
-
-// 挿入（列の値をそのまま設定）
-genDao.CompanyName = testParameter.Shipper.CompanyName;
-genDao.Phone       = testParameter.Shipper.Phone;
-genDao.D1_Insert();
-```
+クラス名は `Dao<テーブル名>`。B層から `DaoShippers genDao = new DaoShippers(this.GetDam())` で生成し、
+プロパティ（`PK_列名`・`列名`・`Set_列名_forUPD`）を設定してメソッド（`S2_Select(dt)`・`S3_Update()`・`D1_Insert()` 等）を呼ぶ。
+**参照/更新/挿入のコードは `references/snippets.md`**。
 
 ## メソッドの命名体系
 

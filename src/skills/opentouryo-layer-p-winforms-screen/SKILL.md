@@ -9,6 +9,8 @@ metadata:
 
 # P層（Windows Forms / 2層クライアントサーバ）：画面の新規作成
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（Form 骨格・UOC_FormInit・6接頭辞・static UserInfo。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 **画面コードクラス（`Form` の派生）を新規に作る。**

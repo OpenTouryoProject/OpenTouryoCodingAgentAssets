@@ -9,6 +9,8 @@ metadata:
 
 # トランザクション制御機能
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（InitDam/GetTransactionPatterns・TCDefinition.xml・MyAttribute。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 `TCDefinition.xml` の書式と、`InitDam` / `GetTransactionPatterns` による Dam の初期化。
@@ -37,28 +39,7 @@ this.SetDam(dam);
 パスは `appSettings` の **`FxXMLTCDefinition`** で指定する（`opentouryo-config` 参照）。
 **ランタイムによらず XML のまま。**
 
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<!DOCTYPE TCD[
-	<!ELEMENT TCD (TransactionGroup*, TransactionPattern*)>
-	<!ELEMENT TransactionGroup EMPTY>
-	<!ELEMENT TransactionPattern EMPTY>
-	<!ATTLIST TransactionGroup
-		id ID #REQUIRED value CDATA #REQUIRED>
-	<!ATTLIST TransactionPattern
-		id ID #REQUIRED connkey CDATA #IMPLIED
-		isolevel (nc|nt|uc|rc|rr|sz|ss|df) "rc">
-]>
-<!-- idの先頭には、数字を使用できない。 -->
-<TCD>
-	<!-- トランザクション グループ：パターンをカンマ区切りで並べる -->
-	<TransactionGroup id="SQL" value="SQL_NT,SQL_UC,SQL_RC,SQL_RR,SQL_SZ,SQL_SS,SQL_DF"/>
-
-	<!-- トランザクション パターン -->
-	<TransactionPattern id="SQL_RC" connkey="ConnectionString_SQL" isolevel="rc"/>
-	<TransactionPattern id="SQL_SZ" connkey="ConnectionString_SQL" isolevel="sz"/>
-</TCD>
-```
+**定義例（DTD 埋め込み・`TransactionPattern`/`TransactionGroup`）は `references/snippets.md`。** 要素・属性は下表。
 
 | 要素・属性 | 内容 |
 | --- | --- |
@@ -98,20 +79,8 @@ this.SetDam(dam);
 ## トランザクション グループ
 
 **パターンIDをまとめて取り出すための束ね。** 同じ処理を複数の分離レベルで試す、
-複数 DB へ同時に接続する、といった用途。
-
-```csharp
-string[] patternIDs;
-BaseLogic.GetTransactionPatterns("SQL", out patternIDs);
-// → ["SQL_NT", "SQL_UC", "SQL_RC", "SQL_RR", "SQL_SZ", "SQL_SS", "SQL_DF"]
-
-foreach (string patternID in patternIDs)
-{
-    BaseDam dam = new DamSqlSvr();
-    BaseLogic.InitDam(patternID, dam);
-    this.SetDam(patternID, dam);   // キー付きで複数 Dam を保持できる
-}
-```
+複数 DB へ同時に接続する、といった用途。`BaseLogic.GetTransactionPatterns("SQL", out patternIDs)` で
+グループのパターンを取得し、各々を `InitDam` → `SetDam(patternID, dam)`（キー付きで複数 Dam 保持）。**コードは `references/snippets.md`**。
 
 `GetTransactionPatterns` / `InitDam` は `BaseLogic` の **`protected static`** メソッド。
 **業務コード親クラス2・業務コードクラスから呼べる。**

@@ -9,6 +9,8 @@ metadata:
 
 # 画面遷移制御機能
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（ScreenTransition/FxTransfer/FxRedirect・SCDefinition.xml・config。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 `SCDefinition.xml` の書式と、画面遷移チェックの有効化。
@@ -44,33 +46,7 @@ Web Forms の画面実装そのものは `opentouryo-layer-p-webforms-screen` /
 パスは `appSettings` の **`FxXMLSCDefinition`** で指定する（`opentouryo-config` 参照）。
 **ランタイムによらず XML のまま。**
 
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<!DOCTYPE SCD[
-	<!ELEMENT SCD (Screen*, CmnTransition*)>
-	<!ELEMENT Screen (Transition*)>
-	<!ELEMENT Transition EMPTY>
-	<!ELEMENT CmnTransition EMPTY>
-	<!ATTLIST Screen
-		value CDATA #REQUIRED
-		directLink (allow|deny) "allow">
-	<!ATTLIST Transition
-		value CDATA #REQUIRED
-		label CDATA #REQUIRED
-		mode  (T|R) #IMPLIED>
-	<!ATTLIST CmnTransition
-		value CDATA #REQUIRED
-		label ID #REQUIRED
-		mode  (T|R) #IMPLIED>
-]>
-<SCD>
-	<Screen value="/ProjectX_sample/Aspx/start/menu.aspx" directLink="allow">
-	</Screen>
-	<Screen value="/ProjectX_sample/Aspx/testScreenCtrl/WebForm1.aspx" directLink="deny">
-		<Transition value="/ProjectX_sample/Aspx/testScreenCtrl/WebForm2.aspx" label="1→2"/>
-	</Screen>
-</SCD>
-```
+**定義例（DTD 埋め込み・`Screen`/`Transition`/`CmnTransition`・`directLink`=allow/deny・`mode`=T/R）は `references/snippets.md`。** 要素・属性は下表。
 
 | 要素・属性 | 内容 |
 | --- | --- |

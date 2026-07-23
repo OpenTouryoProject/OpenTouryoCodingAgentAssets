@@ -9,6 +9,8 @@ metadata:
 
 # OpenTouryo の例外処理方式
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（例外コンストラクタ・スロー・ErrorFlag 受け取り。実装時はここから写す）。
+
 ## 適用範囲
 
 OpenTouryo の全層に共通する例外処理の規約。例外の型の選択、スローの仕方、B層フレームワークが
@@ -46,19 +48,8 @@ B層で throw new BusinessApplicationException(...)
 
 ### コンストラクタとプロパティ
 
-```csharp
-// 業務例外：エラー情報（information）を持つのはこの型だけ
-new BusinessApplicationException(string messageID, string message, string information);
-new BusinessApplicationException(string messageID, string message, string information, Exception innerException);
-
-// システム例外
-new BusinessSystemException(string messageID, string message);
-new BusinessSystemException(string messageID, string message, Exception innerException);
-
-// フレームワーク例外（フレームワークが検知した例外に使う。業務コードから通常スローしない）
-new FrameworkException(string messageID, string message);
-new FrameworkException(string messageID, string message, Exception innerException);
-```
+**コンストラクタ**（`BusinessApplicationException`＝`(messageID, message, information[, inner])`／
+`BusinessSystemException`・`FrameworkException`＝`(messageID, message[, inner])`）は `references/snippets.md`。
 
 | プロパティ | 型 | 保持する型 |
 | --- | --- | --- |
@@ -224,31 +215,10 @@ if (isSystemBlocked)
 
 ## 受け取る（開発者）
 
-### 業務例外 — 戻り値を判定する
+- **業務例外**＝正常系の戻り値で返る → `returnValue.ErrorFlag` を判定し `ErrorMessageID`/`ErrorMessage`/`ErrorInfo` を使う（`catch` しない）。
+- **システム例外**＝リスローされる → `catch (BusinessSystemException bsEx)` で `bsEx.messageID`/`bsEx.Message`。
 
-```csharp
-MyReturnValue returnValue = (MyReturnValue)logic.DoBusinessLogic(parameterValue);
-
-if (returnValue.ErrorFlag)
-{
-    // 業務例外が発生していた
-    // returnValue.ErrorMessageID / ErrorMessage / ErrorInfo を使って
-    // 利用者向けメッセージの生成、入力エラーの表示などを行う
-}
-```
-
-### システム例外 — catch する
-
-```csharp
-try
-{
-    returnValue = (MyReturnValue)logic.DoBusinessLogic(parameterValue);
-}
-catch (BusinessSystemException bsEx)
-{
-    // bsEx.messageID / bsEx.Message を使う
-}
-```
+コードは `references/snippets.md`。
 
 ## 例外振替（参考）
 

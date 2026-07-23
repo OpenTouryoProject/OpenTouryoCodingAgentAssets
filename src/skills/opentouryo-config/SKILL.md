@@ -9,6 +9,8 @@ metadata:
 
 # 構成ファイル
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（GetConfigValue/GetConnectionString・Core の InitConfiguration・主要キー。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 設定値の取得と、構成ファイルへの設定の書き方。

@@ -9,6 +9,8 @@ metadata:
 
 # P層（Web Forms）：イベント処理の実装
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（UOC 命名表・シグネチャ・GridView 2引数・FxEventArgs プロパティ。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 **コントロールのイベントハンドラ（UOC メソッド）を実装する。**
@@ -103,16 +105,8 @@ metadata:
 
 `（イベント名）` はコントロール種別で決まる（上の接頭辞の表）。
 
-```csharp
-// コンテンツページ上の btnButton1
-protected string UOC_btnButton1_Click(FxEventArgs fxEventArgs)
-
-// sampleScreen.master 上の btnMButton1
-protected string UOC_sampleScreen_btnMButton1_Click(FxEventArgs fxEventArgs)
-
-// ID が sampleControl1 のユーザコントロール上の btnUCButton
-protected string UOC_sampleControl1_btnUCButton_Click(FxEventArgs fxEventArgs)
-```
+具体例（`UOC_btnButton1_Click`／`UOC_sampleScreen_btnMButton1_Click`／`UOC_sampleControl1_btnUCButton_Click`）は
+`references/snippets.md`。
 
 同じユーザコントロールを2つ置いた場合、**ID が違えばハンドラも別**になる
 （`UOC_sampleControl1_btnUCButton_Click` と `UOC_sampleControl2_btnUCButton_Click`）。

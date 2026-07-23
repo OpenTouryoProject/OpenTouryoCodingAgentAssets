@@ -1,0 +1,50 @@
+# ログ出力 コードスニペット（コピー元）
+
+出典：UserGuide 纏め者編 §1.3／共通編、`Public/Log/LogIF.cs`（実ソース）で裏取り。**on-demand 参照**（SKILL 予算外）。
+
+## ログ出力 API（loggerName ＋ message）
+
+```csharp
+using Touryo.Infrastructure.Public.Log;
+
+LogIF.DebugLog("ロガー名", "メッセージ");
+LogIF.InfoLog("ロガー名", "メッセージ");
+LogIF.WarnLog("ロガー名", "メッセージ");
+LogIF.ErrorLog("ロガー名", "メッセージ");
+LogIF.FatalLog("ロガー名", "メッセージ");
+```
+
+> ★ ロガー名は**定数がなく文字列直書き**。タイポするとコンパイル・実行時チェックを通らずログが消える。
+> プロジェクトでロガー名の定数を用意すると安全。
+
+## 標準ロガー（サンプルの SampleLogConf.xml）
+
+| ロガー | 用途 | 書式（既定） |
+| --- | --- | --- |
+| `ACCESS` | アクセストレース | カンマ区切り |
+| `SQLTRACE` | SQL トレース | カンマ区切り |
+| `OPERATION` | オペレーション（業務操作） | 運用ルール依存（`opentouryo-project-policy`） |
+| `SERVICE-IF` | サービスインターフェイス | — |
+
+`ACCESS`/`SQLTRACE` の書式は親クラス2 の `LogIF` 呼び出しに依存（`opentouryo-project-policy`／`-base2-customize`）。
+
+## log4net アペンダ（ローリング・複数プロセス・即時フラッシュ）
+
+```xml
+<!-- サイズローリング＋バックアップ数固定 -->
+<appender name="XXX" type="log4net.Appender.RollingFileAppender">
+  <param name="File" value="（パス）" />
+  <param name="RollingStyle" value="size" />
+  <param name="MaximumFileSize" value="10MB" />
+  <param name="MaxSizeRollBackups" value="2" />
+  <param name="AppendToFile" value="true" />
+  <encoding value="utf-8" />
+  <layout type="log4net.Layout.PatternLayout">
+    <param name="ConversionPattern" value="[%date{yyyy/MM/dd HH:mm:ss,fff}],[%-5level],[%thread],%message%newline" />
+  </layout>
+</appender>
+```
+
+- **複数プロセスから1ファイルへ**：appender の子に `<lockingModel type="log4net.Appender.FileAppender+MinimalLock" />`（性能は劣化）。
+- **バッファリング**：`<ImmediateFlush value="False" />`（Disk I/O 軽減。既定 True＝即時・クラッシュ時も全出力）。
+- config パス：`<add key="FxLog4NetConfFile" value="（パス）\SampleLogConf.xml"/>`。

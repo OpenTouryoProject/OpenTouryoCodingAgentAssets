@@ -9,6 +9,8 @@ metadata:
 
 # P層から B層を呼び出す
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（インプロセス呼出・通信制御 Invoke・2CS 手動トランザクション。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 **画面（P層）から業務ロジック（B層）を呼ぶ手順。** どの処理方式でも共通の型。
@@ -27,22 +29,8 @@ metadata:
 ④ リッチクライアント（2CS）だけ、CommitAndClose() で明示的にコミットする
 ```
 
-```csharp
-// ① 引数クラス
-TestParameterValue pv = new TestParameterValue(
-    画面名, コントロール名, "SelectCount", actionType, ユーザ情報);
-//              ↑ メソッド名 → B層で UOC_SelectCount に振り分けられる
-
-// ② B層呼び出し
-LayerB layerB = new LayerB();
-TestReturnValue rv = (TestReturnValue)layerB.DoBusinessLogic(pv, iso);
-
-// ③ 業務例外は戻り値で返る（例外では飛んでこない）
-if (rv.ErrorFlag)
-{
-    // rv.ErrorMessageID / rv.ErrorMessage / rv.ErrorInfo
-}
-```
+①〜③の**コードは `references/snippets.md`**（引数クラス＝`new TestParameterValue(画面名, コントロール名,
+"SelectCount"〔→ B層 `UOC_SelectCount`〕, actionType, ユーザ情報)` → `DoBusinessLogic(pv, iso)` → `rv.ErrorFlag` 判定）。
 
 ## ① 引数クラスの組み立て（処理方式で違う）
 

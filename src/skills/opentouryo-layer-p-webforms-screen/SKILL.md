@@ -9,6 +9,8 @@ metadata:
 
 # P層（Web Forms）：画面の新規作成
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（.aspx＋コードビハインド骨格・UOC_FormInit・コントロール取得。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 **画面コードクラス（`.aspx.cs`）を新規に作る。** **net48 のみ**（Web Forms は Core に無い）。
@@ -48,18 +50,8 @@ public partial class sampleScreen : MyBaseController
 
 ## ページロード処理（実装必須）
 
-`UOC_FormInit` / `UOC_FormInit_PostBack` は親クラス1 で `abstract`。**使わなくても空で実装する。**
-
-```csharp
-protected override void UOC_FormInit()          // 初回ロード
-{
-    // 初期化処理
-}
-
-protected override void UOC_FormInit_PostBack() // ポストバック
-{
-}
-```
+`UOC_FormInit`（初回ロード）/ `UOC_FormInit_PostBack`（ポストバック）を `protected override void` で実装する。
+親クラス1 で `abstract`＝**使わなくても空で実装する**。コードは `references/snippets.md`。
 
 ## 使えるプロパティ・メソッド
 

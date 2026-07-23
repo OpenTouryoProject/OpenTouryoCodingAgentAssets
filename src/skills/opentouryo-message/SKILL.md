@@ -9,6 +9,8 @@ metadata:
 
 # メッセージ取得機能
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（GetMessageDescription・MSGDefinition.xml・%1/%2。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 `MSGDefinition.xml` の書式と `GetMessage` の呼び出し。
@@ -36,22 +38,7 @@ metadata:
 パスは `appSettings` の **`FxXMLMSGDefinition`** で指定する（`opentouryo-config` 参照）。
 **ランタイムによらず XML のまま**（`appsettings.json` になっても、この定義ファイルは XML）。
 
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<!DOCTYPE MSGD[
-	<!ELEMENT MSGD (Message*)>
-	<!ELEMENT Message EMPTY>
-	<!ATTLIST Message
-		id ID #REQUIRED
-		description CDATA #REQUIRED>
-]>
-<!-- idの先頭には、数字を使用できない。 -->
-<!-- 先頭Eは異常系、先頭Iは正常系など -->
-<MSGD>
-	<Message id="I0001" description="～メッセージIDに対応する記述１（正常系）～"/>
-	<Message id="E0001" description="○△□エラー、%1が%2しました。"/>
-</MSGD>
-```
+**定義例（DTD 埋め込み・`Message` の `id`/`description`・先頭 E=異常系/I=正常系）は `references/snippets.md`。** 要素・属性は下表。
 
 | 要素・属性 | 内容 |
 | --- | --- |

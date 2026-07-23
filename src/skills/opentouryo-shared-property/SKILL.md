@@ -9,6 +9,8 @@ metadata:
 
 # 共有情報取得機能
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（GetSharedPropertyValue・SPDefinition.xml・config。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 `SPDefinition.xml` の書式と `GetSharedProperty` の呼び出し。
@@ -26,21 +28,7 @@ metadata:
 パスは `appSettings` の **`FxXMLSPDefinition`** で指定する（`opentouryo-config` 参照）。
 **ランタイムによらず XML のまま**（`appsettings.json` になっても、この定義ファイルは XML）。
 
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<!DOCTYPE SPD[
-	<!ELEMENT SPD (SharedProp*)>
-	<!ELEMENT SharedProp EMPTY>
-	<!ATTLIST SharedProp
-		key ID #REQUIRED
-		value CDATA #REQUIRED>
-]>
-<!-- key(id)の先頭には、数字を使用できない。 -->
-<SPD>
-	<SharedProp key="ConnectionString1" value="てすと１"/>
-	<SharedProp key="HostName1" value="てすと３"/>
-</SPD>
-```
+**定義例（DTD 埋め込み・`SharedProp` の `key`/`value`）は `references/snippets.md`。** 要素・属性は下表。
 
 | 要素・属性 | 内容 |
 | --- | --- |

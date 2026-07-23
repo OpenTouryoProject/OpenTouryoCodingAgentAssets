@@ -9,6 +9,8 @@ metadata:
 
 # P層（Web Forms）：子画面表示機能
 
+> 📋 **コピー元スニペット**：`references/snippets.md`（OK/YesNo/モーダル/モードレス・UOC後処理・データ受け渡し。実装時はここから写す）。
+
 ## このスキルの適用範囲
 
 **Web Forms で、ダイアログや子画面を開く。** 親クラス1（`BaseController`）が用意する
@@ -65,25 +67,15 @@ this.ShowYesNoMessageDialog("messageID", "保存しますか？", "確認");
 // dialogStyle を足すオーバーロードもある
 ```
 
-```csharp
-// [YES] が押されたとき
-protected override void UOC_YesNoDialog_Yes_Click(FxEventArgs parentFxEventArgs)
-{
-    // parentFxEventArgs.ButtonID = ダイアログを開いた親画面のボタン名
-    switch (parentFxEventArgs.ButtonID)
-    {
-        case "btnSave":
-            // 保存処理
-            break;
-    }
-}
-
-protected override void UOC_YesNoDialog_No_Click(FxEventArgs parentFxEventArgs) { }
-protected override void UOC_YesNoDialog_X_Click(FxEventArgs parentFxEventArgs) { }
-```
+後処理は `UOC_YesNoDialog_Yes_Click` / `_No_Click` / `_X_Click(FxEventArgs parentFxEventArgs)` を
+`override`（**コードは `references/snippets.md`**）。
 
 **`parentFxEventArgs.ButtonID` で、どのボタンからダイアログを開いたかを判別する。**
 1画面に確認ダイアログが複数ある場合、`switch` で振り分ける。
+
+**★ 前提：ボタン履歴記録機能（config `buttonHistoryRecorder`）が `off` だと、`ButtonID` は常に `"dummy"`
+（`FxLiteral.VALUE_STR_DUMMY_STRING`）になり、`ButtonID` による `switch` 分岐が効かない。** 後処理でボタンを
+判別するなら `on` にする（`opentouryo-config`）。
 
 ## 業務モーダルダイアログ
 
@@ -113,14 +105,8 @@ this.btnOpen.OnClientClick = this.GetScriptToShowModalScreen("Aspx/Sub/subScreen
 
 ### 後処理
 
-```csharp
-protected override void UOC_ModalDialog_End(
-    FxEventArgs parentFxEventArgs,   // 親画面で押した（ダイアログを開いた）ボタン
-    FxEventArgs childFxEventArgs)    // 子画面で押した（ダイアログを閉じた）ボタン
-{
-    switch (parentFxEventArgs.ButtonID) { /* ... */ }
-}
-```
+`UOC_ModalDialog_End(FxEventArgs parentFxEventArgs, FxEventArgs childFxEventArgs)` を `override`
+（parent＝開いたボタン・child＝閉じたボタン。二段 `switch` のコードは `references/snippets.md`）。
 
 ## 業務モードレス画面
 
