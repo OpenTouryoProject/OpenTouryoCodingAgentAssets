@@ -86,7 +86,8 @@ UPDATE では **WHERE 用（`PK_`）と SET 用（`Set_..._forUPD`）を必ず�
 混同すると更新対象が変わる。
 
 その他に `SetParameteToHt()` / `SetUserParameteToHt()` / `ClearParametersFromHt()` /
-`ExecGenerateSQL()`（静的SQL の生成。バッチ更新用）がある。
+`ExecGenerateSQL()`（静的SQL の生成。バッチ更新用）がある。**DataTable の RowState で明細を一括更新するなら
+`opentouryo-batch-update`**（生成 Dao の CUD を `RowState` で振り分ける・グリッド編集・楽観排他）。
 
 **`SetUserParameteToHt()` は SQL 文字列への置換。** ユーザ入力を渡すと SQL インジェクションに
 なる（`opentouryo-dao-custom` の該当節を参照）。

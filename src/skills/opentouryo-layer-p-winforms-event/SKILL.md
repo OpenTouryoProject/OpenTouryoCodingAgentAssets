@@ -57,6 +57,14 @@ metadata:
 書ける。ただしその場合、フレームワークの例外処理（`UOC_ABEND`）とログ出力を通らない。**
 土台に載せたいなら、親クラス2 での拡張（纏め者）を検討する。
 
+## グリッド（DataGridView）に DataTable をバインドして一括更新するなら
+
+`DataGridView` は自動結線の対象外（`FxPrefixOfGridView` は Web Forms 専用）。リッチクライアントでは
+**`DataGridView` に `DataTable` を（`BindingSource` 経由で）バインド**し、**[追加]／[削除] は通常のボタン**
+（`btn` で結線＝`UOC_btnAdd_Click` / `UOC_btnDelete_Click`）で行う。グリッド上の編集は `DataTable` の `RowState` に
+乗るので、まとめて INSERT/UPDATE/DELETE できる → **`opentouryo-batch-update`**（追加=空行 Added、削除=`dr.Delete()`=Deleted、
+編集=Modified を `RowState` で振り分け・楽観排他）。
+
 <!--
   結線箇所は2つに分かれている（実装で確認済み）:
     BaseControllerWin（親クラス1）  … BUTTON / COMBO_BOX / LIST_BOX / RADIO_BUTTON / PICTURE_BOX

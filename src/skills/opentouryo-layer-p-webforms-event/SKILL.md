@@ -158,6 +158,14 @@ protected string UOC_btnButton1_Click(FxEventArgs fxEventArgs)
 }
 ```
 
+## グリッド系に DataTable をバインドして一括更新するなら
+
+データバインド系コントロール（**`GridView` / `ListView` / `Repeater` / `DataList`**）に `DataTable` をバインドして
+明細を編集し、まとめて反映する構成は **`opentouryo-batch-update`**（`DataRow` の `RowState` で INSERT/UPDATE/DELETE を
+振り分け・楽観排他）。一般的な仕様＝**グリッド外の [追加] ボタンで空行（Added）、グリッド内の [削除]（`GridView` なら
+`RowDeleting` 等）で `dr.Delete()`（Deleted）、セル編集（Modified）**。`GridView`/`ListView`/`Repeater` のイベント自体は
+上の接頭辞で自動結線される（`DataList` は自動結線外＝ボタンで扱う）。
+
 ## やってはいけないこと
 
 - **対応済みのコントロールを `.aspx` の `OnClick` 等で結線する** — フレームワークが接頭辞で

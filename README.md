@@ -57,6 +57,7 @@ docs/
 | `opentouryo-dao-custom` | 個別Dao（業務固有のデータアクセス）を実装するとき |
 | `opentouryo-dao-common` | 共通Dao（`CmnDao`）で単発の SQL を実行するとき |
 | `opentouryo-dao-generated` | 自動生成Dao（テーブル単位の CRUD・楽観排他）を使うとき |
+| `opentouryo-batch-update` | DataTable の RowState でグリッド明細を一括更新（追加/更新/削除）するとき |
 | `opentouryo-query-definition` | SQL 定義ファイル（`.sql` / `.xml`）を書くとき |
 
 ### ③ 制御・定義／横断機能（機能利用：必要になったとき参照）
