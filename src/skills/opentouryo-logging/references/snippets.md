@@ -28,7 +28,16 @@ LogIF.FatalLog("ロガー名", "メッセージ");
 
 `ACCESS`/`SQLTRACE` の書式は親クラス2 の `LogIF` 呼び出しに依存（`opentouryo-project-policy`／`-base2-customize`）。
 
-## log4net アペンダ（ローリング・複数プロセス・即時フラッシュ）
+## ログ ライブラリの選択（log4net / NLog）
+
+`LogIF` の実装は config `LogLib` で切り替わる（実ソース `LogIF.cs`＝`Log_log4net`/`Log_nlog`）：
+**未設定/`log4net`＝log4net、`nlog`＝NLog**（大小無視）。`LogIF` の API は共通。
+**★ 設定ファイルのパスは log4net/NLog とも同じキー `FxLog4NetConfFile`** で指す（NLog も実ソースでこのキーを読む）。
+違うのは**ファイルの中身（フォーマット）**：log4net 形式か NLog 形式か。雛形が `root\files\resource\Log` にある：
+**`Log4NetConfigTemplate.xml`（log4net）／`NLogConfigTemplate.xml`（NLog）**。`SampleLogConf.xml` はサンプルの実 log4net 設定。
+下のアペンダ例は **log4net 形式**。
+
+## log4net アペンダ（ローリング・複数プロセス・即時フラッシュ）※log4net 選択時
 
 ```xml
 <!-- サイズローリング＋バックアップ数固定 -->
@@ -47,5 +56,5 @@ LogIF.FatalLog("ロガー名", "メッセージ");
 
 - **複数プロセスから1ファイルへ**：appender の子に `<lockingModel type="log4net.Appender.FileAppender+MinimalLock" />`（性能は劣化）。
 - **バッファリング**：`<ImmediateFlush value="False" />`（Disk I/O 軽減。既定 True＝即時・クラッシュ時も全出力）。
-- config パス：`<add key="FxLog4NetConfFile" value="（パス）\SampleLogConf.xml"/>`
-  （`SampleLogConf.xml` は配布サンプルの log 設定名。自プロジェクトの設定に読み替える／雛形にコピー可）。
+- config パス（**log4net/NLog 共通のキー**）：`<add key="FxLog4NetConfFile" value="（パス）\（log設定）.xml"/>`
+  （雛形：log4net＝`Log4NetConfigTemplate.xml`／NLog＝`NLogConfigTemplate.xml`。`SampleLogConf.xml` はサンプル固有名＝自設定に読み替える）。
