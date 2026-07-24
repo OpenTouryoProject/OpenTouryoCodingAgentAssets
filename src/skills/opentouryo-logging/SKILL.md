@@ -16,6 +16,7 @@ metadata:
 アプリケーションからのログ出力と、フレームワークが自動出力するログの理解。
 
 構成ファイルの読み方全般は `opentouryo-config`、例外時のログは `opentouryo-exception` を参照。
+**出たログ（ACCESS/SQLTRACE 等）を分析して障害・性能の対応を提案するのは `opentouryo-log-analysis`。**
 
 ## LogIF が唯一の入り口
 

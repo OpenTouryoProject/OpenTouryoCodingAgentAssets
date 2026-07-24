@@ -70,6 +70,7 @@ docs/
 | `opentouryo-transmission` | 通信制御（サービス論理名で B層を呼ぶ）を扱うとき |
 | `opentouryo-exception` | 例外を扱うとき。層を問わず参照する |
 | `opentouryo-logging` | ログを出力するとき |
+| `opentouryo-log-analysis` | 出力ログ（ACCESS/SQLTRACE 等）からエラー・性能の対応を提案するとき |
 | `opentouryo-config` | 設定値を読むとき、構成ファイルを書くとき |
 | `opentouryo-auth` | 認証・ユーザ情報を扱うとき |
 | `opentouryo-oauth2-client` | 外部 IdP と連携するとき（OAuth2 / OIDC のクライアント＝RP） |
