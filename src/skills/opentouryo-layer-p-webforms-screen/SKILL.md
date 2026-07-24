@@ -76,6 +76,7 @@ public partial class sampleScreen : MyBaseController
 リンク・`<body onload/onunload>` で結線する（これが無いとダイアログ/子画面/キー抑止/不正操作防止が動かない）。
 既存マスタ（配布サンプルの `sampleScreen.master`）があれば雛形にできるが、**マスタ名はコンテンツ `.aspx` と別名に
 読み替える**（無ければ上の骨格＋隠しフィールドから作る。`sampleScreen` は配布物固有名＝自プロジェクトに残さない）。
+**マスタページはネスト可**（サンプル `testNestMasterScreen`。ルートマスタに Fx 隠しフィールドがあればよい）。
 
 ## 新規ファイルの csproj 登録・designer.cs（★ エージェント文脈で必須）
 
@@ -111,6 +112,10 @@ public partial class sampleScreen : MyBaseController
 ```
 
 ### ログイン画面
+
+**P層 FW は Session 必須**なので、ログイン画面ではタイムアウト例外が出やすい。対策は3択：
+**(a) ログイン画面に P層 FW を使わない／(b) `IsNoSession = true`（当該画面で機能 OFF）／(c) `FxSessionAbandon()`**
+（詳細は `opentouryo-auth`）。下は (b)+(c) の例。
 
 **`IsNoSession = true` をコンストラクタで設定し、`UOC_FormInit` でセッションを消す。**
 
@@ -151,6 +156,13 @@ public partial class login : MyBaseController
 ログアウトは専用画面（サンプルでは `logout.aspx`。自プロジェクトの画面名に読み替える）の `UOC_FormInit` で
 `FormsAuthentication.SignOut()`。
 
+### 共通エラー画面は素の `Page`（`MyBaseController` を継承しない）
+
+**共通エラー画面（`ErrorScreen.aspx.cs`）は `System.Web.UI.Page` を継承する**（実物で確認）。**`MyBaseController` を
+継承してはいけない**——継承するとエラー処理中に再エラーが起き、`ArgumentException`「キー `SessionAbandonFlag` は
+既に追加」でエラーループになる。エラー画面への遷移元 `TransferErrorScreen` は親クラス2（`opentouryo-base2-customize`）。
+OAuth2 のコールバック画面が素の `Page` なのと同型（`opentouryo-oauth2-client`）。
+
 ## やってはいけないこと
 
 - **`UOC_FormInit` / `UOC_FormInit_PostBack` を実装しない** — 親クラス1 で `abstract`。
@@ -159,3 +171,5 @@ public partial class login : MyBaseController
 - **`this.UserInfo` を自分で取得・生成する** — 親クラス2 が設定済み
 - **ログイン画面で `IsNoSession` の設定やセッション消去を忘れる** — 前のセッションが残る
 - **`RedirectFromLoginPage` の第2引数を `true` にする** — Cookie が永続化される。`false` を推奨
+- **共通エラー画面を `MyBaseController` を継承して作る** — 素の `Page` にする。継承すると
+  `SessionAbandonFlag` 重複でエラーループになる

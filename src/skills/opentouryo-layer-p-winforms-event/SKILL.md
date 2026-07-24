@@ -57,6 +57,10 @@ metadata:
 書ける。ただしその場合、フレームワークの例外処理（`UOC_ABEND`）とログ出力を通らない。**
 土台に載せたいなら、親クラス2 での拡張（纏め者）を検討する。
 
+**`MenuItem` は親クラス2 のカスタマイズ不要**で載せられる：画面ロード（`UOC_FormInit`）で各 `MenuItem.Click` に
+共通ハンドラ（`Item_Click`）を結線する。イベント数が多い場合は**隠しボタン（HiddenButton）の `DoClick()`** で
+`Click` を発火させる手もある（マルチプル/マルチキャストにも使える）。
+
 ## グリッド（DataGridView）に DataTable をバインドして一括更新するなら
 
 `DataGridView` は自動結線の対象外（`FxPrefixOfGridView` は Web Forms 専用）。リッチクライアントでは

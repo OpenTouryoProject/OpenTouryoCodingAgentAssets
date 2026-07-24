@@ -131,7 +131,17 @@ this.DeleteDataFromModalInterface();                       // 削除（全て）
 保持先は**親画面別セッション領域**（画面ごとに内部で別インデックスになるので、キー名が
 衝突しても競合しない）。**所定の画面からしかアクセスできない。**
 
+**複数ウィンドウ対応なら「ウィンドウ別セッション領域」**：`SetDataToBrowserWindow` / `GetDataFromBrowserWindow`
+（＋ `DeleteDataFromBrowserWindow`）。ブラウザ ウィンドウごとに別領域になるので、同一画面を複数ウィンドウで
+開いても競合しない。
+
 **使い終わったら消す。** 消さない・大きなデータを入れると、サーバがメモリリークする。
+
+## トラブルシュート：IFRAME 親画面が操作不能
+
+一部ブラウザで IFRAME のページ `readyState` が `interactive` のまま `complete` にならず、**二重送信防止機能が
+抑止し続けて親画面を操作できなくなる**ことがある。その場合、**親画面の出力時に
+`this.Form.Attributes.Remove("onSubmit")`** で二重送信防止をキャンセルする（局所対処）。
 
 ## 後処理をマスタページ共通ハンドラに書けない
 

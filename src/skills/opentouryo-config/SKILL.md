@@ -174,11 +174,21 @@ XML で、パスを設定に書く。
 | `FxSessionTimeOutCheck` | ○ | ○ | — |
 | `FxScreenTransitionCheck` / `FxScreenTransitionMode` | ○ | — | — |
 | `FxDoubleTransmissionCheck` | ○ | — | — |
+| `FxRequestTicketGuidMaxQueueLength` | ○ | — | — |
+| `FxButtonhistoryMaxQueueLength` | ○ | — | — |
+| `FxScreeenGuidMaxQueueLength` / `FxWindowGuidMaxQueueLength` | ○ | — | — |
 | `FxOKMessageDialogPath` / `FxYesNoMessageDialogPath` / `FxDialogFramePath` | ○ | — | — |
 | `FxCacheControl` | ○ | ○ | — |
 
 画面遷移・ダイアログ・二重送信抑止は **Web Forms 専用**。Windows Forms が使う P層キーは
 接頭辞だけ。
+
+**★ P層のセキュリティ/セッション機能のスイッチ**：`FxDoubleTransmissionCheck`＝二重送信防止、
+`FxRequestTicketGuidMaxQueueLength`＝不正操作防止（画面単位の操作履歴。0以下で OFF）、
+`FxButtonhistoryMaxQueueLength`＝ボタン履歴（0以下で OFF。OFF だと `ButtonID="dummy"`＝`opentouryo-webforms-dialog`）、
+`FxScreeenGuidMaxQueueLength`／`FxWindowGuidMaxQueueLength`＝親画面別/ウィンドウ別セッション領域の自動削除。
+**Session タイムアウト後も業務を継続させるなら、セッション領域自動削除・ボタン履歴・不正操作防止を OFF にする**
+（`opentouryo-auth` のタイムアウト対策）。
 
 ### FxPrefixOf* は機能に直結する
 

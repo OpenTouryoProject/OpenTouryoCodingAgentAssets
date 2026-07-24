@@ -74,7 +74,7 @@ public abstract class MyBaseDao : BaseDao
 ```csharp
 public abstract class MyBaseController : BaseController
 {
-    protected override void UOC_CMNFormInit() { }             // 初回（認証・権限・閉塞・タイトル・ログ）
+    protected override void UOC_CMNFormInit() { /* HTML タイトルは this.Page.Title に設定 */ } // 初回（認証・権限・閉塞・タイトル・ログ）
     protected override void UOC_CMNFormInit_PostBack() { }    // ポストバック
     protected override void UOC_PreAction(FxEventArgs e) { }
     protected override void UOC_AfterAction(FxEventArgs e) { }

@@ -237,6 +237,8 @@ public ActionResult Login()
 `FxSessionAbandon()` は3方式すべての親クラス1 が提供する。
 **セッション タイムアウト検出用 Cookie の削除とセッションの消去**をまとめて行う。
 
+**★ ログイン画面の Session タイムアウト対策3択**（P層FW非使用／`IsNoSession=true`／`FxSessionAbandon`）は `references/snippets.md`。
+
 | | 実装 |
 | --- | --- |
 | Web Forms / net48 MVC | Cookie 削除 + **`Session.Abandon()`**（セッションを破棄） |

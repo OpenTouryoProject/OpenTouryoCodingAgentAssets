@@ -44,3 +44,19 @@ MyUserInfo u = new MyUserInfo(userName, ipAddress);
 
 親クラス2 `MyBaseAsyncApiController`（±Core）の `EnumHttpAuthHeader`（None/Basic/Bearer）。
 Bearer は JWT 検証雛形（`AccessToken.Verify`）＝`opentouryo-base2-customize`。OAuth2 クライアントは `opentouryo-oauth2-client`。
+
+## ログイン画面/予期せぬ Session タイムアウト例外の対策（Web Forms）
+
+**P層 FW は Session 必須**なので、ログイン画面ではタイムアウト例外が出やすい。対策は3択：
+
+1. **ログイン画面に P層 FW を使わない**（Windows 認証・SiteMinder 等の認証基盤に寄せる）。
+2. **`IsNoSession = true`**（コンストラクタ）でその画面の機能を OFF（`opentouryo-layer-p-webforms-screen`）。
+3. **`FxSessionAbandon()`**（`Session.Abandon` ＋ タイムアウト検出 Cookie 消去）。
+
+```csharp
+public login()  { this.IsNoSession = true; }            // (2)
+protected override void UOC_FormInit() { this.FxSessionAbandon(); }  // (3)
+```
+
+- **予期せぬタイムアウト例外**はエラー画面等で `FxSessionAbandon()` を呼ぶ（エラー画面は素の `Page`＝`opentouryo-layer-p-webforms-screen`）。
+- **タイムアウト後も業務を続けるなら**、セッション領域自動削除・ボタン履歴・不正操作防止を OFF（`opentouryo-config`）。
