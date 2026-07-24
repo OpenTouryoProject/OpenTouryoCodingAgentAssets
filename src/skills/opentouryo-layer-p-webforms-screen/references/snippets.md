@@ -89,9 +89,13 @@ public partial class CommonMaster : BaseMasterController { }   // マスタベ�
 <asp:HiddenField ID="RequestTicketGuid" runat="server" Value="0" />
 ```
 
-`<head>` には `Framework/Js/common.js`・`ie_key_event.js`・`Css/style.css` へのリンク、
-`<body onload="Fx_Document_OnLoad();" onunload="Fx_Document_OnClose();">`（纏め者編 §5.2）。
-既存マスタ（`sampleScreen.master`）を雛形にすると速い。
+**★ 配布物の JS/CSS を取り込むのが前提**（無いとダイアログ・子画面・キーイベント抑止・不正操作防止が動かない）：
+`<head>` で `Framework/Js/common.js`・`Framework/Js/ie_key_event.js`・`Css/style.css` をリンクし、
+`<body onload="Fx_Document_OnLoad();" onunload="Fx_Document_OnClose();">` を結線する（纏め者編 §5.2）。
+これらの js/css は配布サンプル（`WebForms_Sample` の `Framework/Js`・`Css`）から自プロジェクトへコピーする。
+
+配布サンプルの `sampleScreen.master` があれば雛形にできるが、**マスタ名はコンテンツ `.aspx` と別名に読み替える**
+（`sampleScreen` は配布物固有名＝残さない）。無ければ上の骨格＋隠しフィールドから作る。
 
 ## 新規 WebForms ファイルの csproj 登録（★ エージェント文脈で必須）
 

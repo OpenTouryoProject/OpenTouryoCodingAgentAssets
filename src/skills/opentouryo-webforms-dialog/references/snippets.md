@@ -52,7 +52,7 @@ protected override void UOC_ModalDialog_End(FxEventArgs parentFxEventArgs, FxEve
 ## 業務モードレス画面／データ受け渡し（親画面別セッション）
 
 ```csharp
-this.ShowNormalScreen("testScreen.aspx");
+this.ShowNormalScreen("testScreen.aspx");   // 引数は開く子画面の URL（例。任意の画面パスでよい）
 
 this.SetDataToModalInterface("key", value);
 object v = this.GetDataFromModalInterface("key");

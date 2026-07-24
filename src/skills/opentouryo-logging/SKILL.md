@@ -120,10 +120,11 @@ LogIF.InfoLog("OPERATION", "受注を登録した。受注ID=" + orderId);
 
 判定は小文字化して比較するので `NLog` でも `nlog` でもよい。
 
-log4net の設定ファイルは `FxLog4NetConfFile` にパスを書く。
+log4net の設定ファイルは `FxLog4NetConfFile` にパスを書く。**`SampleLogConf.xml` は配布サンプルの log 設定名**＝
+自プロジェクトの設定ファイルに読み替える（サンプルを雛形にコピーしてよい）。
 
 ```json
-"FxLog4NetConfFile": "C:/root/files/resource/Log/SampleLogConf.xml"
+"FxLog4NetConfFile": "%OT_RESOURCE_ROOT%/Log/SampleLogConf.xml"
 ```
 
 設定ファイル側で、ロガー名ごとに appender（出力先）とレベルを定義する。

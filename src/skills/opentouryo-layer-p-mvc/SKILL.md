@@ -1,6 +1,6 @@
 ---
 name: opentouryo-layer-p-mvc
-description: "OpenTouryo の P層を ASP.NET MVC（net48）／ASP.NET Core MVC（net10.0）で実装する。コントローラの基底クラス（MyBaseMVController / MyBaseMVControllerCore）、アクションメソッドの書き方、ControllerName / ActionName / UserInfo プロパティ、引数クラスを介した B層の呼び出しとアクション名による自動振り分け、フレームワークが提供するフィルタ（OnActionExecuting / OnActionExecutionAsync / OnException / MyMVCCoreFilterAttribute）、Forms 認証と Cookie 認証、Startup での構成を扱う。MVC / コントローラ / アクション / ASP.NET Core / Razor / 画面 / Web 画面 を伴う作業のときに使う。Web Forms は opentouryo-layer-p-webforms、Windows Forms は opentouryo-layer-p-winforms を使う。"
+description: "OpenTouryo の P層を ASP.NET MVC（net48）／ASP.NET Core MVC（net10.0）で実装する。コントローラの基底クラス（MyBaseMVController / MyBaseMVControllerCore）、アクションメソッドの書き方、ControllerName / ActionName / UserInfo プロパティ、引数クラスの MethodName（サンプルは ActionName を渡す）による B層の自動振り分け、フレームワークが提供するフィルタ（OnActionExecuting / OnActionExecutionAsync / OnException / MyMVCCoreFilterAttribute）、Forms 認証と Cookie 認証、Startup での構成を扱う。MVC / コントローラ / アクション / ASP.NET Core / Razor / 画面 / Web 画面 を伴う作業のときに使う。Web Forms は opentouryo-layer-p-webforms、Windows Forms は opentouryo-layer-p-winforms を使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -76,17 +76,22 @@ metadata:
 ## B層の呼び出し
 
 引数クラスの組み立て・`DoBusinessLogic`・`ErrorFlag` の共通手順は `opentouryo-p-call-business`。
-**MVC 固有なのは、アクション名がそのまま B層の振り分けに使われる点。**
+
+**B層の振り分けは常に「引数クラスに渡した `MethodName`」で決まる**（`UOC_` + `MethodName` をレイトバインド）。
+これは処理方式によらず共通で、`MethodName` は**開発者が引数クラス生成時に渡す任意の文字列**（Web Forms/WinForms では
+`"SelectCount"` のようなリテラルを渡す）。
 
 ```
-this.ActionName = "SelectCount"
-  → 引数クラスの MethodName に入る
+new XxxParameterValue(screenId, controlId, methodName, actionType, user)
+  → 渡した methodName が MethodName に入る
   → B層（MyFcBaseLogic）が "UOC_" + MethodName でレイトバインド
-  → LayerB.UOC_SelectCount(...) が呼ばれる
+  → LayerB.UOC_<methodName>(...) が呼ばれる
 ```
 
-つまり **アクション名と B層の `UOC_` メソッド名を一致させる**。コンパイラは検出しないので、
-綴りがズレると実行時に見つからない。
+**★ MVC サンプルは `methodName` に `this.ActionName` を渡している**（`new TestParameterValue(this.ControllerName,
+"-", this.ActionName, ...)`）。だから「アクション名 = B層メソッド名」に見えるが、これは**サンプルの渡し方**であって
+フレームワーク/MVC の強制仕様ではない（別のリテラルを渡してもよい）。サンプルに倣う場合は**アクション名と B層の
+`UOC_` メソッド名を一致させる**（コンパイラは検出せず、綴りがズレると実行時に見つからない）。
 
 引数クラスの第2引数（コントロール名）は `"-"` を渡す。MVC にコントロールの概念が無いため。
 

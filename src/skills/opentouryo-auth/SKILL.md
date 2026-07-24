@@ -220,7 +220,7 @@ net48 と net10.0 の差をそちらに記述している。
 セッションが消えればユーザ情報も消えるため、`DeleteUserInformation()` は通常不要。
 
 ```csharp
-// Web Forms: login.aspx.cs
+// Web Forms: login.aspx.cs（login.aspx はサンプル画面名。自プロジェクトのログイン画面に読み替える）
 protected override void UOC_FormInit()
 {
     this.FxSessionAbandon();   // セッション消去

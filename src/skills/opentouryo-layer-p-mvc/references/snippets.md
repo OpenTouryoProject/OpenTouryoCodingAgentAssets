@@ -16,11 +16,12 @@ public class Crud1Controller : MyBaseMVControllerCore   // net48 は : MyBaseMVC
     [HttpPost]
     public async Task<IActionResult> SelectCount(CrudViewModel model) // net48 は Task<ActionResult>
     {
-        // 引数クラスを生成
+        // 引数クラスを生成（引数順：screenId, controlId, methodName, actionType, user）
         TestParameterValue pv = new TestParameterValue(
-            this.ControllerName,   // screenId 相当
-            this.ActionName,       // controlId 相当
-            "SelectCount",         // methodName（B層の UOC_SelectCount）
+            this.ControllerName,   // screenId
+            "-",                   // controlId（MVC にコントロールの概念なし）
+            this.ActionName,       // methodName ← サンプルは ActionName を渡す（→ B層 UOC_SelectCount）。
+                                   //   ★任意リテラルでもよいが、その場合 UOC_ メソッド名を一致させる
             "SQL",                 // actionType（先頭[0]=DBMS）
             this.UserInfo);
 

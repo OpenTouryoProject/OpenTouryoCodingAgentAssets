@@ -71,7 +71,11 @@ public partial class sampleScreen : MyBaseController
 `SubmitFlag` / `ScreenGuid` / `FxDialogStyle` / `BusinessDialogStyle` / `NormalScreenStyle` / `NormalScreenTarget` /
 `DialogFrameUrl` / `WindowGuid` / `RequestTicketGuid`）と `ScriptManager` を置く。**これが無いとダイアログ・子画面・
 不正操作防止が動かない。** 全文（隠しフィールド・`<head>` の js/css・`onload/onunload`）は `references/snippets.md`。
-既存マスタ（`sampleScreen.master`）を雛形にできる。
+
+**★ 配布物の `Framework/Js/common.js`・`ie_key_event.js`・`Css/style.css` をプロジェクトに取り込み**、`<head>` で
+リンク・`<body onload/onunload>` で結線する（これが無いとダイアログ/子画面/キー抑止/不正操作防止が動かない）。
+既存マスタ（配布サンプルの `sampleScreen.master`）があれば雛形にできるが、**マスタ名はコンテンツ `.aspx` と別名に
+読み替える**（無ければ上の骨格＋隠しフィールドから作る。`sampleScreen` は配布物固有名＝自プロジェクトに残さない）。
 
 ## 新規ファイルの csproj 登録・designer.cs（★ エージェント文脈で必須）
 
@@ -95,6 +99,8 @@ public partial class sampleScreen : MyBaseController
     <deny users="?" />          <!-- 未認証ユーザをサイト全体で拒否 -->
   </authorization>
 </system.web>
+<!-- ★ login.aspx / menu.aspx はサンプル画面名の例。自プロジェクトのログイン/メニュー画面パスに読み替える -->
+
 
 <!-- パス単位で例外を開ける -->
 <location path="Aspx/OAuth2">
@@ -142,7 +148,8 @@ public partial class login : MyBaseController
 `RedirectFromLoginPage` の第2引数は Cookie を永続化するかどうか。**セキュリティを考慮して
 `false` を推奨。**
 
-ログアウトは専用画面（`logout.aspx`）の `UOC_FormInit` で `FormsAuthentication.SignOut()`。
+ログアウトは専用画面（サンプルでは `logout.aspx`。自プロジェクトの画面名に読み替える）の `UOC_FormInit` で
+`FormsAuthentication.SignOut()`。
 
 ## やってはいけないこと
 

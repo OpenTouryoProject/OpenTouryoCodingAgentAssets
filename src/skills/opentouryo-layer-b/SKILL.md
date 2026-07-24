@@ -82,7 +82,12 @@ this.ReturnValue = testReturn;   // ← 先に設定する
 
 ## 自動振り分け
 
-`MyFcBaseLogic` が `UOC_DoAction` をオーバーライドし、レイトバインドで振り分ける。
+`MyFcBaseLogic`（**Fc＝振り分け機能付き**）が `UOC_DoAction` をオーバーライドし、レイトバインドで振り分ける。
+
+**★ 振り分けは `MyFcBaseLogic` だけの挙動。** 親クラス1 `BaseLogic` は常に `UOC_DoAction` を呼ぶ（`abstract`）。
+`MyFcBaseLogic` はその `UOC_DoAction` を override して `"UOC_" + MethodName` を Latebind するので `UOC_（メソッド名）` に届く。
+一方**非推奨の `MyBaseLogic` は `UOC_DoAction` の override を持たない**（実ソースでコメントアウト）＝呼び出しは常に**単一の
+`UOC_DoAction`** に来る（自動振り分けなし。分岐は自分で書く）。この差が `MyFcBaseLogic` を使う理由。
 
 ```
 呼び出し側が MethodName = "SelectShipper" を渡す

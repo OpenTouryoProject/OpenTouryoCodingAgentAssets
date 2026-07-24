@@ -127,8 +127,8 @@ public async Task<ActionResult> OAuth2AuthorizationCodeGrantClient(string code, 
 
 ### Web Forms のコールバック画面は素の Page
 
-サンプルの `OAuth2AuthorizationCodeGrantClient.aspx.cs` は
-**`System.Web.UI.Page` を継承していて、`MyBaseController` ではない。**
+サンプルのコールバック画面（`OAuth2AuthorizationCodeGrantClient.aspx.cs`＝サンプル固有名。自プロジェクトでは
+任意の画面名でよい）は **`System.Web.UI.Page` を継承していて、`MyBaseController` ではない。**
 
 ```csharp
 public partial class OAuth2AuthorizationCodeGrantClient : System.Web.UI.Page
