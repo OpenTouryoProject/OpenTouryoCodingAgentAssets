@@ -64,6 +64,23 @@ public partial class sampleScreen : MyBaseController
 | `this.FxSessionAbandon()` | セッションを消去する（タイムアウト検出用 Cookie も消す） |
 | `this.IsNoSession` | この画面でセッション ID を返さない（コンストラクタで設定） |
 
+## マスタページの新規作成（子画面/ダイアログを使うなら必須）
+
+コンテンツページはマスタページに乗せる。**マスタを新規に作るなら**：コードビハインドは **`BaseMasterController` を継承**し、
+`.master` に **フレームワークが使う Fx 隠しフィールド一式**（`ChildScreenType` / `ChildScreenUrl` / `CloseFlag` /
+`SubmitFlag` / `ScreenGuid` / `FxDialogStyle` / `BusinessDialogStyle` / `NormalScreenStyle` / `NormalScreenTarget` /
+`DialogFrameUrl` / `WindowGuid` / `RequestTicketGuid`）と `ScriptManager` を置く。**これが無いとダイアログ・子画面・
+不正操作防止が動かない。** 全文（隠しフィールド・`<head>` の js/css・`onload/onunload`）は `references/snippets.md`。
+既存マスタ（`sampleScreen.master`）を雛形にできる。
+
+## 新規ファイルの csproj 登録・designer.cs（★ エージェント文脈で必須）
+
+**VS デザイナが自動でやることを、エージェント/CLI は手でやる。** net48 は**非SDK csproj**なので、新規 `.aspx`/`.master`
+は `<Content Include>`、コードビハインド `.aspx.cs`/`.master.cs` は `<Compile>`＋`<DependentUpon>`＋`<SubType>ASPXCodeBehind`、
+`.designer.cs` は `<Compile>`＋`<DependentUpon>`（`SubType` なし）で登録する。`.designer.cs` も**手書き**する
+（全サーバコントロールを `protected` フィールド宣言。**マスタ上コントロールは designer 不要＝`GetMasterWebControl` 経由**）。
+登録 XML と designer の書き方は `references/snippets.md`。
+
 ## 認証（Forms 認証）
 
 `web.config` に設定を書く。詳細は `opentouryo-auth`。

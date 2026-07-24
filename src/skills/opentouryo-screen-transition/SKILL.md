@@ -19,6 +19,17 @@ metadata:
 Web Forms の画面実装そのものは `opentouryo-layer-p-webforms-screen` /
 `opentouryo-layer-p-webforms-event` を参照。
 
+## 実際の遷移手段は2通り（この機能は「チェック」の追加）
+
+イベントハンドラで**遷移先を決める**基本手段はこの機能とは別にある。使い分け：
+
+- **単純遷移**：ハンドラで URL を返す（`return "遷移先.aspx"`）、または `this.FxRedirect(url)` / `this.FxTransfer(url)`
+  を呼ぶ。**SCDefinition 不要**。遷移しない（ポストバック）なら `return ""`（`opentouryo-layer-p-webforms-event`）。
+- **論理名遷移＋チェック**：`this.ScreenTransition("遷移ラベル")` は `SCDefinition.xml` の**ラベル定義が必須**。
+  併せて下の**チェック機能**で不正遷移を弾ける。
+
+本スキルは主に後者（`SCDefinition.xml` とチェック）を扱う。単純遷移だけなら SCDefinition は要らない。
+
 ## 何のための機能か
 
 **不正な画面遷移を検出して拒否する。** 定義にない遷移や、直リンク禁止の画面への Get アクセスを
@@ -28,15 +39,20 @@ Web Forms の画面実装そのものは `opentouryo-layer-p-webforms-screen` /
 
 ## 有効化する（これを忘れると動かない）
 
-```json
-"FxScreenTransitionCheck": "on"
+**スイッチは `app.config` の `appSettings`（Web Forms 専用＝net48 なので XML。`appsettings.json` ではない）。**
+
+```xml
+<add key="FxScreenTransitionMode"  value="off"/>  <!-- T / R / off。off で機能そのものが無効 -->
+<add key="FxScreenTransitionCheck" value="on"/>   <!-- 不正遷移チェックの on / off -->
 ```
 
-| 設定値 | 挙動 |
+| 設定値（`FxScreenTransitionCheck`） | 挙動 |
 | --- | --- |
 | `on` | 画面遷移をチェックする |
 | `off` | チェックしない |
 | **未設定** | **`off` 扱い**（チェックされない） |
+
+※ `FxScreenTransitionMode` が `off` だと機能自体が無効（チェックも走らない）。
 | 上記以外 | パラメータ・エラー（書式不正）で例外 |
 
 **未設定だと黙って無効になる。** 定義ファイルを書いただけでは動かない。

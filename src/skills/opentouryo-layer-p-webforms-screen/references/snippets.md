@@ -4,9 +4,13 @@
 
 ## コンテンツページ（.aspx）＝マスタページを選択して作成
 
+> ★ 例の名前は **マスタ `CommonMaster.master` と コンテンツ `SupplierScreen.aspx` を別名**にしてある
+> （実サンプルは `sampleScreen.master` と `sampleScreen.aspx` が拡張子抜き同名でイベント接頭辞を取り違えやすい。
+> 自分で作るときも**マスタとコンテンツは別名**にする）。
+
 ```aspx
-<%@ Page Language="C#" MasterPageFile="~/Aspx/Common/TestScreen.master" AutoEventWireup="true"
-    CodeFile="testScreen.aspx.cs" Inherits="Aspx_testFxLayerP_testScreen" Title="Untitled Page" %>
+<%@ Page Language="C#" MasterPageFile="~/Aspx/Common/Master/CommonMaster.master" AutoEventWireup="true"
+    CodeFile="SupplierScreen.aspx.cs" Inherits="Aspx_sample_SupplierScreen" Title="Untitled Page" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="ContentPlaceHolder1" Runat="Server">
     <!-- ここに画面のコントロールを置く（接頭辞規約に従う：btn/txt/ddl…） -->
@@ -20,7 +24,7 @@ using System;
 // ～
 using ProjectName.Infrastructure.Business.Util;
 
-public partial class Aspx_testFxLayerP_testScreen : MyBaseController // 「画面コード親クラス２」を継承
+public partial class Aspx_sample_SupplierScreen : MyBaseController // 「画面コード親クラス２」を継承
 {
     /// <summary>ページロード（初回）＝実装必須</summary>
     protected override void UOC_FormInit()
@@ -54,3 +58,66 @@ TextBox tb  = (TextBox)this.GetContentWebControl("TextBox1"); // コンテンツ
 
 イベント処理（ボタン等の UOC メソッド）は `opentouryo-layer-p-webforms-event`、
 B層呼び出しは `opentouryo-p-call-business`、子画面/ダイアログは `opentouryo-webforms-dialog`。
+
+## マスタページの新規作成（子画面/ダイアログを使うなら必須）
+
+出典：UserGuide 纏め者編 §5.2、`OTRVCAS` の `Aspx/Common/Master/sampleScreen.master(.cs)`（実物）で裏取り。
+
+コードビハインド（`.master.cs`）は **`BaseMasterController` を継承**する：
+
+```csharp
+using Touryo.Infrastructure.Framework.Presentation;
+// ★ マスタ名はコンテンツ .aspx と別名にする（同名だとイベント接頭辞を取り違える）
+public partial class CommonMaster : BaseMasterController { }   // マスタベースページ
+```
+
+`.master` には **フレームワークが使う Fx 隠しフィールド一式**を置く（無いとダイアログ/子画面/不正操作防止が動かない）。
+`<form runat="server">` 内・`<asp:ScriptManager runat="server">` とともに：
+
+```aspx
+<asp:HiddenField ID="ChildScreenType" runat="server" Value="0" />
+<asp:HiddenField ID="ChildScreenUrl"  runat="server" Value="0" />
+<asp:HiddenField ID="CloseFlag"       runat="server" Value="0" />
+<asp:HiddenField ID="SubmitFlag"      runat="server" Value="0" />
+<asp:HiddenField ID="ScreenGuid"      runat="server" Value="0" />
+<asp:HiddenField ID="FxDialogStyle"       runat="server" Value="0" />
+<asp:HiddenField ID="BusinessDialogStyle" runat="server" Value="0" />
+<asp:HiddenField ID="NormalScreenStyle"   runat="server" Value="0" />
+<asp:HiddenField ID="NormalScreenTarget"  runat="server" Value="0" />
+<asp:HiddenField ID="DialogFrameUrl"  runat="server" Value="0" />
+<asp:HiddenField ID="WindowGuid"      runat="server" Value="0" />
+<asp:HiddenField ID="RequestTicketGuid" runat="server" Value="0" />
+```
+
+`<head>` には `Framework/Js/common.js`・`ie_key_event.js`・`Css/style.css` へのリンク、
+`<body onload="Fx_Document_OnLoad();" onunload="Fx_Document_OnClose();">`（纏め者編 §5.2）。
+既存マスタ（`sampleScreen.master`）を雛形にすると速い。
+
+## 新規 WebForms ファイルの csproj 登録（★ エージェント文脈で必須）
+
+**VS デザイナが自動で行う登録を、エージェント/CLI では手で書く。** net48 は**非SDK csproj**なので、
+`.aspx`/`.master` と各コードビハインドを明示登録しないとビルド対象にならない：
+
+```xml
+<!-- ページ本体（.aspx / .master）は Content。★ マスタとコンテンツは別名（CommonMaster ≠ SupplierScreen） -->
+<Content Include="Aspx\sample\crud\SupplierScreen.aspx" />
+<Content Include="Aspx\Common\Master\CommonMaster.master" />
+
+<!-- コードビハインド（.aspx.cs / .master.cs）は Compile ＋ DependentUpon ＋ ASPXCodeBehind -->
+<Compile Include="Aspx\sample\crud\SupplierScreen.aspx.cs">
+  <DependentUpon>SupplierScreen.aspx</DependentUpon>
+  <SubType>ASPXCodeBehind</SubType>
+</Compile>
+<!-- designer は DependentUpon のみ（SubType なし） -->
+<Compile Include="Aspx\sample\crud\SupplierScreen.aspx.designer.cs">
+  <DependentUpon>SupplierScreen.aspx</DependentUpon>
+</Compile>
+```
+
+## designer.cs の手書き（VS デザイナ非在の文脈）
+
+`.aspx.designer.cs` / `.master.designer.cs` は VS が自動生成する。エージェントは手書きする：
+
+- **画面上の全サーバコントロールを `protected` フィールドで宣言**する（`partial class`。型は `global::System.Web.UI.WebControls.Button` 等）。
+- **マスタ上のコントロールは designer 不要**（コンテンツ画面から直接触らず `GetMasterWebControl("ID")` 経由で取る）。
+- ダイアログ用の Fx 隠しフィールドも designer に宣言が要る（マスタの designer 側）。
