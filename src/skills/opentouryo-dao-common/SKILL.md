@@ -88,8 +88,9 @@ cmnDao.ExecSelectFill_DT(dt);
 **大量データの SELECT（10万件超が目安）は `ExecSelectFill_DT`（`DataTable`）より `ExecSelect_DR`（`DataReader`）が速い**
 （`DataTable` は全件をメモリ展開するため）。
 
-その他に `ClearParameters()`（パラメタの一括クリア）、`CommandTimeout` プロパティがある
-（**システム共通のコマンド タイムアウト値は config の `SQL_COMMANDTIMEOUT` でも設定できる**）。
+**パラメタ操作**：同じ `CmnDao` を続けて別の SQL に使い回すときは `ClearParameters()` でパラメタを一括クリアする。
+
+**コマンド タイムアウト**：`CommandTimeout` プロパティで個別に設定できるほか、**システム共通値は config の `SQL_COMMANDTIMEOUT`** で指定できる。
 
 ## 型指定・ストアドも CmnDao で使える
 

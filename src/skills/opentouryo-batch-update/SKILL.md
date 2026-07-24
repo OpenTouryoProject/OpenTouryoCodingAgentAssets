@@ -69,9 +69,10 @@ Web で複数回のポストバックに跨って編集する場合、**編集�
 
 - **配列バインド**（ODP.NET／HiRDB が対応）：`((DamManagedOdp)this.GetDam()).ArrayBindCount` に件数を設定し、各パラメタを
   **配列**で渡す（`OracleDbType` の明示が必須）。詳細は `opentouryo-dao-custom`。
-- **バッチ SQL**（SQL Server 等・配列バインド非対応 DBMS の代替）：**`SQLUtility`**（`Touryo.Infrastructure.Public.Db`）の
-  `GetInsertSQLParts` / `GetUpdateSQLParts` で SQL パーツを生成し、1文に複数 VALUES を並べて `CmnDao` で実行（例は snippet）。
-- **`BaseDao.ExecGenerateSQL`**（自動生成 Dao に追加する `ExecGenerateSQL(fileName, sqlUtil)`）。
+- **バッチ SQL**（配列バインド非対応 DBMS の代替。サンプルは SQL Server）：**`SQLUtility`**（`Touryo.Infrastructure.Public.Db`）の
+  `GetInsertSQLParts(dt)` / `GetUpdateSQLParts(dt, pk[])` で SQL パーツを生成し、1文に複数 VALUES を並べて `CmnDao` で実行（例は snippet）。
+- **`ExecGenerateSQL(sqlUtil)`**（**1引数**・実行せず SQL を生成のみ。`BaseDao`＝`protected`／`CmnDao`＝`public`、実体は `BaseDam`）で
+  生成した静的 SQL を `CmnDao` で流す手もある。
 
 ## やってはいけないこと
 

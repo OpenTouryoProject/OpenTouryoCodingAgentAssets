@@ -93,6 +93,10 @@ protected void SetParameter(string parameterName, object obj)
 **大量データの SELECT（10万件超が目安）は `ExecSelectFill_DT`（`DataTable`）より `ExecSelect_DR`（`DataReader`）が速い**
 （`DataTable` は全件をメモリに展開するため）。自動生成 Dao のテンプレート修正でも対応可。
 
+**繰り返し実行時のパラメタ・クリア**：個別Dao には `ClearParameters()` が**無い**（`CmnDao` 専用）。同じ Dao を
+ループで何度も実行するなら、生コマンドで `this.GetDam().DamIDbCommand.Parameters.Clear();`（**DBMS 中立**）でクリアする
+（DBMS 依存キャストなら `((DamSqlSvr)this.GetDam()).DamSqlCommand.Parameters.Clear();`）。系統別の対比は `opentouryo-layer-d`。
+
 ## SetParameter のオーバーロード
 
 **既定は基本形 `SetParameter(名前, 値)` を使う。** オーバーロードは `+dbTypeInfo`／`+size`／`+ParameterDirection`

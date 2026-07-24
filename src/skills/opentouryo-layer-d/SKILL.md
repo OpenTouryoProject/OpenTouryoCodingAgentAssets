@@ -77,6 +77,20 @@ CmnDao cmnDao    = new CmnDao(this.GetDam());        // 共通Dao
 DaoShippers gen  = new DaoShippers(this.GetDam());   // 自動生成Dao
 ```
 
+## 同じ Dao を繰り返し実行するときのパラメタ・クリア（系統別）
+
+**ループや明細処理で同じ Dao インスタンスを何度も実行するなら、実行の間にパラメタをクリアする**
+（前回のパラメタが残ると重複・誤りになる）。**方法は系統ごとに違う。**
+
+| 系統 | クリア方法 |
+| --- | --- |
+| 個別Dao | **`BaseDao` に `ClearParameters()` は無い**。生コマンドで `this.GetDam().DamIDbCommand.Parameters.Clear();`（**DBMS 中立**）。DBMS 依存キャスト形は `((DamSqlSvr)this.GetDam()).DamSqlCommand.Parameters.Clear();`（Oracle は `((DamManagedOdp)…).DamOracleCommand` 等） |
+| 共通Dao | `cmnDao.ClearParameters()`（`CmnDao` が `public` で公開） |
+| 自動生成Dao | `ClearParametersFromHt()`（生成物のメソッド。`SetParameteToHt` で溜めた Hashtable をクリア） |
+
+**列数の多いテーブルの自動生成Dao は、繰り返しの組み立てコスト自体を「クエリ・キャッシュ」で下げられる**
+（コンストラクタに固定のキャッシュ ID を渡す。`opentouryo-dao-generated`）。
+
 ## Dao集約クラス
 
 **複数の Dao の呼び出しを集約するレイヤ。系統を問わず使える。** 採用するかはプロジェクト基準による。

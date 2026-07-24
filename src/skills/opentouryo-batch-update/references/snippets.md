@@ -87,9 +87,11 @@ dt.AcceptChanges();
 ## 大量データ：SQLUtility でバッチ INSERT（SQL Server のみ）
 
 ```csharp
-// 第2・3引数は省略可（第2の既定は nvarchar）
-SQLUtility su = new SQLUtility(DbEnum.DBMSType.SQLServer, "varchar", "yyyy/MM/dd");
-string[] parts = su.GetInsertSQLParts(dt);   // [0]=列リスト, [1..]=各行の VALUES
+// 型/日付書式は SQLUtility の【コンストラクタ】引数（GetInsertSQLParts の引数ではない）。
+//   第2 convertString  … Convert() の変換先型。SQL Server 既定 "nvarchar"
+//   第3 dateTimeFormat … 日付の文字列化書式。SQL Server 既定 "yyyy/MM/dd HH:mm:ss.fff"
+SQLUtility su = new SQLUtility(DbEnum.DBMSType.SQLServer);          // 既定でよければ dbms のみ
+string[] parts = su.GetInsertSQLParts(dt);   // [0]=列リスト, [1..]=各行の VALUES（1引数）
 
 string collist = parts[0];
 StringBuilder sb = new StringBuilder();
@@ -102,7 +104,10 @@ cd.ExecInsUpDel_NonQuery();
 // → INSERT INTO Products([col..]) VALUES (..),(..),(..)  の1文
 ```
 
-UPDATE は `su.GetUpdateSQLParts(dt, new string[]{ "ProductID" })`（第2引数＝キー列）。
-自動生成 Dao 側に `ExecGenerateSQL(fileName, sqlUtil)`（`base.ExecGenerateSQL(sqlUtil)`）を足す手もある。
+- UPDATE は `su.GetUpdateSQLParts(dt, new string[]{ "ProductID" })`（第2引数＝主キー列の配列。各行 WHERE 付き UPDATE を生成）。
+  **複数 UPDATE 文は `;` で連結**して 1 回で流す。
+- **値はパラメタではなく SQL 文字列へ展開**される（パラメタ数上限の回避）。型は `Convert()` で明示、`NULL` は明示的に出力。
+- `ExecGenerateSQL` を使うなら**署名は `ExecGenerateSQL(SQLUtility sqlUtil)` の1引数**（`BaseDao`＝`protected`・`CmnDao`＝`public new`、
+  実体は `BaseDam`）。生成のみで実行しない。個別/自動生成 Dao から使うなら `public` メソッドで包んで `base.ExecGenerateSQL(sqlUtil)` を呼ぶ。
 
 > ※ フレームワーク経由は 1 件 ≈ 0.5ms。件数が多いときだけバッチ SQL を検討（少数なら上の RowState ループで十分）。
