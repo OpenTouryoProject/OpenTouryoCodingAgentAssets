@@ -29,9 +29,11 @@ this.SetParameter("P1", value, dbTypeInfo, ParameterDirection.Input); // +入出
 ## ストアドプロシージャ（出力/戻り値パラメタ）
 
 出力は `ParameterDirection.Output` / `ReturnValue` で宣言し、実行後に `GetParameter` で取得する。
+**`CommandType.StoredProcedure` を明示する**（既定は `Text`）。
 
 ```csharp
-this.SetSqlByCommand("〈ストアド名〉");
+// SQL 定義ファイルなら SetSqlByFile2(名前, CommandType.StoredProcedure)
+this.SetSqlByCommand("〈ストアド名〉", CommandType.StoredProcedure);
 this.SetParameter("IN1", inValue, dbTypeInfo, ParameterDirection.Input);
 this.SetParameter("OUT1", null, dbTypeInfo, ParameterDirection.Output);
 this.SetParameter("RET", null, dbTypeInfo, ParameterDirection.ReturnValue);
@@ -41,6 +43,34 @@ this.ExecInsUpDel_NonQuery();
 object outVal = this.GetParameter("OUT1");
 object retVal = this.GetParameter("RET");
 ```
+
+### 複数結果セット
+
+`ExecSelect_DR()` の `IDataReader` を `DataTable.Load()`／`NextResult()` で順に読む。
+
+```csharp
+IDataReader dr = this.ExecSelect_DR();
+DataTable dt1 = new DataTable(); dt1.Load(dr);   // Load は次の結果セットまで読む
+DataTable dt2 = new DataTable(); dt2.Load(dr);   // 2つ目
+// もしくは dr.NextResult() で明示的に送る
+dr.Close();
+```
+
+## 配列バインド（バルク・ODP.NET / HiRDB）
+
+`ArrayBindCount` に件数を設定し、各パラメタへ**配列**を渡す（`OracleDbType` の明示が必須）。
+実クラスは `DamManagedOdp`（FAQ の `DamOraOdp` は旧称）。
+
+```csharp
+DamManagedOdp dam = (DamManagedOdp)this.GetDam();
+dam.ArrayBindCount = ids.Length;                        // バインドする件数
+this.SetParameter("ID",   ids,   OracleDbType.Int32);  // 値は配列
+this.SetParameter("NAME", names, OracleDbType.Varchar2);
+this.SetSqlByCommand("INSERT INTO T (ID, NAME) VALUES (:ID, :NAME)");
+this.ExecInsUpDel_NonQuery();                           // 1往復で全件
+```
+
+> 非対応 DBMS はバッチクエリ作成支援（`SQLUtility`）で代替＝`opentouryo-batch-update`。
 
 ## ユーザ定義パラメタ（動的に SQL 文字列を置換）
 

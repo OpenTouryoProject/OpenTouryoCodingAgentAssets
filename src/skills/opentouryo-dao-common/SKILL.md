@@ -85,7 +85,11 @@ cmnDao.ExecSelectFill_DT(dt);
 
 `ExecInsUpDel_NonQuery()` の戻り値（更新件数）は捨てない。0 件は楽観排他の失敗などを意味する。
 
-その他に `ClearParameters()`（パラメタの一括クリア）、`CommandTimeout` プロパティがある。
+**大量データの SELECT（10万件超が目安）は `ExecSelectFill_DT`（`DataTable`）より `ExecSelect_DR`（`DataReader`）が速い**
+（`DataTable` は全件をメモリ展開するため）。
+
+その他に `ClearParameters()`（パラメタの一括クリア）、`CommandTimeout` プロパティがある
+（**システム共通のコマンド タイムアウト値は config の `SQL_COMMANDTIMEOUT` でも設定できる**）。
 
 ## 型指定・ストアドも CmnDao で使える
 
@@ -95,7 +99,8 @@ cmnDao.ExecSelectFill_DT(dt);
 
 - 既定は基本形 `SetParameter(名前, 値)`。**型・サイズの指定は暗黙の型変換の性能劣化が
   顕在化してから**（先回りしない）
-- 使い方の詳細（オーバーロードの一覧、ストアドの実装例）は `opentouryo-dao-custom` を参照
+- 使い方の詳細（オーバーロードの一覧、ストアドの実装例、`CommandType.StoredProcedure` 指定・
+  **複数結果セット**＝`ExecSelect_DR()`→`DataTable.Load()`/`NextResult()`、配列バインド）は `opentouryo-dao-custom` を参照
 - **ただし呼び出し元が違う。** 個別Dao は Dao クラス自身なので `this.SetParameter(...)` /
   `this.GetParameter(...)`、**共通Dao は保持しているインスタンス**なので
   `cmnDao.SetParameter(...)` / `cmnDao.GetParameter(...)`。dao-custom の例の `this.` を

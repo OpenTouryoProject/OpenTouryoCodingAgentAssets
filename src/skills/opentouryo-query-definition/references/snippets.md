@@ -80,3 +80,17 @@ this.SetUserParameter("SEQUENCE", "DESC");
 - **`<` `>` はそのまま書けない** → `&lt;` `&gt;`（最新版は `<![CDATA[ … ]]>` 可）。
 - **タグ総数が 200 を超えると性能負荷**（分割/ビュー化も検討）。
 - DPQuery_Tool 用の PARAM 記述・静的 SQL の `/*PARAM* … *PARAM*/` は UserGuide 動的クエリ編 §2 参照。
+
+## SQL 定義ファイルを DLL に埋め込んで配布
+
+SQL 定義ファイルを `EmbeddedResource` として DLL に埋め込み、実行時にロードできる（`SetSqlByFile2` のカスタマイズ／
+Azure スイッチが要る）。ローダは `EmbeddedResourceLoader.LoadAsString()`（`Touryo.Infrastructure.Public.IO`）。
+
+```csharp
+// アセンブリ内の埋め込み SQL を文字列でロード
+string sql = EmbeddedResourceLoader.LoadAsString("〈アセンブリ名〉", "〈埋め込み名〉.sql", Encoding.UTF8);
+// 埋め込み名が不明ならデバッグ時に列挙して確認
+foreach (string n in Assembly.GetExecutingAssembly().GetManifestResourceNames()) { /* n を確認 */ }
+```
+
+> 埋め込み名は「既定名前空間 + フォルダ + ファイル名」。`GetManifestResourceNames()` で実際の名前を確認する。

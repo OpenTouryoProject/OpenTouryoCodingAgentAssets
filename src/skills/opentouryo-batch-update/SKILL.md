@@ -65,10 +65,12 @@ Web で複数回のポストバックに跨って編集する場合、**編集�
 
 ## 大量データ（性能）
 
-フレームワーク経由は 1 件 ≈ 0.5ms のオーバーヘッド。件数が多いなら**バッチ SQL** を使う（SQL Server のみ）：
+フレームワーク経由は 1 件 ≈ 0.5ms のオーバーヘッド。件数が多いなら次のいずれか：
 
-- **`SQLUtility`**（`Touryo.Infrastructure.Public.Db`）の `GetInsertSQLParts` / `GetUpdateSQLParts` で SQL パーツを生成し、
-  1文に複数 VALUES を並べて `CmnDao` で実行（例は snippet）。
+- **配列バインド**（ODP.NET／HiRDB が対応）：`((DamManagedOdp)this.GetDam()).ArrayBindCount` に件数を設定し、各パラメタを
+  **配列**で渡す（`OracleDbType` の明示が必須）。詳細は `opentouryo-dao-custom`。
+- **バッチ SQL**（SQL Server 等・配列バインド非対応 DBMS の代替）：**`SQLUtility`**（`Touryo.Infrastructure.Public.Db`）の
+  `GetInsertSQLParts` / `GetUpdateSQLParts` で SQL パーツを生成し、1文に複数 VALUES を並べて `CmnDao` で実行（例は snippet）。
 - **`BaseDao.ExecGenerateSQL`**（自動生成 Dao に追加する `ExecGenerateSQL(fileName, sqlUtil)`）。
 
 ## やってはいけないこと

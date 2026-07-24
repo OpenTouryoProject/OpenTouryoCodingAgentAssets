@@ -90,6 +90,9 @@ protected void SetParameter(string parameterName, object obj)
 
 `ExecInsUpDel_NonQuery()` の戻り値（更新件数）は捨てない。0 件は楽観排他の失敗などを意味する。
 
+**大量データの SELECT（10万件超が目安）は `ExecSelectFill_DT`（`DataTable`）より `ExecSelect_DR`（`DataReader`）が速い**
+（`DataTable` は全件をメモリに展開するため）。自動生成 Dao のテンプレート修正でも対応可。
+
 ## SetParameter のオーバーロード
 
 **既定は基本形 `SetParameter(名前, 値)` を使う。** オーバーロードは `+dbTypeInfo`／`+size`／`+ParameterDirection`
@@ -111,6 +114,16 @@ Oracle は `OracleDbType.Int32` など（引数は `object` なのでどちら�
 
 `ParameterDirection` は `ReturnValue` / `Output` / `InputOutput` / `Input`。
 **出力系は `GetParameter(名前)` で取得する**（実行前は `null`、実行後に値が入る）。
+
+- **`CommandType.StoredProcedure` を指定する**：`SetSqlByFile2(名前, CommandType.StoredProcedure)`
+  （SQL 文直接なら `SetSqlByCommand` の `CommandType` 引数）。既定は `Text` なので明示が要る。
+- **複数結果セット**は `ExecSelect_DR()` の `IDataReader` を **`DataTable.Load()`／`dr.NextResult()`** で順に読む。
+
+## 配列バインド（バルク・ODP.NET / HiRDB）
+
+**大量 INSERT/UPDATE を1往復で流す**なら配列バインド（ODP.NET・HiRDB が対応）。`((DamManagedOdp)this.GetDam()).ArrayBindCount`
+に件数を設定し、各 `SetParameter` へ**配列**を渡す（`OracleDbType` の明示が必須）。**非対応 DBMS はバッチクエリ作成支援で代替**
+（`opentouryo-batch-update` の `SQLUtility`）。※実クラスは `DamManagedOdp`（FAQ の `DamOraOdp` は旧称）。
 
 ## SetUserParameter にユーザ入力を渡さない
 

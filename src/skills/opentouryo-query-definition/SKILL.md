@@ -16,6 +16,9 @@ metadata:
 Dao から実行する SQL 定義ファイルの書き方。ファイルの指定は Dao 側の責務なので
 `opentouryo-layer-d`（3系統の使い分け）と系統ごとのスキルを参照。
 
+**SQL 定義ファイルは DLL に埋め込んで配布もできる**（`EmbeddedResourceLoader.LoadAsString()` でロード。Azure スイッチ／
+`SetSqlByFile2` のカスタマイズが要る。埋め込み名は `Assembly.GetManifestResourceNames()` で確認）。詳細は `references/snippets.md`。
+
 ## 2種類の定義ファイル
 
 | 拡張子 | 種類 | 中身 |
@@ -25,6 +28,9 @@ Dao から実行する SQL 定義ファイルの書き方。ファイルの指�
 
 **拡張子で自動的に切り替わる。** Dao 側で `SQLFileName = "Xxx.sql"` なら静的、`"Xxx.xml"` なら
 動的として扱われる。
+
+実行時に `.xml` の書式を検証し、**正しい動的クエリなら動的（DPQ）として組み立て、書式が不正ならそのまま静的 SQL
+として実行**にフォールバックする。どちらで実行されたかは `IsDPQ`（`BaseDam`）で判別でき、`DPQuery_Tool` の書式確認にも使う。
 
 ### 使い分け
 
@@ -66,6 +72,8 @@ Dao から実行する SQL 定義ファイルの書き方。ファイルの指�
 **コード側（`SetParameter("P1", ...)`）は接頭辞なしで DBMS 中立。** 接頭辞をフレームワークが
 DBMS ごとに付ける。型を明示するときの `dbTypeInfo` は DBMS 依存
 （`SqlDbType.Int` / `OracleDbType.Int32` など。`opentouryo-dao-custom`）。
+
+**バインドは名前バインドのみ**（ODP.NET は名前バインド固定、OLEDB／ODBC／HiRDB はフレームワーク内部で名前バインドに変換）。
 
 `CAST` や関数など SQL の構文そのものも DBMS で違う（後述の暗黙の型変換対策の `CAST` も
 SQL Server の例）。
