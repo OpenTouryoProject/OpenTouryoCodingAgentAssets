@@ -81,16 +81,19 @@ this.SetUserParameter("SEQUENCE", "DESC");
 - **タグ総数が 200 を超えると性能負荷**（分割/ビュー化も検討）。
 - DPQuery_Tool 用の PARAM 記述・静的 SQL の `/*PARAM* … *PARAM*/` は UserGuide 動的クエリ編 §2 参照。
 
-## SQL 定義ファイルを DLL に埋め込んで配布
+## SQL 定義ファイルを DLL に埋め込んで配布（PaaS/クラウド）
 
-SQL 定義ファイルを `EmbeddedResource` として DLL に埋め込み、実行時にロードできる（`SetSqlByFile2` のカスタマイズ／
-Azure スイッチが要る）。ローダは `EmbeddedResourceLoader.LoadAsString()`（`Touryo.Infrastructure.Public.IO`）。
+SQL 定義ファイルを `EmbeddedResource` として DLL に埋め込む構成。**起動時にフレームワークのスイッチを立てる**と、
+`SetSqlByFile2` が通常ファイルの代わりに埋め込みリソースを読む（`MyBaseDao.cs`＝`UseEmbeddedResource` 分岐で裏取り）。
 
 ```csharp
-// アセンブリ内の埋め込み SQL を文字列でロード
-string sql = EmbeddedResourceLoader.LoadAsString("〈アセンブリ名〉", "〈埋め込み名〉.sql", Encoding.UTF8);
-// 埋め込み名が不明ならデバッグ時に列挙して確認
-foreach (string n in Assembly.GetExecutingAssembly().GetManifestResourceNames()) { /* n を確認 */ }
+// アプリ起動時（Global.asax / Startup / Program / Form 初期化 など）に一度だけ
+Touryo.Infrastructure.Business.Dao.MyBaseDao.UseEmbeddedResource = true;
+// appSettings に既定の名前空間名を設定（PaaS/DLL 時）
+//   "Azure": "[Web アプリケーションの既定の名前空間名]"
+// 以降は通常どおり Dao で SetSqlByFile2("Xxx.xml") ／自動生成 Dao を呼ぶだけ
 ```
 
-> 埋め込み名は「既定名前空間 + フォルダ + ファイル名」。`GetManifestResourceNames()` で実際の名前を確認する。
+- **SQL リソースは EntryAssembly 以外の任意のアセンブリにも埋め込める。SQL 以外のリソースは EntryAssembly に埋め込む。**
+- 低レベルには `EmbeddedResourceLoader.LoadAsString(アセンブリ名, 埋め込み名, enc)`（`Touryo.Infrastructure.Public.IO`）。
+  埋め込み名（「既定名前空間＋フォルダ＋ファイル名」）が不明なら `Assembly.GetManifestResourceNames()` で列挙して確認する。

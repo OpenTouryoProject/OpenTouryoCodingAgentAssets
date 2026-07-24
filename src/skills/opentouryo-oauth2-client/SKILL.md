@@ -230,14 +230,17 @@ return this.Redirect(Url.Action("Index", "Home"));
 `CmnClientParams` は `Touryo.Infrastructure.Framework.Authentication`。SAML2 / OAuth2・OIDC /
 FAPI で共用する。
 
-### Core は HttpClient の設定が要る
+### 起動時に HttpClient の設定が要る（Framework / Core 共通）
 
 ```csharp
-// Program.Main
+// アプリ起動時に一度だけ設定する
+//   Framework（ASP.NET）… Global.asax の Application_Start
+//   Core（ASP.NET Core）… Startup / Program
+//   リッチクライアント／CLI … Login や Program.Main
 OAuth2AndOIDCClient.HttpClient = new HttpClient();
 ```
 
-**設定しないと通信できない。**
+**設定しないと通信できない**（`OAuth2AndOIDCClient._HttpClient` は既定 `null`＝遅延生成しない。net48 サンプルの `Global.asax` でも設定している）。
 
 ## OAuth2AndOIDCClient の他の機能
 
@@ -262,4 +265,5 @@ OAuth2AndOIDCClient.HttpClient = new HttpClient();
 - **`state` / `nonce` をセッション以外で持つ** — 突き合わせができなくなる
 - **外部 IdP でログインしたら `MyUserInfo` の設定が不要と考える** — 通常のログインと同じで、
   .NET 側の認証と `MyUserInfo` の**両方**が要る（`opentouryo-auth` 参照）
-- **Core で `OAuth2AndOIDCClient.HttpClient` の設定を忘れる** — 通信できない
+- **起動時に `OAuth2AndOIDCClient.HttpClient` の設定を忘れる** — 既定 `null` で通信できない。Framework/Core とも要る
+  （Framework は `Global.asax`、Core は `Startup`/`Program`）

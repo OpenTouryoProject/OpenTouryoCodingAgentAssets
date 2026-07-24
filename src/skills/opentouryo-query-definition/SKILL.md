@@ -16,8 +16,9 @@ metadata:
 Dao から実行する SQL 定義ファイルの書き方。ファイルの指定は Dao 側の責務なので
 `opentouryo-layer-d`（3系統の使い分け）と系統ごとのスキルを参照。
 
-**SQL 定義ファイルは DLL に埋め込んで配布もできる**（`EmbeddedResourceLoader.LoadAsString()` でロード。Azure スイッチ／
-`SetSqlByFile2` のカスタマイズが要る。埋め込み名は `Assembly.GetManifestResourceNames()` で確認）。詳細は `references/snippets.md`。
+**SQL 定義ファイルは DLL に埋め込んで配布もできる**（PaaS/クラウド向け）。**起動時に `MyBaseDao.UseEmbeddedResource = true;` を設定**すると、
+`SetSqlByFile2` が通常ファイルの代わりに埋め込みリソースを読む（appSettings の `Azure`＝既定の名前空間名を使う。ローダは `EmbeddedResourceLoader.LoadAsString()`）。
+詳細は `references/snippets.md`。
 
 ## 2種類の定義ファイル
 
