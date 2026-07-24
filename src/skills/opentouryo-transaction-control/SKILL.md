@@ -85,6 +85,24 @@ this.SetDam(dam);
 `GetTransactionPatterns` / `InitDam` は `BaseLogic` の **`protected static`** メソッド。
 **業務コード親クラス2・業務コードクラスから呼べる。**
 
+**キー付き `SetDam(key, dam)` で 2本目以降の接続を「管理下」に追加でき、フレームワークが `_dams`（`Dictionary<string,BaseDam>`）の
+全 Dam を一括コミット／ロールバックする**（サーバ側 `BaseLogic`）。★ **2CS の `BaseLogic2CS` はキー付き `SetDam` を持たず単一
+`static _dam` のみ**。2CS で追加接続が要るときは `InitDam(パターン, dam)` で開けるが、コミット／クローズは手動（`CommitAndClose` は `_dam` だけ）。
+
+## 高度なトランザクション操作（★ 非標準・逸脱は要相談）
+
+既定は「B層完了時にフレームワークが自動でコミット／例外時のみロールバック」。以下は**標準の外**なので、
+**採るなら標準化観点の例外認可を個別に検討**（`opentouryo-project-policy`）。**コードは `references/snippets.md`**。
+
+- **手動トランザクション制御**：**B層なら `this.GetDam()`（管理下の Dam）の `BeginTransaction`/`CommitTransaction`/`RollbackTransaction`
+  を自分で呼べば手動制御できる**（新規に Dam を生成しなくてよい）。**2本目以降の接続を追加するのは「キー付き Dam」（標準機能）**
+  なので上の「トランザクション グループ」節を使う（ここで扱うのは既存 Tx の途中操作）。
+- **分割コミット**：B層から `this.GetDam().CommitTransaction()` → `this.GetDam().BeginTransaction(iso)` で途中コミットして続行。
+- **SAVEPOINT**：**プロバイダ固有**（例 Oracle）。`((DamManagedOdp)this.GetDam()).DamOracleTransaction` の
+  `.Save("名")`／`.Rollback("名")`（実物では `DamOraClient` も `DamOracleTransaction` を公開）。
+- **2フェーズコミット（分散トランザクション）は未サポート**。`TransactionScope` 対応の親クラス1 を作れば実現可能だが、
+  需要が低く見送られている（＝現状は使えない）。
+
 ## やってはいけないこと
 
 - **`InitDam()` に接続文字列や分離レベルを直接書く** — 渡すのはパターンID（`SQL_RC` など）。

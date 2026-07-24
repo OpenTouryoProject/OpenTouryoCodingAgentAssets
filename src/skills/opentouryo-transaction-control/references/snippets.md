@@ -57,3 +57,32 @@ public class LayerB : MyBaseLogic
 ```
 
 > B層の分離レベル指定（`DoBusinessLogic(pv, iso)`・`SelectIsolationLevel`）は `opentouryo-layer-b` / `-p-call-business`。
+
+## 高度なトランザクション操作（★ 非標準・逸脱は要相談）
+
+既定は自動コミット／例外時のみロールバック。以下は標準外なので例外認可を個別検討（`opentouryo-project-policy`）。
+
+```csharp
+// ── 分割コミット（B層で途中コミットして続行）──────────────
+this.GetDam().CommitTransaction();          // ここまでを確定
+this.GetDam().BeginTransaction(DbEnum.IsolationLevelEnum.ReadCommitted); // 続きを開始
+```
+
+```csharp
+// ── SAVEPOINT（プロバイダ固有。例：Oracle）────────────────
+// Oracle Dam（ODP.NET は DamManagedOdp、旧 OracleClient は DamOraClient）が
+// DamOracleTransaction（OracleTransaction）を公開する
+OracleTransaction tx = ((DamManagedOdp)this.GetDam()).DamOracleTransaction;
+tx.Save("MySavePoint");                      // セーブポイント作成
+// … 途中でやり直したくなったら …
+tx.Rollback("MySavePoint");                  // セーブポイントまでロールバック
+```
+
+- **手動トランザクション制御**：**B層なら `this.GetDam()`（フレームワーク管理下の Dam）を取得して
+  `BeginTransaction`/`CommitTransaction`/`RollbackTransaction` を自分で呼べば手動制御できる**（新規に Dam を生成する必要はない）。
+  **例外時の扱い（認可）は個別に決める。**
+- **2本目以降の接続は「キー付き Dam」で管理下に追加**（標準・上の「トランザクション グループで複数 Dam」節）：
+  サーバ側 `BaseLogic` は `SetDam(key, dam)`/`GetDam(key)` と `_dams`（`Dictionary<string,BaseDam>`）で複数 Dam を保持し、
+  **全 Dam を一括コミット／ロールバック**する。★ **2CS `BaseLogic2CS` はキー付き `SetDam` を持たず単一 `static _dam` のみ**（`InitDam(パターン, dam)`
+  で追加接続は開けるが、コミット／クローズは手動＝`CommitAndClose` は `_dam` だけ）。FAQ「2CS も2本目可能」はこの手動運用を指す。
+- **2フェーズコミット（分散 Tx）は未サポート**。`TransactionScope` 対応の親クラス1 を作らない限り使えない。
