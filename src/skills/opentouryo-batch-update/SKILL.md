@@ -53,6 +53,11 @@ metadata:
 > ★ **`Deleted` 行は `DataRowVersion.Original` しか読めない**（現在の値は存在しない）。削除行の PK も
 > `dr["ProductID", DataRowVersion.Original]` で取る。
 
+> ★ **複数行 DML の一般則（採番・実行順）と楽観排他方式は `opentouryo-layer-d`**。バッチ更新で特に効くのは：
+> ①**IDENTITY 主キーは `S1_Insert()` で採番値が `DataTable` に戻らない**→ 反映後は一覧を再 SELECT して返す（追加直後の行に続けて操作しない）。
+> ②同じキーを使い回すなら `switch(dr.RowState)` は **Deleted → Added の順**（Added を先に流すと旧行と衝突）。
+> ③楽観排他は取得時の値を WHERE に入れて件数0で検知（タイムスタンプ列が無ければ全列 `Original`・`NULL`→`IS NULL`）。
+
 ## 反映後の後始末
 
 - 成功後に **`dt.AcceptChanges()`** で `RowState` を `Unchanged` に戻す（保存済み状態に同期）。
