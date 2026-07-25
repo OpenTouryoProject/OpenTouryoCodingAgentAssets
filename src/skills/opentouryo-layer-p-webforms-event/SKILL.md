@@ -136,6 +136,17 @@ protected string UOC_gvwGridView_RowUpdating(FxEventArgs fxEventArgs, EventArgs 
 **レイトバインドで呼ばれるため、シグネチャが違っても、修飾子が `private` でも、
 コンパイルは通り実行時に呼ばれないだけ。**
 
+### グリッド内「削除」ボタンの実装（レシピ）
+
+`GridView` に削除ボタンを置くなら（実サンプル `testGridView` で裏取り）：
+
+- `GridView` に **`DataKeyNames="キー列"`**（通常 `AutoGenerateColumns="False"` と併用）を設定する。
+- グリッド内に **`<asp:LinkButton … CommandName="Delete" …>`**（`ButtonField` でも可）を置く。
+- ハンドラは `RowDeleting`＝**`protected string UOC_gvwXxx_RowDeleting(FxEventArgs fxEventArgs, GridViewDeleteEventArgs e)`**。
+  キー値は **`this.gvwXxx.DataKeys[e.RowIndex].Value`** で取る（第2引数は `EventArgs` でなく `GridViewDeleteEventArgs`）。
+- **動的に生成したコマンドボタンを使うページは `.aspx` の `@Page` に `EnableEventValidation="false"` が要る**
+  （イベント検証で弾かれるため）。コードは `references/snippets.md`。
+
 ### FxEventArgs
 
 | プロパティ | 内容 |

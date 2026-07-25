@@ -30,6 +30,10 @@ Web Forms の画面実装そのものは `opentouryo-layer-p-webforms-screen` /
 
 本スキルは主に後者（`SCDefinition.xml` とチェック）を扱う。単純遷移だけなら SCDefinition は要らない。
 
+**★ `return url`（UOC の戻り値遷移）を Transfer にするか Redirect にするかは、`FxScreenTransitionMode` が `off` のとき
+app キー `ScreenTransitionMethod` で決まる**（`1`=`Server.Transfer`／`2`=`Response.Redirect`＝`FxRedirect`。`~/` は `ResolveUrl` 解決。
+実装 `MyBaseController.cs`）。`FxScreenTransitionMode`（T/R/off）とは**別のキー**なので混同しない。
+
 ## 何のための機能か
 
 **不正な画面遷移を検出して拒否する。** 定義にない遷移や、直リンク禁止の画面への Get アクセスを
@@ -39,23 +43,26 @@ Web Forms の画面実装そのものは `opentouryo-layer-p-webforms-screen` /
 
 ## 有効化する（これを忘れると動かない）
 
-**スイッチは `app.config` の `appSettings`（Web Forms 専用＝net48 なので XML。`appsettings.json` ではない）。**
+**スイッチは `app.config` の `appSettings`（Web Forms 専用＝net48 なので XML。`appsettings.json` ではない）。2段ある。**
 
 ```xml
-<add key="FxScreenTransitionMode"  value="off"/>  <!-- T / R / off。off で機能そのものが無効 -->
-<add key="FxScreenTransitionCheck" value="on"/>   <!-- 不正遷移チェックの on / off -->
+<add key="FxScreenTransitionMode"  value="T"/>   <!-- 主スイッチ：T / R / off。off だと機能全体が無効 -->
+<add key="FxScreenTransitionCheck" value="on"/>  <!-- 副スイッチ：不正遷移チェックの on / off -->
 ```
 
-| 設定値（`FxScreenTransitionCheck`） | 挙動 |
-| --- | --- |
-| `on` | 画面遷移をチェックする |
-| `off` | チェックしない |
-| **未設定** | **`off` 扱い**（チェックされない） |
+**★ 主スイッチは `FxScreenTransitionMode`。これが `off` だと、`FxScreenTransitionCheck` の値に関わらずチェックは走らない**
+（実装 `BaseController.cs`：`_transitionMethod == off` で `_transitionCheck` を強制 `false`）。`FxScreenTransitionCheck` が
+効くのは主スイッチが `T` / `R`（有効）のときだけ。
 
-※ `FxScreenTransitionMode` が `off` だと機能自体が無効（チェックも走らない）。
-| 上記以外 | パラメータ・エラー（書式不正）で例外 |
+| `FxScreenTransitionMode`（主） | `FxScreenTransitionCheck`（副） | チェック |
+| --- | --- | --- |
+| `off` | （不問） | **走らない**（強制無効） |
+| `T` / `R` | `on` | 走る |
+| `T` / `R` | `off` / 未設定 | 走らない |
+| `T` / `R` | 上記以外 | 書式不正で例外 |
 
-**未設定だと黙って無効になる。** 定義ファイルを書いただけでは動かない。
+**両方を設定しないと黙って無効になる。** 定義ファイルを書いただけでは動かない。
+**★ 配布サンプル／OTRVCAS は `Mode=off`** なのでチェックは実際には効いていない（未登録画面への直リンクも通る）。既存 app.config を必ず確認する。
 
 ## 定義ファイル
 

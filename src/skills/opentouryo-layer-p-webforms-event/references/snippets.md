@@ -66,3 +66,31 @@ protected string UOC_gvwGridView_RowUpdating(FxEventArgs fxEventArgs, EventArgs 
 | `PostBackValue` | イメージマップのホットスポット値・リピータ等のコマンド名 |
 
 > B層呼び出しは `opentouryo-p-call-business`、接頭辞の自動結線拡張は `opentouryo-base2-customize`（addControlEvent）。
+
+## GridView 内「削除」ボタン（`RowDeleting`）
+
+出典：`OTRVCAS`（as-built）`Aspx/testFxLayerP/table/testGridView.aspx(.cs)` で裏取り。
+
+```aspx
+<%@ Page ... EnableEventValidation="false" %>  <%-- 動的コマンドボタンには必須 --%>
+<asp:GridView ID="gvwGridView1" runat="server" AutoGenerateColumns="False" DataKeyNames="fileid">
+  <Columns>
+    <asp:TemplateField>
+      <ItemTemplate>
+        <asp:LinkButton ID="LinkButton1" runat="server" CommandName="Delete" Text="削除"
+          OnClientClick="return confirm('削除してよろしいですか？');" />
+      </ItemTemplate>
+    </asp:TemplateField>
+  </Columns>
+</asp:GridView>
+```
+
+```csharp
+// 第2引数は EventArgs でなく GridViewDeleteEventArgs
+protected string UOC_gvwGridView1_RowDeleting(FxEventArgs fxEventArgs, GridViewDeleteEventArgs e)
+{
+    int fileid = (int)this.gvwGridView1.DataKeys[e.RowIndex].Value;  // DataKeyNames で取れる
+    // 引数クラスを組み立てて B層で DELETE（→ opentouryo-p-call-business）
+    return string.Empty;
+}
+```

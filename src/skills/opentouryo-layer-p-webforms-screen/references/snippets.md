@@ -2,6 +2,10 @@
 
 出典：UserGuide 開発者編 §4.1／纏め者編 §5.2、実ソースで裏取り。**on-demand 参照**（SKILL 予算外）。
 
+**よく要る名前空間（using）**：`Touryo.Infrastructure.Framework.Presentation`（`BaseController`/`MyBaseController`/`FxEventArgs`）、
+`Touryo.Infrastructure.Framework.Util`（**`UserInfoHandle`**・`FxEnum.IconType`）、`Touryo.Infrastructure.Business.Presentation`（`MyBaseController` 派生元）。
+`UserInfoHandle` の using 漏れは初回コンパイル エラーの定番。
+
 ## コンテンツページ（.aspx）＝マスタページを選択して作成
 
 > ★ 例の名前は **マスタ `CommonMaster.master` と コンテンツ `SupplierScreen.aspx` を別名**にしてある
@@ -89,9 +93,22 @@ public partial class CommonMaster : BaseMasterController { }   // マスタベ�
 <asp:HiddenField ID="RequestTicketGuid" runat="server" Value="0" />
 ```
 
-**★ 配布物の JS/CSS を取り込むのが前提**（無いとダイアログ・子画面・キーイベント抑止・不正操作防止が動かない）：
-`<head>` で `Framework/Js/common.js`・`Framework/Js/ie_key_event.js`・`Css/style.css` をリンクし、
-`<body onload="Fx_Document_OnLoad();" onunload="Fx_Document_OnClose();">` を結線する（纏め者編 §5.2）。
+**★ 配布物の JS/CSS を取り込むのが前提**（無いとダイアログ・子画面・キーイベント抑止・不正操作防止が動かない）。
+**実サンプル（OTRVCAS `sampleScreen.master`）は ASP.NET バンドルで読み込む**（`App_Start/BundleConfig.cs` で
+`~/bundles/touryo` に `common.js`・`ie_key_event.js` 等を束ねる）：
+
+```aspx
+<%-- <head> 内 --%>
+<%: Scripts.Render("~/bundles/modernizr") %>
+<webopt:bundlereference runat="server" path="~/bundles/css" />
+<%-- <body> --%>
+<body onload="Fx_Document_OnLoad();Fx_AdjustStyle();" onunload="Fx_Document_OnClose();">
+<%-- </form> の直前 --%>
+<%: Scripts.Render("~/bundles/touryo") %>
+<%: Scripts.Render("~/bundles/app") %>
+```
+
+バンドルを使わないなら `Framework/Js/common.js`・`ie_key_event.js`・`Css/style.css` を `<head>` で直接リンクしてもよい。
 これらの js/css は配布サンプル（`WebForms_Sample` の `Framework/Js`・`Css`）から自プロジェクトへコピーする。
 
 配布サンプルの `sampleScreen.master` があれば雛形にできるが、**マスタ名はコンテンツ `.aspx` と別名に読み替える**
