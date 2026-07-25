@@ -10,11 +10,12 @@ Assets used by coding agents utilizing OpenTouryo
 ```
 src/
   instructions/AGENTS.md        概要・規約（常時コンテキストに載る / これが原本）
-  skills/                       全34スキル（用途別の一覧・使いどころは下の「スキル一覧」節）
+  skills/                       全スキル（用途別の一覧・使いどころは下の「スキル一覧」節）
+  docs/                         配布物：spec/plan/tutorial の見本（-IncludeTutorial で導入先の docs/ へ）
 install/
   install.ps1                   対象リポジトリへのインストーラ
 docs/
-  authoring.md                  アセット執筆ガイド
+  authoring.md                  アセット執筆ガイド（このリポジトリ用・導入先へは配らない）
 ```
 
 **インストラクション**（概要）と**スキル**（具体的なコードの書き方）に分かれている。
@@ -105,7 +106,16 @@ cd OpenTouryoCodingAgentAssets
 
 # 実際には書き込まず、何が行われるか確認
 ./install/install.ps1 -Product agents -WhatIf -TargetRoot C:\git\MyApp
+
+# 評価用チュートリアル一式（docs/spec|plan|tutorial/tutorial1.md）も配置（opt-in）
+./install/install.ps1 -Product claude -TargetRoot C:\git\MyApp -IncludeTutorial
 ```
+
+### 開発の進め方とチュートリアル
+
+規模のある変更は **spec → plan → 実装** で進めるのを推奨する（仕様を `docs/spec/`、計画を `docs/plan/` に置いてから実装）。
+`-IncludeTutorial` を付けると、この流れを通しで試すサンプル（`docs/spec|plan|tutorial/tutorial1.md`）を導入先へ配置する。
+`docs/spec`・`docs/plan` は利用者の作業ディレクトリなので、**再実行しても既存ファイルは上書きしない**（`-Force` でのみ上書き）。
 
 ### 配置先
 

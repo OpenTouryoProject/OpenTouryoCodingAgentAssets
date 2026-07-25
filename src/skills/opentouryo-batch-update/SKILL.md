@@ -71,8 +71,9 @@ Web で複数回のポストバックに跨って編集する場合、**編集�
   **配列**で渡す（`OracleDbType` の明示が必須）。詳細は `opentouryo-dao-custom`。
 - **バッチ SQL**（配列バインド非対応 DBMS の代替。サンプルは SQL Server）：**`SQLUtility`**（`Touryo.Infrastructure.Public.Db`）の
   `GetInsertSQLParts(dt)` / `GetUpdateSQLParts(dt, pk[])` で SQL パーツを生成し、1文に複数 VALUES を並べて `CmnDao` で実行（例は snippet）。
-- **`ExecGenerateSQL(sqlUtil)`**（**1引数**・実行せず SQL を生成のみ。`BaseDao`＝`protected`／`CmnDao`＝`public`、実体は `BaseDam`）で
-  生成した静的 SQL を `CmnDao` で流す手もある。
+- **`ExecGenerateSQL`（実行せず SQL 文字列を生成）**：**自動生成 Dao は公開の2引数 `ExecGenerateSQL(fileName, sqlUtil)`** を持つ
+  （内部で `SetSqlByFile2(fileName)`→`SetParametersFromHt()`→`base.ExecGenerateSQL(sqlUtil)`）。基底は `BaseDao.ExecGenerateSQL(sqlUtil)`（1引数・`protected`）／
+  `CmnDao` は1引数 `public new`／実体は `BaseDam`。生成した静的 SQL を連結して `CmnDao` で流す。
 
 ## やってはいけないこと
 

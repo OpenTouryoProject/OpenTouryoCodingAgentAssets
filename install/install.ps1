@@ -34,9 +34,19 @@
 .PARAMETER Force
     このスクリプトが生成したものではない既存ファイルも上書きする。
 
+.PARAMETER IncludeTutorial
+    spec→plan→実装 の進め方を試すチュートリアル一式（docs/spec・docs/plan・docs/tutorial の
+    tutorial1.md）を導入先へ配置する。既定では配置しない（opt-in）。
+    docs/spec・docs/plan は利用者が実仕様/実計画を置く作業ディレクトリのため、
+    既存ファイルは上書きしない（上書きするには -Force）。
+
 .EXAMPLE
     ./install.ps1 -Product claude -TargetRoot C:\git\MyApp
     Claude Code 向けに全スキルをインストールする。
+
+.EXAMPLE
+    ./install.ps1 -Product claude -TargetRoot C:\git\MyApp -IncludeTutorial
+    スキルに加えて、評価用チュートリアル一式（docs/spec|plan|tutorial/tutorial1.md）も配置する。
 
 .EXAMPLE
     ./install.ps1 -Product claude,copilot -Skill opentouryo-layer-d,opentouryo-layer-b
@@ -56,7 +66,9 @@ param(
 
     [string[]]$Skill,
 
-    [switch]$Force
+    [switch]$Force,
+
+    [switch]$IncludeTutorial
 )
 
 Set-StrictMode -Version Latest
@@ -68,6 +80,7 @@ $GeneratedMarker = '<!-- opentouryo-agent-assets:generated -->'
 $SourceRoot = Split-Path -Parent $PSScriptRoot
 $InstructionsSource = Join-Path $SourceRoot 'src/instructions/AGENTS.md'
 $SkillsSource = Join-Path $SourceRoot 'src/skills'
+$DocsSource = Join-Path $SourceRoot 'src/docs'
 
 # プロダクト別のスキル配置先。
 # 補足: Copilot は .github/skills / .claude/skills / .agents/skills のいずれも走査するため、
@@ -172,6 +185,24 @@ Write-Host ''
 Write-Host 'インストラクション (共通):'
 $agentsMd = "$GeneratedMarker`n$instructionsBody"
 Write-AssetFile -Path (Join-Path $TargetRoot 'AGENTS.md') -Content $agentsMd
+
+# チュートリアル一式（opt-in・プロダクト非依存）。導入先の docs/ 配下へ配置する。
+# docs/spec・docs/plan は利用者の作業ディレクトリなので、生成マーカーは埋め込まず、
+# 既存ファイルは上書きしない（Write-AssetFile が -Force 指定時のみ上書きする）。
+if ($IncludeTutorial) {
+    Write-Host ''
+    Write-Host 'チュートリアル (opt-in):'
+    foreach ($sub in @('spec', 'plan', 'tutorial')) {
+        $srcPath = Join-Path (Join-Path $DocsSource $sub) 'tutorial1.md'
+        if (-not (Test-Path $srcPath)) {
+            Write-Warning "チュートリアル原本が見つかりません: $srcPath"
+            continue
+        }
+        $tutorialBody = [System.IO.File]::ReadAllText($srcPath)
+        $destPath = Join-Path (Join-Path (Join-Path $TargetRoot 'docs') $sub) 'tutorial1.md'
+        Write-AssetFile -Path $destPath -Content $tutorialBody
+    }
+}
 
 foreach ($p in $Product) {
     Write-Host ''
