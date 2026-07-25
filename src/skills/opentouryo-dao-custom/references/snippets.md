@@ -59,7 +59,7 @@ dr.Close();
 ## 配列バインド（バルク・ODP.NET / HiRDB）
 
 `ArrayBindCount` に件数を設定し、各パラメタへ**配列**を渡す（`OracleDbType` の明示が必須）。
-実クラスは `DamManagedOdp`（FAQ の `DamOraOdp` は旧称）。
+実クラスは `DamManagedOdp`（FAQ の `DamOraOdp` 表記に注意）。
 
 ```csharp
 DamManagedOdp dam = (DamManagedOdp)this.GetDam();

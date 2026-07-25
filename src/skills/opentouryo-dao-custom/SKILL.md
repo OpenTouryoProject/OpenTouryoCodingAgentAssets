@@ -127,7 +127,7 @@ Oracle は `OracleDbType.Int32` など（引数は `object` なのでどちら�
 
 **大量 INSERT/UPDATE を1往復で流す**なら配列バインド（ODP.NET・HiRDB が対応）。`((DamManagedOdp)this.GetDam()).ArrayBindCount`
 に件数を設定し、各 `SetParameter` へ**配列**を渡す（`OracleDbType` の明示が必須）。**非対応 DBMS はバッチクエリ作成支援で代替**
-（`opentouryo-batch-update` の `SQLUtility`）。※実クラスは `DamManagedOdp`（FAQ の `DamOraOdp` は旧称）。
+（`opentouryo-batch-update` の `SQLUtility`）。※実クラスは `DamManagedOdp`（FAQ の `DamOraOdp` 表記に注意）。
 
 ## SetUserParameter にユーザ入力を渡さない
 

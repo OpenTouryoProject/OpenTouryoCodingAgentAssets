@@ -74,9 +74,8 @@ this.ShowYesNoMessageDialog("messageID", "保存しますか？", "確認");
 1画面に確認ダイアログが複数ある場合、`switch` で振り分ける。
 
 **★ 前提：ボタン履歴記録機能が OFF だと、`ButtonID` は常に `"dummy"`（`FxLiteral.VALUE_STR_DUMMY_STRING`）になり、
-`ButtonID` による `switch` 分岐が効かない。** この機能の on/off は**専用キーではなく `FxButtonhistoryMaxQueueLength`**
-（`> 0` で ON・`0` 以下＝実質未設定で OFF。`buttonHistoryRecorder` という config キーは存在しない）。実装 `BaseController.cs`。
-後処理でボタンを判別するなら正の値にする（`opentouryo-config`）。
+`ButtonID` による `switch` 分岐が効かない。** この機能の on/off は config **`FxButtonhistoryMaxQueueLength`**
+（`> 0` で ON・`0` 以下＝実質未設定で OFF。実装 `BaseController.cs`）。後処理でボタンを判別するなら正の値にする（`opentouryo-config`）。
 
 ## 業務モーダルダイアログ
 
