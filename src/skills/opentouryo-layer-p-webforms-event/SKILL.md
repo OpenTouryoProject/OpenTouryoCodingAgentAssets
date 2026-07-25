@@ -136,16 +136,17 @@ protected string UOC_gvwGridView_RowUpdating(FxEventArgs fxEventArgs, EventArgs 
 **レイトバインドで呼ばれるため、シグネチャが違っても、修飾子が `private` でも、
 コンパイルは通り実行時に呼ばれないだけ。**
 
-### グリッド内「削除」ボタンの実装（レシピ）
+### 一覧表示系（GridView / ListView / Repeater）の実装
 
-`GridView` に削除ボタンを置くなら（実サンプル `testGridView` で裏取り）：
+`DataTable` をバインドするグリッド系の **`.aspx` ＋ コードビハインドの実装**（バインド・編集/更新/削除・行内コントロール取得・
+全行走査・第2引数の EventArgs 型）は `references/snippets.md` に**系統別・同レベルでまとめてある**（実サンプル `testFxLayerP/table` で裏取り）：
+**[GridView](references/snippets.md#gridview)** ／ **[ListView](references/snippets.md#listview)** ／ **[Repeater](references/snippets.md#repeater)**。
 
-- `GridView` に **`DataKeyNames="キー列"`**（通常 `AutoGenerateColumns="False"` と併用）を設定する。
-- グリッド内に **`<asp:LinkButton … CommandName="Delete" …>`**（`ButtonField` でも可）を置く。
-- ハンドラは `RowDeleting`＝**`protected string UOC_gvwXxx_RowDeleting(FxEventArgs fxEventArgs, GridViewDeleteEventArgs e)`**。
-  キー値は **`this.gvwXxx.DataKeys[e.RowIndex].Value`** で取る（第2引数は `EventArgs` でなく `GridViewDeleteEventArgs`）。
-- **動的に生成したコマンドボタンを使うページは `.aspx` の `@Page` に `EnableEventValidation="false"` が要る**
-  （イベント検証で弾かれるため）。コードは `references/snippets.md`。
+先に要点だけ：
+
+- キー列は **`DataKeyNames`** に指定し `DataKeys[index].Value` で取る。★ **GridView は `e.RowIndex`／ListView は `e.ItemIndex`**。
+- 削除・コマンド用の `<asp:LinkButton CommandName="Delete">` など**動的コマンドボタンを使うページは `@Page` に `EnableEventValidation="false"`**。
+- 行内コントロールは `fxEventArgs.PostBackValue`（＝アイテムの index）→ `Items[index].FindControl("id")`。
 
 ### FxEventArgs
 
@@ -155,7 +156,7 @@ protected string UOC_gvwGridView_RowUpdating(FxEventArgs fxEventArgs, EventArgs 
 | `InnerButtonID` | リピータ等の内部に配置されたコントロール |
 | `MethodName` | レイトバインドに使ったメソッド名 |
 | `X` / `Y` | イメージボタンの座標 |
-| `PostBackValue` | イメージマップのホットスポット値、リピータ等のコマンド名 |
+| `PostBackValue` | イメージマップのホットスポット値／**一覧表示系コントロールではアイテムの index** |
 
 ## ハンドラの中身は B層呼び出し
 
