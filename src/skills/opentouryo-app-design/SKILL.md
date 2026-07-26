@@ -11,7 +11,7 @@ metadata:
 
 > このスキルは**設計段（spec→plan）で「何を決めるか」の地図**。実装の詳細は各スキルにある。
 > `AGENTS.md` の「開発の進め方（spec→plan→実装）」に沿い、`docs/spec` / `docs/plan` を書くときの**漏れ防止**に使う。
-> 📋 **設計 references**（`references/`・個別課題ごとに追加）：`timeout-values.md`（各種タイムアウト値の設計）。
+> 📋 **設計 references**（`references/`・個別課題ごとに追加）：`timeout-values.md`（各種タイムアウト値の設計）／`file-upload-download.md`（ファイルのアップロード・ダウンロード）。
 
 ## 使いどころ
 
@@ -33,6 +33,7 @@ metadata:
 | データアクセス | Dao 3系統の選択、SQL 定義（静的/動的）、楽観排他（ts 有無）、明細一括更新、複数行 DML の順序 | `opentouryo-layer-d`・`opentouryo-dao-*`・`opentouryo-query-definition`・`opentouryo-batch-update` |
 | 共有情報・設定 | 持ち回り（共有情報 vs セッション）、外部パラメタ／接続文字列／パス | `opentouryo-shared-property`・`opentouryo-config` |
 | 画面設計 | マスタ／フッタ ボタン共通化、一覧（グリッド）、入力チェック、画面遷移、ダイアログ | `opentouryo-base2-customize`・`opentouryo-layer-p-webforms-screen`/`-event`・`opentouryo-screen-transition`・`opentouryo-webforms-dialog` |
+| ファイル入出力 | アップロード/ダウンロードの制限・保存先・**セキュリティ**（拡張子＋中身検証・パストラバーサル・認可）・日本語ファイル名 | **`references/file-upload-download.md`**（本スキル）＋`opentouryo-layer-p-webforms-event`/`-mvc`・`opentouryo-config`・`opentouryo-auth` |
 | セッション/セキュリティ | タイムアウト検出、二重送信／不正操作防止のスイッチ | `opentouryo-auth`・`opentouryo-config`・`opentouryo-screen-transition` |
 | タイムアウト設計 | 各種タイムアウトを**呼び出し元（外側）ほど長く**整合（HTTP／`executionTimeout`／DB／ロック／セッション） | **`references/timeout-values.md`**（本スキル）＋`opentouryo-config`・`opentouryo-auth` |
 | 認証・認可 | Forms（net48）／Cookie（core）、外部 IdP（OAuth2/OIDC/JWT） | `opentouryo-auth`・`opentouryo-oauth2-client` |
