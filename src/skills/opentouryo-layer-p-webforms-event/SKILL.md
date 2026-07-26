@@ -147,6 +147,9 @@ protected string UOC_gvwGridView_RowUpdating(FxEventArgs fxEventArgs, EventArgs 
 - キー列は **`DataKeyNames`** に指定し `DataKeys[index].Value` で取る。★ **GridView は `e.RowIndex`／ListView は `e.ItemIndex`**。
 - 削除・コマンド用の `<asp:LinkButton CommandName="Delete">` など**動的コマンドボタンを使うページは `@Page` に `EnableEventValidation="false"`**。
 - 行内コントロールは `fxEventArgs.PostBackValue`（＝アイテムの index）→ `Items[index].FindControl("id")`。
+- **★ グリッド／テンプレート内のコントロールには自動結線の接頭辞（`txt`／`lbn` 等）を付けない。** 接頭辞は機能なので、
+  付けると行ごとに `TextChanged`／`Click` 等が**不要に自動結線される**。行内コントロールは接頭辞なしの名前にし、値は `FindControl("ID")` で取る
+  （グリッド自身は `gvw` 等が付くので `RowCommand` は結線される。使わないなら空実装を置く）。
 
 ### FxEventArgs
 

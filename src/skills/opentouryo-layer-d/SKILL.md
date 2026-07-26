@@ -88,8 +88,13 @@ DaoShippers gen  = new DaoShippers(this.GetDam());   // 自動生成Dao
 | 共通Dao | `cmnDao.ClearParameters()`（`CmnDao` が `public` で公開） |
 | 自動生成Dao | `ClearParametersFromHt()`（生成物のメソッド。`SetParameteToHt` で溜めた Hashtable をクリア） |
 
-**列数の多いテーブルの自動生成Dao は、繰り返しの組み立てコスト自体を「クエリ・キャッシュ」で下げられる**
-（コンストラクタに固定のキャッシュ ID を渡す。`opentouryo-dao-generated`）。
+**★ クリア後に動的SQL（`.xml` の DPQ）が再処理されるかは系統で違う**（`BaseDam.PreExecQuery`／`init` で確認）：
+
+- **個別Dao・共通Dao**：SQL を自分で1回だけセットするので、**初回の実行で動的SQL→静的SQLに変換され（以後 SPQ 扱い・XML は破棄）**、
+  次からのクリア＋再セット＋実行は**その静的SQLに値を差し替えるだけ＝動的SQLは再処理されない**（速い）。ただし**動的構造は初回で固定**——
+  行ごとに `IF` タグの有効/無効を変えたいなら `SetSqlByFile2` を都度呼び直す。
+- **自動生成Dao**：生成メソッドが**毎回 `SetSqlByFile2` を呼ぶため、動的SQLを毎回再処理**する（行ごとに列を変えられる代わりに遅い）。
+  繰り返しの組み立てコストは「**クエリ・キャッシュ**」で下げられる（コンストラクタに固定のキャッシュ ID を渡す。`opentouryo-dao-generated`）。
 
 ## 複数行の INSERT / UPDATE / DELETE を混在させるときの注意
 
@@ -115,6 +120,9 @@ DaoShippers gen  = new DaoShippers(this.GetDam());   // 自動生成Dao
 - **タイムスタンプ列が無い場合**：自動チェックが無いので、`D3_Update`／`D4_Delete`（動的 WHERE）に**取得時の全列の値**
   （`DataRowVersion.Original` 等）を入れて**全行一致**で判定する（`NULL` 列は `null` を渡して `IS NULL` に落とす）。他者が
   1 列でも変えていれば WHERE が一致せず件数0になる。列が多いほど WHERE が長くなるので、可能なら**タイムスタンプ列を足す**方が簡潔。
+  - **★ `ntext`／`text`／`image`（大きなオブジェクト型）を含むテーブルは、この全列 WHERE が使えない**——SQL Server はこれらを
+    `=` で比較できず**実行時エラー**になる。該当列を WHERE から除く（＝その列の変更は検出できない）か、**タイムスタンプ列を足す**か、
+    主キーのみ（`S3`/`S4`）に割り切る。
 
 ## Dao集約クラス
 
