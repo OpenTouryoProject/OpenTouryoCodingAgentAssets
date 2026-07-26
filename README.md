@@ -28,7 +28,7 @@ docs/
 主に人が俯瞰するための索引。
 
 **`└` はファサード／概観スキルの配下**（親が呼び出す・詳細を委ねる先）を表す：`opentouryo-project-setup`＝セットアップ手順のファサード、
-`opentouryo-layer-d`＝Dao 3系統の概観。その他の関連（利用・相互参照）は厳密な親子ではなく、各スキルの `description` に記載。
+`opentouryo-layer-d`＝Dao 3系統の概観、`opentouryo-app-design`＝設計フェーズの地図（配下の子スキルは個別課題ごとに順次追加）。その他の関連（利用・相互参照）は厳密な親子ではなく、各スキルの `description` に記載。
 
 ### ① 立ち上げ・構成（初期設定：立ち上げ担当／纏め者。主に一度きり）
 
@@ -48,6 +48,7 @@ docs/
 
 | スキル | 使いどころ |
 | --- | --- |
+| `opentouryo-app-design` | **設計フェーズの地図**：spec/plan で決める設計事項（レイヤ/例外/Tx/データアクセス/画面/認証…）を各実装スキルへ割り付け（**配下の子スキルは今後追加**） |
 | `opentouryo-layer-p-mvc` | ASP.NET MVC / ASP.NET Core MVC のコントローラを実装するとき |
 | `opentouryo-layer-p-webforms-screen` | Web Forms の画面を新規作成するとき |
 | `opentouryo-layer-p-webforms-event` | Web Forms のコントロールのイベントを実装するとき |
