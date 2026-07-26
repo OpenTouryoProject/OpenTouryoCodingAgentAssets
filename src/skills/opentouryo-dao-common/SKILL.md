@@ -90,7 +90,7 @@ cmnDao.ExecSelectFill_DT(dt);
 
 **パラメタ操作**：同じ `CmnDao` を続けて別の SQL に使い回すときは `ClearParameters()` でパラメタを一括クリアする。
 
-**コマンド タイムアウト**：`CommandTimeout` プロパティで個別に設定できるほか、**システム共通値は config の `SQL_COMMANDTIMEOUT`** で指定できる。
+**コマンド タイムアウト**：`CommandTimeout` プロパティで個別に設定できるほか、**システム共通値は config の `FxSqlCommandTimeout`** で指定できる（`BaseDam.SetCommandTimeout`。タイムアウト全体の設計は `opentouryo-app-design` の `references/timeout-values.md`）。
 
 ## 型指定・ストアドも CmnDao で使える
 
