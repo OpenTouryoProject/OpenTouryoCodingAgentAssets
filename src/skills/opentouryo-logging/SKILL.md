@@ -132,6 +132,9 @@ LogIF.InfoLog("OPERATION", "受注を登録した。受注ID=" + orderId);
 設定ファイル側で、ロガー名ごとに appender（出力先）とレベルを定義する。
 `LogIF` に渡すロガー名と、設定ファイルの `<logger name="...">` が対応する。
 
+**設定ファイル「の中」の出力先パス**を可搬にする（`%OT_RESOURCE_ROOT%` は中身では展開されないため、**log4net＝`PatternString` の `%env{OT_RESOURCE_ROOT}`／
+NLog＝`${OT_RESOURCE_ROOT}`** を使う）方法は `opentouryo-project-setup-config`（`references/resource-config.md`）。出力先が旧パスのままでも起動はする。
+
 ## ログレベルで処理を分岐する
 
 メッセージの組み立てが重い場合は、出力されるか先に判定する。

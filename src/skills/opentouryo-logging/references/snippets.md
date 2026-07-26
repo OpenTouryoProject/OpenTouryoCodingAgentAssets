@@ -56,5 +56,4 @@ LogIF.FatalLog("ロガー名", "メッセージ");
 
 - **複数プロセスから1ファイルへ**：appender の子に `<lockingModel type="log4net.Appender.FileAppender+MinimalLock" />`（性能は劣化）。
 - **バッファリング**：`<ImmediateFlush value="False" />`（Disk I/O 軽減。既定 True＝即時・クラッシュ時も全出力）。
-- config パス（**log4net/NLog 共通のキー**）：`<add key="FxLog4NetConfFile" value="（パス）\（log設定）.xml"/>`
-  （雛形：log4net＝`Log4NetConfigTemplate.xml`／NLog＝`NLogConfigTemplate.xml`。`SampleLogConf.xml` はサンプル固有名＝自設定に読み替える）。
+- config パス（key）：`<add key="FxLog4NetConfFile" value="（パス）\（log設定）.xml"/>`（共通キー・雛形・読み替えは上の「ログ ライブラリの選択」節）。

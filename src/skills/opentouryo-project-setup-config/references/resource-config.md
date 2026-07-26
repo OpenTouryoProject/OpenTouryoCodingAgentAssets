@@ -35,15 +35,23 @@ IIS Express / w3wp の CWD はアプリ フォルダでないため 500 にな�
 しているなら**意図的な自己完結型＝そのまま残す**（`%OT_RESOURCE_ROOT%\Sql` に書き換えると SQL が無く逆に壊れる。例 `RerunnableBatch_sample`）。
 コンソール exe を出力フォルダから実行する前提。
 
-## ログ出力先（`SampleLogConf.xml` の中身）— 原則1だが起動は妨げない（原則3）
+## ログ定義ファイルの中の出力先パス — 原則1だが起動は妨げない（原則3）
 
-各 appender の出力先 `<param name="File" value="C:\root\files\resource\Log\ACCESS"/>` を `%OT_RESOURCE_ROOT%\Log` へ揃えるのが原則1。
-ただし**張り替えなくても起動する**（ログが旧パスへ出る／無ければ log4net が黙って出さないだけ。as-built：`WORKSPACE` も既定のまま稼働）＝原則3。
-**注意：ここでは `%OT_RESOURCE_ROOT%` は展開されない**（中身は生のまま `XmlConfigurator` へ渡る）。log4net の `PatternString` を使う：
+出力先を `%OT_RESOURCE_ROOT%\Log` へ揃えるのが原則1。ただし**張り替えなくても起動する**（ログが旧パスへ出る／無ければ黙って
+出さないだけ。as-built：`WORKSPACE` も既定のまま稼働）＝原則3。**`FxLog4NetConfFile`（ファイルの場所）は `%OT_RESOURCE_ROOT%` で
+解決されるが、その中身は OpenTouryo が展開せずログライブラリへそのまま渡す**（log4net＝`XmlConfigurator`／NLog＝`XmlLoggingConfiguration`）。
+＝**展開は各ログライブラリの書式**で行う。`LogLib`（log4net / NLog）の選択は `opentouryo-logging`。
 
-```xml
-<file type="log4net.Util.PatternString" value="%env{OT_RESOURCE_ROOT}\Log\ACCESS" />
-```
+- **log4net**：`%OT_RESOURCE_ROOT%` は効かない → `PatternString` の `%env{}`（`<param name="File">` を型付き `<file>` に置換）：
+  ```xml
+  <file type="log4net.Util.PatternString" value="%env{OT_RESOURCE_ROOT}\Log\ACCESS" />
+  ```
+- **NLog**：NLog の環境変数展開 **`${OT_RESOURCE_ROOT}`** を使う（as-built テンプレート `NLogConfigTemplate.xml` の書式）：
+  ```xml
+  <nlog ... internalLogFile="${OT_RESOURCE_ROOT}\Log\NLogInternalLog.log">
+    <target xsi:type="File" name="ACCESS" fileName="${OT_RESOURCE_ROOT}\Log\ACCESS..." ... />
+  ```
+  テンプレート `resource\Log\NLogConfigTemplate.xml` の `（★ファイルパス）` を上の `${OT_RESOURCE_ROOT}\Log\...` に埋める。
 
 ## その他の罠
 
