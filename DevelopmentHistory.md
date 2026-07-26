@@ -140,65 +140,65 @@ Download→Build→ベンダは、その場のコマンド羅列にせず**セ�
 ## 3. 成果物の現状
 
 ```
-opentouryo-layer-p-mvc            実効302L tok~3687  完了
-opentouryo-layer-p-webforms-screen 実効146L tok~1891  完了（画面の新規作成）
-opentouryo-layer-p-webforms-event  実効177L tok~2935  完了（イベント実装）
-opentouryo-webforms-dialog         実効166L tok~2193  完了（子画面表示・ダイアログ）
-opentouryo-layer-p-winforms-screen 実効117L tok~1812  完了（画面の新規作成）
-opentouryo-layer-p-winforms-event  実効106L tok~1878  完了（イベント実装）
-opentouryo-p-call-business        実効191L tok~2784  完了（P層→B層呼出し・横断）
-opentouryo-richclient-async       実効148L tok~2110  完了（リッチクライアントの非同期呼び出し）
-opentouryo-common-parts           実効129L tok~2351  完了（用途→共通部品のインデックス）
-opentouryo-project-setup          実効 99L tok~2617  完了（**ファサード**。全体の流れ＝4スキル＋選択式 db の呼び出し順／既存への追加・再実行〔冪等性・**2CS/RichClient は同ランタイムでも③追加ビルド要＝例外**〕／**配置・命名の固定規則**〔net48=元名・core は net48版が在れば `_Core`・net48 のみ/net10.0 のみは無印・WS 系は `WS_sample\` 階層維持・開発支援ツールは `OT_Tools\` 配下〕／完了後（→transform）・コミット促し／全工程共通の禁止事項〔例外：WS ホスト ServiceInterface は引き込む〕）
-opentouryo-project-setup-selection 実効105L tok~2856  完了（①②。起点サンプル選択〔全系列を必ず提示・**派生も提示**・名前で決め打ちしない〕＋取得元 <ref>〔固定タグ番号はユーザ確認・develop〕。**CLI=net10.0 のみ／Web Forms=net48 のみ／WSClient variant は csproj で判断〔Win2 は WS 非依存の単独 P層〕**。RichClient 基盤要サンプル注記〔2CS/WPF/3層〕）
-opentouryo-project-setup-build    実効169L tok~4350  完了（③。ZIP取得→ランタイム別バッチ→ベンダ。footgun＋偽の成功＋MAX_PATH短ルート＋PowerShell 既定。短ルート展開ツリーをワークスペース化。**Business.RichClient は別 sln＝2CS/RichClient なら必須・base2 非依存**。生成 .ps1 は `scripts/` 配下・CWD 非依存）
+opentouryo-layer-p-mvc            実効279L tok~3748  完了
+opentouryo-layer-p-webforms-screen 実効173L tok~2946  完了（画面の新規作成）
+opentouryo-layer-p-webforms-event  実効196L tok~3945  完了（イベント実装。GridView/ListView/Repeater を .aspx＋コードビハインドで系統別に統一・SKILL からリンク）
+opentouryo-webforms-dialog         実効161L tok~2470  完了（子画面表示・ダイアログ）
+opentouryo-layer-p-winforms-screen 実効118L tok~1859  完了（画面の新規作成）
+opentouryo-layer-p-winforms-event  実効122L tok~2397  完了（イベント実装）
+opentouryo-p-call-business        実効178L tok~2768  完了（P層→B層呼出し・横断）
+opentouryo-richclient-async       実効 92L tok~1731  完了（リッチクライアントの非同期呼び出し）
+opentouryo-common-parts           実効128L tok~2351  完了（用途→共通部品のインデックス）
+opentouryo-project-setup          実効103L tok~2868  完了（**ファサード**。全体の流れ＝4スキル＋選択式 db の呼び出し順／既存への追加・再実行〔冪等性・**2CS/RichClient は同ランタイムでも③追加ビルド要＝例外**〕／**配置・命名の固定規則**〔net48=元名・core は net48版が在れば `_Core`・net48 のみ/net10.0 のみは無印・WS 系は `WS_sample\` 階層維持・開発支援ツールは `OT_Tools\` 配下〕／完了後（→transform）・コミット促し／全工程共通の禁止事項〔例外：WS ホスト ServiceInterface は引き込む〕）
+opentouryo-project-setup-selection 実効108L tok~3028  完了（①②。起点サンプル選択〔全系列を必ず提示・**派生も提示**・名前で決め打ちしない〕＋取得元 <ref>〔固定タグ番号はユーザ確認・develop〕。**CLI=net10.0 のみ／Web Forms=net48 のみ／WSClient variant は csproj で判断〔Win2 は WS 非依存の単独 P層〕**。RichClient 基盤要サンプル注記〔2CS/WPF/3層〕）
+opentouryo-project-setup-build    実効186L tok~4995  完了（③。ZIP取得→ランタイム別バッチ→ベンダ。footgun＋偽の成功＋MAX_PATH短ルート＋PowerShell 既定。短ルート展開ツリーをワークスペース化。**Business.RichClient は別 sln＝2CS/RichClient なら必須・base2 非依存**。生成 .ps1 は `scripts/` 配下・CWD 非依存）
                                   └ examples.md 実効233L tok~4044  実機 as-built スクリプト3本（setup-build/setup-build-netcore/build-app。netcore は extract 流用・TFM 両サブフォルダをベンダ。**build-app は WS を ProjectReference で同ソリューション一括ビルドに改訂**〔copy-to-Build 廃止〕。ツールは `OT_Tools\`）
-opentouryo-project-setup-core     実効 73L tok~1635  完了（④⑤＝核心。取り出し〔+開発支援ツール→`OT_Tools\`・**csproj Include とファイル実体を毎回照合**〕・HintPath 張替・WS/3層の扱い。references/samples を保持）
+opentouryo-project-setup-core     実効 71L tok~1679  完了（④⑤＝核心。取り出し〔+開発支援ツール→`OT_Tools\`・**csproj Include とファイル実体を毎回照合**〕・HintPath 張替・WS/3層の扱い。references/samples を保持）
                                   ├ references/reference-rewrite.md 実効54L tok~1295  ⑤の edge case（Build_* 全 DLL＝MySql/Oracle 非復元・**WSServer/WSIFType は ProjectReference＝DLL張替の対象外**・net48 も PackageReference 併用時 restore・MAX_PATH）
                                   ├ samples/webservices.md 実効152L tok~4407  WS/3層の共通機構＋**WSClient 4 variant 実測表**〔依存形3種・config 0〜2・ClickOnce〕。**参照方式＝FW は DLL／サンプル B・D・型は ProjectReference**・WS ホスト ServiceInterface 引き込み・`_all.sln` 雛形差替・core 実用不可
                                   ├ samples/webforms.md    実効42L tok~881   Web Forms 固有（cc 画面 CS0246・(A)=WS を ProjectReference/(B)画面差し替え・config二段・test*マスタ固有名）
                                   ├ samples/daogentool.md  実効39L tok~912   開発支援ツール DaoGen_Tool（墨壺＝D層自動生成。`OT_Tools\` 配下・HintPath＋PackageReference 混在＝restore 要）→ dao-generated
                                   └ samples/dpquerytool.md 実効35L tok~798   開発支援ツール DPQuery_Tool（PARAM タグ。取り出し/張替は daogentool.md と同じ）→ query-definition
-opentouryo-project-setup-config   実効 83L tok~1846  完了（⑥⑦。resource 移設・config パス張替〔%OT_RESOURCE_ROOT%〕・.gitignore・接続文字列/InitConfiguration/StateServer・ビルド/実行検証。references を保持）
-                                  ├ references/resource-config.md   実効84L tok~1876  ⑥の詳細（相対不可・%VAR%展開・パスキー一覧・**自己完結型 `.\Dao` は張替しない例外**・log4net PatternString・綴りの罠・config二段）
+opentouryo-project-setup-config   実効 82L tok~1902  完了（⑥⑦。resource 移設・config パス張替〔%OT_RESOURCE_ROOT%〕・.gitignore・接続文字列/InitConfiguration/StateServer・ビルド/実行検証。references を保持）
+                                  ├ references/resource-config.md   実効46L tok~1378  ⑥の詳細（**作者の3原則を先頭に簡潔化**：絶対パスは環境変数／`OT_RESOURCE_ROOT` 重複時は番号付き `%OT_RESOURCE_ROOTn%`／一部設定は空・誤りでも起動。相対不可・**自己完結型 `.\Dao` は張替しない例外**・ログ出力先は log4net `%env{}`／**NLog `${OT_RESOURCE_ROOT}`**〔追加〕・綴りの罠・config二段）
                                   └ references/run-verify.md        実効97L tok~2085  ⑦実行確認（net48 IIS Express／core Kestrel／デスクトップ exe 生存／**Batch・CLI 引数・Console.ReadKey・DB 条件付き**／3層は WS ホスト ServiceInterface 起動）
-opentouryo-project-setup-db       実効 98L tok~2203  完了（**選択式**の環境構築。LocalServicesOnDocker で SQL Server/MySQL/PostgreSQL/Redis/MongoDB を Docker 起動。既定が サンプル接続文字列と一致〔SQL 1433/sa/seigi@123/Northwind＝ConnectionString_SQL、MySQL＝ConnectionString_MCN〕。Oracle は対象外。Docker 変更は SETUP-CHANGES.md 記録。既存 DB あれば不要。**★4 DB は永続無し＝毎回リセット・redis のみ残る／Northwind 基本表は自動再作成・ORDERS2 等サンプル固有表は都度再投入**。clone は repo 外・起動前ポート プリフライト・Start-Services.ps1 の up/down/ps/logs＋-NoWait/-NoPause）
-opentouryo-project-transform      実効101L tok~2263  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消。実機E2E反映：改行LF/非対話PSガード・2層化のDB DLL付替・test*マスタ警告・csproj剪定手法。実行は任意）
-opentouryo-layer-b               実効293L tok~4133  完了
-opentouryo-layer-d             実効151L tok~2239  完了（Dao 3系統の使い分け・入口）
-opentouryo-dao-custom          実効205L tok~2928  完了
-opentouryo-dao-common          実効143L tok~2096  完了
-opentouryo-dao-generated       実効157L tok~2112  完了
-opentouryo-batch-update        実効 79L tok~1758  完了（**DataTable の RowState バッチ更新**。グリッド外[追加]=Added・グリッド内[削除]=`dr.Delete()`=Deleted・セル編集=Modified を `switch(dr.RowState)` で自動生成 Dao の S1_Insert/D3_Update/D4_Delete に振り分け。`DataRowVersion.Original` で楽観排他〔Deleted 行は Original のみ〕、`AcceptChanges`、Web は Session 保持、大量は SQLUtility/ExecGenerateSQL。実サンプル GenDaoAndBatUpd_sample で裏取り）
-opentouryo-query-definition    実効343L tok~4109  完了
-opentouryo-message             実効140L tok~1760  完了
-opentouryo-shared-property     実効 75L tok~ 779  完了
-opentouryo-screen-transition   実効119L tok~1485  完了
-opentouryo-transaction-control 実効129L tok~1652  完了
-opentouryo-transmission        実効141L tok~2063  完了
-opentouryo-exception           実効298L tok~4407  完了
-opentouryo-logging             実効167L tok~2114  完了
+opentouryo-project-setup-db       実効104L tok~2422  完了（**選択式**の環境構築。LocalServicesOnDocker で SQL Server/MySQL/PostgreSQL/Redis/MongoDB を Docker 起動。既定が サンプル接続文字列と一致〔SQL 1433/sa/seigi@123/Northwind＝ConnectionString_SQL、MySQL＝ConnectionString_MCN〕。Oracle は対象外。Docker 変更は SETUP-CHANGES.md 記録。既存 DB あれば不要。**★4 DB は永続無し＝毎回リセット・redis のみ残る／Northwind 基本表は自動再作成・ORDERS2 等サンプル固有表は都度再投入**。clone は repo 外・起動前ポート プリフライト・Start-Services.ps1 の up/down/ps/logs＋-NoWait/-NoPause）
+opentouryo-project-transform      実効 99L tok~2263  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消。実機E2E反映：改行LF/非対話PSガード・2層化のDB DLL付替・test*マスタ警告・csproj剪定手法。実行は任意）
+opentouryo-layer-b               実効242L tok~4157  完了
+opentouryo-layer-d             実効198L tok~3724  完了（Dao 3系統の使い分け・入口＋複数行 DML の注意〔採番・実行順〕・楽観排他方式〔ts 有無〕・パラメタクリア/DPQ 再処理の系統差）
+opentouryo-dao-custom          実効172L tok~3021  完了
+opentouryo-dao-common          実効150L tok~2303  完了
+opentouryo-dao-generated       実効166L tok~2909  完了
+opentouryo-batch-update        実効 90L tok~2213  完了（**DataTable の RowState バッチ更新**。グリッド外[追加]=Added・グリッド内[削除]=`dr.Delete()`=Deleted・セル編集=Modified を `switch(dr.RowState)` で自動生成 Dao の S1_Insert/D3_Update/D4_Delete に振り分け。`DataRowVersion.Original` で楽観排他〔Deleted 行は Original のみ〕、`AcceptChanges`、Web は Session 保持、大量は SQLUtility/ExecGenerateSQL。実サンプル GenDaoAndBatUpd_sample で裏取り）
+opentouryo-query-definition    実効356L tok~4504  完了
+opentouryo-message             実効126L tok~1747  完了
+opentouryo-shared-property     実効 62L tok~ 777  完了
+opentouryo-screen-transition   実効116L tok~2010  完了
+opentouryo-transaction-control 実効115L tok~2116  完了
+opentouryo-transmission        実効124L tok~2046  完了
+opentouryo-exception           実効266L tok~4250  完了
+opentouryo-logging             実効174L tok~2404  完了
 opentouryo-log-analysis        実効 85L tok~2092  完了（**出力ログの分析＝読む側**。ACCESS/SQLTRACE/OPERATION/SERVICE-IF の parse、ERROR/FATAL＋スタックトレース＋例外型による分類、実行時間/CPU時間の外れ値・遅いSQL・N+1・分離レベル、重大度順の提案〔証跡→原因→対処→使うスキル〕。実ログ `resource/Log` で書式裏取り。references に実行行例・原因/対処表・grep 集計レシピ）
-opentouryo-config              実効200L tok~2746  完了
-opentouryo-auth                実効312L tok~4952  完了 ★上限に貼り付いている
-opentouryo-oauth2-client       実効266L tok~2853  完了
-opentouryo-project-policy      実効195L tok~4515  完了（親クラス2 の挙動・運用ルールの確認手順＝読む側。Business 実ソース全スキャンで Web API/引数戻り値/非同期/サブシステム/属性の確認地図を追補。検証実行で①ソース所在を現行化〔短ルート C:\otr・使い捨て・上流 archive/<ref>.zip 取得手順〕＋overlay 空/不在=未改変確定の L166 例外・接続文字列キーは config 先読み・空振り起動ガード・確定事実は PROJECT-POLICY.md へ記録。<ref> は setup-build が build-ref.txt に残す。★DBMS 選択等の4行は 2CS なら MyFcBaseLogic2CS.cs を読む・ActionType は PascalCase・Dam はランタイム別）
-opentouryo-base2-customize     実効169L tok~4878  完了（親クラス2 のカスタマイズ＝纏め者向け・作る側。オーバーレイ+固定タグ。短ルート展開ツリーをワークスペース化。★2CS=Business.RichClient は別 sln〔BusinessRichClient_*.sln〕要ビルド／overlay 適用は Copy-Item＋UTF-8 BOM 保持／overlay はファイル丸ごと差替＝パッチでない。Web API/引数戻り値/非同期/RcMyCmnFunction/サブシステム/属性の差し込み点を追補。検証実行で UOC_ConnectionOpen は deprecated 双子含む4クラス重複／DBMS 増減の面チェックリスト／RichClient sln は非SDK＝/t:build・obj 共有掃除〔examples.md 2b〕／overlay 適用の正典1本／ODP ガード不揃い注意）
+opentouryo-config              実効212L tok~3098  完了
+opentouryo-auth                実効297L tok~4997  完了 ★上限に貼り付いている
+opentouryo-oauth2-client       実効267L tok~3026  完了
+opentouryo-project-policy      実効173L tok~4235  完了（親クラス2 の挙動・運用ルールの確認手順＝読む側。Business 実ソース全スキャンで Web API/引数戻り値/非同期/サブシステム/属性の確認地図を追補。検証実行で①ソース所在を現行化〔短ルート C:\otr・使い捨て・上流 archive/<ref>.zip 取得手順〕＋overlay 空/不在=未改変確定の L166 例外・接続文字列キーは config 先読み・空振り起動ガード・確定事実は PROJECT-POLICY.md へ記録。<ref> は setup-build が build-ref.txt に残す。★DBMS 選択等の4行は 2CS なら MyFcBaseLogic2CS.cs を読む・ActionType は PascalCase・Dam はランタイム別）
+opentouryo-base2-customize     実効170L tok~4989  完了（親クラス2 のカスタマイズ＝纏め者向け・作る側。オーバーレイ+固定タグ。短ルート展開ツリーをワークスペース化。★2CS=Business.RichClient は別 sln〔BusinessRichClient_*.sln〕要ビルド／overlay 適用は Copy-Item＋UTF-8 BOM 保持／overlay はファイル丸ごと差替＝パッチでない。Web API/引数戻り値/非同期/RcMyCmnFunction/サブシステム/属性の差し込み点を追補。検証実行で UOC_ConnectionOpen は deprecated 双子含む4クラス重複／DBMS 増減の面チェックリスト／RichClient sln は非SDK＝/t:build・obj 共有掃除〔examples.md 2b〕／overlay 適用の正典1本／ODP ガード不揃い注意）
 ```
 
-**全34スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
+**全36スキルの本文を書き終えた。** 全て標準準拠、目安（500行 / 5000トークン）内。
 「実効」は HTML コメント除去後（Claude Code ではコメントが除去されるため）。
 計測は `scratchpad/measure.py` 相当のスクリプトで行う（見積り式：ASCII 1/4字 + 非ASCII 1/1.1字。
 tiktoken 生値はこれより約1.3倍〔日本語過大計上〕なので、上表は見積り式で統一）。
-値は 2026-07-20 に全スキル再計測して更新（WS/ProjectReference・OT_Tools・命名規則・TFM 改修を反映）。
+値は **2026-07-26 に全スキル再計測して更新**（本セッションの field-test 反映・NLog/環境変数・GridView/ListView/Repeater の系統統一・楽観排他方式/複数行 DML・config 簡潔化 等を反映。旧値は 2026-07-20）。
 
-**`opentouryo-auth` は 約4,950トークンで上限 5,000 に接している。**
+**`opentouryo-auth` は 約4,997トークンで上限 5,000 に接している**（`opentouryo-project-setup-build` 4,995・`opentouryo-base2-customize` 4,989 も同様に上限際）。
 これ以上の加筆は分割とセットで考えること。外部 IdP 連携を `opentouryo-oauth2-client` として
 独立させたのもこれが一因（2.5 参照）。
 
 相互リンクしている（B層 → D層 → クエリ定義、全層 → 例外、P層3種 → auth、
 auth → oauth2-client、setup → config / project-policy、など）。
-`AGENTS.md` は tok~3403（スキル一覧表は README〔GitHub リンク〕へ移設済み＝§4.3 2026-07-19。
+`AGENTS.md` は tok~3785（スキル一覧表は README〔GitHub リンク〕へ移設済み＝§4.3 2026-07-19。「開発の進め方 spec→plan→実装」節を追加済み。
 常時ロード枠を約1000 節約）。残るのは横断事実（DBMS 差・名前空間・ランタイム差・セットアップ）と
 非推奨リファレンス表が中心で、これ以上は load-bearing な情報を削ることになる。スキル一覧と使いどころは README 参照。
 
@@ -355,6 +355,8 @@ APIリファレンスで足りる）。
 | **as-built `WORKSPACE` 照合でログ出力先の張替を「任意・起動には不要」と明確化**（作者指摘・**2026-07-26**。セットアップ済み `WORKSPACE/resource/Log/SampleLogConf.xml` で確認） | 作者指摘：`WORKSPACE`（環境変数はプロセス限定上書きで検証したセットアップ済みプロジェクト）の `SampleLogConf.xml` は**未変更**（各 appender の `File` が既定の `C:\root\files\resource\Log\...` のまま）で稼働。＝ログ定義中の**出力先パス張替は「ログの置き場所」の運用事項で、アプリの起動可否には無関係**（張り替えなくても動く＝旧パスへ出る/log4net が黙って出さないだけ）。これは resource **入力**の解決（`FxLog4NetConfFile`＝ログ定義ファイルの場所は `%OT_RESOURCE_ROOT%` で解決＝起動に必要）とは別問題。→ `resource-config.md` の当該節を「見落とし注意・張り替える（必須に読める）」→「**任意・起動には不要・揃えたい場合のみ**」に、`opentouryo-project-setup-config` SKILL の step3 も「（任意・起動には不要）」に。自明な「残ると旧パスへ出力＝実測」の実測表記も整理。tok：setup-config 1875（上限内・resource-config は予算外） |
 | **config/リソース記述を作者の3原則で簡潔化**（作者指摘「全体的に冗長」・**2026-07-26**） | 作者提示の3原則を先頭に据えて `resource-config.md` を圧縮（**94→53行**）：①Resource を指す絶対パス（.NET 設定 `*.config`/`*.json`＋LOG 設定 `*.xml`）は環境変数で張替、②`OT_RESOURCE_ROOT` 重複時は番号付き `%OT_RESOURCE_ROOTn%`（例 `%OT_RESOURCE_ROOT1%`。前回の `OT_RESOURCE_ROOT2` から表記統一）、③一部設定は空/誤りでもアプリが起動する（「起動＝正しい」ではない＝ログ出力先はこの例）。非自明な事実（相対パス不可の理由・`.\Dao` 自己完結型は張替不可・log4net `%env{}` PatternString・綴り罠 `Xml`/`Test`・net48 Web の config 二段）は圧縮して温存（落とさない）。`opentouryo-project-setup-config` SKILL の step2（番号付き変数）・step3（ログは張替対象＝原則1だが非ブロッキング＝原則3）も整合。tok：setup-config 1902（上限内・resource-config は予算外） |
 | **NLog 設定ファイルの環境変数対応方法を追加**（作者依頼・**2026-07-26**。`LogManager_nlog.cs`＋as-built `NLogConfigTemplate.xml` で裏取り） | 従来 log4net の `%env{}` だけ記載だったログ出力先の可搬化を NLog にも拡張。裏取り：`LogManager_nlog.cs` は NLog 設定を **`XmlLoggingConfiguration` にそのまま渡す**〔L126/134〕＝**OpenTouryo は中身を展開しない**（log4net の `XmlConfigurator` と同型）→展開は NLog 側書式。as-built `OTRVCAS`/`WORKSPACE` の `NLogConfigTemplate.xml` は **`${OT_RESOURCE_ROOT}`**（例 `internalLogFile="${OT_RESOURCE_ROOT}\Log\NLogInternalLog.log"`）。→ `resource-config.md` のログ節を log4net（`%env{OT_RESOURCE_ROOT}` の `PatternString`）／NLog（`${OT_RESOURCE_ROOT}`・テンプレの `（★ファイルパス）` を埋める）の2本立てに。`opentouryo-logging` に相互参照（設定ファイル「の中」の出力先パス可搬化＝setup-config へ・出力先が旧のままでも起動する旨）。`FxLog4NetConfFile`（ファイルの場所）は従来どおり `%OT_RESOURCE_ROOT%` 解決。tok：logging 2404（上限内・resource-config は予算外） |
+| **README・DevelopmentHistory を最新化**（作者依頼・**2026-07-26**） | §3 インベントリを **2026-07-26 全スキル再計測**で更新（本セッションの field-test 反映・NLog/環境変数・グリッド系統一・楽観排他方式/複数行DML・config 簡潔化を数値と要約に反映）。**「全34スキル」→「全36スキル」**、auth 上限注記 4,950→4,997（＋setup-build 4,995／base2 4,989）、AGENTS.md tok 3403→3785、resource-config.md 1876→1378。§7「次にやること」も 36スキル・auth 4,997・`-IncludeTutorial`/`src/docs/` を反映。README は既に36スキル・`src/docs/`・`-IncludeTutorial`・進め方節を反映済みで最新（変更不要を確認）。§4.3 の過去行（2026-07-19 の「全33→34」「34行の表」）は**履歴として不変**（当時の実数）。全スキル上限内（最大 auth 4,997・setup-build 4,995・query-definition 4,504） |
+| **README スキル一覧に親子（ファサード／概観→詳細）関係を `└` で表現**（作者依頼・**2026-07-26**。実 description/SKILL で裏取り） | 厳密な親子は2つと確認：**`opentouryo-project-setup`（ファサード）→ `-selection`/`-build`/`-core`/`-config`/`-db`/`project-transform`**〔SKILL の flow で呼び出し順を確認〕、**`opentouryo-layer-d`（Dao 概観）→ `dao-custom`/`dao-common`/`dao-generated`**〔description「実装の詳細は…を使う」〕。README ①②表の子行に **`└`**（コード span 外）を付け、親行に「配下は下記 `└`」を注記、凡例を追加。その他（auth→oauth2-client・batch-update→dao-generated・P層 screen↔event 等）は**利用/相互参照＝親子でない**ので `└` にせず description 記載のまま。README のみ変更（スキル本文・トークン不変） |
 | **公式「自動生成Dao性能対策」ページから未収録の「クエリ・キャッシュ」機能を取り込み**（作者提示 URL・**2026-07-24**。生成物 `DaoShippers.cs`＋`LayerB.cs` L538 で裏取り） | **未収録の実機能を dao-generated に追加**。列数の多いテーブルの自動生成 Dao は動的PQ組立コストが高く、コンストラクタに**クエリ・キャッシュ ID** を渡すと組立済み SQL（`CommandText`）を静的 SQL として再利用。実ソース裏取り（WebForms 版生成物）：`protected static ConcurrentDictionary<string,string> CDicQueryCache`〔L53〕＝**Dao クラス単位の static**・キー＝`CacheId+sqlFileName`／コンストラクタ2種〔無印 L94・`(dam, cacheId)` L99〕／ラッパ〔L313-350〕は CacheId 空=毎回 `SetSqlByFile2`、ヒット=`SetSqlByCommand(キャッシュ済)`、ミス=組立後 `DamIDbCommand.CommandText` を格納。使用例 `new DaoShippers(this.GetDam(), "f54d…")`〔`WebApp_sample/.../LayerB.cs` L538〕。規則：**生成テンプレートを `DaoTemplate2` に切替再生成**（ツール app.config `DaoTemplateFileName`=`DaoTemplate2`）／**ID は固定値（GUID か完全修飾名）・`Guid.NewGuid()` 不可**（ヒットせず肥大）／**同一 ID は同一パラメタ・セットのみ**（動的タグ差で `CommandText` が変わり不一致エラー）／別 Dao とは非共有／v02-50 追加・テンプレ修正のみで旧版可。→ 本文に新節＋やってはいけない2件、snippet にキャッシュ実装（理解用）。tok：dao-generated 2272→2909（上限内） |
 | **「繰り返し実行時のパラメタ・クリア」を系統横断で整理**（作者依頼・**2026-07-24**。`CmnDao.cs`/`BaseDao.cs`/生成物 `DaoShippers.cs`/`TestMTC.cs` で裏取り） | ループ/明細で同じ Dao を繰り返し実行するときの実行間パラメタ・クリアが系統ごとに違う点を整理。裏取り：**`ClearParameters()` は `CmnDao` 専用**〔`CmnDao.cs` L173。`BaseDao`/`MyBaseDao` に無い〕→ 個別Dao は生コマンドでクリア＝**DBMS 中立形 `this.GetDam().DamIDbCommand.Parameters.Clear()`**〔`DamIDbCommand` は `BaseDam` L179 抽象〕、DBMS 依存形 `((DamSqlSvr)this.GetDam()).DamSqlCommand.Parameters.Clear()`〔Oracle は `DamManagedOdp.DamOracleCommand` L112 等。サンプル `TestMTC.cs` L141 で生コマンド取得を確認〕。自動生成Dao は `ClearParametersFromHt()`〔生成物メソッド・`SetParameteToHt` の Hashtable をクリア〕＋クエリ・キャッシュ。反映：**`opentouryo-layer-d` に系統別クリア比較表**（新節）、**`opentouryo-dao-custom` に個別Dao の生クリア**（`ClearParameters()` 不在＝genuine gap を補充）。dao-common は `ClearParameters()` 既載・dao-generated は `ClearParametersFromHt()` 既載。tok：layer-d 2294→2622・dao-custom 2896→3019（上限内） |
 | **公式「共通の初期化処理」ページから2点を反映**（作者提示 URL・**2026-07-24**。`MyBaseDao.cs`/`OAuth2AndOIDCClient.cs`＋各サンプルで裏取り） | 起動時共通初期化2点。**①埋め込みリソース（D層）＝前回 A5 を正確化**：スイッチは `MyBaseDao.UseEmbeddedResource = true;`〔`MyBaseDao.cs` L56 static bool・L71 分岐。true で `SetSqlByFile2` が通常ファイルでなく埋め込みを読む〕＋appSettings `Azure`＝既定名前空間。SQL は EntryAssembly 以外にも埋め込み可・SQL 以外は EntryAssembly。サンプル `GenDaoAndBatUpd_sample/Form1.cs` L50 で使用確認。→ query-definition 本文の A5 記述を「`EmbeddedResourceLoader`/Azure スイッチ」から**実スイッチ `UseEmbeddedResource`** に是正＋snippet 更新。**②`OAuth2AndOIDCClient.HttpClient = new HttpClient()`（起動時）は oauth2-client に既収録だが「Core は」と過小限定→是正**：ゲッターは `set` のみ・`_HttpClient` 既定 `null`・遅延生成なし〔`OAuth2AndOIDCClient.cs` L58/61〕で **Framework/Core とも起動時設定が必須**（net48 `Global.asax` L81/94・Core `Program.cs` L38 の双方で設定を確認）。→ 見出し「Core は」→「起動時（Framework/Core 共通）」、コード注に Global.asax/Startup/Program、やってはいけないを是正。tok：query-definition 4469→4504・oauth2-client →3026（上限内） |
@@ -816,10 +818,11 @@ skills-ref validate ./src/skills/opentouryo-layer-d
 
 ## 7. 次にやること
 
-**このリポジトリ側の作業は残っていない。** 全34スキル、`AGENTS.md`（アーキテクチャ節を含む）、
-インストーラまで書き終えた。利用ガイド（doc 0〜8・動的クエリ・D層自動生成・設定一覧）も
-一通り確認し、整合性の補正と新規スキル（dialog / p-call-business / richclient-async /
-common-parts / project-policy ほか）への反映を済ませた。
+**このリポジトリ側の作業は残っていない。** 全36スキル（`opentouryo-batch-update`・`opentouryo-log-analysis` を含む）、
+`AGENTS.md`（アーキテクチャ節を含む）、インストーラ（＋`-IncludeTutorial` と `src/docs/` の spec/plan/tutorial 見本）まで書き終えた。
+利用ガイド（doc 0〜8・動的クエリ・D層自動生成・設定一覧）と各種 FAQ・作者の field-test レポートも
+一通り反映し、整合性の補正と新規スキル（dialog / p-call-business / richclient-async /
+common-parts / project-policy / batch-update / log-analysis ほか）への反映を済ませた。
 
 残る TODO は**導入プロジェクトか作者にしか決められない**（5.2 / 5.3 / 5.4）。
 特に 5.2 は**空欄のまま配布するのが正しい**ので、埋めようとしないこと。
@@ -829,7 +832,7 @@ common-parts / project-policy ほか）への反映を済ませた。
 1. **5.1 の「完了済み」を読む。** TODO が陳腐化していた事例が複数ある。
    2CS の差（5.1）は `-winforms` と 4.3 に答えが書いてあるのに TODO が残っていた。
    **書いた本人が忘れるので、まず現物を検索してから調査を始めること**
-2. **`opentouryo-auth` は 約4,950トークンで上限に接している**（3 参照）。
+2. **`opentouryo-auth` は 約4,997トークンで上限に接している**（`project-setup-build` 4,995・`base2-customize` 4,989 も。3 参照）。
    加筆が必要になったら分割とセットで考える
 3. **ランタイム差（net48 / .NET 10.0）に注意。** Web Forms とリモート呼び出し（通信制御
    `protocol="2"`）・`Zipper` / `BinarySerialize` / `Win32` は net48 専用（4.3 参照）
