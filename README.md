@@ -57,12 +57,14 @@ docs/
 | `opentouryo-p-call-business` | P層から B層を呼ぶとき（引数クラス・`DoBusinessLogic`・`ErrorFlag`） |
 | `opentouryo-richclient-async` | リッチクライアント（WinForms / WPF）で B層を非同期に呼ぶとき |
 | `opentouryo-layer-b` | 業務ロジックを実装するとき |
+| `opentouryo-exception` | 例外を扱うとき（**全層で常用する横断・層を問わず参照**。「業務例外はリスローされない」等の必須ルール） |
 | `opentouryo-layer-d` | D層の全体像と Dao 3系統の使い分け（**概観。配下は下記 `└`**） |
 | └ `opentouryo-dao-custom` | 個別Dao（業務固有のデータアクセス）を実装するとき |
 | └ `opentouryo-dao-common` | 共通Dao（`CmnDao`）で単発の SQL を実行するとき |
 | └ `opentouryo-dao-generated` | 自動生成Dao（テーブル単位の CRUD・楽観排他）を使うとき |
 | `opentouryo-batch-update` | DataTable の RowState でグリッド明細を一括更新（追加/更新/削除）するとき |
 | `opentouryo-query-definition` | SQL 定義ファイル（`.sql` / `.xml`）を書くとき |
+| `opentouryo-comment-convention` | **全層・全ファイル共通**：新規コードファイルのヘッダ（所属機能名／クラス情報／更新履歴）とコメント規則 |
 
 ### ③ 制御・定義／横断機能（機能利用：必要になったとき参照）
 
@@ -73,13 +75,17 @@ docs/
 | `opentouryo-transaction-control` | トランザクション パターンを定義するとき（`TCDefinition.xml`） |
 | `opentouryo-screen-transition` | 画面遷移制御を定義するとき（`SCDefinition.xml`。Web Forms 専用） |
 | `opentouryo-transmission` | 通信制御（サービス論理名で B層を呼ぶ）を扱うとき |
-| `opentouryo-exception` | 例外を扱うとき。層を問わず参照する |
 | `opentouryo-logging` | ログを出力するとき |
-| `opentouryo-log-analysis` | 出力ログ（ACCESS/SQLTRACE 等）からエラー・性能の対応を提案するとき |
 | `opentouryo-config` | 設定値を読むとき、構成ファイルを書くとき |
 | `opentouryo-auth` | 認証・ユーザ情報を扱うとき |
 | `opentouryo-oauth2-client` | 外部 IdP と連携するとき（OAuth2 / OIDC のクライアント＝RP） |
 | `opentouryo-common-parts` | ユーティリティ（文字列チェック・エンコード等）を自作する前に既存の共通部品を探すとき |
+
+### ④ レビュー・フェーズ（実装・実行の後：実装。実行結果（ログ／エラー／性能）を分析して対応を提案）
+
+| スキル | 使いどころ |
+| --- | --- |
+| `opentouryo-log-analysis` | 出力ログ（ACCESS / SQLTRACE 等）からエラー・性能の対応を提案するとき |
 
 ## スキルの互換性
 
