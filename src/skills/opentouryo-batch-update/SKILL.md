@@ -71,6 +71,11 @@ Web で複数回のポストバックに跨って編集する場合、**編集�
 （`RowState` を保つため）。**サーバ メモリの消費に注意**（大きなデータを持たない・使用後は消す）。
 **StateServer/SQLServer セッション モードなら保持する型は直列化可能に**（`DataTable` は可。`opentouryo-config`）。
 
+**★ バッチ更新を Web 画面で行うなら、`DataTable` を Session に持つ＝件数がメモリを圧迫する。**
+→ **レコード件数に上限を設ける**か、**ページングを前提にする**（`opentouryo-app-design/references/list-paging.md`）。
+**ページングする場合は、編集（バッチ更新）開始後はページングを止める**——ページ切替で再取得すると `RowState` が消えるため。
+最初の編集で結果セットを固定する（`opentouryo-webforms-crud-screens` の「一覧＆更新」）。
+
 ### ★ Web グリッド ↔ DataRow の対応付け（index がずれる）
 
 - **`Deleted` 行は `DefaultView`（既定の `RowStateFilter`）から外れてグリッドに表示されない** → **グリッドの
