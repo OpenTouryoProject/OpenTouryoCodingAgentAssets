@@ -47,6 +47,11 @@ P→B には**2経路**があり、**既定は処理方式で決まる**（ど�
   `User` 振替（`opentouryo-project-policy`）、必要なら**属性ベースで B層クラス・メソッドに埋め込む**（`opentouryo-transaction-control`）。
 - **Web でも `Invoke` を選べば**疎結合になり後で WS へ無変更で移せるが、その場合 per-call の `iso` は渡せない（サーバ側方式に従う）。
   `InvokeAsync` も同2引数。`opentouryo-transmission`。
+- **★ 通信制御で3層構成を採るなら、後の物理分離に備えて実装先を分ける**：**B層・D層は `WSServer_sample` 側／
+  型情報（引数・戻り値クラス＝`MyParameterValue`/`MyReturnValue` 派生）は `WSIFType_sample` 側**に置く
+  （クライアントとサーバの**両方が参照する共有契約**なので別アセンブリに。型は `[Serializable]`＝WS 転送）。
+  P層（クライアント）は共有アセンブリの型を参照し `Invoke` で呼ぶ。**2層（直呼び）は型も B/D もアプリ内**。
+  実装配置の対比（3層／2層）とコードは `references/snippets.md`「3層構成での実装配置」。
 
 ## ① 引数クラスの組み立て（処理方式で違う）
 

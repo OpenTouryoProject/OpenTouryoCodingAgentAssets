@@ -57,6 +57,38 @@ TestReturnValue rv = (TestReturnValue)cctrl.Invoke("〈サービス論理名〉"
 // 以降の ErrorFlag 判定は同上
 ```
 
+## 3層構成（通信制御）での実装配置（後の物理分離に備える）
+
+**共有契約（型）とサーバ実装（B/D）を別アセンブリに分ける。** これで client/server を後から物理分離できる。
+
+| 実装物 | 3層（通信制御） | 2層（直呼び） |
+| --- | --- | --- |
+| 引数・戻り値クラス（**型情報**＝`MyParameterValue`/`MyReturnValue` 派生） | **型アセンブリ（共有）**＝client/server 両方が参照・`[Serializable]` | アプリ内 |
+| **B層（`LayerB`）・D層（`LayerD`/Dao）** | **サーバ側アセンブリ** | アプリ内 |
+| P層（呼び出し側） | 型を参照して `CallController.Invoke(論理名, pv)` | 型を参照して `new LayerB().DoBusinessLogic(pv, iso)` |
+
+```csharp
+// 【3層】P層（クライアント）：型は共有アセンブリを参照、呼び出しは通信制御
+using WSIFType_sample;   // ← 引数・戻り値クラス（型情報）＝クライアントとサーバの共有契約
+// ...
+TestParameterValue pv = new TestParameterValue(/* screenId, controlId, methodName, actionType, */ this.UserInfo);
+CallController cctrl = new CallController(this.UserInfo);
+TestReturnValue rv = (TestReturnValue)cctrl.Invoke("〈サービス論理名〉", pv);
+// → B層・D層はサーバ側アセンブリ（LayerB : MyFcBaseLogic、LayerD/Dao）に実装。
+//   分離レベル・トランザクションはサーバ側で決める（iso=User 振替／TCDefinition／属性ベース）。
+
+// ───────────────────────────────
+// 【2層】P層：型も B/D もアプリ内（同一プロセスで直呼び）
+using MyType;            // ← 引数・戻り値クラスはアプリ内
+// ...
+LayerB myBusiness = new LayerB();
+TestReturnValue rv2 = (TestReturnValue)myBusiness.DoBusinessLogic((BaseParameterValue)pv, iso);
+```
+
+> 参考（配布サンプルの対応。**サンプルは 2層化・整理で削除されうるので、上のパターンを正とする**）：
+> 3層＝`WS_sample/{WSIFType_sample＝型, WSServer_sample＝B/D}`＋`sampleScreen_cc.aspx.cs`／
+> 2層＝`AppCode/.../{Common＝型, Business, Dao}`＋`sampleScreen.aspx.cs`。
+
 ## 2層C/S（リッチクライアント）＝手動トランザクション
 
 C/S 2層では都度コミットせず手動制御する。B層は `MyFcBaseLogic2CS` を継承（`opentouryo-base2-customize`）。
