@@ -1,7 +1,19 @@
+---
+name: opentouryo-webforms-crud-screens
+description: "OpenTouryo の ASP.NET Web Forms でテーブル保守（マスタメンテ）の CRUD 画面を実装する。2方式＝(1) 一覧→詳細（検索一覧で行選択して詳細画面で単一レコードの追加・更新・削除。オーソドックス・既定）、(2) 一覧＆更新（一覧でその場で複数行を更新・削除＝RowState バッチ、追加だけ詳細画面）。検索条件（AND/OR/Like）→動的クエリ、GridView と ObjectDataSource による一覧・ページング・ソート、行選択で主キー＋タイムスタンプを Session に持ち回り、詳細画面の INSERT/表示モード分岐、(2) の「最初の編集で結果セットを固定＝ページング停止」、グリッド↔DataRow の対応付けを扱う。自動生成（_3TierEngine / CmnTableAdapter / ObjectDataSource）を推奨実装（LayerB/DoBusinessLogic＋自動生成 Dao＋DPQ＋RowState）へ置き換える指針も示す。テーブルメンテナンス画面 / 一覧画面 / 検索画面 / 詳細画面 / 一覧→詳細 / 一覧＆更新 / CRUD 画面 / マスタメンテ / GridView の更新・削除 を伴う作業のときに使う。バッチ更新の中核は opentouryo-batch-update、一覧ページングの SQL は opentouryo-app-design の list-paging を使う。"
+license: MIT
+metadata:
+  author: OpenTouryoProject
+  version: "0.1.0"
+---
+
 # テーブル・メンテナンス画面（一覧・詳細・更新）の P層パターン
 
-`opentouryo-batch-update` の on-demand 参照。**Web Forms のテーブル保守 CRUD 画面**を、一覧/詳細/更新でどう分けるかの型。
+**Web Forms のテーブル保守 CRUD 画面**を、一覧/詳細/更新でどう分けるかの型。**ASP.NET Web Forms（net48）専用。**
+実装の中核部品は `opentouryo-batch-update`（RowState バッチ）／`opentouryo-layer-p-webforms-screen`・`-event`（画面・グリッド）／`opentouryo-screen-transition`（遷移）／`opentouryo-app-design/references/list-paging.md`（ページング）。
 出典：自動生成サンプル `Aspx/sample/3Tier/Products{ConditionalSearch,Detail,SearchAndUpdate}.aspx(.cs)`＋`ProductsTableAdapter.cs`＋実ソース `Business/Business/_3TierEngine.cs`・`Business/Presentation/CmnTableAdapter.cs`。
+
+> 📋 **コピー元スニペット＋「何処を→どう書き換えるか」（自動生成→推奨）の対比は `references/snippets.md`**（サンプルは削除されうるのでスニペットを正とする）。
 
 > **★ サンプルは自動生成（墨壺２）で、汎用エンジン `_3TierEngine`（`TableName`＋`Dictionary`＋`actionType` を渡すと内部で自動生成 SQL を直利用）を使う＝OpenTouryo の推奨実装とは少し違う。** 構造（画面分割・状態遷移・結果セット固定・RowState バッチ）を参考にし、**推奨部品**（`LayerB`/`DoBusinessLogic`＋自動生成 Dao＋DPQ＋RowState）で実装する。自動生成そのままを写さない。
 
