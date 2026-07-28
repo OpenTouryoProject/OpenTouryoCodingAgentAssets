@@ -10,6 +10,7 @@ metadata:
 # DataTable の RowState を使ったバッチ更新
 
 > 📋 **RowState switch の全文・グリッド追加/削除・SQLUtility の実装は `references/snippets.md`**。
+> 🖥 **Web Forms のテーブル保守 CRUD 画面パターン**（一覧→詳細／一覧＆更新、ページングと結果セット固定、自動生成→推奨実装への置き換え）は `references/webforms-crud-screens.md`。
 
 ## いつ使うか
 
