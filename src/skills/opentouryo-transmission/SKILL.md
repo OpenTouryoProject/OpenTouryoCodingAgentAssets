@@ -56,6 +56,10 @@ TestReturnValue rv = (TestReturnValue)cctrl.Invoke("testWebService", parameterVa
 
 `Invoke` の非同期版として `InvokeAsync(serviceName, parameterValue)` もある。
 
+**★ `Invoke`/`InvokeAsync` は `(serviceName, parameterValue)` の2引数のみ＝分離レベル（`iso`）を渡せない。**
+per-call で分離レベルを変えるなら `Invoke` ではなく `new LayerB().DoBusinessLogic(pv, iso)` 直呼びにする
+（トレードオフは `opentouryo-p-call-business`「呼び出し経路の選択」）。
+
 ### リモート呼び出し（`protocol="2"`）は net48 専用
 
 **`net10.0`（core）では、インプロセス（`protocol="1"`）しか動かない。**

@@ -38,7 +38,8 @@ metadata:
 `foreach (DataRow dr in dt.Rows)` で回し、**`switch (dr.RowState)`** で自動生成 Dao の CUD を呼ぶ。
 行ごとに `dao.ClearParametersFromHt()` でパラメタをクリアする。コード全文は `references/snippets.md`。
 
-- **`Added`** → 全列を現在値で設定 → `S1_Insert()`（または `D1_Insert()`）。
+- **`Added`** → `S1_Insert()`（**全列必須**＝生成 INSERT が全列に `@param` を持つ。列を1つでも設定しないと実行時エラー）。
+  **一覧が全列でないなら `D1_Insert()`**（動的＝設定した列だけ INSERT する。生成 SQL を読んで判断＝`opentouryo-dao-generated`）。
 - **`Modified`** → `PK_列` を設定、`Set_列_forUPD` に**現在値**、WHERE 用の列は**元の値**（下記）→ `S3_Update()` / `D3_Update()`。
 - **`Deleted`** → `PK_列` を設定 → `S4_Delete()` / `D4_Delete()`。
 
@@ -67,6 +68,18 @@ metadata:
 
 Web で複数回のポストバックに跨って編集する場合、**編集中の `DataTable` を `Session` などに保持**する
 （`RowState` を保つため）。**サーバ メモリの消費に注意**（大きなデータを持たない・使用後は消す）。
+**StateServer/SQLServer セッション モードなら保持する型は直列化可能に**（`DataTable` は可。`opentouryo-config`）。
+
+### ★ Web グリッド ↔ DataRow の対応付け（index がずれる）
+
+- **`Deleted` 行は `DefaultView`（既定の `RowStateFilter`）から外れてグリッドに表示されない** → **グリッドの
+  `e.RowIndex` と `dt.Rows[i]` がずれる**。DataRow を引くときは `Deleted` を飛ばしながら数えるか、キーで引く。
+  **素朴に `dt.Rows[e.RowIndex]` としない。**
+- **`DataKeyNames`＋`DataKeys[i]` はバッチ更新では使えない**（`opentouryo-layer-p-webforms-event` は通常これを勧めるが、
+  **追加行の主キーが未採番＝`DBNull`** なので成立しない）。バッチ更新時は DataRow 側で対応付ける。
+- **セル編集は自動では `DataTable` に入らない** → グリッドのセルから **DataRow へ読み戻す**（`Modified` はこの代入で立つ）。
+  **★ 元が `DBNull` の列に `""` を代入すると無駄な `Modified`（無駄 UPDATE）が量産される** → **現在値と一致するなら代入しない**。
+  読み戻しスニペットは `references/snippets.md`。
 
 ## 大量データ（性能）
 

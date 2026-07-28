@@ -35,6 +35,43 @@ dt.Rows.Add(nr);
 if (bs.Current is DataRowView drv) drv.Row.Delete();   // ★ Delete（Remove ではない）
 ```
 
+## ★ Web グリッド：セル値を DataRow へ読み戻す（index ずれ・DBNull 対策）
+
+セル編集は自動では `DataTable` に入らない。**グリッドのセル → DataRow へ読み戻す**（`Modified` はこの代入で立つ）。
+`Deleted` 行は表示から外れるので `e.RowIndex` と `dt.Rows[i]` はずれる → **`Deleted` を飛ばして数える**。
+`DataKeyNames` は追加行の PK が `DBNull` で使えない。
+
+```csharp
+foreach (GridViewRow gvr in this.gvwSuppliers.Rows)
+{
+    if (gvr.RowType != DataControlRowType.DataRow) continue;
+
+    // 表示 index → DataRow（Deleted を飛ばしながら数える。★ dt.Rows[gvr.RowIndex] としない）
+    DataRow dr = GetDataRowForDisplayIndex(dt, gvr.RowIndex);
+
+    string edited = ((TextBox)gvr.FindControl("txtCompanyName")).Text;
+
+    // ★ 元が DBNull の列に "" を代入しない・現在値と同じなら代入しない（無駄 Modified＝無駄 UPDATE を防ぐ）
+    object cur = dr["CompanyName"];
+    bool curBlank = (cur == DBNull.Value) || (string)cur == "";
+    if (curBlank && edited == "") continue;                 // 空↔空は変更なし
+    if (!curBlank && (string)cur == edited) continue;       // 同値は触らない
+    dr["CompanyName"] = edited;                             // ここで初めて Modified
+}
+
+// Deleted を飛ばして「表示 index 番目」の DataRow を返す
+DataRow GetDataRowForDisplayIndex(DataTable dt, int displayIndex)
+{
+    int i = -1;
+    foreach (DataRow dr in dt.Rows)
+    {
+        if (dr.RowState == DataRowState.Deleted) continue;  // 表示されていない
+        if (++i == displayIndex) return dr;
+    }
+    return null;
+}
+```
+
 ## B層：RowState で振り分け（自動生成 Dao）
 
 ```csharp

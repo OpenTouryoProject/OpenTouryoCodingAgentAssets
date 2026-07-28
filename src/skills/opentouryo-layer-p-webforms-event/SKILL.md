@@ -136,6 +136,10 @@ protected string UOC_gvwGridView_RowUpdating(FxEventArgs fxEventArgs, EventArgs 
 **レイトバインドで呼ばれるため、シグネチャが違っても、修飾子が `private` でも、
 コンパイルは通り実行時に呼ばれないだけ。**
 
+**★ 対応する UOC メソッドがどこにも無いボタンは、押しても何も起きない（無視）＝例外にならない。**
+フレームワークは呼ぶ前に存在確認する（`Latebind.CheckTypeOfMethodByName` でコンテンツ→マスタ→ユーザコントロールを探索。
+呼び出しも `InvokeMethod_NoErr`）。**→ マスタ上の未使用ボタンに空の UOC を書く必要はない**（未実装でも押下は無害な postback）。
+
 ### 一覧表示系（GridView / ListView / Repeater）の実装
 
 `DataTable` をバインドするグリッド系の **`.aspx` ＋ コードビハインドの実装**（バインド・編集/更新/削除・行内コントロール取得・
@@ -145,6 +149,8 @@ protected string UOC_gvwGridView_RowUpdating(FxEventArgs fxEventArgs, EventArgs 
 先に要点だけ：
 
 - キー列は **`DataKeyNames`** に指定し `DataKeys[index].Value` で取る。★ **GridView は `e.RowIndex`／ListView は `e.ItemIndex`**。
+  **★ ただしバッチ更新（`DataTable` の RowState）では例外**：追加行の主キーが未採番＝`DBNull` で `DataKeyNames` が成立せず、
+  `Deleted` 行がグリッドから外れて index もずれる → DataRow 側で対応付ける（`opentouryo-batch-update`）。
 - 削除・コマンド用の `<asp:LinkButton CommandName="Delete">` など**動的コマンドボタンを使うページは `@Page` に `EnableEventValidation="false"`**。
 - 行内コントロールは `fxEventArgs.PostBackValue`（＝アイテムの index）→ `Items[index].FindControl("id")`。
 - **★ グリッド／テンプレート内のコントロールには自動結線の接頭辞（`txt`／`lbn` 等）を付けない。** 接頭辞は機能なので、

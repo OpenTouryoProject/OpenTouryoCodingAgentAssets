@@ -67,6 +67,11 @@ this.ShowYesNoMessageDialog("messageID", "保存しますか？", "確認");
 // dialogStyle を足すオーバーロードもある
 ```
 
+**★ 後処理は「別ポストバック」で走る。** `ShowYesNoMessageDialog` を呼んだハンドラはそこで終わり、
+`UOC_YesNoDialog_Yes_Click` は**ユーザが YES を押した次のポストバック**で実行される。したがって
+「更新ボタン → 確認 → YES で更新」は、**ダイアログを出す時点で編集内容を確定して持ち回る**必要がある
+（例：編集中の `DataTable` を `Session` に保持＝`opentouryo-batch-update`。ローカル変数は次ポストバックまで残らない）。
+
 後処理は `UOC_YesNoDialog_Yes_Click` / `_No_Click` / `_X_Click(FxEventArgs parentFxEventArgs)` を
 `override`（**コードは `references/snippets.md`**）。
 

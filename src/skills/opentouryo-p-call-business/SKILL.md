@@ -24,13 +24,25 @@ metadata:
 
 ```
 ① 引数クラスを生成する（画面名・コントロール名・メソッド名・ユーザ情報を渡す）
-② DoBusinessLogic(引数, 分離レベル) を呼ぶ（Async 版もある）
+② B層を呼ぶ（**既定＝`CallController.Invoke(論理名, pv)`**／分離レベル指定時＝`DoBusinessLogic(pv, iso)` 直呼び。下記「呼び出し経路の選択」）
 ③ 戻り値の ErrorFlag で業務例外を受け取る
 ④ リッチクライアント（2CS）だけ、CommitAndClose() で明示的にコミットする
 ```
 
 ①〜③の**コードは `references/snippets.md`**（引数クラス＝`new TestParameterValue(画面名, コントロール名,
-"SelectCount"〔→ B層 `UOC_SelectCount`〕, actionType, ユーザ情報)` → `DoBusinessLogic(pv, iso)` → `rv.ErrorFlag` 判定）。
+"SelectCount"〔→ B層 `UOC_SelectCount`〕, actionType, ユーザ情報)` → 呼び出し（下記）→ `rv.ErrorFlag` 判定）。
+
+## 呼び出し経路の選択（★AGENTS.md の規約と分離レベルの両立）
+
+P→B には**2経路**があり、**分離レベルを per-call で指定できるかが分岐点**。配布サンプルも両方ある（`sampleScreen`＝直呼び／`sampleScreen_cc`＝`CallController`）。
+
+| 経路 | 分離レベル指定 | 疎結合／WS 切替 | いつ使う |
+| --- | --- | --- | --- |
+| **`CallController.Invoke(サービス論理名, pv)`** | **不可**（`Invoke(string, object)` の2引数のみ。プロジェクト既定＝親クラス2 の `User` 振替先に委ねる） | ○（論理名解決でインプロセス⇄WS をコード無変更で切替） | **既定**（AGENTS.md「直接 `new` せず `Invoke`」）。分離レベルを既定に委ねてよいとき |
+| **`new LayerB().DoBusinessLogic(pv, iso)` 直呼び** | **可**（`iso` 引数） | ✕（B層クラスへ直接参照・WS 切替不可） | **per-call で分離レベルを変える必要があるときだけ** |
+
+- **既定は `CallController.Invoke`**（疎結合・WS 切替。`InvokeAsync` も同2引数。`opentouryo-transmission`）。
+- **`Invoke` に分離レベル引数は無い**。per-call で `iso` を変えるときだけ `DoBusinessLogic(pv, iso)` 直呼びに切り替える（下記②）。
 
 ## ① 引数クラスの組み立て（処理方式で違う）
 

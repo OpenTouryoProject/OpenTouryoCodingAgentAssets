@@ -44,6 +44,10 @@ metadata:
 - ビルドが通り、実行できることを確認する（net48＝msbuild／core＝`dotnet build`）。**ビルド成功＝動く、ではない**
   （初期化は `%OT_RESOURCE_ROOT%` を読むので実行して初めて ⑥ の成否が分かる）。WebForms の IIS Express 実行確認
   （SSL 回避・スモーク・500 の見方）は `references/run-verify.md`
+- **★ WebForms は `.aspx`/`.master` を msbuild が検証しない**（`.cs` のみコンパイル）。マークアップのエラー
+  （`Inherits` 綴り・`ContentPlaceHolderID` 不一致・`TagPrefix` 未登録・designer 宣言漏れ）は実行時まで出るので、
+  **`aspnet_compiler.exe -v / -p <プロジェクトディレクトリ> -f <出力先>` で事前コンパイル検証する**
+  （エージェント/CI では必須。`opentouryo-layer-p-webforms-screen`）
 
 ### `.gitignore` を置く
 

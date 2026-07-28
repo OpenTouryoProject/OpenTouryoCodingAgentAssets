@@ -129,10 +129,13 @@ P層  --CallController.Invoke(サービス論理名, パラメータ値)-->  B�
 B層  --new LayerD(this.GetDam()) / new CmnDao(this.GetDam())-->  D層
 ```
 
-- **P層 → B層は `CallController.Invoke()`。** 直接 `new` せず**サービス論理名**を渡す（URL や
+- **P層 → B層は `CallController.Invoke()`（既定）。** 直接 `new` せず**サービス論理名**を渡す（URL や
   クラス名ではない）。実体解決は定義ファイルが行い、インプロセス⇄Web サービスをコード無変更で
   切り替えられる（`opentouryo-transmission`）。**ただしリモート（Web サービス）は net48 専用**、
-  `net10.0` はインプロセスのみ（`BinarySerialize` が core に無い）
+  `net10.0` はインプロセスのみ（`BinarySerialize` が core に無い）。
+  **例外：`Invoke(論理名, pv)` は分離レベルを引数で渡せない**（プロジェクト既定に委ねる）。per-call で
+  分離レベルを変える必要があるときだけ `new LayerB().DoBusinessLogic(pv, iso)` 直呼びにする
+  （`opentouryo-p-call-business`「呼び出し経路の選択」）
 - **B層 → D層は `this.GetDam()` を渡して Dao を生成する。** 接続・トランザクションは B層が持つ
   （D層は自前で接続を開かない）
 - **P層から D層を直接呼ばない**（トランザクション境界は B層）。層をまたぐ引数・戻り値は

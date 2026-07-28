@@ -83,8 +83,16 @@ public partial class sampleScreen : MyBaseController
 **VS デザイナが自動でやることを、エージェント/CLI は手でやる。** net48 は**非SDK csproj**なので、新規 `.aspx`/`.master`
 は `<Content Include>`、コードビハインド `.aspx.cs`/`.master.cs` は `<Compile>`＋`<DependentUpon>`＋`<SubType>ASPXCodeBehind`、
 `.designer.cs` は `<Compile>`＋`<DependentUpon>`（`SubType` なし）で登録する。`.designer.cs` も**手書き**する
-（全サーバコントロールを `protected` フィールド宣言。**マスタ上コントロールは designer 不要＝`GetMasterWebControl` 経由**）。
-登録 XML と designer の書き方は `references/snippets.md`。
+（全サーバコントロールを `protected` フィールド宣言）。**マスタ上のコントロールは、コンテンツ側の `.designer.cs` には宣言不要**
+（アクセスは `GetMasterWebControl` 経由）。**ただしマスタ自身の `.master.designer.cs` には全コントロールを宣言する**
+（実サンプル `sampleScreen.master.designer.cs` は全コントロールを宣言）。登録 XML と designer の書き方は `references/snippets.md`。
+
+**★ マークアップは msbuild では検証されない（エージェント文脈で必須の追加検証）。** net48 の Web Application Project では
+msbuild は `.cs` しかコンパイルせず、`.aspx`/`.master` 側のエラー（`Inherits` の綴り・`ContentPlaceHolderID` 不一致・
+`TagPrefix` 未登録・designer 宣言漏れ）は**実行時まで出ない**。ビルド成功＝マークアップ健全ではない。事前に
+`aspnet_compiler.exe -v / -p <プロジェクトディレクトリ> -f <出力先>` でマークアップをコンパイル検証する
+（`opentouryo-project-setup-config` の検証にも併記）。
+**★ 新規 `.cs` は UTF-8 BOM を後付けする**（BOM 無しだと `csc` が Shift-JIS 解釈で日本語コメントが文字化け。`opentouryo-comment-convention`）。
 
 ## 認証（Forms 認証）
 
