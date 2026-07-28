@@ -34,8 +34,8 @@ metadata:
 | 共有情報・設定 | 持ち回り（共有情報 vs セッション）、外部パラメタ／接続文字列／パス | `opentouryo-shared-property`・`opentouryo-config` |
 | 画面設計 | マスタ／フッタ ボタン共通化、一覧（グリッド）、入力チェック、画面遷移、ダイアログ | `opentouryo-base2-customize`・`opentouryo-layer-p-webforms-screen`/`-event`・`opentouryo-screen-transition`・`opentouryo-webforms-dialog` |
 | ファイル入出力 | アップロード/ダウンロードの制限・保存先・**セキュリティ**（拡張子＋中身検証・パストラバーサル・認可）・日本語ファイル名 | **`references/file-upload-download.md`**（本スキル）＋`opentouryo-layer-p-webforms-event`/`-mvc`・`opentouryo-config`・`opentouryo-auth` |
-| キャッシュ制御 | 動的/認証画面は**キャッシュ無効**（`FxCacheControl=on`）、静的は積極キャッシュ、参照データは Memory/Distributed | **`references/cache-control.md`**（本スキル）＋`opentouryo-config`・`opentouryo-screen-transition` |
-| セッション/セキュリティ | タイムアウト検出、二重送信／不正操作防止（Request Ticket・戻る再送/リロード/キャッシュ参照）のスイッチ、**キャッシュ制御と三点セット** | **`references/illegal-operation-prevention.md`**（本スキル）＋`opentouryo-auth`・`opentouryo-config`・`opentouryo-screen-transition` |
+| キャッシュ制御 | 動的/認証画面は**キャッシュ無効**（`FxCacheControl=on`。**Web Forms・MVC 両対応**）、静的は積極キャッシュ、参照データは Memory/Distributed | **`references/cache-control.md`**（本スキル）＋`opentouryo-config`・`opentouryo-screen-transition` |
+| セッション/セキュリティ | タイムアウト検出、二重送信／不正操作防止（Request Ticket・戻る再送/リロード/キャッシュ参照）のスイッチ、**キャッシュ制御と三点セット**。**★ これらは Web Forms 専用（MVC には無い）** | **`references/illegal-operation-prevention.md`**（本スキル）＋`opentouryo-auth`・`opentouryo-config`・`opentouryo-screen-transition` |
 | タイムアウト設計 | 各種タイムアウトを**呼び出し元（外側）ほど長く**整合（HTTP／`executionTimeout`／DB／ロック／セッション） | **`references/timeout-values.md`**（本スキル）＋`opentouryo-config`・`opentouryo-auth` |
 | 認証・認可 | Forms（net48）／Cookie（core）、外部 IdP（OAuth2/OIDC/JWT） | `opentouryo-auth`・`opentouryo-oauth2-client` |
 | ログ | 出力（log4net/NLog）・ロガー名、分析（性能/エラー） | `opentouryo-logging`・`opentouryo-log-analysis` |

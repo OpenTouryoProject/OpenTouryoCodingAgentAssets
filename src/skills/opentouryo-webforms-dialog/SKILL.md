@@ -131,9 +131,11 @@ this.DeleteDataFromModalInterface();                       // 削除（全て）
 保持先は**親画面別セッション領域**（画面ごとに内部で別インデックスになるので、キー名が
 衝突しても競合しない）。**所定の画面からしかアクセスできない。**
 
-**複数ウィンドウ対応なら「ウィンドウ別セッション領域」**：`SetDataToBrowserWindow` / `GetDataFromBrowserWindow`
-（＋ `DeleteDataFromBrowserWindow`）。ブラウザ ウィンドウごとに別領域になるので、同一画面を複数ウィンドウで
-開いても競合しない。
+**複数ウィンドウ対応なら「ブラウザ・ウィンドウ別セッション領域」**：`SetDataToBrowserWindow` / `GetDataFromBrowserWindow`
+（＋ `DeleteDataFromBrowserWindow`。`BaseController.cs` L3195〜）。ブラウザ ウィンドウごとに別領域になるので、同一画面を複数ウィンドウで
+開いても競合しない。GET 要求時（遷移リダイレクトを除く）に GUID を採番し Hidden／QueryString で持ち回る。
+**Session 領域は入れ子の2層**：外側＝ブラウザ・ウィンドウ別（config `FxWindowGuidMaxQueueLength`）／内側＝
+親画面別（`FxScreeenGuidMaxQueueLength`。上記モーダルの保持先）。どちらも世代数を超えると LRU で自動削除（`opentouryo-config`）。
 
 **使い終わったら消す。** 消さない・大きなデータを入れると、サーバがメモリリークする。
 

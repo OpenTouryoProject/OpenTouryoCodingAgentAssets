@@ -1,7 +1,9 @@
 # 不正操作防止機能（設計・実装の基本）
 
-`opentouryo-app-design` の設計事項の1つ。**on-demand 参照**。対象＝**P層**（ASP.NET Web Forms）。
+`opentouryo-app-design` の設計事項の1つ。**on-demand 参照**。対象＝**P層（ASP.NET Web Forms 専用）**。
 出典：OpenTouryo「不正操作防止機能」「Webアプリケーションの不正操作」＋実ソース（`BaseController.cs` / `FxLiteral.cs`）＋最新動向（末尾 Sources）。**キャッシュ制御と一体**（`references/cache-control.md`）。
+
+> **★ Web Forms 専用・MVC には無い。** 不正操作防止（RequestTicket）・二重送信防止・画面遷移制御・ブラウザ/ウィンドウ別 Session 領域は **`BaseController`（Web Forms）だけ**が生成・検出する。**MVC（`MyBaseMVController`/`Core`）はこれらの検出機構を持たない**（「不正操作/画面遷移チェック エラーならセッションを解放しない」防御ハンドリングの残置のみ〔L450〕）。**キャッシュ制御（`FxCacheControl`）だけは例外で MVC でも効く**。MVC の CSRF は .NET 標準のアンチフォージェリで対応（末尾 最新動向）。
 
 ## 不正操作の6分類と対策（キャッシュ⇄不正操作防止の中間マップ）
 
@@ -36,7 +38,7 @@
 | --- | --- | --- |
 | 二重送信防止 | `FxDoubleTransmissionCheck` | `opentouryo-config` |
 | ボタン履歴（`ButtonID` 判別） | `FxButtonhistoryMaxQueueLength`（0以下=OFF → `ButtonID="dummy"`） | `opentouryo-config` / `opentouryo-webforms-dialog` |
-| 親画面別／ウィンドウ別 Session 領域 | `FxScreeenGuidMaxQueueLength` / `FxWindowGuidMaxQueueLength` | `opentouryo-config` / `opentouryo-webforms-dialog` |
+| ブラウザ・ウィンドウ別／親画面別 Session 領域（入れ子2層） | `FxWindowGuidMaxQueueLength`（外＝窓別）/ `FxScreeenGuidMaxQueueLength`（内＝親画面別） | `opentouryo-config` / `opentouryo-webforms-dialog` |
 | 画面遷移制御 | `FxScreenTransitionMode` / `FxScreenTransitionCheck` | `opentouryo-screen-transition` |
 | キャッシュ無効化 | `FxCacheControl` | `references/cache-control.md` |
 

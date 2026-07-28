@@ -35,6 +35,12 @@ metadata:
 
 `UOC_` が出てくるのは B層（`LayerB`）だけ（`opentouryo-layer-b` 参照）。
 
+## MVC に無い Web Forms 専用のP層機能
+
+**不正操作防止（Request Ticket）・二重送信防止・画面遷移制御・ブラウザ/ウィンドウ別 Session 領域は Web Forms 専用**（`BaseController` のみが生成・検出）。**MVC には無い**（`MyBaseMVController` は該当エラーが来たらセッションを解放しない防御コードだけを持つ）。
+→ MVC では **CSRF は .NET 標準のアンチフォージェリ、二重送信/リロードは PRG・冪等化トークン**で自前対応する（`opentouryo-app-design/references/illegal-operation-prevention.md`）。
+**例外＝キャッシュ制御（`FxCacheControl`）は MVC でも効く**（`MyBaseMVController`/`Core` が no-cache ヘッダを付与。`references/cache-control.md`）。
+
 ## 実装場所
 
 | 階層 | net48 | net10.0 | 修正 |

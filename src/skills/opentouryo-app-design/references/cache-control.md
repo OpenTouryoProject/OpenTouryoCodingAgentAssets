@@ -1,6 +1,7 @@
 # キャッシュ制御（設計・実装の基本）
 
-`opentouryo-app-design` の設計事項の1つ。**on-demand 参照**。対象＝主に **P層**。
+`opentouryo-app-design` の設計事項の1つ。**on-demand 参照**。対象＝**P層（Web Forms・MVC の両方）**。
+※ **他の不正操作防止系機能（不正操作防止・二重送信・画面遷移制御・ブラウザ/ウィンドウ別 Session 領域）は Web Forms 専用だが、キャッシュ制御は例外で MVC でも効く**（`references/illegal-operation-prevention.md`）。
 出典：OpenTouryo「キャッシュ・コントロール」＋実ソース（`MyBaseController.cs` / `MyLiteral.cs` / `PubLiteral.cs`）＋最新動向（ASP.NET Core。末尾 Sources）。
 
 ## OpenTouryo の方針：動的画面のレスポンスはキャッシュ無効が基本
@@ -8,7 +9,8 @@
 Web アプリのデータ不整合・機密漏えい（戻るボタンでのログアウト後表示・プロキシ残存）を避けるため、**動的画面のレスポンスはキャッシュさせない**のが基本方針。
 
 - フレームワークが**スイッチ config `FxCacheControl`**（`MyLiteral.CACHE_CONTROL`。ON/OFF・**既定 OFF**）を持つ。**`FxCacheControl=on`** にすると
-  `MyBaseController` が全レスポンスに無効化ヘッダを付ける（既定 OFF なので、**方針として ON を推奨**）：
+  親クラス2 が全レスポンスに無効化ヘッダを付ける（既定 OFF なので、**方針として ON を推奨**）。
+  **Web Forms は `MyBaseController`、MVC は `MyBaseMVController`／`MyBaseMVControllerCore` が同処理を実装**（両対応）：
   ```
   Cache-Control: no-cache, no-store, must-revalidate   （HTTP/1.1）
   Pragma: no-cache                                      （HTTP/1.0）
