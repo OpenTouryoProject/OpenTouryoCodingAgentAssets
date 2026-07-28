@@ -91,6 +91,8 @@ B層で throw new BusinessApplicationException(...)
 
 迷ったら「利用者がやり直せば成功しうるか」で判断する。しうるなら業務例外、しえないならシステム例外。
 
+**★ 閉塞チェックの実装**は親クラス2 の共通処理（全 P層方式に `// 閉塞チェック` stub が実在）で、閉塞テーブル（機能/画面/イベント単位・障害/運用閉塞）を引き、閉塞なら**業務 or システム例外に「閉塞用 messageID」をセットしてスロー**する（＝上の分類に乗る）。実装の地図は `opentouryo-app-design/references/table-driven-control.md`（③閉塞）・`opentouryo-base2-customize`。
+
 ## B層フレームワークの自動処理
 
 `BaseLogic.DoBusinessLogic()` が型ごとに異なる処理を行う。**業務コード側で書く必要はない。**
@@ -103,6 +105,8 @@ B層で throw new BusinessApplicationException(...)
 
 **ロールバックは、どの型の例外でも B層ルートを通過する際にフレームワークが自動的に行う。**
 コネクションの切断も `finally` で行われる。いずれも業務コード側で書かない。
+
+**ログレベル・表示先（既定テンプレの方針）**：既定の `MyFcBaseLogic.UOC_ABEND` は **業務例外＝`LogIF.WarnLog`（ワーニング）／システム例外＝`ErrorLog`（エラー）／その他＝振替次第で Warn or Error**（`ACCESS` ロガー）。**表示先**は 業務例外＝**メッセージエリア**（マスタの Message ラベル・元画面継続）／その他＝**共通エラー画面**（業務停止。`opentouryo-layer-p-webforms-screen`）。ログレベル・表示は**親クラス2 で決まる**（`opentouryo-base2-customize`／`opentouryo-project-policy`）。
 
 ### 2層クライアントサーバ（Windows Forms）は違う
 

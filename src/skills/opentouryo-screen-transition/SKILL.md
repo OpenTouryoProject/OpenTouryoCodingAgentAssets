@@ -34,6 +34,19 @@ Web Forms の画面実装そのものは `opentouryo-layer-p-webforms-screen` /
 app キー `ScreenTransitionMethod` で決まる**（`1`=`Server.Transfer`／`2`=`Response.Redirect`＝`FxRedirect`。`~/` は `ResolveUrl` 解決。
 実装 `MyBaseController.cs`）。`FxScreenTransitionMode`（T/R/off）とは**別のキー**なので混同しない。
 
+## Redirect と Transfer の使い分け（設計比較）
+
+| | **Redirect**（`FxRedirect`＝`Response.Redirect`・`ScreenTransitionMethod=2`） | **Transfer**（`FxTransfer`＝`Server.Transfer`・`=1`） |
+| --- | --- | --- |
+| URL | **変わる**（画面＝URL＝パイプラインが1対1＝素直） | **変わらない**（1対1でない） |
+| リロード時 | **最後のリクエストを再実行**（＝**GET 再送**） | **前のリクエストを再実行**（＝**POST 再送**。二重送信注意＝`opentouryo-app-design/references/illegal-operation-prevention.md`） |
+| 情報の持ち回り | **`Session`**（別リクエストになるため。`opentouryo-app-design/references/state-management.md`） | **`HttpContext.Items`／Hidden**（同一リクエスト内で引き継げる） |
+| 性能 | 往復1回増える | **有利**（サーバ内転送） |
+
+- **既定は Redirect が素直**（URL と画面が1対1・リロード挙動が分かりやすい）。Transfer は性能重視だが URL ズレ・二重送信リスク。
+- **★ Transfer＋Hidden/HttpContext で「セッション不要（ステートレス）」設計も可能**（1リクエスト内で完結＝`IsNoSession`。`opentouryo-auth`）。
+- **MVC は Transfer が無い**：`RedirectToAction`／`Redirect(Url.Action(...))` で他コントローラへ、`Html.BeginForm` は自コントローラへ Post して View 再描画、`Ajax.BeginForm` は PartialView（`opentouryo-layer-p-mvc`）。
+
 ## 何のための機能か
 
 **不正な画面遷移を検出して拒否する。** 定義にない遷移や、直リンク禁止の画面への Get アクセスを

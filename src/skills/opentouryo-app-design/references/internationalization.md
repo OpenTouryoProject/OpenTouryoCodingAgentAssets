@@ -37,6 +37,7 @@
 - **時刻**：**`GMTMaster`**（`Touryo.Infrastructure.Business.Util`・public）＝**ローカル時刻⇔UTC 変換**（内部 UTC 保持の実装に使う。`MyTimeZone` は internal）。
 - **数値書式**：**`FormatConverter`**（`Touryo.Infrastructure.Public.Str`・public）＝丸め（`Round_Banker`／`Round_4sya5nyu`）・桁区切り（`AddFigure3`/`AddFigure4`/`AddFigureX`）・`Floor`/`Ceiling`・`ToUnixTime`。
 - **文字コード検証**：`StringChecker`／`JIS2k4Checker`（`references/character-encoding.md`）。
+- **画面文言の多言語化＝2方式**：既定は **`.resx`**（上記）／代替は **辞書テーブル方式**（画面名＋コントロール名→多言語。親クラス2 で Control を再帰走査して一括差し替え。**定義の可視性が良い**が **WebForms/WinForms のみ**＝MVC 不可）。→ `references/table-driven-control.md`。
 
 ## 設計時に決めること（要件チェック）
 

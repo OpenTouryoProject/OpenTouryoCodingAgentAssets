@@ -25,7 +25,8 @@
 
 ## 負荷分散（Web ファーム）
 
-- **`machineKey` を全ノードで統一**する。ViewState・Session（暗号化）・Cookie 認証チケットの暗号化／検証がノード間で相互運用可能になる（`opentouryo-config`／`opentouryo-auth`）。
+- **net48**：`web.config` の **`<machineKey>` を全ノードで統一**する。ViewState・Session（暗号化）・Cookie 認証チケットの暗号化／検証がノード間で相互運用可能になる（`opentouryo-config`／`opentouryo-auth`）。
+- **★ Core（net10.0）に `machineKey` は無い**。代わりに **ASP.NET Core Data Protection**（`AddDataProtection`）が Cookie 認証・アンチフォージェリ・TempData 等を保護。既定のキーリングは**マシン ローカル**なので、Web ファーム/複数インスタンスでは**共有ストレージに永続化**（`PersistKeysToFileSystem`〔共有UNC〕／`PersistKeysToStackExchangeRedis`／Azure Blob）＋**複数アプリ共有なら `SetApplicationName("同一名")`**。放置するとスケールアウト/再起動でトークン失効（ログイン切れ・anti-forgery エラー）。
 
 ## OpenTouryo での対応（どれをどのスキルで）
 
@@ -37,6 +38,24 @@
 | アプリ共通の**定数**（Application 的な固定値） | **共有情報**（`SPDefinition.xml`＋`GetSharedProperty`）＝ユーザ状態でなく設定値 | `opentouryo-shared-property` |
 | 認証チケット（Cookie）・`machineKey` | Forms 認証（net48）／Cookie 認証（Core） | `opentouryo-auth`・`opentouryo-config` |
 | 複数ポストバックに跨る編集（`DataTable`） | Session 保持（StateServer/SQLServer なら直列化可能に） | `opentouryo-batch-update` |
+
+## ★ 共通情報の持ち回り（2経路）
+
+システム全体で共通に使う情報（ユーザ情報等）の持ち回りは**2経路**：
+
+1. **ユーザ情報クラス `MyUserInfo`**（ユーザ名／端末〔IP・マシン名〕／権限）——**ログオン時に設定**し、**ASP.NET は Session／リッチクライアントはグローバル変数（`static`）**で保持。取得は `UserInfoHandle`（`opentouryo-auth`）。
+2. **共通引数クラス（`MyParameterValue`/`MyReturnValue` 派生）**——画面名・コントロール名・メソッド名・処理区分（`actionType`）・ユーザ情報 を持ち、**P→B→D へ引数で渡す**（`opentouryo-p-call-business`）。全 B層で運ぶ共通項目は親クラス2 で追加（`opentouryo-project-policy`／`opentouryo-base2-customize`）。
+
+**使い分け**：ユーザ状態＝Session/global（①）／レイヤ間の受け渡し＝引数クラス（②）／アプリ共通の定数＝共有情報（`GetSharedProperty`・上表）。
+
+## OpenTouryo の Session 管理機能（補足）
+
+- Web Forms
+  - **Session 領域の自動削除**：**あり**＝親画面別／ブラウザ・ウィンドウ別（LRU。`FxScreeenGuidMaxQueueLength`／`FxWindowGuidMaxQueueLength`。`opentouryo-webforms-dialog`）。**なし**＝ユーザ情報用／サブシステムID別（セッション中は保持され消えない）。
+  - **タイムアウト**：検出（タイムアウト後も業務継続させるなら `IsNoSession`／`FxSessionAbandon`。`opentouryo-auth`）＋**防止（Ping）**＝クライアントから定期リクエストでセッションを維持。
+  - `IsNoSession`（セッション不要画面のフラグ）・`FxSessionAbandon`（Cookie 削除＋Session 破棄。net48=`Abandon`／Core=`Clear`）は `opentouryo-auth`。
+
+- **Session サイズ計測**：**`MyCmnFunction.CalculateSessionSizeMB()`／`CalculateSessionSizeKB()`**（`Business/Util`・public static）で肥大を監視（Session に大きな `DataTable` 等を持つとメモリ圧迫＝`opentouryo-batch-update`）。
 
 ## 設計時に決めること（チェック）
 
