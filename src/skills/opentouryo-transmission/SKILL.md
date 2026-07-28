@@ -56,9 +56,11 @@ TestReturnValue rv = (TestReturnValue)cctrl.Invoke("testWebService", parameterVa
 
 `Invoke` の非同期版として `InvokeAsync(serviceName, parameterValue)` もある。
 
-**★ `Invoke`/`InvokeAsync` は `(serviceName, parameterValue)` の2引数のみ＝分離レベル（`iso`）を渡せない。**
-per-call で分離レベルを変えるなら `Invoke` ではなく `new LayerB().DoBusinessLogic(pv, iso)` 直呼びにする
-（トレードオフは `opentouryo-p-call-business`「呼び出し経路の選択」）。
+**★ `Invoke`/`InvokeAsync` は `(serviceName, parameterValue)` の2引数のみ＝分離レベル（`iso`）を渡せない（設計）。**
+3層C/S ではサーバとクライアントが分離するので、**分離レベルはサーバ側の関心事**。CallController／WS の入口は B層を常に
+`iso=User` で呼び（`CallController.cs` L366・`FxController.cs`・`WCFTCPSvcForFx.cs`）、実際の分離レベルはサーバ側で決める
+（親クラス2 の `User` 振替／属性ベースで B層に埋め込む）。Web でインプロセスかつ per-call で分離レベルを変えたいなら、
+`Invoke` でなく `new LayerB().DoBusinessLogic(pv, iso)` 直呼び（`opentouryo-p-call-business`「呼び出し経路の選択」）。
 
 ### リモート呼び出し（`protocol="2"`）は net48 専用
 

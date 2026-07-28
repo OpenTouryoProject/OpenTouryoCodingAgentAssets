@@ -24,7 +24,7 @@ metadata:
 
 ```
 ① 引数クラスを生成する（画面名・コントロール名・メソッド名・ユーザ情報を渡す）
-② B層を呼ぶ（**既定＝`CallController.Invoke(論理名, pv)`**／分離レベル指定時＝`DoBusinessLogic(pv, iso)` 直呼び。下記「呼び出し経路の選択」）
+② B層を呼ぶ（**Web＝`DoBusinessLogic(pv, iso)` 直呼び／3層C/S＝`CallController.Invoke(論理名, pv)`**。下記「呼び出し経路の選択」）
 ③ 戻り値の ErrorFlag で業務例外を受け取る
 ④ リッチクライアント（2CS）だけ、CommitAndClose() で明示的にコミットする
 ```
@@ -32,17 +32,21 @@ metadata:
 ①〜③の**コードは `references/snippets.md`**（引数クラス＝`new TestParameterValue(画面名, コントロール名,
 "SelectCount"〔→ B層 `UOC_SelectCount`〕, actionType, ユーザ情報)` → 呼び出し（下記）→ `rv.ErrorFlag` 判定）。
 
-## 呼び出し経路の選択（★AGENTS.md の規約と分離レベルの両立）
+## 呼び出し経路の選択（既定は処理方式で違う）
 
-P→B には**2経路**があり、**分離レベルを per-call で指定できるかが分岐点**。配布サンプルも両方ある（`sampleScreen`＝直呼び／`sampleScreen_cc`＝`CallController`）。
+P→B には**2経路**があり、**既定は処理方式で決まる**（どちらが正しいかではない）。配布サンプルも両方ある（`sampleScreen`＝直呼び／`sampleScreen_cc`＝`CallController`）。
 
-| 経路 | 分離レベル指定 | 疎結合／WS 切替 | いつ使う |
+| 経路 | 既定の処理方式 | 分離レベル | 疎結合／WS 切替 |
 | --- | --- | --- | --- |
-| **`CallController.Invoke(サービス論理名, pv)`** | **不可**（`Invoke(string, object)` の2引数のみ。プロジェクト既定＝親クラス2 の `User` 振替先に委ねる） | ○（論理名解決でインプロセス⇄WS をコード無変更で切替） | **既定**（AGENTS.md「直接 `new` せず `Invoke`」）。分離レベルを既定に委ねてよいとき |
-| **`new LayerB().DoBusinessLogic(pv, iso)` 直呼び** | **可**（`iso` 引数） | ✕（B層クラスへ直接参照・WS 切替不可） | **per-call で分離レベルを変える必要があるときだけ** |
+| **`new LayerB().DoBusinessLogic(pv, iso)` 直呼び** | **Web（WebForms・MVC）** | **per-call で指定可**（`iso` 引数。同一プロセスでクライアント側が決める） | ✕（B層クラスへ直接参照） |
+| **`CallController.Invoke(サービス論理名, pv)`** | **3層C/S（リッチクライアント／WS）** | **クライアントからは指定しない**（下記＝サーバ側で決める） | ○（論理名解決でインプロセス⇄WS をコード無変更で切替） |
 
-- **既定は `CallController.Invoke`**（疎結合・WS 切替。`InvokeAsync` も同2引数。`opentouryo-transmission`）。
-- **`Invoke` に分離レベル引数は無い**。per-call で `iso` を変えるときだけ `DoBusinessLogic(pv, iso)` 直呼びに切り替える（下記②）。
+- **`Invoke` に分離レベル引数が無いのは「制約」でなく設計。** 3層C/S ではP層（クライアント）とB層（サーバ）が分離するので、
+  **分離レベルはサーバ側の関心事**。CallController／WS の入口は B層を常に **`iso=User`** で呼び（`CallController.cs` L366・
+  `FxController.cs`・`WCFTCPSvcForFx.cs`）、実際の分離レベルは**サーバ側で決める**——親クラス2 `MyFcBaseLogic.UOC_ConnectionOpen` の
+  `User` 振替（`opentouryo-project-policy`）、必要なら**属性ベースで B層クラス・メソッドに埋め込む**（`opentouryo-transaction-control`）。
+- **Web でも `Invoke` を選べば**疎結合になり後で WS へ無変更で移せるが、その場合 per-call の `iso` は渡せない（サーバ側方式に従う）。
+  `InvokeAsync` も同2引数。`opentouryo-transmission`。
 
 ## ① 引数クラスの組み立て（処理方式で違う）
 
