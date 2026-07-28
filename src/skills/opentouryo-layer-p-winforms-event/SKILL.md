@@ -1,6 +1,6 @@
 ---
 name: opentouryo-layer-p-winforms-event
-description: "OpenTouryo の P層（Windows Forms、リッチクライアント）でコントロールのイベント処理を実装する。コントロール名の接頭辞（FxPrefixOfButton 等、有効なのは6種だけ）によるイベントの自動結線、種別ごとに決まるハンドラのイベント名（ボタン・ピクチャボックス=Click / コンボボックス・リストボックス=SelectedIndexChanged / ラジオボタン・チェックボックス=CheckedChanged）、protected void ...(RcFxEventArgs) のシグネチャ（戻り値は void）、対応コントロールの拡張と未対応時のトレードオフを扱う。Windows Forms / WinForms / イベントハンドラ / 接頭辞 / 自動結線 / RcFxEventArgs / UOC_btnXXX_Click を伴う作業のときに使う。画面の新規作成は opentouryo-layer-p-winforms-screen、ハンドラ内での B層呼び出しと手動トランザクションは opentouryo-p-call-business を使う。"
+description: "OpenTouryo の P層（Windows Forms、リッチクライアント）でコントロールのイベント処理を実装する。コントロール名の接頭辞（FxPrefixOfButton 等、有効なのは6種だけ）によるイベントの自動結線、種別ごとに決まるハンドラのイベント名（ボタン・ピクチャボックス=Click / コンボボックス・リストボックス=SelectedIndexChanged / ラジオボタン・チェックボックス=CheckedChanged）、protected void ...(RcFxEventArgs) のシグネチャ（戻り値は void）、対応コントロールの拡張と未対応時のトレードオフ、Control の所在別のハンドラ配置（Form 上＝接頭辞なし・ベースForm 継承分も再帰検索で不要／UserControl 上＝UC クラス自身に定義 or Form 側に UC 名接頭辞・Form 優先）を扱う。Windows Forms / WinForms / イベントハンドラ / 接頭辞 / 自動結線 / RcFxEventArgs / UOC_btnXXX_Click / ベースForm / UserControl を伴う作業のときに使う。画面の新規作成は opentouryo-layer-p-winforms-screen、ハンドラ内での B層呼び出しと手動トランザクションは opentouryo-p-call-business を使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
@@ -64,6 +64,21 @@ metadata:
 `.NET 標準イベント → HiddenButton.DoClick() → Click` で発火させれば、対応外のイベントもフレームワークの土台に
 載せられる（マルチプル/マルチキャストにも使える）。`MenuItem` は親クラス2 のカスタマイズ不要で、`UOC_FormInit` で
 各 `MenuItem.Click` に共通ハンドラ（`Item_Click`）を結線して使える。
+
+## ハンドラをどこに書くか（Control の所在別）
+
+**Control が「Form 上」か「UserControl 上」かで、UOC を書く場所が変わる**（実装 `GetMethodName` / `CMN_Event_Handler`。Web Forms のコンテンツ/マスタ/UC 命名に相当）。
+
+| Control の所在 | UOC の書き方 | 書く場所 |
+| --- | --- | --- |
+| **Form 上**（**ベースForm から継承した分も含む**） | `UOC_（コントロール名）_（イベント名）` | その **Form クラス** |
+| **UserControl 上**（推奨＝UC 側） | `UOC_（コントロール名）_（イベント名）`（接頭辞なし） | その **UserControl クラス自身** |
+| **UserControl 上**（Form 側で受ける） | `UOC_（UserControl の Name）_（コントロール名）_（イベント名）` | **Form クラス**（UC の Name が接頭辞） |
+
+- **★ ベースForm 上の Control に接頭辞は不要。** フレームワークはコントロールツリーを**再帰検索**する（`RcMyCmnFunction`）ので、ベースForm から継承した Control も自動で見つかる。**Web Forms のマスタページのような「マスタ名の接頭辞」（`UOC_（マスタ名）_…`）は WinForms では要らない**（Form 側は所在に関わらず `UOC_（名）_（イベント）`）。
+- **UserControl は Form 側が優先。** フレームワークは **Form → 各 UserControl** の順に UOC を探す。Form 側に UC 用ハンドラ（UC の Name を接頭辞にした形）があればそれを、無ければ UserControl 自身のハンドラ（接頭辞なし）を使う。
+- **UserControl は自動収集される**（`LstUserControl`＝手動登録不要）。**動的な追加/削除**にも対応（`groupBox.Controls.Add(new 〈UserControl〉())`）。
+- 参考サンプル：`Samples/WS_sample/WSClient_sample/WSClientWin2_sample`（`Form3` ＋ `UserControl3`/`UserControlChild`/`UserControlParent`）。※サンプルは削除されうるので**上の規則を正とする**。
 
 ## グリッド（DataGridView）に DataTable をバインドして一括更新するなら
 

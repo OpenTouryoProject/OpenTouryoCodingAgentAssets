@@ -111,7 +111,7 @@ LogIF.InfoLog("OPERATION", "受注を登録した。受注ID=" + orderId);
 
 ## ログ ライブラリの切り替え
 
-`LogLib` 設定で log4net と NLog を切り替える。
+`LogLib` 設定（config キーは `"LogLib"`。`LogIF.cs`）で log4net と NLog を切り替える。
 
 | `LogLib` の値 | 使われる実装 |
 | --- | --- |
@@ -120,6 +120,8 @@ LogIF.InfoLog("OPERATION", "受注を登録した。受注ID=" + orderId);
 | 上記以外 | log4net |
 
 判定は小文字化して比較するので `NLog` でも `nlog` でもよい。
+
+**★ 方針：公式は NLog への移行を推奨**（log4net は本家の開発休止で将来廃止予定）。**新規プロジェクトは `LogLib=nlog`** を既定にする。既存の log4net もそのまま動く（`LogIF` の API は共通なので**業務コードは無変更**、切り替えは config と設定ファイルの差し替えだけ）。
 
 **設定ファイルのパスは log4net/NLog とも同じキー `FxLog4NetConfFile`** で指す（NLog も実ソースでこのキーを読む）。
 違うのは**中身のフォーマット**。雛形が `root\files\resource\Log` にある：**`Log4NetConfigTemplate.xml`（log4net）／

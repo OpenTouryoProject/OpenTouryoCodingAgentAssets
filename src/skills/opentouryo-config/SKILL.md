@@ -18,6 +18,17 @@ metadata:
 ログの設定は `opentouryo-logging`、SQL 定義ファイル（`.sql` / `.xml`）は
 `opentouryo-query-definition` を参照（あちらは「設定」ではなくクエリの定義）。
 
+### 外部パラメタの置き場（何をどこに）
+
+| 種類 | 置き場 | 取得 |
+| --- | --- | --- |
+| 一般設定・接続文字列 | `appSettings` / `connectionStrings`（`app.config`/`web.config`/`appsettings.json`） | `GetConfigValue` / `GetConnectionString`（このスキル） |
+| アプリ共通の独自パラメタ（key-value） | 共有情報 `SPDefinition.xml` | `GetSharedProperty.GetSharedPropertyValue`（`opentouryo-shared-property`） |
+| 多言語メッセージ | `MSGDefinition.xml` / `.resx` | `opentouryo-message` |
+
+- **★ 設定は基本「起動時に読む／キャッシュ」＝オンライン中の変更は反映されない。** 変更は**再起動**（web.config 変更は IIS がアプリプールを再起動）、無停止なら**ローリング・アップグレード**で運用する。
+  （`appsettings.json` の `reloadOnChange` はあるが、`GetConfigParameter` は `InitConfiguration` 時の構成を使うため、Fx 系設定は起動時前提で設計する。）
+
 ## GetConfigParameter が唯一の入り口
 
 `GetConfigParameter`（`Touryo.Infrastructure.Public.Util`）の `static` メソッドを使う。
