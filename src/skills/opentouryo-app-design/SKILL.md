@@ -11,7 +11,7 @@ metadata:
 
 > このスキルは**設計段（spec→plan）で「何を決めるか」の地図**。実装の詳細は各スキルにある。
 > `AGENTS.md` の「開発の進め方（spec→plan→実装）」に沿い、`docs/spec` / `docs/plan` を書くときの**漏れ防止**に使う。
-> 📋 **設計 references**（`references/`・個別課題ごとに追加）：`timeout-values.md`（各種タイムアウト値の設計）／`file-upload-download.md`（ファイルのアップロード・ダウンロード）／`cache-control.md`（キャッシュ制御）／`illegal-operation-prevention.md`（不正操作防止＝二重送信/戻る再送/リロード）／`list-paging.md`（一覧ページ制御方式）／`state-management.md`（ASP.NET 状態管理方式）／`concurrency-tuning.md`（同時実行性・スレッド/接続の環境チューニング）／`character-encoding.md`（文字コード・エンコーディング）／`internationalization.md`（国際化 i18n／地域化）／`screen-composition.md`（画面の構成＝WebForms/WinForms/MVC）／`table-driven-control.md`（親クラス2 のテーブル駆動制御＝多言語化辞書/権限・状態/閉塞）／`batch-processing.md`（バッチ処理方式＝コミット間隔/リラン/多重化）／`data-access-design.md`（データアクセス設計＝排他/削除方式/ID採番/更新履歴/複数DBMS）／`performance-design.md`（性能設計＝性能ポイントは全層に散る地図）／`input-validation.md`（入力値のチェック＝単項目/関連・サーバ側必須）。
+> 📋 **設計 references**（`references/`・個別課題ごとに追加）：`timeout-values.md`（各種タイムアウト値の設計）／`file-upload-download.md`（ファイルのアップロード・ダウンロード）／`cache-control.md`（キャッシュ制御）／`illegal-operation-prevention.md`（不正操作防止＝二重送信/戻る再送/リロード）／`list-paging.md`（一覧ページ制御方式）／`state-management.md`（ASP.NET 状態管理方式）／`concurrency-tuning.md`（同時実行性・スレッド/接続の環境チューニング）／`character-encoding.md`（文字コード・エンコーディング）／`internationalization.md`（国際化 i18n／地域化）／`screen-composition.md`（画面の構成＝WebForms/WinForms/MVC）／`table-driven-control.md`（親クラス2 のテーブル駆動制御＝多言語化辞書/権限・状態/閉塞）／`batch-processing.md`（バッチ処理方式＝コミット間隔/リラン/多重化）／`data-access-design.md`（データアクセス設計＝排他/削除方式/ID採番/更新履歴/複数DBMS）／`performance-design.md`（性能設計＝性能ポイントは全層に散る地図）／`input-validation.md`（入力値のチェック＝単項目/関連・サーバ側必須）／`processing-sequence.md`（処理シーケンス＝リクエスト→応答の UOC 呼び出し順・P層/B層フックの別）。
 
 ## 使いどころ
 
