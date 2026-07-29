@@ -73,6 +73,8 @@ this.SetDam(dam);
 | `ss` | スナップ ショット（`Snapshot`） |
 | `df` | デフォルト（規定の分離レベル。`DefaultTransaction`） |
 
+**各レベルが防ぐ現象（ダーティ/反復不可/ファントム）・MVCC vs ロック法の DBMS 差・`READ_COMMITTED_SNAPSHOT`** は `opentouryo-app-design/references/data-access-design.md`（分離レベルの基礎）。
+
 **`User` に対応する略号は無い。** `User` は親クラス2 が既定の分離レベルへ振り替えるための
 マーカーで、Dam へ渡らない（`opentouryo-layer-b` 参照）。
 

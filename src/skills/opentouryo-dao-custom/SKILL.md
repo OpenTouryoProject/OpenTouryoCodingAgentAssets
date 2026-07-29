@@ -97,6 +97,11 @@ protected void SetParameter(string parameterName, object obj)
 ループで何度も実行するなら、生コマンドで `this.GetDam().DamIDbCommand.Parameters.Clear();`（**DBMS 中立**）でクリアする
 （DBMS 依存キャストなら `((DamSqlSvr)this.GetDam()).DamSqlCommand.Parameters.Clear();`）。系統別の対比は `opentouryo-layer-d`。
 
+**★ Dam から生の ADO.NET コマンドを取り出して直接設定できる**（フレームワークがラップしない ADO.NET プロパティを触る一般手段）：
+- **DBMS 中立**：`this.GetDam().DamIDbCommand`（`IDbCommand`。`BaseDam` abstract）。
+- **DBMS 依存**：`((DamSqlSvr)this.GetDam()).DamSqlCommand`（`SqlCommand`）／`((DamManagedOdp)this.GetDam()).DamOracleCommand`（`OracleCommand`）等。
+- 用途例：`Parameters.Clear()`（上記）／**ODP.NET の `FetchSize`**（サーバカーソルの取得数＝メモリ制御。`((DamManagedOdp)this.GetDam()).DamOracleCommand.FetchSize = …`。OpenTouryo はラップしないので生コマンドで）／配列バインド `ArrayBindCount`（下記）。**`CommandTimeout` は生設定でなく共通 config `FxSqlCommandTimeout`／`SetCommandTimeout()` を使う**（`opentouryo-dao-common`）。
+
 ## SetParameter のオーバーロード
 
 **既定は基本形 `SetParameter(名前, 値)` を使う。** オーバーロードは `+dbTypeInfo`／`+size`／`+ParameterDirection`

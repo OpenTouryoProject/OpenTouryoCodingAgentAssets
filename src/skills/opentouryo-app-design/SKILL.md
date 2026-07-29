@@ -11,7 +11,7 @@ metadata:
 
 > このスキルは**設計段（spec→plan）で「何を決めるか」の地図**。実装の詳細は各スキルにある。
 > `AGENTS.md` の「開発の進め方（spec→plan→実装）」に沿い、`docs/spec` / `docs/plan` を書くときの**漏れ防止**に使う。
-> 📋 **設計 references**（`references/`・個別課題ごとに追加）：`timeout-values.md`（各種タイムアウト値の設計）／`file-upload-download.md`（ファイルのアップロード・ダウンロード）／`cache-control.md`（キャッシュ制御）／`illegal-operation-prevention.md`（不正操作防止＝二重送信/戻る再送/リロード）／`list-paging.md`（一覧ページ制御方式）／`state-management.md`（ASP.NET 状態管理方式）／`concurrency-tuning.md`（同時実行性・スレッド/接続の環境チューニング）／`character-encoding.md`（文字コード・エンコーディング）／`internationalization.md`（国際化 i18n／地域化）／`screen-composition.md`（画面の構成＝WebForms/WinForms/MVC）／`table-driven-control.md`（親クラス2 のテーブル駆動制御＝多言語化辞書/権限・状態/閉塞）／`batch-processing.md`（バッチ処理方式＝コミット間隔/リラン/多重化）。
+> 📋 **設計 references**（`references/`・個別課題ごとに追加）：`timeout-values.md`（各種タイムアウト値の設計）／`file-upload-download.md`（ファイルのアップロード・ダウンロード）／`cache-control.md`（キャッシュ制御）／`illegal-operation-prevention.md`（不正操作防止＝二重送信/戻る再送/リロード）／`list-paging.md`（一覧ページ制御方式）／`state-management.md`（ASP.NET 状態管理方式）／`concurrency-tuning.md`（同時実行性・スレッド/接続の環境チューニング）／`character-encoding.md`（文字コード・エンコーディング）／`internationalization.md`（国際化 i18n／地域化）／`screen-composition.md`（画面の構成＝WebForms/WinForms/MVC）／`table-driven-control.md`（親クラス2 のテーブル駆動制御＝多言語化辞書/権限・状態/閉塞）／`batch-processing.md`（バッチ処理方式＝コミット間隔/リラン/多重化）／`data-access-design.md`（データアクセス設計＝排他/削除方式/ID採番/更新履歴/複数DBMS）／`performance-design.md`（性能設計＝性能ポイントは全層に散る地図）。
 
 ## 使いどころ
 
@@ -30,7 +30,7 @@ metadata:
 | レイヤ分割 | P/B/D の責務境界・呼び出し経路（P→B は論理名、B→D は `GetDam()` 渡し。**P→D 直呼び禁止**） | `AGENTS.md`・`opentouryo-layer-b`/`-d`/`-p-*`/`-p-call-business` |
 | 例外・エラー | 業務例外（やり直し可）／システム例外（不可）／閉塞の切り分け、メッセージ採番 | `opentouryo-exception`・`opentouryo-message` |
 | トランザクション | 境界は **B層**。TC パターン・分離レベル・複数 DB | `opentouryo-transaction-control`・`opentouryo-layer-b` |
-| データアクセス | Dao 3系統の選択、SQL 定義（静的/動的）、楽観排他（ts 有無）、明細一括更新、複数行 DML の順序 | `opentouryo-layer-d`・`opentouryo-dao-*`・`opentouryo-query-definition`・`opentouryo-batch-update` |
+| データアクセス | Dao 3系統の選択、SQL 定義（静的/動的）、**排他（楽観/悲観）**、明細一括更新、複数行 DML の順序、**削除方式（物理/論理）・ID 採番・更新履歴・複数 DBMS** | **`references/data-access-design.md`**（本スキル）＋`opentouryo-layer-d`・`opentouryo-dao-*`・`opentouryo-query-definition`・`opentouryo-transaction-control`・`opentouryo-batch-update` |
 | 一覧ページ制御 | 最大表示/取得件数、ページ制御方式（アプリ/ストアド/**SQL＝`ROW_NUMBER`/`TOP`/`ROWNUM`**）、大量データは SQL でページング（UI ページャと役割分担） | **`references/list-paging.md`**（本スキル）＋`opentouryo-query-definition`・`opentouryo-layer-d`・`opentouryo-layer-p-webforms-event` |
 | 共有情報・設定・状態管理 | **共通情報の持ち回り2経路**（ユーザ情報クラス `MyUserInfo`→Session/global／共通引数クラス→P→B→D）、状態のスコープ・寿命で方式選択（ViewState/Hidden/Cookie/Session/Cache…）、共有情報（定数）、外部パラメタ／接続文字列／パス。**★ ViewState・Server.Transfer は Web Forms 専用** | **`references/state-management.md`**（本スキル）＋`opentouryo-shared-property`・`opentouryo-config`・`opentouryo-auth`・`opentouryo-p-call-business`・`opentouryo-layer-p-winforms-event`・`opentouryo-webforms-dialog` |
 | 画面設計 | **画面構成**（親=マスタ/ベースForm/`_Layout`＋個別＋ユーザコントロール）、マスタ／フッタ ボタン共通化、一覧（グリッド）、入力チェック、画面遷移、ダイアログ、**テーブル保守 CRUD（一覧→詳細／一覧＆更新）** | **`references/screen-composition.md`**（本スキル）＋`opentouryo-base2-customize`・`opentouryo-layer-p-webforms-screen`/`-event`・`opentouryo-layer-p-mvc`・`opentouryo-screen-transition`・`opentouryo-webforms-dialog`・**`opentouryo-webforms-crud-screens`**・`opentouryo-batch-update` |
@@ -51,7 +51,7 @@ metadata:
 
 - **出力層**：帳票出力・印刷・メール送信
 - **WebAPI 設計**（RESTful・非同期 API）
-- **性能設計／高信頼性設計**（性能の「分析側」は `opentouryo-log-analysis`）
+- **高信頼性設計**（性能設計は `references/performance-design.md`・分析側は `opentouryo-log-analysis`）
 - **組込系／ヒューマン・ワークフロー／モバイルバックエンド**
 
 出典：公式「アプリケーション設計のポイント」（設計トピックの目次）。**各領域の実装規則は該当サブページを取得して裏取りの上で整備**する。
