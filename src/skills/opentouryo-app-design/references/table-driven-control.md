@@ -10,6 +10,7 @@
 - 実装するのは**纏め者（親クラス2）**（`opentouryo-base2-customize`）。`UOC_CMNFormInit` は WebForms=`BaseController`／WinForms=`BaseControllerWin` の **abstract フック**で、**全画面で自動的に走る**（`UOC_FormInit` の共通版）。
 - 再帰走査：`if (ctrl.HasControls()/HasChildren) { foreach (child in ctrl.Controls) 再帰 }`。各 Control の `ID`/`Name` でテーブルを引き、`Text`／`Enabled`／`Visible`／`ReadOnly` 等を設定する。
 - **★ WebForms/WinForms のみ**（Control ツリーがあるから再帰できる）。**MVC は Control ツリーが無く不可**＝別戦略（Razor のローカライズ／タグヘルパー等。`opentouryo-layer-p-mvc`）。カスタムコントロールは `Render` 系のカスタマイズで対応。
+- **同じ Control 再帰走査の手法は「単項目の入力値チェック」でも使う**（カスタムコントロールの `CheckType` 宣言でも、**単項目チェックテーブルを作ればテーブル駆動でも**実装できる＝`references/input-validation.md`）。**ただし場所が違う**：本節は**親クラス2（纏め者・全画面自動）**、単項目チェックは**画面コードクラスのイベントハンドラ（開発者・サブミット時）**。
 
 ## 応用①：多言語化（辞書テーブル）＝`.resx` の代替
 

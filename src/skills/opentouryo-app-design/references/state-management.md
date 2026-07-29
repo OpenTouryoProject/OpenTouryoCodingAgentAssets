@@ -50,10 +50,13 @@
 
 ## OpenTouryo の Session 管理機能（補足）
 
-- Web Forms
-  - **Session 領域の自動削除**：**あり**＝親画面別／ブラウザ・ウィンドウ別（LRU。`FxScreeenGuidMaxQueueLength`／`FxWindowGuidMaxQueueLength`。`opentouryo-webforms-dialog`）。**なし**＝ユーザ情報用／サブシステムID別（セッション中は保持され消えない）。
-  - **タイムアウト**：検出（タイムアウト後も業務継続させるなら `IsNoSession`／`FxSessionAbandon`。`opentouryo-auth`）＋**防止（Ping）**＝クライアントから定期リクエストでセッションを維持。
-  - `IsNoSession`（セッション不要画面のフラグ）・`FxSessionAbandon`（Cookie 削除＋Session 破棄。net48=`Abandon`／Core=`Clear`）は `opentouryo-auth`。
+- **Session 領域の自動削除**（★ **Web Forms 専用**＝`BaseController` の GUID キュー）：**あり**＝親画面別／ブラウザ・ウィンドウ別（LRU。`FxScreeenGuidMaxQueueLength`／`FxWindowGuidMaxQueueLength`。`opentouryo-webforms-dialog`）。**なし**＝ユーザ情報用／サブシステムID別（セッション中は保持され消えない）。
+
+- **タイムアウト検出**（**Web Forms・MVC 両方**）：スイッチ＝`FxSessionTimeOutCheck`（`opentouryo-config`・既定 **OFF**）。仕組み＝**揮発性 Cookie `SessionTimeOut`**（ブラウザを閉じると消える）＋**新規セッション判定**。セッションが切れた後の再アクセスは「新規セッションなのに検出用 Cookie が残っている」ため**タイムアウトと判定**し `FrameworkException`（`SESSION_TIMEOUT`）をスロー→共通エラー画面。**全 Web 親クラス1 に実装**＝`BaseController`〔WebForms〕／`BaseMVController`〔MVC net48〕／`BaseMVControllerCore`〔MVC Core〕。**★ Core は `HttpSessionState.IsNewSession` が無いため Session キーで疑似実装**。⇔ **不正操作防止（RequestTicket）・`IsNoSession` は Web Forms 専用**（MVC 親クラスに無い）と対照的。
+
+- **タイムアウト後の Session クリア＝`FxSessionAbandon()`**（**全3クラスに実装**・`opentouryo-auth`）：検出 ON 中に**通常の `Session.Abandon()`/`Clear()` を呼ぶと次アクセスで必ずタイムアウト例外**（検出用 Cookie が残るため）。`FxSessionAbandon` は**検出用 Cookie も同時に消す**ので例外にならない。**net48=`Abandon()`／Core=`Clear()`**。**クリア後は別画面へ GET 遷移**（同画面ポストバックは不正操作防止でエラー）。ログイン画面の対策3択（P層FW非使用／`IsNoSession=true`〔★ WebForms 専用〕／`FxSessionAbandon`）は `opentouryo-auth`。
+
+- **タイムアウト防止（Ping＝キープアライブ）**：クライアント JS **`Scripts/touryo/common.js` の `HttpPing()`**（`$.ajax` GET・`cache:false`）が**一定間隔でサーバへ ping** し、画面を開いている間 Session を維持する。**有効化＝`window.setInterval(HttpPing, 5*60*1000)` のコメントアウト（`//`）を外す**（既定は無効）。ping 先は **WebForms=`ping.aspx`／MVC=`~/Ping`（`Fx_ResolveServerUrl('~/Ping')`）**。**★ クライアント JS なので MVC でも有効**（Web Forms 専用ではない。`MVC_Sample/Scripts/touryo/common.js` に実在）。
 
 - **Session サイズ計測**：**`MyCmnFunction.CalculateSessionSizeMB()`／`CalculateSessionSizeKB()`**（`Business/Util`・public static）で肥大を監視（Session に大きな `DataTable` 等を持つとメモリ圧迫＝`opentouryo-batch-update`）。
 

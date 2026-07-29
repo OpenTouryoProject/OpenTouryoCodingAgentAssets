@@ -58,6 +58,7 @@
 - **ID 採番**：`IDENTITY`（採番値がメモリに戻らない＝反映後に再取得。`opentouryo-layer-d`）／`SEQUENCE`（Oracle 等）／**連番採番テーブル**（アプリ採番）。DBMS で差がある。
 - **更新履歴（監査）**：履歴テーブル or トリガで記録（設計）。※ コードファイルの「更新履歴」（`opentouryo-comment-convention`）とは別物。
 - コード設計（採番コード／リストコード）・マスタ管理は業務設計。
+- **数値・金額の型（基礎）**：**金額は `decimal`**（10進・有効桁28-29・誤差が出ない）。**`double`/`float` は誤差**（丸め/打ち切り/桁落ち/情報落ち）で金額に不可。オーバーフローは `System.OverflowException`（C# `checked`／VB `Option Strict`）。**丸めは `FormatConverter`**（`Round_Banker`＝銀行家=偶数丸め／`Round_4sya5nyu`＝四捨五入／`Floor`/`Ceiling`。`Public/Str`・`references/internationalization.md`）。
 
 ## 大量データ・性能（決める）
 
