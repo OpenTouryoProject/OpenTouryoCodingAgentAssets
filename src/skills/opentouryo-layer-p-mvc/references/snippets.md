@@ -25,10 +25,10 @@ public class Crud1Controller : MyBaseMVControllerCore   // net48 は : MyBaseMVC
             "SQL",                 // actionType（先頭[0]=DBMS）
             this.UserInfo);
 
-        // B層を非同期呼び出し（分離レベルは画面の選択値から）
+        // B層を非同期呼び出し（分離レベルは一律 User＝MyFcBaseLogic.UOC_ConnectionOpen で振替）
         LayerB layerB = new LayerB();
         TestReturnValue rv = (TestReturnValue)await layerB.DoBusinessLogicAsync(
-            pv, this.SelectIsolationLevel(model.DdlIso));
+            pv, DbEnum.IsolationLevelEnum.User);
 
         // 戻り値判定
         if (rv.ErrorFlag)
@@ -57,7 +57,7 @@ public class Crud1Controller : MyBaseMVControllerCore   // net48 は : MyBaseMVC
 
 - `this.ControllerName` / `this.ActionName`：フィルタが設定するコントローラ/アクション名。
 - `this.UserInfo`：ユーザ情報。
-- `this.SelectIsolationLevel(...)`：分離レベル。
+- 分離レベル：一律 `DbEnum.IsolationLevelEnum.User` を渡す（`MyFcBaseLogic.UOC_ConnectionOpen` で振替）。
 
 > 引数クラスの組み立て・`DoBusinessLogic(Async)`・`ErrorFlag` の共通手順は `opentouryo-p-call-business`。
 > Core は `Startup` で `services._AddHttpContextAccessor()` / `app._UseHttpContextAccessor()` 必須（`opentouryo-config`）。

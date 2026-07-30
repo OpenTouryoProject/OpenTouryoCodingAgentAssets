@@ -83,6 +83,5 @@ throw new BusinessApplicationException(
 
 ## 分離レベル
 
-P層から `DoBusinessLogic(pv, iso)` の第2引数で渡る。`UserInfo` 由来の `SelectIsolationLevel()` を使うのが定石
-（`opentouryo-p-call-business`）。既定テンプレートでは `IsolationLevelEnum.User` は `ReadCommitted`（相当）へ振替
-（`MyFcBaseLogic.UOC_ConnectionOpen`。プロジェクト依存＝`opentouryo-project-policy`）。
+P層から `DoBusinessLogic(pv, iso)` の第2引数で渡る。**一律 `DbEnum.IsolationLevelEnum.User` を渡す**——
+既定テンプレートで `ReadCommitted`（相当）へ振替（`MyFcBaseLogic.UOC_ConnectionOpen`。プロジェクト依存＝`opentouryo-project-policy`）。

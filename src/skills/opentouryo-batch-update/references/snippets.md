@@ -51,6 +51,11 @@ foreach (GridViewRow gvr in this.gvwSuppliers.Rows)
 
     string edited = ((TextBox)gvr.FindControl("txtCompanyName")).Text;
 
+    // ★ 追加行（Added）は全列が DBNull 始まり。下の skip 判定に掛けると値を入れない列が DBNull のまま残り、
+    //   S1_Insert() が NOT NULL 列へ NULL を送って落ちる → Added は skip せず無条件代入する
+    //   （下の「空↔空は変更なし」は Unchanged/Modified 行だけの話）
+    if (dr.RowState == DataRowState.Added) { dr["CompanyName"] = edited; continue; }
+
     // ★ 元が DBNull の列に "" を代入しない・現在値と同じなら代入しない（無駄 Modified＝無駄 UPDATE を防ぐ）
     object cur = dr["CompanyName"];
     bool curBlank = (cur == DBNull.Value) || (string)cur == "";

@@ -56,7 +56,7 @@ public class LayerB : MyBaseLogic
 }
 ```
 
-> B層の分離レベル指定（`DoBusinessLogic(pv, iso)`・`SelectIsolationLevel`）は `opentouryo-layer-b` / `-p-call-business`。
+> B層の分離レベル指定（`DoBusinessLogic(pv, iso)`。一律 `DbEnum.IsolationLevelEnum.User` を渡す）は `opentouryo-layer-b` / `-p-call-business`。
 
 ## 高度なトランザクション操作（★ 非標準・逸脱は要相談）
 

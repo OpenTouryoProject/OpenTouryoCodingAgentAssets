@@ -76,6 +76,7 @@ public partial class sampleScreen : MyBaseController
 リンク・`<body onload/onunload>` で結線する（これが無いとダイアログ/子画面/キー抑止/不正操作防止が動かない）。
 既存マスタ（配布サンプルの `sampleScreen.master`）があれば雛形にできるが、**マスタ名はコンテンツ `.aspx` と別名に
 読み替える**（無ければ上の骨格＋隠しフィールドから作る。`sampleScreen` は配布物固有名＝自プロジェクトに残さない）。
+**★ マスタ名はマスタ上ボタンのハンドラ名 `UOC_<マスタ名>_<control>_<event>` との契約**（実装先＝親クラス2〔全画面共通〕or 画面コードクラス〔画面固有〕。両者とも編集可）。マスタを**改名・削除したら該当ハンドラも揃えて改名／削除**する（UOC 未発見は例外にならず黙って無反応。`references/snippets.md`）。
 **マスタページはネスト可**（サンプル `testNestMasterScreen`。ルートマスタに Fx 隠しフィールドがあればよい）。
 
 ## 新規ファイルの csproj 登録・designer.cs（★ エージェント文脈で必須）

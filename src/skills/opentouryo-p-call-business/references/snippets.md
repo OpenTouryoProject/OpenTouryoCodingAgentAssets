@@ -16,8 +16,8 @@ protected string UOC_〈イベントハンドラ名〉(FxEventArgs fxEventArgs)
         "〈actionType〉",          // 条件分岐等に使う自由文字列（先頭[0]=DBMS）
         this.UserInfo);            // ユーザ情報（ベース2 で追加した項目）
 
-    // 分離レベル
-    DbEnum.IsolationLevelEnum iso = this.SelectIsolationLevel();
+    // 分離レベル（一律 User＝MyFcBaseLogic.UOC_ConnectionOpen でプロジェクト既定へ振替）
+    DbEnum.IsolationLevelEnum iso = DbEnum.IsolationLevelEnum.User;
 
     // B層を生成して実行
     LayerB myBusiness = new LayerB();
