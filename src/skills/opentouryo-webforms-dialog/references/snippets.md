@@ -60,3 +60,23 @@ this.DeleteDataFromModalInterface("key");   // 引数なしで全削除
 ```
 
 > 画面の新規作成は `opentouryo-layer-p-webforms-screen`。最新版は `window.open`／Floating div（旧 `showModalDialog` から置換）。
+
+## ★ ヘッドレス検証（クライアント→サーバの hidden フィールド契約）
+
+ブラウザを持たないエージェントがダイアログ経由の業務フロー（YES で更新確定 等）を `Invoke-WebRequest` だけで
+再現するための、`Scripts/touryo/common.js` が使う hidden フィールド契約（**WebForms `common.js` で裏取り**）。
+**ダイアログは JS が hidden を書いてフォームを submit するだけ**＝これらを自前でセットして再ポストすれば同じサーバ後処理が走る。
+
+| hidden（`ctl00$` 接頭辞） | 値 | 意味（サーバ後処理） |
+| --- | --- | --- |
+| `SubmitFlag` | `1` | YES/NO ダイアログで **「×」**（`UOC_YesNoDialog_X_Click`） |
+| `SubmitFlag` | `2` | YES/NO ダイアログで **「YES」**（`UOC_YesNoDialog_Yes_Click`） |
+| `SubmitFlag` | `3` | YES/NO ダイアログで **「NO」**（`UOC_YesNoDialog_No_Click`） |
+| `SubmitFlag` | `4` | 業務モーダル/モードレスを閉じた後のポストバック（`UOC_ModalDialog_End`） |
+| `CloseFlag` | `1`/`2`/`3` | 子画面側で閉じる（`1`=親で後処理あり／`2`=後処理なし／`3`=判定） |
+| `ChildScreenType`/`ChildScreenUrl` | 非空 | **サーバが「ダイアログ起動中」を返した**印（`ChildScreenUrl` に `?ParentScreenGUID=…`）＝次段でこの契約に沿って再ポスト |
+
+- **submit 時にボタン名は送らない**（`fobj.submit()`）＝どのボタンから開いたかは `SubmitFlag` と保持済みの状態で判定する。
+- 手順：①通常ポストで「YES/NO を出す」イベントを起こす→②応答の `ChildScreenType`/`ChildScreenUrl` で起動を検出→
+  ③`__VIEWSTATE`/`__EVENTVALIDATION` を引き継ぎ **`ctl00$SubmitFlag=2`** を足して同じ URL へ再ポスト（＝YES 確定）。
+- ★ これは**検証用の内部契約**。業務コードから触るものではない（`ShowYesNoMessageDialog`／`UOC_YesNoDialog_*` を使う）。

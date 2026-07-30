@@ -65,7 +65,7 @@ B層呼び出しは `opentouryo-p-call-business`、子画面/ダイアログは 
 
 ## マスタページの新規作成（子画面/ダイアログを使うなら必須）
 
-出典：UserGuide 纏め者編 §5.2、`OTRVCAS` の `Aspx/Common/Master/sampleScreen.master(.cs)`（実物）で裏取り。
+出典：UserGuide 纏め者編 §5.2、配布サンプル `WebForms_Sample` の `Aspx/Common/Master/sampleScreen.master(.cs)`（セットアップで導入する実物）で裏取り。
 
 コードビハインド（`.master.cs`）は **`BaseMasterController` を継承**する：
 
@@ -94,7 +94,7 @@ public partial class CommonMaster : BaseMasterController { }   // マスタベ�
 ```
 
 **★ 配布物の JS/CSS を取り込むのが前提**（無いとダイアログ・子画面・キーイベント抑止・不正操作防止が動かない）。
-**実サンプル（OTRVCAS `sampleScreen.master`）は ASP.NET バンドルで読み込む**（`App_Start/BundleConfig.cs` で
+**配布サンプル `WebForms_Sample` の `sampleScreen.master` は ASP.NET バンドルで読み込む**（`App_Start/BundleConfig.cs` で
 `~/bundles/touryo` に `common.js`・`ie_key_event.js` 等を束ねる）：
 
 ```aspx

@@ -37,6 +37,17 @@ B層からの呼び出しは `opentouryo-layer-b`、例外は `opentouryo-except
 SELECT を使う INSERT / UPDATE は**自動生成できない**。これらは個別Dao（`opentouryo-dao-custom`）で
 SQL を直接書く。**参照系なら、ビューを作れば**自動生成の対象に載せられる。
 
+### ツール（墨壺）を起動できない文脈（エージェント / CI）
+
+D層自動生成ツール（墨壺）は **GUI アプリ**（`DaoGen_Tool.csproj` は `OutputType=WinExe`）で、**CLI からは起動できない**。
+エージェント/CI でテーブル定義から生成し直せないときは：
+
+- **既に生成済みの Dao があればそれを流用する。** 生成物はプロジェクト内・配布サンプルの `.../Dao/`（例 `AppCode/.../Dao/DaoSuppliers.cs`・
+  `GenDaoAndBatUpd_sample/Dao/`）に置かれ、ヘッダに「テスト用クラスなので、必要に応じて流用 or 削除して下さい」と付く。
+  「手で書き換えない」は**生成ロジックを直に編集しない**意味＝**既存生成物をそのまま使う/コピーするのは可**。
+- **名前空間は生成時にツール設定で決まる**（サンプルは `namespace WebForms_Sample`）。名前空間を設定せず生成するとグローバル名前空間に載る。
+  自プロジェクトの名前空間に入れたいなら**生成時に設定して作り直す**（生成後に名前空間だけ手で書き換えても再生成で消える）。
+
 ## 書き方
 
 クラス名は `Dao<テーブル名>`。B層から `DaoShippers genDao = new DaoShippers(this.GetDam())` で生成し、

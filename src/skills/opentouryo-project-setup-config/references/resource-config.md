@@ -38,7 +38,7 @@ IIS Express / w3wp の CWD はアプリ フォルダでないため 500 にな�
 ## ログ定義ファイルの中の出力先パス — 原則1だが起動は妨げない（原則3）
 
 出力先を `%OT_RESOURCE_ROOT%\Log` へ揃えるのが原則1。ただし**張り替えなくても起動する**（ログが旧パスへ出る／無ければ黙って
-出さないだけ。as-built：`WORKSPACE` も既定のまま稼働）＝原則3。**`FxLog4NetConfFile`（ファイルの場所）は `%OT_RESOURCE_ROOT%` で
+出さないだけ＝セットアップ済みプロジェクトでも既定パスのまま稼働する）＝原則3。**`FxLog4NetConfFile`（ファイルの場所）は `%OT_RESOURCE_ROOT%` で
 解決されるが、その中身は OpenTouryo が展開せずログライブラリへそのまま渡す**（log4net＝`XmlConfigurator`／NLog＝`XmlLoggingConfiguration`）。
 ＝**展開は各ログライブラリの書式**で行う。`LogLib`（log4net / NLog）の選択は `opentouryo-logging`。
 

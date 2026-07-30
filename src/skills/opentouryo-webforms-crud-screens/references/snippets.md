@@ -1,6 +1,6 @@
 # テーブル保守 CRUD 画面 スニペット（コピー元＋自動生成→推奨の書き換え）
 
-出典：WORKSPACE 自動生成サンプル `Aspx/sample/3Tier/Products{ConditionalSearch,Detail,SearchAndUpdate}.aspx(.cs)`＋`AppCode/sample/3TierTableAdapter/ProductsTableAdapter.cs`＋framework `Business/Business/_3TierEngine.cs`・`Business/Presentation/CmnTableAdapter.cs`。
+出典：配布サンプル `WebForms_Sample` の `Aspx/sample/3Tier/Products{ConditionalSearch,Detail,SearchAndUpdate}.aspx(.cs)`＋`AppCode/sample/3TierTableAdapter/ProductsTableAdapter.cs`＋framework `Business/Business/_3TierEngine.cs`・`Business/Presentation/CmnTableAdapter.cs`。
 **★ サンプルは自動生成（墨壺２）。以下は「構造はそのまま使える部分」と「自動生成→推奨実装へ書き換える部分（★）」を分けて示す。サンプルは削除されうるので本スニペットを正とする。**
 
 ## 1. 一覧（検索）画面：行選択 → Session → 詳細へ遷移【そのまま使える】

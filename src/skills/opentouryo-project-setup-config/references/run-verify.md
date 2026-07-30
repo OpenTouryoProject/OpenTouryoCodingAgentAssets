@@ -33,6 +33,10 @@
 - `Aspx/start/login.aspx` … **200** でログインフォームが描画されれば OK。
 - **500 が出たら resource パス／config 解決の失敗を疑う**（フレームワーク初期化で XML 定義・log4net を
   `%OT_RESOURCE_ROOT%` から読む＝ここが実行時検証の勘所。⑥ / `references/resource-config.md`）。
+  **典型症状＝`System.ArgumentException: リソースファイル[…]は見つかりませんでした。`（`at Touryo.Infrastructure.Public.IO.ResourceLoader.Exists`）**。
+  `%OT_RESOURCE_ROOT%` が**プロセスに載っておらず空展開**し、パス先頭（ルート）が欠けたときに出る
+  （例：`リソースファイル[\Log\SampleLogConf.xml]は見つかりませんでした`）。原因＝常駐シェルが `SetEnvironmentVariable`
+  より前に起動し古い環境ブロックを継承したケース等 → **手順2 のとおり起動コマンドで `$env:OT_RESOURCE_ROOT` を明示**する。
 
 ## core（net10.0）＝ Kestrel（`dotnet run`）
 
