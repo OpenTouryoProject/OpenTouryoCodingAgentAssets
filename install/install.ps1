@@ -35,8 +35,9 @@
     このスクリプトが生成したものではない既存ファイルも上書きする。
 
 .PARAMETER IncludeTutorial
-    spec→plan→実装 の進め方を試すチュートリアル一式（docs/spec・docs/plan・docs/tutorial の
-    tutorial1.md）を導入先へ配置する。既定では配置しない（opt-in）。
+    spec→plan→実装 の進め方を試すチュートリアル一式（src/docs 配下の全ファイル。
+    docs/spec・docs/plan・docs/tutorial …）を、相対パスを保ったまま導入先の docs/ へ配置する。
+    既定では配置しない（opt-in）。
     docs/spec・docs/plan は利用者が実仕様/実計画を置く作業ディレクトリのため、
     既存ファイルは上書きしない（上書きするには -Force）。
 
@@ -46,7 +47,7 @@
 
 .EXAMPLE
     ./install.ps1 -Product claude -TargetRoot C:\git\MyApp -IncludeTutorial
-    スキルに加えて、評価用チュートリアル一式（docs/spec|plan|tutorial/tutorial1.md）も配置する。
+    スキルに加えて、評価用チュートリアル一式（src/docs 配下の全ファイル）も docs/ へ配置する。
 
 .EXAMPLE
     ./install.ps1 -Product claude,copilot -Skill opentouryo-layer-d,opentouryo-layer-b
@@ -186,21 +187,29 @@ Write-Host 'インストラクション (共通):'
 $agentsMd = "$GeneratedMarker`n$instructionsBody"
 Write-AssetFile -Path (Join-Path $TargetRoot 'AGENTS.md') -Content $agentsMd
 
-# チュートリアル一式（opt-in・プロダクト非依存）。導入先の docs/ 配下へ配置する。
+# チュートリアル一式（opt-in・プロダクト非依存）。src/docs 配下の全ファイルを、
+# 相対パスを保ったまま導入先の docs/ 配下へ配置する。
 # docs/spec・docs/plan は利用者の作業ディレクトリなので、生成マーカーは埋め込まず、
 # 既存ファイルは上書きしない（Write-AssetFile が -Force 指定時のみ上書きする）。
 if ($IncludeTutorial) {
     Write-Host ''
     Write-Host 'チュートリアル (opt-in):'
-    foreach ($sub in @('spec', 'plan', 'tutorial')) {
-        $srcPath = Join-Path (Join-Path $DocsSource $sub) 'tutorial1.md'
-        if (-not (Test-Path $srcPath)) {
-            Write-Warning "チュートリアル原本が見つかりません: $srcPath"
-            continue
+    if (-not (Test-Path $DocsSource)) {
+        Write-Warning "チュートリアル原本ディレクトリが見つかりません: $DocsSource"
+    }
+    else {
+        # Resolve-Path で区切りを正規化してから相対パスを切り出す。
+        $docsRoot = (Resolve-Path $DocsSource).Path
+        $docFiles = Get-ChildItem -Path $docsRoot -Recurse -File
+        if (-not $docFiles) {
+            Write-Warning "チュートリアル原本が見つかりません: $docsRoot"
         }
-        $tutorialBody = [System.IO.File]::ReadAllText($srcPath)
-        $destPath = Join-Path (Join-Path (Join-Path $TargetRoot 'docs') $sub) 'tutorial1.md'
-        Write-AssetFile -Path $destPath -Content $tutorialBody
+        foreach ($f in $docFiles) {
+            $relative = $f.FullName.Substring($docsRoot.Length).TrimStart('\', '/')
+            $tutorialBody = [System.IO.File]::ReadAllText($f.FullName)
+            $destPath = Join-Path (Join-Path $TargetRoot 'docs') $relative
+            Write-AssetFile -Path $destPath -Content $tutorialBody
+        }
     }
 }
 
