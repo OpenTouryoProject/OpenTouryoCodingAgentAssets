@@ -99,20 +99,15 @@ Business.RichClient も含め**全部ビルドされる**。本スキルは標�
 （親クラス2 を 2CS カスタマイズする場合も同じ sln。`opentouryo-base2-customize`）。→ **RichClient 系サンプルなら ③ に
 このビルドを足す**（`examples.md` の 2b＝`setup-build-richclient.ps1` 相当。フル一式で回すなら不要）。
 
-**★ netcore は欠落範囲がさらに広い（実測・03-20/net10.0）。** `net10.0-windows7.0` では、標準 `2_/3_Build_netcore100`
-直後の `Build_netcore100\net10.0-windows7.0\` に **`OpenTouryo.Business` と `Dam*`（`DamManagedOdp`/`DamMySQL`/`DamPstGrS`）
-まで無い**（`net10.0\` 側にはある）。`3_Build_BusinessRichClient_netcore100.bat` がこれらと `Business.RichClient` を
-まとめて生成するので、**`net10.0-windows7.0\` フォルダを丸ごと再ベンダ**する（`Business.RichClient.dll` だけ拾うと
-`OpenTouryo.Business` で `CS0246` が残る）。**net48 で `BusinessRichClient_net48.sln` から要るのは `Business.RichClient` だけではない**
-（`CustCtrl_sample` を使うなら `CustomControl.RichClient` も＝次項）。
+**★ netcore は欠落範囲がさらに広い（実測）。** `net10.0-windows7.0\` は標準 `2_/3_Build_netcore100` 直後だと
+**`OpenTouryo.Business` と `Dam*`（`DamManagedOdp`/`DamMySQL`/`DamPstGrS`）まで無い**（`net10.0\` にはある）。
+`3_Build_BusinessRichClient_netcore100.bat` がこれらと `Business.RichClient` をまとめて生成するので、**`net10.0-windows7.0\` を
+丸ごと再ベンダ**する（拾い漏らすと `OpenTouryo.Business` で `CS0246`）。
 
-**★ `CustCtrl_sample`（WinForms カスタムコントロール デモ・net48）は `OpenTouryo.CustomControl.RichClient` も要る（実測）。**
-標準ベンダ `Build_net48\` には **WebForms 版 `OpenTouryo.CustomControl.dll` しか無い**ことがあり、WinForms 版
-`OpenTouryo.CustomControl.RichClient.dll` が漏れる（`Business.RichClient` と同型の第2例）。**これは `BusinessRichClient_net48.sln`
-に含まれる**（`CustomControl.RichClient_net48` プロジェクト＝`Business.RichClient` と同じ sln）が、**ベンダのコピー手順が漏らして
-いた**だけ（単体 `CustomControl.RichClient_net48.csproj` ビルドでも作れる）。→ **`BusinessRichClient_*.sln` を追加ビルドしたら、
-その sln の全出力が `Build_net48\` にベンダされたか照合し、`CustomControl.RichClient.dll`(/.pdb/.xml) も入れる**。**netcore 側は
-元々揃っている**（net48 のみの漏れ）。**汎用教訓：RichClient 追加ビルド後は sln の生成物を一つずつ照合してベンダ漏れを防ぐ。**
+**★ RichClient sln は2プロジェクト＝出力を1つずつ照合する（実測）。** net48 の `BusinessRichClient_net48.sln` は
+`Business.RichClient` と **`CustomControl.RichClient`**（`CustCtrl_sample`＝WinForms カスタムコントロール デモが要る）の2つを生成する。
+標準ベンダで WinForms 版 `CustomControl.RichClient.dll` が漏れやすい（netcore 側は元々揃う）。→ **RichClient 追加ビルド後は
+sln の全出力を照合して両方ベンダする**（スクリプト化＝`examples.md` の RichClient 2 DLL 照合）。
 
 ### エージェント/CI では PowerShell ラッパを既定にする（推奨）
 
@@ -170,6 +165,10 @@ Community/Professional/Enterprise を網羅）。VS18 の BuildTools/Professiona
 **ベンダ後、成否を生成物の実在で確認する**（バッチの exit code は当てにならない＝上の「偽の成功」）。
 少なくとも **`OpenTouryo.Business.dll`**（Business ビルドの生成物で、`MSB3553` 等で最も失敗しやすい）が
 ベンダ先にあることを確かめる。無ければビルドは失敗している（ビルド出力を確認する）。
+
+**★ 確認パスはランタイムで違う（#14）**：net48 は `Build_net48\` 直下（平坦）だが、**core は `Build_netcore100\<TFM>\`
+（`net10.0\`・`net10.0-windows7.0\`）配下**でベンダ先直下に無い＝**直下確認だと core は必ず偽の失敗**。core は
+`net10.0\OpenTouryo.Business.dll` か `-Recurse` で確認する（`examples.md` netcore 雛形）。
 
 **★ ベンダした `<ref>`・ランタイム・実施日を `OpenTouryoAssemblies\build-ref.txt` に記録しコミット**（無いと後で
 `opentouryo-project-policy` が上流ソースを引けない）。

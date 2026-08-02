@@ -19,6 +19,23 @@
 （配置維持）方針なら相対パスは配置に合わせて変える。**as-built の雛形なので、環境に合わせて調整する**
 （Configuration・restore 方式・msbuild 解決など）。
 
+## ★ 2ランタイムを1本に：`-Runtime` 引数化（#13）
+
+下の2本（`setup-build.ps1`＝net48／`setup-build-netcore.ps1`＝netcore100）は**大半が重複**する。混在 repo
+（net48 済みに netcore100 を後から足す等）で毎回どちらを複製/改変するか迷わないよう、**`-Runtime net48|netcore100` の
+1本に畳む**のが推奨（実測でそう直した）。バッチ名・ベンダ先が規則的なので引数1本で導出できる：
+
+```powershell
+param([ValidateSet('net48','netcore100')][string]$Runtime = 'net48')
+$vendor = Join-Path $repo "OpenTouryoAssemblies\Build_$Runtime"
+# バッチは 2_/3_Build_*_$Runtime.bat（例 3_Build_Business_$Runtime.bat / 3_Build_BusinessRichClient_$Runtime.bat）
+```
+
+ただし**ランタイム固有の分岐は残す**：**確認パス**は net48＝`Build_net48\` 直下／core＝`Build_netcore100\<TFM>\`
+（`net10.0\`・`net10.0-windows7.0\`）配下（#14）。**RichClient のビルド方式**は net48＝非SDK sln を `& $msb …/t:build`
+（restore なし・obj パージ要）／core＝`.bat`。**core の欠落**は `net10.0-windows7.0\` が RichClient を回して初めて
+`Business`/`Dam*` が揃う（#19）。以下は分かりやすさのため別々に載せるが、実運用は `-Runtime` 1本に畳んでよい。
+
 - `setup-build.ps1` — 本スキル ①②③（ZIP取得 → net48 基盤ビルド → ベンダ）。短パス `C:\otr` でビルド、
   `OpenTouryo.Business.dll` の実在で成否判定。**親クラス2 をカスタマイズするなら任意ブロック**（overlay 適用＋
   2CS の `Business.RichClient` ビルド）を有効化する。
@@ -122,10 +139,16 @@ Copy-Item -Path (Join-Path $src '*') -Destination $vendor -Recurse -Force
 if (-not (Test-Path (Join-Path $vendor 'OpenTouryo.Business.dll'))) {
     throw "Base build did not produce OpenTouryo.Business.dll (check the build output above)."
 }
-# When customizing 2CS, also confirm the RichClient Business DLL was produced.
-if ((Test-Path $overlay) -and
-    -not (Test-Path (Join-Path $vendor 'OpenTouryo.Business.RichClient.dll'))) {
-    throw "base2-overlay present but OpenTouryo.Business.RichClient.dll not vendored (2b did not run?)."
+# When RichClient was built (2CS / rich client target, OR base2 customizes 2CS), the
+# BusinessRichClient_net48.sln produces BOTH Business.RichClient AND CustomControl.RichClient
+# (2 projects in one sln). Verify BOTH were vendored -- a prior round vendored only
+# Business.RichClient and CustomControl.RichClient.dll was silently missing (#22).
+if ($needRichClient -or (Test-Path $overlay)) {
+    foreach ($rc in 'OpenTouryo.Business.RichClient.dll','OpenTouryo.CustomControl.RichClient.dll') {
+        if (-not (Test-Path (Join-Path $vendor $rc))) {
+            throw "RichClient build/vendor incomplete: $rc missing (BusinessRichClient_net48.sln builds both)."
+        }
+    }
 }
 Get-ChildItem $vendor -Filter 'OpenTouryo.*.dll' | Select-Object -ExpandProperty Name
 ```
@@ -202,6 +225,17 @@ if ($needRichClient -and
 ソリューションに WS 2プロジェクトを含めて一括ビルドすれば WS も同時に建つ。`MySql.Data`/`Oracle`（3rd-party）だけは
 DLL 参照のままベンダ先 `Build_net48\` を指す（`references/reference-rewrite.md`）。
 
+**★ restore 方式は sln ごとに違う（#23）＝1つに決め打ちしない**：
+
+| sln の形 | 復元方式 |
+| --- | --- |
+| `packages.config` 有（非SDK net48・WebForms 等） | `nuget restore <sln>`（`-MSBuildPath` 明示＝#28） |
+| **`packages.config` 無 ＋ `PackageReference`（非SDK net48・2CS 等）** | `msbuild <sln> /t:restore,build`（`nuget restore` では復元されず `Microsoft.Data.SqlClient` 等が解決不能） |
+| SDK（core） | `dotnet build`（restore 込み） |
+
+下の雛形は WebForms（`packages.config`）前提。**2CS 等 `PackageReference` のみの sln を足すときは `msbuild /t:restore,build` に切り替える**
+（DaoGen/DPQuery ツールが既にその方式＝下の任意ブロック）。
+
 ```powershell
 # Build the WebForms sample (3-layer, WS in-process) against the vendored
 # OpenTouryo base DLLs. Reproducible from a fresh clone:
@@ -226,7 +260,11 @@ $nuget = Join-Path $repo 'tools\nuget.exe'
 
 # --- 1. restore + build the WebForms solution (WS built in-solution via ProjectReference) ---
 $wfSln = Join-Path $repo 'WebForms_Sample\WebForms_Sample.sln'
-& $nuget restore $wfSln   # msbuild /t:restore won't restore packages.config
+# nuget.exe auto-detects an MSBuild and may grab the SSMS-bundled one -> `MSB4226`
+# (Microsoft.WebApplication.targets missing) on Web slns. It's only an error MESSAGE
+# (packages.config still restores, build succeeds) but reads as failure. Pin MSBuild
+# to the vswhere-resolved one (#28).
+& $nuget restore $wfSln -MSBuildPath (Split-Path $msb)   # msbuild /t:restore won't restore packages.config
 if ($LASTEXITCODE -ne 0) { throw "nuget restore failed ($LASTEXITCODE)" }
 & $msb $wfSln /p:Configuration=Debug /nologo /v:m
 if ($LASTEXITCODE -ne 0) { throw "WebForms build failed ($LASTEXITCODE)" }
