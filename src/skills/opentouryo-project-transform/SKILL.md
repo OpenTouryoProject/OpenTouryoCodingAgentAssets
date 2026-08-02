@@ -1,105 +1,66 @@
 ---
 name: opentouryo-project-transform
-description: "OpenTouryo プロジェクトをセットアップ後に用途へ合わせて変形（リストラクチャ）する後工程。取り出したサンプルから不要な依存を削る（例：WS 依存を切り離す＝3層画面・他サンプル参照の除去。＝俗に「2層化」）、サンプル固有コードの整理と、それに伴うビルドエラー（CS0246 等）の解消を扱う。ソリューションを開いて全体を俯瞰したうえで行う。取得・ビルド・参照張り替え・config でソリューションを開ける状態にするのは opentouryo-project-setup、既存構成の上で新規に業務コードを書くのは各層スキル（opentouryo-layer-* ほか）。WS 依存を切り離す / 2層化 / 3層を削る / 不要な依存の削減 / サンプルの整理 / 変形 / リストラクチャ / CS0246 を伴う作業のときに使う。"
+description: "OpenTouryo プロジェクトをセットアップ後に用途へ合わせて変形（リストラクチャ）する後工程。サブコマンド式：(1) minimize＝サンプル/テスト画面を除いて最小骨格化（testScreen・3Tier・デモ content 画面と専用 AppCode を削る。実使用のマスタ〔menu シェルや blank マスタ〕は名前が sample/test でも残す）、(2) ws-decouple＝WS 依存の切り離し（俗称2層化。3層画面・WSIFType/WSServer 参照・専用周辺コードの除去と CS0246 解消）。現行手順は WebForms_Sample 前提（実物で裏取り済み）。取得・ビルド・参照張り替え・config でソリューションを開ける状態にするのは opentouryo-project-setup、既存構成の上で新規に業務コードを書くのは各層スキル（opentouryo-layer-* ほか）。最小化 / 最小骨格 / テストコード除去 / サンプル画面削除 / 骨格化 / WS 依存を切り離す / 2層化 / 3層を削る / 不要な依存の削減 / サンプルの整理 / 変形 / リストラクチャ / CS0246 を伴う作業のときに使う。"
 license: MIT
 metadata:
   author: OpenTouryoProject
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # プロジェクトの変形（セットアップ後のリストラクチャ）
 
 <!-- 執筆者メモ（Claude Code は読み込み時に除去）：
-     現状は「3層→2層」ケースだけを収録した first-cut。将来の変形（認証方式の差し替え 等）は
-     節を足して育てる。
-     ※ net48↔core はランタイム別サンプル（Samples / Samples4NetCore）で対応する＝サンプル選択
-       （opentouryo-project-setup）の領分なので、このスキルの対象外。
-     セットアップから外した詳細手順（DevelopmentHistory §4.3 の3層行）が出所。 -->
+     ディスパッチャ＝薄い受付。重い手順は references/<sub>.md（budget-free）へ。
+     現状の subcommand は minimize（テスト除去・最小化）と ws-decouple（2層化）の2本。
+     いずれも手順は WebForms_Sample 前提で裏取り済み。将来の変形（認証方式差し替え等）や
+     MVC 等の未収録対象は、下記「未収録の対象が来たら」に従いベストエフォート→検証後に収録。
+     net48↔core はランタイム別サンプルで対応＝サンプル選択（opentouryo-project-setup）の領分で対象外。 -->
 
-## このスキルの適用範囲
+## 適用範囲と実行タイミング
 
-セットアップで取り出したサンプルを、**用途に合わせて構成を削る／変える**とき。
-
-**実行タイミングは選択式（任意）。** どちらでもよい:
-
-- **セットアップ直後に続けて実行**（`opentouryo-project-setup` 完了後の任意ステップ。早くフィードバックを得たいとき）
-- **後で別途依頼**（利用者がソリューションを俯瞰してから）
-
-いずれも**利用者主導**で行う。セットアップの途中に割り込ませるのではなく、開ける状態に達した後に選ぶ。
+セットアップで**開ける状態にした**サンプルを、用途に合わせて**構成を削る／変える**とき。**利用者主導・任意**。
+セットアップ直後に続けてでも、後日ソリューションを俯瞰してからでもよい（途中に割り込ませない）。
 
 - ゼロから開ける状態にする（取得・ビルド・参照張り替え・config）→ `opentouryo-project-setup`
 - 既存構成の上で新規に業務コードを書く → 各層スキル（`opentouryo-layer-*` ほか）
 
-**セットアップとは責務が別。** セットアップは「開ける状態」まで。ここは「開いた後、要らないものを削る」。
+## サブコマンド（どれか1つを当てる）
 
-## 基本方針
+| subcommand | 何をする（ゴール） | 詳細 | 主なトリガ |
+| --- | --- | --- | --- |
+| **`minimize`** | サンプル/テスト画面を除いて**最小骨格**へ | `references/minimize.md` | 最小化 / 最小骨格 / テストコード除去 / サンプル画面削除 / 骨格化 |
+| **`ws-decouple`** | **WS 依存の切り離し**（俗称「2層化」） | `references/ws-decouple.md` | 2層化 / 3層を削る / WS 依存を切り離す / CS0246 |
 
-- **まずビルドして現状を把握**してから削る。何が何に依存しているかはビルドエラーが教えてくれる。
-- **段階的に**：一気に消さず、`削る → 再ビルド → CS0246（型・名前空間が見つからない）等を潰す` を繰り返す。
-- **基盤（`Frameworks/Infrastructure/*` / `OpenTouryo.*` DLL）には触らない**（`opentouryo-project-policy`）。
-  変形の対象は**サンプル由来の業務コード側だけ**。
-- **複数行の一括置換前に改行コードを確認する**（実測）。サンプルの `.csproj` / `.config` は **LF**
-  （GitHub ZIP 由来）のことがあり、**CRLF 前提の複数行ブロック置換はマッチせず失敗する**（単一行は通るので
-  気付きにくい）。編集ツールの改行前提に合わせるか、LF のまま扱う。
-- **非対話 PowerShell では削除とテキスト置換を別コマンドに分ける**（実測）。`Remove-Item` と `/>` 等の
-  断片を含む文字列を同一コマンドに混ぜると、安全ガードが断片（例 `/>` + 改行）を「システムパス削除」と
-  誤検知してコマンド全体がブロックされることがある。
+- 関係：`ws-decouple` は**2層サンプル画面を残して WS だけ外す**。`minimize` は**サンプル画面ごと骨格まで落とす**（3層画面の除去も内包）。end-state が違う。
+- `/opentouryo-project-transform <sub>` の引数、または自動起動時は**タスク内容から subcommand を選び、該当 `references/<sub>.md` を読んでから**作業する。
 
-## WS 依存を切り離す（サンプルから WS を外す）
+## 現行の前提（裏取りの範囲）
 
-一部サンプル（例：`WebForms_Sample`）は WS 依存があり、**他サンプルの B・D層/型**（`WSServer_sample` /
-`WSIFType_sample`。(A) 構成では ProjectReference＝`samples/webservices.md`）に依存する。WS が不要なら次を削る／直す
-（「3層/2層」は呼び方の別で、判断軸は WS 依存の有無。core は通信制御を使ってもインプロセスのみ＝実質 2層になり得る）。
+両 subcommand とも、**具体手順は `WebForms_Sample` 前提**（実物で裏取り済み）。`MVC_Sample` も WS 依存を持つ
+（`MVC_Sample.csproj` が `WSIFType_sample`/`WSServer_sample` を参照）＝ws-decouple の対象になり得るが、
+**参照形態が違い**（WebForms＝ProjectReference / MVC＝DLL Reference の HintPath）**手順は未収録**。
 
-### 削る
+## 未収録の対象が来たら（ベストエフォート＋断り）
 
-- 3層画面：`Aspx\sample\3Tier\`、`Aspx\start\menu.aspx` の3層リンク
-- `WSIFType_sample` / `WSServer_sample` 参照（3層画面を消したうえで）
-- 3層画面専用の周辺ソース：`AppCode\sample\3TierTableAdapter\ProductsTableAdapter.cs`、
-  3層画面からのみ使う B層 `AppCode\sample\Business\GetMasterData.cs`
+1. **未収録である旨を先に断る**（例「MVC は手順未収録。一般原則からのベストエフォート」）。
+2. **憶測で書かず実ソースで裏取りしながら進める**（実クローンあり＝`reference-csharp-source-mirror` の場所）。
+3. **段階ビルドで検証**（`削る→再ビルド→CS0246 を上から潰す` loop がセーフティネット＝間違えればビルドが落ちて気づく）。
+4. そこで得た手順は**勝手にスキルへ書かない**（配布物は裏取り済みのみ。検証後に纏め者が収録）。
+5. **後戻りできず検証手段が無い破壊**はそのまま進めず確認する。
 
-> **WS 参照は `WSIFType_sample` / `WSServer_sample` だけではない**（実測）。WebForms の csproj は
-> **`MySql.Data.dll` / `Oracle.ManagedDataAccess.dll` も `WS_sample\Build\` を HintPath 参照**している。
-> `WS_sample` ごと消して WS 依存を完全に断つなら、**この2つの HintPath をベンダ先
-> （`OpenTouryoAssemblies\Build_net48\`）へ張り替える**（さもないと参照切れ。`opentouryo-project-setup-core` ⑤ /
-> その `references/reference-rewrite.md` と同じ要領）。
+## 共通ポリシー（両 subcommand 共通）
 
-> **`Web.config` の endpoint（`system.serviceModel`）は削らない。** このサンプルの endpoint は
-> 3層固有（`WSServer_sample`）ではなく、**フレームワークの Transmission WCF 設定**
-> （`IWCFHTTPSvcForFx` / `IWCFTCPSvcForFx`）と `IJSONService`。`WSServer_sample` は参照（(A)＝ProjectReference）で
-> インプロセス呼び出しされ、専用 endpoint を持たない。消しても WS 依存の切り離しに不要なうえ、実行時構成を壊しかねない。
-
-### 直す（見落としやすい罠）
-
-**2層画面が WS 側（`WSIFType_sample`）の型を掴んでいることがある。** `sampleScreen_cc.aspx.cs` は
-`using WSIFType_sample;` で `TestParameterValue` / `TestReturnValue` を **WS 側の参照から**解決している。
-同名クラスがサンプル同梱ソース（`AppCode\sample\Common\`、`using MyType;`）にもあるので、
-`using WSIFType_sample;` → `using MyType;` に差し替える。
-
-### 確実な進め方
-
-WS 参照（`WSIFType_sample` / `WSServer_sample`）を外してビルドし、**`CS0246` が出た箇所を上から潰す**。
-
-- 同名クラスが同梱ソースにある → `using` を差し替える（上記の罠）
-- 3層専用のコードだった → 削る
-
-## サンプル固有コードの整理（不要なテスト画面等の削除）
-
-サンプルには動作確認用のテスト画面が多数含まれる。用途に不要なら削るが、**名前の接頭辞で機械的に
-一括削除しない**。
-
-- **★ `test*` 接頭辞でも「実使用」のものがある**（実測・最優先の注意）。例：`testBlankScreen.master` は
-  名前が `test` でも**実マスタ**で、`login` / `logout` / `menu` / `ErrorScreen` / OAuth2 等の `MasterPageFile`
-  として参照されている。`test*` で一括削除すると足場（マスタ）が全滅する。**削除前に、残す画面の
-  `MasterPageFile` を確認する**。サンプル固有の「残す／CRUD 用」マスタ名は `samples/webforms.md`。
-- **csproj の大量剪定は「実在しない `Include` を消す」方式が堅牢**（実測）。ファイルを先に削除し、
-  csproj の `Content` / `Compile` / `None` / `EmbeddedResource` のうち **`Include` 先が実在しないエントリ**を
-  XML DOM で剪定する（`PreserveWhitespace=true` ＋直前の空白ノード除去で差分最小。**ワイルドカードと
-  `Reference` 系は除外**）。名前マッチで消すより安全・高速。剪定後も段階ビルドで確認する。
+- **基盤（`OpenTouryo.*` / `Frameworks/Infrastructure/*`）は触らない**＝本体・纏め者の領分（`opentouryo-project-policy`）。
+  変形は**サンプル由来の業務コード側だけ**。**基盤を DLL 参照している構成では、基盤内クラス（例 `MyBaseController`）は
+  そもそもプロジェクト外＝アプリ側から編集不可**（消したいなら本体側の作業。`references/minimize.md`）。
+- **まずビルドして現状把握**→**段階的に**：一気に消さず「削る→再ビルド→`CS0246`（型・名前空間が見つからない）等を潰す」を繰り返す。
+- **複数行の一括置換前に改行コードを確認する**（実測）。サンプルの `.csproj` / `.config` は **LF**（GitHub ZIP 由来）のことがあり、
+  **CRLF 前提の複数行ブロック置換はマッチせず失敗する**（単一行は通るので気付きにくい）。
+- **非対話 PowerShell では削除とテキスト置換を別コマンドに分ける**（実測）。`Remove-Item` と `/>` 等の断片を同一コマンドに
+  混ぜると、安全ガードが断片を「システムパス削除」と誤検知してコマンド全体がブロックされることがある。
 
 ## やってはいけないこと
 
-- **基盤（`OpenTouryo.*` / `Frameworks/Infrastructure/*`）を改造して辻褄を合わせる** — 纏め者の領分。
-  変形はサンプル由来コード側で行う（`opentouryo-project-policy`）
-- **セットアップ（取得・ビルド・参照・config）をここでやり直す** — それは `opentouryo-project-setup`
-- **一括で大量に削ってからまとめてビルド** — 依存を見失う。段階的に削って都度ビルドする
+- **基盤を改造して辻褄を合わせる**（纏め者・本体の領分）／**セットアップをここでやり直す**（それは `opentouryo-project-setup`）。
+- **一括で大量に削ってからまとめてビルド**（依存を見失う。段階的に削って都度ビルド）。
+- **名前の接頭辞で機械的に一括削除**する（`test*` / `sample*` でも**実使用のマスタ・足場**がある＝各 `references/` の「★トラップ」参照）。
