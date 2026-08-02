@@ -17,6 +17,8 @@
   **その `<Reference>`+HintPath を削除して `.csproj` への `<ProjectReference>` に切り替える**（webservices.md の原則）。
   同じ csproj の `MySql.Data`/`Oracle.ManagedDataAccess`（同じく WS_sample\Build を指す）は**サンプルでなく 3rd-party
   なので ProjectReference にはできない＝ベンダ先 `Build_net48\` への DLL 参照に張り替える**（`references/reference-rewrite.md`）。
+  **★ (A) では `WebForms_Sample.sln` にも `WSIFType_sample`/`WSServer_sample` の2プロジェクトを追加**し、
+  `<ProjectReference>` の `<Project>` GUID を参照先 `<ProjectGuid>` に一致させる（#1/#2＝`webservices.md`「ProjectReference 化の共通注意」）。
 
 ## config は二段構成（初見で `Web.config` を探して迷う）
 

@@ -62,10 +62,10 @@ HintPath は2階層＝`..\..\`。`samples/daogentool.md` / `samples/dpquerytool.
 - **(B) WS 依存を切り離す** — WS 参照を外す（**後工程 `opentouryo-project-transform`**）。
 
 **(A)/(B) の選択・層の削減・画面改変は、セットアップ中に判断を求めない**（開ける状態の後に利用者が決める）。
-**WS/3層の共通手順は `samples/webservices.md`、サンプル固有は `samples/<サンプル>.md`**（Web Forms は `samples/webforms.md`）。
+**WS/3層の共通手順は `samples/webservices.md`、サンプル固有は `samples/<サンプル>.md`**（Web Forms は `samples/webforms.md`、MVC は `samples/mvc.md`）。
 
 <!-- 執筆者メモ（Claude Code は読み込み時に除去）：samples/<サンプル>.md は検証したサンプルから順に整備する残件。
-     現状あるのは webforms.md（サンプル）／daogentool.md・dpquerytool.md（開発支援ツール）。
+     現状あるのは webforms.md・mvc.md（サンプル）／daogentool.md・dpquerytool.md（開発支援ツール）。
      専用 md が無いサンプルも上の一般手順＋samples/webservices.md で取り出せる。癖が見つかったら md を起こす。 -->
 
 ## やってはいけないこと

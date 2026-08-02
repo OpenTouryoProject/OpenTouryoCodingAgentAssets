@@ -24,6 +24,23 @@ WS/3層依存サンプルは、別サンプル **`WS_sample` の `WSIFType_sampl
   DLL 参照だと編集のたびにビルド＆コピーが要り並行開発にならない。ProjectReference なら**同一ソリューションで編集が即伝播**する。
 - → **`WS_sample\Build\` への DLL コピー＆その HintPath 参照は廃止**（旧 (A) の copy-to-Build 手順は不要）。
 
+## ★ ProjectReference 化の共通注意（sln 追加・GUID 一致・全 proj 確認）
+
+サンプル間参照を DLL→ProjectReference に切り替えるときは、どのサンプルでも次を守る（実測で踏む）：
+
+- **アプリの `.sln` にも当該プロジェクトを追加する（#1）。** csproj を ProjectReference にしても、`.sln` に
+  `WSIFType_sample`/`WSServer_sample` が無ければ **VS でビルド対象にならず `nuget restore <sln>` の対象からも漏れる**。
+  `Project("{…}") = "<名>", "<相対パス>.csproj", "{GUID}"` 行＋`ProjectConfigurationPlatforms`（各プラットフォーム×2行）を足す。
+  （WSClient の `_all.sln` は下記③に既述。**WebForms 等の単体 sln でも同じ**＝`samples/webforms.md`。）
+- **`<Project>` GUID を参照先と一致させる（#2）。** `<ProjectReference>` の `<Project>{GUID}</Project>` は
+  **参照先 csproj の `<ProjectGuid>` と一致**させる（ずれると VS が再解決・警告）。
+- **張替後、全プロジェクトで `ProjectReference` の実在を確認する（#30）。** 機械挿入の目印にする
+  `Microsoft.CSharp.targets` の**インポート変数がプロジェクトで違う**（実測：client と `ASPNETWebService`＝`$(MSBuildBinPath)`／
+  **`WCFService` だけ `$(MSBuildToolsPath)`**）。片方だけ見た置換だと**そのプロジェクトに ProjectReference が入らず、
+  DLL 参照の削除だけ効いて `CS0246`**。→ 全 proj で `<ProjectReference>` を grep 確認する。
+- **2つ目以降の WS 依存サンプルは取り出しを共有できる（#34）。** `WSIFType_sample`/`WSServer_sample` を先のサンプルで
+  取り出し・ベンダ張替済みなら、**参照も不要でそのまま共有**（既に `..\..\OpenTouryoAssemblies\...`）＝**client と WS ホストだけ足せばよい**。
+
 ## (A) WS も一式取り出して 1 ソリューションで並行開発する
 
 1. **取り出す** — `Samples\WS_sample\WSIFType_sample` と `WSServer_sample` を `WS_sample\` 直下の相対配置を保って取り出す
@@ -99,6 +116,10 @@ WinCone＝WSIFType のみ）＝csproj を見て張り替える。
 **これが無いとクライアントは通信相手が居ない。** 源は `Frameworks\Infrastructure\ServiceInterface` だが、**WS 一式を `WS_sample\`
 配下に集約**するため **`WS_sample\ServiceInterface\` に置く**（`WSClient_sample`/`WSIFType_sample`/`WSServer_sample` と兄弟）。
 これはフレームワーク*ライブラリ*の改造ではない（WS ホスト アプリを配置・起動するだけ＝「Frameworks を取り込んで改造しない」に当たらない）。
+
+> **⚠ 源を取り違えない（#5）**：`Samples\WS_sample\ASPNETWebService\` は **README だけのスタブ**（develop で
+> `OpenTouryoProject/ResourceServerTemplates` へ移動済み）。**実体の WS ホスト源は `Frameworks\Infrastructure\ServiceInterface\{ASPNETWebService,WCFService}`**。
+> スタブを誤って引き込まない（④ の Include 突き合わせでも中身が空と分かる）。
 - **既定は `ASPNETWebService`**（クライアント app.config が `FxXMLTMProtocolDefinition=TMProtocolDefinition2.xml`＝Web API
   経路を選択。`WCFService` は代替＝`TMProtocolDefinition.xml`）。通常は ASPNETWebService を建てれば足りる。
 - **引き込み位置**：`WS_sample\ServiceInterface\<host>\`（`<host>`＝`ASPNETWebService`/`WCFService`）。
@@ -140,8 +161,13 @@ WinCone は ClickOnce デプロイ版（"Cone"）で csproj に **`SignManifests
 ### 到達点
 - **セットアップの到達点＝5プロジェクトが開けて 0 error でビルドできる**（クライアント〔P〕＋WSServer〔B・D〕＋WSIFType〔型〕
   ＋WS ホスト ASPNETWebService/WCFService。P・B・D を1ソリューションで並行開発できる状態）。
-- **WS モード（`protocol="2"`）実動の確認は run-verify**：ASPNETWebService を IIS Express で起動 → クライアント exe から
+- **WS モード実動の確認は run-verify**：ASPNETWebService を IIS Express で起動 → クライアント exe から
   WS 越しに呼べること（`references/run-verify.md`）。ホスト未起動でもクライアントはインプロセス兼用で開ける。
+- **★ 既定プロトコルは develop で更新済み（#31・実測 `TMProtocolDefinition2.xml`）**：生きているのは
+  **`protocol="5"`（Web API＝`https://localhost:44349/WebAPIControllerForFx`）**と `protocol="4"`（net.tcp WCF）。
+  **`protocol="2"`（ASMX＝`ServiceForFx.asmx`）と `3`（WCF-HTTP）はコメントアウト**され、`ServiceForFx.asmx` は
+  ASPNETWebService に**存在しない**（GET 404）。＝旧「`protocol="2"` で確認」やファイル先頭コメント「2=WebService」は現行と合わない。
+  非対話での WS ホスト稼働判定は `references/run-verify.md`（`GET /test`）。
 
 ## MAX_PATH(260)
 
