@@ -8,7 +8,8 @@
 ## 置き場所とランタイム
 
 - ソース：**`Frameworks\Tools\DaoGen_Tool`**（`Samples\` ではない。基盤ツリー配下）。
-- WinExe（WinForms の GUI）。`AssemblyName` は `OpenTouryo.DaoGen_Tool`。
+- WinExe（WinForms GUI）。`AssemblyName` は `OpenTouryo.DaoGen_Tool`。**新しい ref は非対話 CLI（`/CUI`）も持つ**
+  ＝実行時の CLI 起動（エージェント/CI で生成）は **`opentouryo-daogen-cli`**。
 - net48：`DaoGen_Tool.csproj` / `.sln`（msbuild）。
 - net10.0：`DaoGen_ToolCore.csproj` / `.sln`（`net10.0-windows7.0`＝Windows 専用。`dotnet build`）。
 
@@ -34,5 +35,6 @@
 ## 使い方の要点
 
 - DB に接続してテーブルを選び、**自動生成Dao のソースを出力**する（出力したソースをプロジェクトの D層へ入れる）。
+- **非対話（エージェント/CI）で生成するなら CLI＝`opentouryo-daogen-cli`**（`/CUI`・`/HELP`。GUI は開かない）。
 - 生成物の命名体系（`S1_Insert`/`D2_Select` 等、`PK_列名`/`Set_列名_forUPD` 等）と楽観排他は `opentouryo-dao-generated`。
 - SELECT を含む INSERT/UPDATE は自動生成の対象外（個別Dao ＝ `opentouryo-dao-custom`）。

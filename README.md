@@ -63,6 +63,7 @@ docs/
 | └ `opentouryo-dao-custom` | 個別Dao（業務固有のデータアクセス）を実装するとき |
 | └ `opentouryo-dao-common` | 共通Dao（`CmnDao`）で単発の SQL を実行するとき |
 | └ `opentouryo-dao-generated` | 自動生成Dao（テーブル単位の CRUD・楽観排他）を使うとき |
+| └ `opentouryo-daogen-cli` | 自動生成Dao をツール（墨壺）の CLI（`/CUI`・非対話）で生成するとき |
 | `opentouryo-batch-update` | DataTable の RowState でグリッド明細を一括更新（追加/更新/削除）するとき |
 | `opentouryo-webforms-crud-screens` | Web Forms のテーブル保守 CRUD 画面を作るとき（一覧→詳細／一覧＆更新・ページング・結果セット固定） |
 | `opentouryo-query-definition` | SQL 定義ファイル（`.sql` / `.xml`）を書くとき |
