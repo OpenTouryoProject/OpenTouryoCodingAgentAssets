@@ -1,39 +1,52 @@
 # minimize — サンプル/テスト画面を除いて最小骨格へ
 
 `opentouryo-project-transform` の subcommand。**セットアップ済みの WebForms サンプルから、動作確認用のテスト/デモ画面を
-除いて「業務画面を足していける最小骨格」に落とす。** 出典：as-built（セットアップ済み `WebForms_Sample` を最小化した実測構成）。
+除いて「業務画面を足していける最小骨格」に落とす。** 出典：トランスフォーム テスト（develop の `WebForms_Sample` を最小化した実測）。
 
-## ゴールの姿（最小骨格に残るもの＝実測）
+## ゴールの姿（最小骨格に残るもの）
 
-最小化後も**残す**のは「枠組み」だけ。実測の as-built では csproj に次だけが残った：
+残すのは「枠組み」だけ。実測（develop）で残ったのは次：
 
 - **Framework ダイアログ**：`Aspx\Framework\`＝`DialogFrame.htm` / `DialogLoader.htm` / `myOKMessageDialog.aspx` /
   `myYesNoMessageDialog.aspx` / `Ping.aspx`（画面遷移・ダイアログ機構。`opentouryo-webforms-dialog` / `-screen-transition`）。
 - **共通画面**：`Aspx\Common\ErrorScreen.aspx`（エラー画面）。
 - **開始画面**：`Aspx\start\`＝`login.aspx` / `logout.aspx` / `menu.aspx`。
-- **マスタ2枚**：`Aspx\Common\Master\sampleScreen.master`（＝menu の実シェル）と `testBlankScreen.master`（＝login 等の blank）。**下記★トラップ参照＝どちらも残す**。
-- **認証系**：`Aspx\OAuth2\OAuth2AuthorizationCodeGrantClient.aspx`（**認証方式次第で残す/削る**。使わないなら削ってよい＝`opentouryo-auth` / `-oauth2-client`）。
+- **実シェルのマスタ（＝残す画面の `MasterPageFile` が指すもの）だけ**：`Aspx\Common\Master\` のうち、残す画面が実際に使うマスタ。
+  develop では **`testBlankScreen.master` 1枚**。**どれが実シェルかは版で変わる＝名前で決めず `MasterPageFile` を grep して特定する**（下記★トラップ）。
+- **認証系**：`Aspx\OAuth2\OAuth2AuthorizationCodeGrantClient.aspx`（**認証方式次第**。ただし `login.aspx` の
+  「外部ログイン」ボタンの遷移先でもある＝**使わないなら画面とボタンを対で消す**〔T15〕。`opentouryo-auth` / `-oauth2-client`）。
 - **土台**：`App_Start\{BundleConfig,RouteConfig}.cs`、`Global.asax(.cs)`、`Properties\AssemblyInfo.cs`、
   `Content\` / `Scripts\` / `images\`（bootstrap・jQuery・touryo・WebForms スクリプト等）、`Web.config` / `app.config` / `Bundle.config`、`packages.config`。
 - **空フォルダ**：`AppCode\`（業務コードを足す場所）、`App_Data\`。
 
 ## 削る対象
 
-- **テスト/デモの content 画面**：`testScreen*`、`sampleScreen.aspx`（＝マスタでなく画面本体）等の動作確認画面。
-- **3層（3Tier）画面**とその専用周辺：`Aspx\sample\3Tier\`、`AppCode\sample\3TierTableAdapter\*`、3層専用 B層（`AppCode\sample\Business\GetMasterData.cs` 等）。※WS 依存を含むので、3層を消すときは `ws-decouple` も参照。
-- 上記からのみ参照される型・using。
+- **テスト/デモの content 画面**：`testScreen*`、`sampleScreen.aspx` / `sampleScreen_cc.aspx`（＝画面本体）等の動作確認画面、
+  Web ユーザ コントロール（`Aspx\Common\Wuc\`）。
+- **3層（3Tier）画面**：`Aspx\sample\3Tier\` 等。※これは **WS 依存ではない**（`_3TierEngine` 等は基盤側＝`ws-decouple` の T4 参照）。
+  「最小化で消す」判断であって「WS 切り離し」とは別。専用周辺（`AppCode\sample\3TierTableAdapter\*`・`AppCode\sample\Business\GetMasterData.cs`）も。
+- **無参照になったマスタ**：画面を消した結果、どの残存画面の `MasterPageFile` からも指されなくなったマスタは**削る**（`sample*`/`test*` 名でも）。
+  develop では crud 2画面を消すと `sampleScreen.master`（MButton 現存）が無参照になる＝**削除対象**。
+- **`menu.aspx` のリンク掃除（T9）**：画面を消すと `menu.aspx` に**リンク切れが残る**。**ビルドも `aspnet_compiler` も通ってしまう**
+  ＝実行して 404 で初めて気付く。削った画面へのリンクは menu から消す（業務画面用のプレースホルダ コメントへ置換）。
+- 上記からのみ参照される型・`using`。
 
-## ★トラップ（名前の接頭辞で機械削除しない＝最優先の注意）
+## ★トラップ（名前で決めない・結論は版で反転する＝最優先の注意）
 
-**`test*` / `sample*` という名前でも「実使用」のものがある。** 削除前に、**残す画面の `MasterPageFile` を必ず確認する**。実測：
+**`test*` / `sample*` という名前は判断材料にならない。** 実シェルの特定は**必ず `MasterPageFile` の grep で行う**：
 
-| マスタ | 名前の印象 | 実態（実測） | 判断 |
-| --- | --- | --- | --- |
-| `sampleScreen.master` | sample＝消したくなる | **`menu.aspx` の実シェル**（ロゴ・Sign-out・メニュー一覧・`ContentPlaceHolder_A`＋Fx の hidden 群〔`SubmitFlag`/`ChildScreenType` 等〕）。**この版に MButton 系サーバコントロールは無い**（サンプルボタンは既に除去済み） | **残す**（自アプリのメニュー・シェルとして流用／改名） |
-| `testBlankScreen.master` | test＝消したくなる | **`login` / `logout` / `ErrorScreen` / `OAuth2` の実マスタ**（blank 系） | **残す** |
+1. 残す画面（`login`/`logout`/`menu`/`ErrorScreen`/`OAuth2` 等）の `MasterPageFile` を集める。
+2. そこに出るマスタ＝**実シェル＝残す**。出ないマスタ＝**無参照＝削る**（`sample*`/`test*` 名でも）。
 
-- `sampleScreen.master` を単純削除すると **`menu.aspx` が壊れる**（消すなら menu を別マスタへ張り替えるが、shell〔ロゴ・サインアウト・メニュー〕を失う＝通常は残す方が良い）。
-- マスタを**改名**したら、`MasterPageFile` 参照と、次項のハンドラ命名（`UOC_<マスタ名>_…`）も揃える。
+**版で結論が反転する実例（同じ `sampleScreen.master` でも逆になる）：**
+
+| 版 | `menu.aspx` の `MasterPageFile`（実シェル） | `sampleScreen.master` の実態 |
+| --- | --- | --- |
+| **develop（現行）** | **`testBlankScreen.master`** | crud 2画面（`sampleScreen.aspx`/`_cc`）専用＝**削除対象**。**MButton 現存**（`btnMButton1〜9`/`101`/`102`） |
+| 旧 03-20 | `sampleScreen.master` | menu の実シェルだった＝残す |
+
+＝「`sampleScreen.master` は残す/消す」を**名前で固定して書かない**。マスタを**改名**したら、`MasterPageFile` 参照と
+ハンドラ命名（`UOC_<マスタ名>_…`）も揃える。
 
 ## master 上コントロールのハンドラ（`MyBaseController`・削除は任意）
 
@@ -41,23 +54,25 @@ master 上のコントロール（ボタン等）のイベントハンドラは�
 `MyBaseController`（親クラス2）に束ねられる（例 `UOC_sampleScreen_btnMButton101_Click`。`opentouryo-layer-p-webforms-screen`）。
 **`MyBaseController` を編集・カスタマイズするなら `opentouryo-base2-customize`。**
 
-- **削除は任意（残してよい）。** 最小化で master 上のコントロールを外すと、その**ハンドラは結線されず＝到達不能・デッドコードになる**だけで、
-  呼ばれないので大きな問題にはならない。無理に消さなくてよい。
+- **削除は任意（残してよい）。** 最小化で master 上のコントロール（や、その master 自体）を外すと、その**ハンドラは結線されず＝到達不能・
+  デッドコードになる**だけで、呼ばれないので大きな問題にはならない。無理に消さなくてよい（実測では `#region マスタ ページ上の…` を
+  region 丸ごと削除できた＝`base2-customize` overlay 経由）。
 - **消すなら注意**：`MyBaseController` は複数サンプルで共有される。**最小化していない**サンプル側の画面が同名ハンドラを使っていると、
-  その **master ページ上のコントロールのハンドラが動作しなくなる**。＝削除は共有の影響を確認してから。
+  その **master ページ上のコントロールのハンドラが動作しなくなる**。＝削除は共有の影響を確認してから（WebForms 系が1本だけか等。実測 OK）。
 
 ## csproj の剪定（大量エントリ）
 
-**「実在しない `Include` を消す」方式が堅牢**（実測）。ファイルを先に削除し、csproj の `Content` / `Compile` / `None` /
-`EmbeddedResource` のうち **`Include` 先が実在しないエントリ**を XML DOM で剪定する（`PreserveWhitespace=true` ＋直前の空白ノード
-除去で差分最小。**ワイルドカードと `Reference` 系は除外**）。名前マッチで消すより安全・高速。剪定後も段階ビルドで確認する。
+**「実在しない `Include` を消す」方式が堅牢**（実測で 151 件を一発処理）。ファイルを先に削除し、csproj の `Content` / `Compile` /
+`None` / `EmbeddedResource` のうち **`Include` 先が実在しないエントリ**を XML DOM で剪定する（`PreserveWhitespace=true` ＋直前の
+空白ノード除去で差分最小。**ワイルドカードと `Reference` 系は除外**）。名前マッチで消すより安全・高速。
+**剪定後、空になった `ItemGroup` も除去する**（T10）。剪定後も段階ビルドで確認する。
 
 ## 進め方（段階ビルド）
 
 1. **まずビルドして現状把握**（何が何に依存するかはビルドエラーが教える）。
-2. テスト/デモ画面を削る → **再ビルド** → `CS0246`（型・名前空間が見つからない）を上から潰す。
-   - 同名クラスが同梱ソースにある → `using` を差し替える（`ws-decouple` の「罠」参照）。
-   - そのコードが 3層専用だった → 削る（`ws-decouple` へ）。
-3. csproj を剪定（上記）→ 再ビルド。
-4. `MasterPageFile` を確認し、**実使用マスタは残す**（★トラップ）。
-5. 認証（OAuth2 等）を使わないなら削る（`opentouryo-auth`）。
+2. テスト/デモ画面を削る → **再ビルド** → `CS0246`（型・名前空間が見つからない）を上から潰す
+   （同名クラスが同梱ソースにある→`using` 差し替え／3層専用→削る。`ws-decouple`）。
+3. **残す画面の `MasterPageFile` を grep → 無参照マスタを削る**（★トラップ）。
+4. **`menu.aspx` のリンク掃除**（削った画面への link を除去。ビルドは通るので実行 404 の前に）。
+5. csproj を剪定（空 `ItemGroup` 除去含む）→ 再ビルド → `aspnet_compiler` で静的検証（マークアップの参照切れ検出）。
+6. 認証（OAuth2 等）を使わないなら、**画面と `login` 側のボタンを対で**削る（T15）。
