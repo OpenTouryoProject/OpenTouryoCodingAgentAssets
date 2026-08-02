@@ -1,0 +1,11 @@
+# トランスフォームのテスト
+
+## 1
+/opentouryo-project-transform で WebForms_Sample の 2層化
+
+## 2
+/opentouryo-project-transform で WebForms_Sample の 最小化
+（この際、ベース2クラスのmasterページのハンドラも削除する）
+
+## 3
+/opentouryo-base2-customize で DB接続先から、OLEとODBCを削除
