@@ -34,13 +34,9 @@ metadata:
   プロジェクト共通の挙動（接続・認証・例外・ログ・画面初期化）を注入するのが役割。
 - ビルドは **`3_Build_Business_net48` / `3_Build_Business_netcore100`**（親クラス1 の `2_Build_NuGet_*` が先）。
   これを導入プロジェクトが参照する（`opentouryo-project-setup-build` のベンダ）。
-- **★ `OpenTouryo.Business` と `OpenTouryo.Business.RichClient`（2CS）は別 sln＝ビルド経路が違う**（実測・net48 03-20）。
-  `3_Build_Business_net48` がビルドするのは `Business_net48.sln`＝**`Business` + `CustomControl` だけ**。**2CS クラス
-  （`MyBaseLogic2CS` / `MyFcBaseLogic2CS` ＝ `OpenTouryo.Business.RichClient`）は別の `BusinessRichClient_net48.sln`
-  を明示ビルドしないと生成されない**（`opentouryo-project-setup-build` が回す `2_/3_Build_*` サブセットも
-  `Nuget_RichClient_net48.sln` も作らない＝出来るのは `Framework.RichClient` まで。※本体のフル一式／`9_CICD.bat`
-  なら出る）。**2CS を直してもこのサブセットだと無言で無視される**（エラーも出ない）。core も同構成で
-  同じ穴（`BusinessRichClient_netcore100.sln` が別在）。→ 2CS を触るなら次項のビルドに一手足す。
+- **★ `OpenTouryo.Business.RichClient`（2CS＝`MyBaseLogic2CS`/`MyFcBaseLogic2CS`）は別 sln**（`BusinessRichClient_net48.sln`／core `_netcore100`）。
+  `3_Build_Business_*` は `Business`+`CustomControl` だけ＝**2CS を直しても明示ビルドしないと無言で無視される**（エラーも出ない）。
+  → 2CS を触るなら次項のビルドに一手足す（ビルド機構の正本は `opentouryo-project-setup-build`）。
 - **カスタマイズは「修正ファイルだけ」をオーバーレイとしてバージョン管理する**（後述の「バージョン管理」）。
   `opentouryo-project-setup-build` が展開する丸ごとのツリーはビルドの副産物で、そこを直接いじって放置する場所ではない。
 
@@ -79,9 +75,12 @@ metadata:
 
 ### DBMS を足す/減らすときの"面"（チェックリスト）
 
-`UOC_ConnectionOpen` の分岐を触るだけでは不完全。**4点を揃える**（どれか残すと半端に生き続ける）：
-①ロジック分岐（上記**4クラス全部**）／②csproj の `<Reference>`+`HintPath`（例 `OpenTouryo.DamManagedOdp`。RichClient の
-net48・netcore 両方）／③ベンダされる Dam DLL 自体（`Build_*` から外す）／④config の `ConnectionString_<code>` キー（サンプル側）。
+`UOC_ConnectionOpen` の分岐だけでは不完全。**5つの面を揃える**（どれか残すと半端に生き続ける）：
+**①ロジック分岐（4クラス全部・置換後 grep で残存確認）／②csproj `<Reference>`・③ベンダ Dam DLL を外す（②③は Dam が別 DLL のときだけ
+＝`DamManagedOdp`/`DamMySQL`/`DamPstGrS`。`DamOLEDB`/`DamODBC` は `Public`〔親クラス1〕同居で外さない）／④config の `ConnectionString_<code>`
+（開発支援ツール `DaoGen_Tool` は親クラス2 を経由せず自前で `Odbc/OleDbConnection` を開く＝キーは残す）／④'サンプル UI の DAP 選択肢
+（残すと最後の `else` が SQL へ黙ってフォールバック＝最も気付きにくい）**。
+根拠と T16〜T20（`#if` 不揃い・`Public` 同居・ツール除外・UI フォールバック・DLL 反映確認は型名 UTF-8/リテラル UTF-16 で走査）は **`references/snippets.md`**。
 
 ## 変更 → 反映のループ
 
@@ -93,12 +92,12 @@ net48・netcore 両方）／③ベンダされる Dam DLL 自体（`Build_*` か
    スクリプトが担う**（その `examples.md` の **`1b` ブロック**。「任意」表記だが overlay があれば必須＝見落とさない）。
    **2CS（`MyBaseLogic2CS` / `MyFcBaseLogic2CS`）を触ったら、`3_Build_Business_*` に加えて `BusinessRichClient_net48.sln`
    （core は `_netcore100`）も別途ビルドする**（さもないと 2CS の変更が無言で無視される。前述）。
-   **★ この RichClient sln は非SDK＝`/t:restore` が壊れる（`/t:build` 単体）。かつ net48/netcore が `obj\` を共有し
-   netcore の restore 残骸で net48 が落ちる→`Business\RichClient\obj`・`CustomControl\RichClient\obj` の残骸を消す**
-   （実装・正本は `opentouryo-project-setup-build` の `examples.md` `2b`）。
+   **★ この RichClient sln は非SDK＝`/t:build` 単体（`/t:restore` は壊れる）・`obj\` 残骸の掃除が要る**（正本は
+   `opentouryo-project-setup-build` の `examples.md` `2b`）。
 3. 生成された `OpenTouryo.Business.dll`（2CS を直したなら `OpenTouryo.Business.RichClient.dll` も）を導入プロジェクトへ配布
    （`opentouryo-project-setup-build` のベンダ先 `OpenTouryoAssemblies\Build_*`）。
 4. 依存アプリを再ビルドして反映。**破壊的変更（シグネチャ・挙動）は全依存アプリに波及**する。
+   反映確認（バイナリ走査）のエンコード注意は下の「面」チェックリスト＋`references/snippets.md`（T20）。
 
 ## バージョン管理（オーバーレイ ＋ 固定タグ）
 
@@ -118,8 +117,8 @@ net48・netcore 両方）／③ベンダされる Dam DLL 自体（`Build_*` か
   Temp/                                             ← .gitignore で除外（使い捨て）
 ```
 
-- **取得元は固定タグに固定する**（`develop` は土台が動きオーバーレイの当たりがズレる。
-  `opentouryo-project-setup-selection` ②で固定タグを選ぶ）。
+- **取得元は固定タグに固定する**（`develop` は土台が動きオーバーレイの当たりがズレる。**overlay はファイル丸ごと差し替え＝
+  `develop` を引き直すと上流の当該ファイル変更を巻き戻す**（T13）。`opentouryo-project-setup-selection` ②で固定タグを選ぶ）。
 - ビルド スクリプトは `3_Build_Business_*` の**前に**オーバーレイを展開ツリーへ上書きする
   （`<extract>` は展開先。深いリポで MAX_PATH を避けるため短い作業ルート `C:\otr\...` のこともある。
   `opentouryo-project-setup-build`）：

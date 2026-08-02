@@ -29,9 +29,10 @@ Docker でまとめて立てる構成。<https://github.com/NetDevInfraWGinOSSCo
 （マシン全体のインフラ。成果物 repo に取り込むと汚染＋`.gitignore` 問題になる）を前提に、具体パスをユーザに聞いてから
 clone する。clone したら**用途に合う起動スクリプトを実行**する。
 
-- **起動前プリフライト**：立てるポートを既存プロセスが握っていないか確認する
-  （例：`Test-NetConnection localhost -Port 1433`。ネイティブ SQL Server 等と衝突する）。塞がっていれば
-  **このスキルはスキップ**（既存 DB を使う）。
+- **★ まず既存の DB を試す（#21）**：**「ポートが空いているか」だけでなく「使える DB が既に応答するか」を先に確認**する。
+  `localhost:1433` に**使える SQL Server（Northwind）が既に在るなら、それを使ってこのスキルはスキップ**する——
+  **Docker とは別のネイティブ SQL Server が応答することがある**（実測：Docker デーモン停止中でも 1433 が `sa`/Northwind で応答した）。
+  手順：`Test-NetConnection localhost -Port 1433` で疎通 → 続けて Northwind へ接続確認 → 繋がれば構築不要。塞がっていて別 DB なら別ポート/スキップ。
 - **初回は数分**：SQL Server 2022（約 1.5GB）含む 5 イメージを pull する（時間・帯域・ディスクに余裕を）。
 
 ```powershell

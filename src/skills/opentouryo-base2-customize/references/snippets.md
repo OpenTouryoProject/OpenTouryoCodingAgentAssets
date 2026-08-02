@@ -3,6 +3,29 @@
 出典：UserGuide 纏め者編 §3-§7、`Frameworks/Infrastructure/Business/**`（実ソース）で裏取り。**on-demand 参照**（SKILL 予算外）。
 親クラス2 は override して共通処理を注入する。**アプリ側は触らない**（`opentouryo-project-policy`）。
 
+## DBMS を足す/減らすときの「面」＝チェックリストの根拠（T16〜T20）
+
+SKILL の「5つの面」の詳細。実測（develop）で裏取り済み。
+
+- **①ロジック分岐は4クラス全部（`MyFcBaseLogic`/`MyBaseLogic`〔`[Obsolete]`〕/`MyFcBaseLogic2CS`/`MyBaseLogic2CS`）。置換後は grep で残存確認（T17）。**
+  upstream は同じ分岐でも**ガードの `#if` が4クラスで不揃い**（`#if NETCOREAPP` と `#if NETCOREAPP2_0` が混在。`net10` は
+  `NETCOREAPP2_0` 未定義＝`#else` 側が有効）。片方の `#if` を目印にした機械置換は**当たらないクラスを無言で残す**
+  （ビルドは通るので気付けない）＝置換後に4クラスを grep して残存ゼロを確認する。
+- **②③は「Dam が別アセンブリの DBMS」だけ（T16）。** ②csproj の `<Reference>`+`HintPath`／③ベンダ Dam DLL を `Build_*` から外す、は
+  Dam が**別 DLL**（`OpenTouryo.DamManagedOdp`/`.DamMySQL`/`.DamPstGrS`）のときだけ該当。
+  **`DamOLEDB`/`DamODBC` は `Public`（親クラス1）に同居**（`Public\Db\Dam{OLEDB,ODBC}.cs`）＝**外せない・外してはいけない**
+  （外すには親クラス1 を触る＝規約違反）。→「Dam がどのアセンブリに居るか」で②③の要否が決まる。
+- **④ config の `ConnectionString_<code>`（アプリ側）。開発支援ツールは対象外（T18）。**
+  `OT_Tools\DaoGen_Tool`（墨壺）は**親クラス2 を経由せず自前で `OdbcConnection`/`OleDbConnection` を開く**（`Form1.cs`）＝
+  キーを消すとツールが壊れる＝**残すのが正**（＝親クラス2 経由のアプリの config だけ張り替える）。
+- **④' サンプル UI の DAP 選択肢（第5の面・T19）。** 分岐を消しても、サンプルのドロップダウンに DBMS コードが残ると、
+  選んだとき `UOC_ConnectionOpen` の**最後の `else` が SQL Server に黙ってフォールバック**する（エラーにならず別 DBMS で動く＝
+  最も気付きにくい壊れ方）。UI 側（`Form1.cs`/`CrudViweModel.cs` 等）の選択肢も揃える。
+  **傍証**：MVC core の picker は `DB2`/`HIR` を出すのに親クラス2 にその分岐は無い（コメントアウト）＝上流の時点で同じ不整合。
+- **反映確認（バイナリ走査）のエンコード（T20）。** 「DLL に反映されたか」を非対話で見るとき、**型名・メソッド名（メタデータ）は UTF-8、
+  `ldstr` の文字列リテラル（`ConnectionString_<code>` 等）は UTF-16（`#US` ヒープ）**。ASCII/UTF-8 一律で走査すると接続キー等が
+  全 False になり誤判定する＝型名は UTF-8、リテラルは UTF-16 で見る。
+
 ## B層：MyFcBaseLogic の UOC 群
 
 ```csharp

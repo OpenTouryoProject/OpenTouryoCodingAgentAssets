@@ -76,7 +76,7 @@ if (-not (Test-Path $extract)) {
     Expand-Archive -Path $zip -DestinationPath $work -Force
 }
 
-# --- 1b. (optional) apply base2 overlay BEFORE building ---
+# --- 1b. apply base2 overlay BEFORE building (NOT optional: if base2-overlay\ exists it MUST be applied) ---
 # If this repo customizes the framework Business layer, its edited *.cs live in
 # base2-overlay\ as FILE-LEVEL copies (not patches). Overwrite the extract tree
 # with them before the build. Copy-Item preserves bytes incl UTF-8 BOM (the base
