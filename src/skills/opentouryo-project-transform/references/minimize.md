@@ -35,18 +35,16 @@
 - `sampleScreen.master` を単純削除すると **`menu.aspx` が壊れる**（消すなら menu を別マスタへ張り替えるが、shell〔ロゴ・サインアウト・メニュー〕を失う＝通常は残す方が良い）。
 - マスタを**改名**したら、`MasterPageFile` 参照と、次項のハンドラ命名（`UOC_<マスタ名>_…`）も揃える。
 
-## MyBaseController の master ハンドラ（DLL 参照時の現実＝重要）
+## master 上コントロールのハンドラ（`MyBaseController`・削除は任意）
 
-master 上のボタンのハンドラは、命名契約 **`UOC_<マスタ名(拡張子なし)>_<control>_<event>`** で `MyBaseController`（親クラス2）に束ねられる
-（例 `UOC_sampleScreen_btnMButton101_Click`。`opentouryo-layer-p-webforms-screen`）。**最小化での扱いは構成で変わる：**
+master 上のコントロール（ボタン等）のイベントハンドラは、命名契約 **`UOC_<マスタ名(拡張子なし)>_<control>_<event>`** で
+`MyBaseController`（親クラス2）に束ねられる（例 `UOC_sampleScreen_btnMButton101_Click`。`opentouryo-layer-p-webforms-screen`）。
+**`MyBaseController` を編集・カスタマイズするなら `opentouryo-base2-customize`。**
 
-- **基盤を DLL 参照している構成**（例：`OpenTouryoAssemblies\Build_net48\OpenTouryo.Business.dll` を参照）では、
-  **`MyBaseController` はプロジェクト外＝アプリ側から編集できない。** master のボタンを消しても、
-  **対応ハンドラが基盤 DLL に残るだけ＝対応コントロールが無ければ休眠（呼ばれず実害なし）**。＝**そのままでよい**。
-- **どうしても消すなら本体ソース**（`Frameworks\Infrastructure\Business\Presentation\MyBaseController.cs`）を編集して DLL 再ビルド
-  ＝**本体（全 WebForms サンプル共有）の変更**。しかも `UOC_TestScreen1/2_*` 等は**他サンプルが使う**ため、
-  安易に消すと他サンプルが壊れる。**アプリ最小化の範囲では触らない**（`opentouryo-project-policy`）。
-- `MyBaseController` を**自アプリで所有・カスタマイズ**したいなら別作業＝`opentouryo-base2-customize` の領分。
+- **削除は任意（残してよい）。** 最小化で master 上のコントロールを外すと、その**ハンドラは結線されず＝到達不能・デッドコードになる**だけで、
+  呼ばれないので大きな問題にはならない。無理に消さなくてよい。
+- **消すなら注意**：`MyBaseController` は複数サンプルで共有される。**最小化していない**サンプル側の画面が同名ハンドラを使っていると、
+  その **master ページ上のコントロールのハンドラが動作しなくなる**。＝削除は共有の影響を確認してから。
 
 ## csproj の剪定（大量エントリ）
 

@@ -50,9 +50,9 @@ metadata:
 
 ## 共通ポリシー（両 subcommand 共通）
 
-- **基盤（`OpenTouryo.*` / `Frameworks/Infrastructure/*`）は触らない**＝本体・纏め者の領分（`opentouryo-project-policy`）。
-  変形は**サンプル由来の業務コード側だけ**。**基盤を DLL 参照している構成では、基盤内クラス（例 `MyBaseController`）は
-  そもそもプロジェクト外＝アプリ側から編集不可**（消したいなら本体側の作業。`references/minimize.md`）。
+- **基盤（`OpenTouryo.*` / `Frameworks/Infrastructure/*` の本体クラス）は触らない**＝本体・纏め者の領分（`opentouryo-project-policy`）。
+  変形は**サンプル由来の業務コード側だけ**。**親クラス2（`My*`＝`MyBaseController` 等）のカスタマイズが要るなら
+  `opentouryo-base2-customize`**（master ハンドラの扱いは `references/minimize.md`）。
 - **まずビルドして現状把握**→**段階的に**：一気に消さず「削る→再ビルド→`CS0246`（型・名前空間が見つからない）等を潰す」を繰り返す。
 - **複数行の一括置換前に改行コードを確認する**（実測）。サンプルの `.csproj` / `.config` は **LF**（GitHub ZIP 由来）のことがあり、
   **CRLF 前提の複数行ブロック置換はマッチせず失敗する**（単一行は通るので気付きにくい）。

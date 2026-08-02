@@ -214,7 +214,9 @@ opentouryo-project-setup-config   実効86L tok~2040  完了（⑥⑦。resource
                                   ├ references/resource-config.md   実効46L tok~1378  ⑥の詳細（**作者の3原則を先頭に簡潔化**：絶対パスは環境変数／`OT_RESOURCE_ROOT` 重複時は番号付き `%OT_RESOURCE_ROOTn%`／一部設定は空・誤りでも起動。相対不可・**自己完結型 `.\Dao` は張替しない例外**・ログ出力先は log4net `%env{}`／**NLog `${OT_RESOURCE_ROOT}`**〔追加〕・綴りの罠・config二段）
                                   └ references/run-verify.md        実効97L tok~2085  ⑦実行確認（net48 IIS Express／core Kestrel／デスクトップ exe 生存／**Batch・CLI 引数・Console.ReadKey・DB 条件付き**／3層は WS ホスト ServiceInterface 起動）
 opentouryo-project-setup-db       実効104L tok~2422  完了（**選択式**の環境構築。LocalServicesOnDocker で SQL Server/MySQL/PostgreSQL/Redis/MongoDB を Docker 起動。既定が サンプル接続文字列と一致〔SQL 1433/sa/seigi@123/Northwind＝ConnectionString_SQL、MySQL＝ConnectionString_MCN〕。Oracle は対象外。Docker 変更は SETUP-CHANGES.md 記録。既存 DB あれば不要。**★4 DB は永続無し＝毎回リセット・redis のみ残る／Northwind 基本表は自動再作成・ORDERS2 等サンプル固有表は都度再投入**。clone は repo 外・起動前ポート プリフライト・Start-Services.ps1 の up/down/ps/logs＋-NoWait/-NoPause）
-opentouryo-project-transform      実効 99L tok~2263  完了（セットアップ後の変形＝2層化・サンプル整理・CS0246 解消。実機E2E反映：改行LF/非対話PSガード・2層化のDB DLL付替・test*マスタ警告・csproj剪定手法。実行は任意）
+opentouryo-project-transform      実効 67L tok~1703  完了（**ディスパッチャ式に再構成**＝subcommand `minimize`/`ws-decouple`。共通ポリシー〔基盤不可触・段階ビルド・改行LF/非対話PSガード・**未収録対象はベストエフォート＋断り**〕。現行手順は WebForms_Sample 前提。実行は任意）
+                                  ├ references/minimize.md     実効66L tok~1750  テスト/デモ画面除去→最小骨格（as-built裏取り：残す枠組み〔Framework ダイアログ/ErrorScreen/login-logout-menu/マスタ2枚/OAuth2任意〕・**★実使用マスタは名前が sample/test でも残す**〔sampleScreen.master=menuシェル・testBlankScreen.master=login等〕・**master 上コントロールのハンドラ（`MyBaseController`＝親クラス2）は削除任意＝結線されず到達不能・デッドコードになるだけ／編集は `opentouryo-base2-customize`・消すと非最小化サンプルで動作しなくなる**・csproj剪定）
+                                  └ references/ws-decouple.md   実効47L tok~990   WS 依存の切り離し（2層化。3層画面/WSIFType・WSServer 参照/専用周辺の除去・MySql/Oracle HintPath 張替・Web.config endpoint は残す・using WSIFType→MyType・CS0246 を上から潰す。**MVC は未収録**）
 opentouryo-layer-b               実効242L tok~4157  完了
 opentouryo-layer-d             実効201L tok~3945  完了（Dao 3系統の使い分け・入口＋複数行 DML の注意〔採番・実行順〕・楽観排他方式〔ts 有無〕・パラメタクリア/DPQ 再処理の系統差）
 opentouryo-dao-custom          実効178L tok~3266  完了
@@ -323,6 +325,7 @@ APIリファレンスで足りる）。
 
 | 項目 | 内容 |
 | --- | --- |
+| **project-transform をサブコマンド式へ再構成**（2026-08-02） | 変形スキルを**ディスパッチャ＋`references/{minimize,ws-decouple}.md`** に再編。**操作＝サブコマンド／対象サンプル＝前提注記**（`webforms-` を名前に焼かない＝MVC 対応時の名前増殖回避）。**未収録対象の扱いを明文化**＝未収録と断り→実ソース裏取り→段階ビルドでベストエフォート→検証後に収録（実行時は前へ・文書化は検証後）。**minimize は as-built〔セットアップ済み WebForms_Sample 最小化構成〕で裏取り**：既に画面最小化済みで残るのは枠組みのみ／**`sampleScreen.master` は名前が sample でも menu の実シェル＝残す・`testBlankScreen.master` は login 等の実マスタ＝残す**（`MasterPageFile` 実測：menu→sampleScreen、他→testBlankScreen）／**master 上コントロールのハンドラ（`MyBaseController`＝親クラス2、`UOC_<マスタ名>_<ctrl>_<event>`）は削除任意＝結線されず到達不能・デッドコードになるだけ（編集は `opentouryo-base2-customize`）。消すと最小化していないサンプルの同名ハンドラが動作しなくなる**。SKILL 実効99L→67L tok~1703。作者依頼で WORKSPACE は非破壊 |
 | UOCメソッドのシグネチャ | `private void UOC_XXX(パラメータ値クラス)`。**引数1つ・戻り値void**。レイトバインドのため |
 | 戻り値の返し方 | `this.ReturnValue = ...` を**業務処理より先に**設定。`finally` で回収されるので例外時も戻る |
 | `messageID` | **小文字始まり**。C#の命名規則に反する |
