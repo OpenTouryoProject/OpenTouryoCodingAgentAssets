@@ -38,6 +38,18 @@
   （例：`リソースファイル[\Log\SampleLogConf.xml]は見つかりませんでした`）。原因＝常駐シェルが `SetEnvironmentVariable`
   より前に起動し古い環境ブロックを継承したケース等 → **手順2 のとおり起動コマンドで `$env:OT_RESOURCE_ROOT` を明示**する。
 
+## ★ 自動スモークの罠：分離レベルの先頭 option は `NC`（NotConnect）（#18）
+
+CRUD 画面を機械的に叩くとき「各 `<select>` の**先頭 option** を選ぶ」実装だと、**分離レベルの先頭が `NC`＝NotConnect**（接続しない）で、
+B層が Dam を作らず、D層 `SetSqlByFile2` で **`NullReferenceException`→500**（`GetDam()` が null）になる。サンプルの既定は `NT`（`Selected=true`）。
+どちらかで回避する：
+
+- **(a) 既定 option（`selected="selected"`）を選ぶ** — ただし `Html.DropDownListFor` は `selected` を `value` より**前**に描画するので、
+  素朴な正規表現だと拾えない。
+- **(b) 分離レベルは `NT`/`RC` を明示指定する**。
+
+（上流の軽微な難点：`NC` は UI から選べるのに DAO を呼ぶアクションでは必ず未処理例外になる＝業務例外にできると親切。）
+
 ## core（net10.0）＝ Kestrel（`dotnet run`）
 
 core は IIS Express ではなく Kestrel。**`dotnet run` は `Properties\launchSettings.json` の `applicationUrl` を優先する**ため、
@@ -52,7 +64,12 @@ $env:OT_RESOURCE_ROOT = "<repo>\resource"   # dotnet run を起こすシェル�
 dotnet run --project "<repo>\MVC_Sample_Core\MVC_Sample" --urls http://localhost:5080
 ```
 
-スモークは net48 と同様（未認証で 302→login、login 200、500＝resource/config 解決失敗）。**core は `InitConfiguration()` 必須**（⑦）。
+**★ core MVC のスモーク判定は net48 と違う（#17）**：`HomeController` は class に `[Authorize]` だが `Index`/`Login` は `[AllowAnonymous]`、
+`PingController` は素の `Controller`（`[Authorize]` 無し）＝**`/`・`/Home/Index`・`/Home/Login`・`/Ping/Index` はすべて 200**
+（未認証でも 302 にならない。**net48 MVC は `Ping/Index`=302**＝同名サンプルでもランタイムで違う）。
+**判定は「200 が返り、かつ `ACCESS` ログにフィルタのトレース（`OnActionExecuting` 等）が出ること」**＝ログに出て初めて
+基盤初期化（`%OT_RESOURCE_ROOT%` 解決）の成功が言える（200 だけでは resource/config 解決の成否は分からない）。
+500＝resource/config 解決失敗の見方は net48 と同じ。**core は `InitConfiguration()` 必須**（⑦）。
 
 ## デスクトップ（WinForms / WPF・2CS・リッチクライアント）＝ exe
 
@@ -67,6 +84,9 @@ Web ではないので HTTP スモークは無い。**exe を起動してプロ�
 セットアップの不備ではない）。DB は選択式 `opentouryo-project-setup-db` で立てられる（既定が SQL Server/Northwind と一致）。
 
 - exe の場所：net48＝`bin\Debug\<app>.exe`、core＝`bin\Debug\net10.0-windows7.0\<app>.exe`（`dotnet run --project <proj>` でも可）。
+- **★ 2CS 等のログは `resource\Log\` でなく exe と同じフォルダに出る（#25）**（同梱ログ定義の `File` が相対名 `ACCESS_2CS` 等＝
+  `references/resource-config.md` の埋め込み/相対）。起動生存を裏取りするときは **`bin\Debug\*.log`** を見る
+  （Web の癖で `resource\Log` を見ると「ログが出ない＝失敗」と誤判定する）。
 - **非対話チェック**（起動生存を機械判定）：
 
   ```powershell
@@ -78,9 +98,13 @@ Web ではないので HTTP スモークは無い。**exe を起動してプロ�
   ```
 
 - **3層リッチクライアント（`WSClient_*`）は WS ホスト側の起動も要る**：WS ホスト＝`WS_sample\ServiceInterface`
-  （既定 `ASPNETWebService`＝クライアントが `TMProtocolDefinition2` を使用）を **IIS Express で起動**
-  してからクライアント exe を起動し、WS 越し（`protocol="2"`）に呼べることを確認する。ホストの引き込み・張替は
+  （既定 `ASPNETWebService`）を起動してからクライアント exe を起動する。ホストの引き込み・張替は
   `opentouryo-project-setup-core` の `samples/webservices.md`（③ WS ホスト節）。ホスト未起動ならインプロセス兼用で開ける。
+  - **★ WS ホストの稼働は GUI 無しで機械判定できる（#32）**：既定 `IISUrl=https://localhost:44349/` は証明書が要るので、
+    WebForms と同じく**プレーン HTTP ポートで起動**する（`iisexpress /path:"<host dir>" /port:8082 /clr:v4.0`）。判定＝
+    **`GET /test`（`FxController`）が 200＋固定 JSON**／**`GET /WebAPIControllerForFx` が 405**（POST 専用＝ルート生存の証拠）。
+    **`GET /`（既定ドキュメント無し）はタイムアウトするので判定に使わない**。実 WS 呼び出し（既定 `protocol="5"` の Web API）は
+    クライアント GUI 起点＝到達点は「ホスト稼働＋クライアント起動生存」まで（`samples/webservices.md` #31/#32）。
 
 ## バッチ / CLI（コンソール）＝ exe（引数あり）
 
