@@ -29,6 +29,12 @@
   develop では crud 2画面を消すと `sampleScreen.master`（MButton 現存）が無参照になる＝**削除対象**。
 - **`menu.aspx` のリンク掃除（T9）**：画面を消すと `menu.aspx` に**リンク切れが残る**。**ビルドも `aspnet_compiler` も通ってしまう**
   ＝実行して 404 で初めて気付く。削った画面へのリンクは menu から消す（業務画面用のプレースホルダ コメントへ置換）。
+- **★ 消した画面/クラスを指す XML 定義・config の後始末（T4）**：画面・B層（`LayerB`）を消すと、それを指す `resource\Xml` の定義が
+  **存在しない画面/クラスを指したまま静かに腐る**（呼ぶ画面も消えるので実行時に露見しない＝ビルドでも出ない）。実測（develop）：
+  `SCDefinition.xml`（画面遷移）は `~/Aspx/testScreenCtrl/...` 等の削除済み画面を、`TMInProcessDefinition`（＋2層化で作った
+  `TMInProcessDefinition_<App>.xml`）は消えた `LayerB` を指したまま残る。→ **`SC`/`TMInProcess`/`SP`/`TC` 定義（`resource\Xml`）と
+  `app.config` の該当キーから、消した画面/クラスのエントリを掃除する**（2層化〔`ws-decouple` の T1〕で作ったアプリ専用 TMInProcess 定義は、
+  B層ごと消えたら空＋書式テンプレのコメントに戻す）。
 - 上記からのみ参照される型・`using`。
 
 ## ★トラップ（名前で決めない・結論は版で反転する＝最優先の注意）
@@ -74,5 +80,6 @@ master 上のコントロール（ボタン等）のイベントハンドラは�
    （同名クラスが同梱ソースにある→`using` 差し替え／3層専用→削る。`ws-decouple`）。
 3. **残す画面の `MasterPageFile` を grep → 無参照マスタを削る**（★トラップ）。
 4. **`menu.aspx` のリンク掃除**（削った画面への link を除去。ビルドは通るので実行 404 の前に）。
-5. csproj を剪定（空 `ItemGroup` 除去含む）→ 再ビルド → `aspnet_compiler` で静的検証（マークアップの参照切れ検出）。
-6. 認証（OAuth2 等）を使わないなら、**画面と `login` 側のボタンを対で**削る（T15）。
+5. **消した画面/クラスを指す XML 定義（`resource\Xml` の `SC`/`TMInProcess`/`SP`/`TC`）と `app.config` の該当キーを掃除**（T4。静かに腐る＝ビルドでも実行でも出ない）。
+6. csproj を剪定（空 `ItemGroup` 除去含む）→ 再ビルド → `aspnet_compiler` で静的検証（マークアップの参照切れ検出）。
+7. 認証（OAuth2 等）を使わないなら、**画面と `login` 側のボタンを対で**削る（T15）。

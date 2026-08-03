@@ -119,14 +119,12 @@ metadata:
 
 - **取得元は固定タグに固定する**（`develop` は土台が動きオーバーレイの当たりがズレる。**overlay はファイル丸ごと差し替え＝
   `develop` を引き直すと上流の当該ファイル変更を巻き戻す**（T13）。`opentouryo-project-setup-selection` ②で固定タグを選ぶ）。
-- ビルド スクリプトは `3_Build_Business_*` の**前に**オーバーレイを展開ツリーへ上書きする
-  （`<extract>` は展開先。深いリポで MAX_PATH を避けるため短い作業ルート `C:\otr\...` のこともある。
-  `opentouryo-project-setup-build`）：
+  **★ `develop` 立ての repo に後から overlay を足すなら、まず固定タグへ焼き直す**（ベンダを作り直してから overlay。#T5）。
+- ビルド スクリプトは `3_Build_Business_*` の**前に**オーバーレイを展開ツリー（`<extract>`。MAX_PATH 回避で短ルート `C:\otr\...` のことも）へ上書きする（`opentouryo-project-setup-build`）：
 
   ```powershell
-  # フォルダ相手の xcopy は F/D を訊いて非対話で止まりうる。Copy-Item が安全
+  # Copy-Item が安全（フォルダ相手の xcopy は F/D を訊いて非対話で止まりうる）
   Copy-Item -Path base2-overlay\* -Destination <extract>\root\programs\CS\ -Recurse -Force
-  # xcopy を使うなら /I を付ける： xcopy /Y /E /I base2-overlay\* <extract>\root\programs\CS\
   ```
 
   **元エンコードを保って書く**：基盤ソースは **UTF-8 BOM 付き**で日本語コメントを含む。オーバーレイをツールで

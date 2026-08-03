@@ -64,7 +64,14 @@ $vendor  = Join-Path $repo 'OpenTouryoAssemblies\Build_net48'
 $overlay = Join-Path $repo 'base2-overlay'   # present only when customizing 親クラス2
 
 # --- 1. ZIP acquisition (not git clone) ---
+# ★ #1 pristine-build guard: an extract tree that a PREVIOUS run OVERLAID (base2)
+#   is reused as-is here and silently vendors a NON-pristine DLL (old OLE/ODBC or
+#   handler removals persist; the diff never shows in build output). For a pristine
+#   ref (no overlay this round) rebuild the tree. Same $extract is reused by the
+#   netcore script, so this guard applies there too.
+$Fresh = $false   # set $true to force a clean re-extract (素の ref を焼くとき)
 New-Item -ItemType Directory -Force -Path $work | Out-Null
+if ($Fresh -and (Test-Path $extract)) { Remove-Item $extract -Recurse -Force }
 if (-not (Test-Path $extract)) {
     if (-not (Test-Path $zip)) {
         # WebClient.DownloadFile() defaults to an old TLS and gets 404 from GitHub

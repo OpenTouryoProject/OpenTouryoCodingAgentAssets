@@ -31,12 +31,22 @@
 
 - `Aspx/Framework/Ping.aspx` … 未認証で **302**（→ login へ）。正常。
 - `Aspx/start/login.aspx` … **200** でログインフォームが描画されれば OK。
+- **★ 初回リクエストは待つ（#7）**：ビルド直後の**初回リクエストは初回コンパイル**（WebForms＝`.aspx` コンパイル／core＝JIT・起動）で
+  **30 秒を超える**ことがある（実測：`/Ping/Index` が 30s タイムアウト→ウォーム後は正常）。**タイムアウト＝失敗と誤判定しない**
+  ＝初回は **120s 程度のタイムアウト**にするか、**1発ウォームアップしてから判定**する。
 - **500 が出たら resource パス／config 解決の失敗を疑う**（フレームワーク初期化で XML 定義・log4net を
   `%OT_RESOURCE_ROOT%` から読む＝ここが実行時検証の勘所。⑥ / `references/resource-config.md`）。
   **典型症状＝`System.ArgumentException: リソースファイル[…]は見つかりませんでした。`（`at Touryo.Infrastructure.Public.IO.ResourceLoader.Exists`）**。
   `%OT_RESOURCE_ROOT%` が**プロセスに載っておらず空展開**し、パス先頭（ルート）が欠けたときに出る
   （例：`リソースファイル[\Log\SampleLogConf.xml]は見つかりませんでした`）。原因＝常駐シェルが `SetEnvironmentVariable`
   より前に起動し古い環境ブロックを継承したケース等 → **手順2 のとおり起動コマンドで `$env:OT_RESOURCE_ROOT` を明示**する。
+
+## ★ WebForms のポストバック検証は hidden を全件返す（#T2）
+
+WebForms を**非対話でポストバック**（ボタン押下相当）で叩くとき、**GET で受け取った `<input type="hidden">` を全件そのまま次の POST に載せる**。
+`__VIEWSTATE`/`__EVENTVALIDATION` だけを返すと、フレームワークが持つ **`ctl00$RequestTicketGuid`・`ScreenGuid`・`WindowGuid`・`SubmitFlag`** 等が欠けて
+**`FrameworkException:不正操作チェック処理でエラーが発生しました。`** になる（実測。ビルドも設定も正しいのに「実行失敗」に見える＝紛らわしい）。
+＝MVC 側の antiforgery（下記 #11）と対。
 
 ## ★ 自動スモークの罠：分離レベルの先頭 option は `NC`（NotConnect）（#18）
 
@@ -70,6 +80,11 @@ dotnet run --project "<repo>\MVC_Sample_Core\MVC_Sample" --urls http://localhost
 **判定は「200 が返り、かつ `ACCESS` ログにフィルタのトレース（`OnActionExecuting` 等）が出ること」**＝ログに出て初めて
 基盤初期化（`%OT_RESOURCE_ROOT%` 解決）の成功が言える（200 だけでは resource/config 解決の成否は分からない）。
 500＝resource/config 解決失敗の見方は net48 と同じ。**core は `InitConfiguration()` 必須**（⑦）。
+
+**★ core MVC の DB 到達確認は antiforgery 込みの POST（#11・非対話手順）**：`GET /Home/Login` で **`__RequestVerificationToken`**
+（`name="__RequestVerificationToken"` の hidden ＋ 同名 Cookie）を拾い、それを載せて **POST /Home/Login** → **セッション（Cookie）を維持**して
+**POST /Crud1/SelectCount**（`DdlIso=RC` を明示＝先頭 `NC` を避ける〔#18〕）。成功＝「3件のデータがあります」＋`SQLTRACE` に `SELECT COUNT(*)`。
+**トークンと Cookie を引き回さないと弾かれる**（WebForms の hidden 全件返し〔#T2〕と対の、MVC 版の非対話手順）。
 
 ## デスクトップ（WinForms / WPF・2CS・リッチクライアント）＝ exe
 

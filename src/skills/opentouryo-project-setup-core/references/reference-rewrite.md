@@ -18,6 +18,11 @@ net48 サンプルの元 HintPath は `…\Frameworks\Infrastructure\Build\`（�
 `3_Build_BusinessRichClient_netcore100.bat` でこれらが揃うので、**`net10.0-windows7.0\` フォルダを丸ごと再ベンダ**してから
 張り替える（個別 DLL だけ拾うと `OpenTouryo.Business` で `CS0246`）。→ `opentouryo-project-setup-build` ③。
 
+**★ ベンダされる Dam の集合もランタイムで割れる（#10）**：`DamPstGrS`（PostgreSQL＝`NPS`）は **core 専用**
+（`DamPstGrS_netcore100.csproj` のみ＝net48 に無い）。core サンプルは `DamPstGrS` を参照するので、
+**net48 の DLL 一覧で core の要否を照合すると「無い」と誤判定**する＝**確認はランタイムごとのベンダ先で行う**
+（`opentouryo-project-setup-build` §3 の確認パス）。
+
 ## 張り替え対象は「ベンダ先 `Build_*\` に含まれる DLL すべて」（`OpenTouryo.*` だけではない）
 
 例：net48 サンプルの `MySql.Data` / `Oracle.ManagedDataAccess` は **`packages.config` に無く**、

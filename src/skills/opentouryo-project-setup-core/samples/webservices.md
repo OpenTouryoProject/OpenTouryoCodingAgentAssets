@@ -32,6 +32,11 @@ WS/3層依存サンプルは、別サンプル **`WS_sample` の `WSIFType_sampl
   `WSIFType_sample`/`WSServer_sample` が無ければ **VS でビルド対象にならず `nuget restore <sln>` の対象からも漏れる**。
   `Project("{…}") = "<名>", "<相対パス>.csproj", "{GUID}"` 行＋`ProjectConfigurationPlatforms`（各プラットフォーム×2行）を足す。
   （WSClient の `_all.sln` は下記③に既述。**WebForms 等の単体 sln でも同じ**＝`samples/webforms.md`。）
+  - **★ この追加は「静かに失敗」しうる＝改行を合わせ、行数で検算する（#14）。** sln の**改行コードは ref／ファイルで割れる**
+    （実測：ある ref では csproj＝LF・**develop では sln も csproj も CRLF**）＝**決め打ちせず、編集するファイルの実際の改行を確認して合わせる**。
+    改行/アンカー不一致だと **`Project(...)` 行は入っても `ProjectConfigurationPlatforms` 行だけ無反応**になり、
+    しかも **ProjectReference 経由でビルドは通る＝偽の成功**（VS で開いて初めて構成欠落が判明する）。
+    → **追加後、`GlobalSection(ProjectConfigurationPlatforms)` 内の当該 GUID の行（＝構成数×2）を数えて実際に入ったか検算する**。
 - **`<Project>` GUID を参照先と一致させる（#2）。** `<ProjectReference>` の `<Project>{GUID}</Project>` は
   **参照先 csproj の `<ProjectGuid>` と一致**させる（ずれると VS が再解決・警告）。
 - **張替後、全プロジェクトで `ProjectReference` の実在を確認する（#30）。** 機械挿入の目印にする

@@ -15,9 +15,11 @@ SKILL の「5つの面」の詳細。実測（develop）で裏取り済み。
   Dam が**別 DLL**（`OpenTouryo.DamManagedOdp`/`.DamMySQL`/`.DamPstGrS`）のときだけ該当。
   **`DamOLEDB`/`DamODBC` は `Public`（親クラス1）に同居**（`Public\Db\Dam{OLEDB,ODBC}.cs`）＝**外せない・外してはいけない**
   （外すには親クラス1 を触る＝規約違反）。→「Dam がどのアセンブリに居るか」で②③の要否が決まる。
-- **④ config の `ConnectionString_<code>`（アプリ側）。開発支援ツールは対象外（T18）。**
-  `OT_Tools\DaoGen_Tool`（墨壺）は**親クラス2 を経由せず自前で `OdbcConnection`/`OleDbConnection` を開く**（`Form1.cs`）＝
-  キーを消すとツールが壊れる＝**残すのが正**（＝親クラス2 経由のアプリの config だけ張り替える）。
+- **④ config の `ConnectionString_<code>`＝親クラス2 を参照して B層を動かす側すべて（T18／T11）。**
+  対象は**アプリの config だけでなく、WS ホスト（`ASPNETWebService`/`WCFService`）の `<connectionStrings>`（`name="ConnectionString_<code>"`）も含む**
+  （実測：両ホストに `ConnectionString_OLE`/`_ODBC`。3層構成で「アプリ側だけ」と書くとホストを取りこぼす＝T11）。
+  一方 **開発支援ツール `OT_Tools\DaoGen_Tool`（墨壺）は対象外**：親クラス2 を経由せず自前で `OdbcConnection`/`OleDbConnection` を開く（`Form1.cs`）
+  ＝キーを消すとツールが壊れる＝**残すのが正**（T18）。
 - **④' サンプル UI の DAP 選択肢（第5の面・T19）。** 分岐を消しても、サンプルのドロップダウンに DBMS コードが残ると、
   選んだとき `UOC_ConnectionOpen` の**最後の `else` が SQL Server に黙ってフォールバック**する（エラーにならず別 DBMS で動く＝
   最も気付きにくい壊れ方）。UI 側（`Form1.cs`/`CrudViweModel.cs` 等）の選択肢も揃える。
