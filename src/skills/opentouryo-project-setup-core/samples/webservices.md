@@ -28,6 +28,11 @@ WS/3層依存サンプルは、別サンプル **`WS_sample` の `WSIFType_sampl
 
 サンプル間参照を DLL→ProjectReference に切り替えるときは、どのサンプルでも次を守る（実測で踏む）：
 
+- **★ (A) 化の前に「実使用」を確認する（#10・目視検出で是正）。** csproj に WS 参照（`WSIFType_sample`/`WSServer_sample`）があっても、
+  **`.cs`/`.cshtml` に WS 型（`using WSIFType_sample`・`TestParameterValue`/`TestReturnValue` 等）が無ければ、未使用の陳腐化参照**
+  ＝**ProjectReference 化・sln 追加でなく、参照ごと削除する**（削除しても未使用なので `CS0246` は出ない）。
+  実測：**`MVC_Sample` は WS 型 0 使用＝削除が正**（`samples/mvc.md`）／**WebForms は `sampleScreen_cc` が使うので (A)/(B) 判断が要る**。
+  ＝**(A)/(B) は「参照の有無」でなく「実使用の有無」で決める**（機械的に全部 ProjectReference 化しない）。
 - **アプリの `.sln` にも当該プロジェクトを追加する（#1）。** csproj を ProjectReference にしても、`.sln` に
   `WSIFType_sample`/`WSServer_sample` が無ければ **VS でビルド対象にならず `nuget restore <sln>` の対象からも漏れる**。
   `Project("{…}") = "<名>", "<相対パス>.csproj", "{GUID}"` 行＋`ProjectConfigurationPlatforms`（各プラットフォーム×2行）を足す。
@@ -54,7 +59,9 @@ WS/3層依存サンプルは、別サンプル **`WS_sample` の `WSIFType_sampl
    - **クライアント → `WSServer_sample`・`WSIFType_sample`**：旧 `..\..\Build\*.dll` の `<Reference>`+HintPath を**削除**し、
      各 `.csproj`（`..\..\WSServer_sample\WSServer_sample.csproj` 等）への `<ProjectReference>` にする。
    - **WS ホスト（ASPNETWebService/WCFService）→ 同2つ**：旧 `...\Samples\WS_sample\Build\*.dll` を**削除**し ProjectReference に。
-   - `WSServer_sample → WSIFType_sample` は既定で ProjectReference（触らない）。
+   - `WSServer_sample → WSIFType_sample` は**源で ProjectReference（既定）**。**★ 2つを sln に追加するときは `WSIFType_sample` も
+     確実に入れ（#14 の行数検算）、`WSServer_sample`→`WSIFType_sample` の ProjectReference が生きていることを確認する**
+     （WSIF が sln に無い／参照が切れると **`WSServer_sample` が `WSIFType_sample` を解決できずビルド不能**＝目視検出のエラー）。
 3. **各プロジェクトの `OpenTouryo.*` は DLL 参照のままベンダ先へ張り替える**（`…\Frameworks\Infrastructure\Build\` →
    `…\OpenTouryoAssemblies\Build_net48\`。末尾フォルダ名も変わる。深さは配置に合わせる）。
 4. **endpoint は触らない** — `Web.config`/`app.config` の endpoint はフレームワークの Transmission 設定（`opentouryo-transmission`）。

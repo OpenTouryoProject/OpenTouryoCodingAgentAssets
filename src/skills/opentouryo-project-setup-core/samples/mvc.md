@@ -3,16 +3,17 @@
 `opentouryo-project-setup-core` でこのサンプルを取り出すときの、**サンプル固有の癖**。
 （WS/3層まわりの共通機構は `webservices.md`、HintPath の edge case は `references/reference-rewrite.md`。）
 
-## ★ MVC(net48) も WS 依存＝(A)/(B) の判断が要る（#10）
+## ★ MVC(net48) の WS 参照は「未使用の陳腐化参照」＝実使用を確認して削除（#10・目視検出で是正）
 
-**MVC(net48) は WebForms と同じく 3層構成で WS 依存を持つ**（実測）：`MVC_Sample.csproj` が
-`WSIFType_sample` / `WSServer_sample` を **`..\..\..\WS_sample\Build\*.dll`（DLL 参照）**で参照する。
-`WS_sample\Build\` は ZIP に無い生成物なので、**取り出し直後は WS 側型で `CS0246` になり得る**。
-＝**WebForms と同様に (A) そのまま残す（ProjectReference 化）／(B) 切り離す**の判断が要る（共通手順・sln 追加・GUID 一致・
-全 proj 確認は `webservices.md`）。「MVC は WS 無関係」ではない。
+`MVC_Sample.csproj`(net48) は `WSIFType_sample`/`WSServer_sample` を **`..\..\..\WS_sample\Build\*.dll`（DLL 参照）**で持つが、
+**MVC のコードは WS 型を一切使っていない**（実測：`.cs`/`.cshtml` に `using WSIFType_sample`・`WSServer_sample`・WS 型が **0 件**）
+＝**陳腐化した未使用参照**（`About`/`Contact.cshtml` の残骸 #9 と同類）。
 
-- (A) の場合：`WSIFType_sample`/`WSServer_sample` を ProjectReference 化＋`MVC_Sample.sln` に2プロジェクト追加（#1/#2）。
-- (B) の場合：後工程 `opentouryo-project-transform`。
+- → **WS 参照を (A) ProjectReference 化・`.sln` に追加してはいけない**（不要な参照・sln 肥大が残る＝**目視で検出された不具合**）。
+- **取り出し時に `.cs`/`.cshtml` を grep して WS 型の実使用を確認**し、無ければ **WS 参照（DLL 参照）を csproj から削除**する
+  （使っていないので削除しても `CS0246` は出ない）。
+- **WebForms との違い**：WebForms は `sampleScreen_cc.aspx.cs` が WS 型（`TestParameterValue`/`TestReturnValue`）を**実際に使う**ので (A)/(B) の判断が要る。
+  MVC は使っていないので判断の余地なく**削除**＝**(A)/(B) は「参照があるか」でなく「実使用があるか」で決める**（共通手順は `webservices.md`）。
 
 ## MySql/Oracle の HintPath は「Frameworks 側」＝WebForms と割れる
 
