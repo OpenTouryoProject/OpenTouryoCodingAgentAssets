@@ -26,49 +26,43 @@
 /opentouryo-project-setup で WSClientWin_sample net48 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
 ## 9
-/opentouryo-project-setup で WSClientWin_sample net48 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
-
-## 10
-/opentouryo-project-setup で WSClientWin_sample net48 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
-
-## 11
 /opentouryo-project-setup で WSClientWin2_sample net48 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
-## 12
+## 10
 /opentouryo-project-setup で WSClientWinCone_sample net48 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
-## 13
+## 11
 /opentouryo-project-setup で WSClientWPF_sample net48 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
-## 14
+## 12
 /opentouryo-project-setup で SimpleBatch_sample net48 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
-## 15
+## 13
 /opentouryo-project-setup で SimpleBatch_sample net10.0 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
-## 16
+## 14
 /opentouryo-project-setup で RerunnableBatch_sample net48 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
-## 17
+## 15
 /opentouryo-project-setup で RerunnableBatch_sample net10.0 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
-## 18
+## 16
 /opentouryo-project-setup で RerunnableBatch2_sample net48 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
-## 19
+## 17
 /opentouryo-project-setup で RerunnableBatch2_sample net10.0 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
-## 20
+## 18
 /opentouryo-project-setup で RerunnableBatch3_sample net48 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
-## 21
+## 19
 /opentouryo-project-setup で RerunnableBatch3_sample net10.0 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
-## 22
+## 20
 /opentouryo-project-setup で Simple_CLI net10.0 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
-## 23
+## 21
 /opentouryo-project-setup で DAG_Login_CLI net10.0 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
 
-## 24
+## 22
 /opentouryo-project-setup で LIR_Login_CLI net10.0 / [branches/tags](既存） を実行。 問題点は Reporting.md に書き出して下さい。
