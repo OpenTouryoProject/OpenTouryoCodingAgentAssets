@@ -16,12 +16,16 @@
     「TODO:」を検索して各節を埋めてください。空欄のまま配布しないこと。
 -->
 
-# OpenTouryo アプリケーション開発
+# プロジェクト ポリシー
 
-このリポジトリは **OpenTouryo**（.NET 用アプリケーションフレームワーク）を利用している。
-以下の規約に従って実装すること。
+このリポジトリは
 
-## プロジェクト ポリシー
+- [OpenTouryo](https://github.com/OpenTouryoProject/OpenTouryo/)（.NET 用アプリケーションフレームワーク）
+- [OpenTouryoCodingAgentAssets](https://github.com/OpenTouryoProject/OpenTouryoCodingAgentAssets/)（Open棟梁を使用するエージェント・スキル）
+
+を利用している。
+
+コーディング・エージェントは、以下の規約に従って実装すること。
 
 <!--
   導入プロジェクト固有の運用ルールを記述する欄。
@@ -31,7 +35,7 @@
   方針が異なる場合は、このプロジェクトの実態に合わせて書き換えること。
 -->
 
-### Git 操作は行わない
+### Git 操作は行わない（状態を変える操作をしない）
 
 **成果物の検収は人が行う。** エージェントは作業結果をワーキング ツリーに残すところまでを担当し、
 Git 操作は人が手動で行う。
@@ -40,6 +44,10 @@ Git 操作は人が手動で行う。
 
 - `git add` / `commit` / `push`（検収前・未レビューの変更を確定・送信しない）
 - `git checkout` / `switch` / `branch` / `reset` / `restore` / `stash`（人の作業状態や未保存の作業を壊す）
+
+**参照系は制限しない。** 何を変更したかを正確に報告するために必要なため、次は自由に実行してよい。
+
+- `git status` / `diff`（`--cached` 含む）/ `log` / `show` / `ls-files` / `check-ignore` / `blame`
 
 作業が完了したら**何を変更したかを報告するに留める**。コミットの要否とタイミングは人が判断する。
 
@@ -83,12 +91,9 @@ Git 操作は人が手動で行う。
 - ランタイム: net48 / net10.0
 - IDE: TODO
 
-ランタイムで書き方が変わる箇所がある（差異は各スキルに記述）。主な差異：XML 定義ファイルは共通、
-`app.config` は core 系で `appsettings.json`。
-
 ### DBMS による差異（スキルの SQL 例は特記なければ SQL Server）
 
-対象 DBMS はプロジェクト依存（Oracle / DB2 / HiRDB / MySQL / PostgreSQL 等）。
+対象 DBMS はプロジェクト依存（SQL Server / Oracle / MySQL / PostgreSQL 等）。
 **SQL 定義ファイル（`.sql` / `.xml`）は DBMS 別**で、パラメタの接頭辞（SQL Server `@P1` /
 Oracle `:P1`）・`CAST`・関数の構文が違う。**型情報も DBMS 依存**
 （`SqlDbType.Int` / `OracleDbType.Int32`）。一方、**コードの `SetParameter("P1", ...)` は
