@@ -9,8 +9,11 @@ MVC_Sample_Core に opentouryo-* スキルを使用して、以下の基本的�
 ## ケース3：WebForms_Sample
 WebForms_Sample に opentouryo-* スキルを使用して、以下の基本的な処理を実装する。
 
-## ケース4：...
-...
+## ケース4：2CSClientWin_sample
+2CSClientWin_sample に opentouryo-* スキルを使用して、以下の基本的な処理を実装する。
+
+## ケース5：WSClientWin_sample
+WSClientWin_sample に opentouryo-* スキルを使用して、以下の基本的な処理を実装する。
 
 ## 基本的な処理
 - 使用するフレームワーク毎に[共通仕様](../spec/test-framework.md)と、トランザクション・テーブル（Orders。表示変換・ドロップダウンに使うマスタ・テーブルは Shippers〈ShipVia〉）を使用した[サンプル仕様](../spec/test-transactiontable.md)に従って実装する。
