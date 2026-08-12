@@ -59,10 +59,11 @@ IIS Express / w3wp の CWD はアプリ フォルダでないため 500 にな�
 解決されるが、その中身は OpenTouryo が展開せずログライブラリへそのまま渡す**（log4net＝`XmlConfigurator`／NLog＝`XmlLoggingConfiguration`）。
 ＝**展開は各ログライブラリの書式**で行う。`LogLib`（log4net / NLog）の選択は `opentouryo-logging`。
 
-**★ 絶対パスを持つログ定義は `SampleLogConf.xml` だけではない（#4）。** 実測（develop の `resource\Log\`）で
+**★ 絶対パスを持つログ定義は `SampleLogConf.xml` だけではない（#4）。** 実測（`resource\Log\`）で
 `SampleLogConf.xml` / `SampleLogConfWebService.xml` / `SampleLogConf_N.xml`（NLog）/ `Examples of rolling of date+size.xml` /
-`Log4NetConfigTemplate.xml` / `NLogConfigTemplate.xml` にも `C:\root\files\resource\Log\...` がある
-（`SampleLogConf2CS.xml` は相対名 `ACCESS_2CS`＝デスクトップ同梱で対象外）。→ **`resource\Log\*.xml` を走査して該当を全件**張り替える
+`NLogConfigTemplate.xml` の**5ファイル**に `C:\root\files\resource\Log\...` がある
+（`Log4NetConfigTemplate.xml` は `File` 値がプレースホルダ `（★ファイルパス）`で絶対パスを持たない＝対象外。
+`SampleLogConf2CS.xml` は相対名 `ACCESS_2CS`＝デスクトップ同梱で対象外）。→ **`resource\Log\*.xml` を走査して該当を全件**張り替える
 （1ファイル決め打ちにしない）。
 
 - **log4net**：`%OT_RESOURCE_ROOT%` は効かない → `PatternString` の `%env{}`（`<param name="File">` を型付き `<file>` に置換）：

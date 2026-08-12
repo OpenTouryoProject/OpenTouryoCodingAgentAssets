@@ -3,6 +3,7 @@
 実環境（WebForms_Sample / net48 / 固定タグ `03-20` / 深いリポ パス）で**実際に通した2本**。
 本スキルが推奨する「生成スクリプトをリポジトリに残す・`.bat` より PowerShell ラッパ」の具体例で、
 既知の落とし穴（MAX_PATH＝短い作業ルート、exit code 不信＝DLL 実在で判定、`.\`＋`< nul`、
+**出力を `Select-Object -First N` で絞らない**〔下記〕、
 **2CS＝`Business.RichClient` の別 sln**、**ツールの `PackageReference` restore**）を織り込み済み。
 （※`build-app.ps1` は参照方式の更新に合わせて改訂：`WSServer_sample`/`WSIFType_sample` は ProjectReference＝
 1ソリューション一括ビルド。旧「WS を別ビルドして `WS_sample\Build\` へコピー」は不要。`samples/webservices.md`。）
@@ -18,6 +19,16 @@
 **雛形化する際は `$ref`・パス・標的ランタイム（net48）をパラメタ化**する。フラット化しない
 （配置維持）方針なら相対パスは配置に合わせて変える。**as-built の雛形なので、環境に合わせて調整する**
 （Configuration・restore 方式・msbuild 解決など）。
+
+## ★ 実行時の罠：出力を `| Select-Object -First N` で絞らない（スクリプトごと止まる）
+
+これらのスクリプトを `... | Select-String … | Select-Object -First N` のように**出力を絞って**実行すると、
+PowerShell は上流パイプラインを**停止**するため、**スクリプトが途中で終了**する（例外は出ない＝静かな失敗）。実測2件：
+
+- `setup-build.ps1`：overlay 適用と `2_Build_NuGet` は流れたが **`3_Build_Business` に到達せず**、DLL が更新されないまま「成功したように見えた」（DLL のタイムスタンプで気付いた）。
+- `prune-csproj.ps1`：`pruned: N` と表示されたのに **`$xml.Save()` に到達せず csproj は無変更**（直後のビルドが `CS2001` 大量で落ちて初めて気付いた）。
+
+→ **長い出力は `Out-File` に落として後から grep する**（`Select-Object -First N` で絞らない）。上の「exit code 不信＝生成物の実在／タイムスタンプで判定」原則は、まさにこの事故を検出してくれる。
 
 ## ★ 2ランタイムを1本に：`-Runtime` 引数化（#13）
 
@@ -221,9 +232,10 @@ if ($needRichClient -and
 }
 ```
 
-> **既知の警告（本体側）**：core サンプル（例 Core MVC）は `log4net 3.2.0` を `PackageReference` で参照するため、
-> ビルドで **`NU1902`（脆弱性・中）** が出ることがある。**ビルドは通る**。本体のバージョン更新待ちの既知事項なので、
-> セットアップ側で無理に差し替えない（差し替えると本体構成から乖離する）。
+> **既知の警告（本体側・版依存）**：core サンプル（例 Core MVC）が参照する `log4net` の版により挙動が変わる。
+> **`3.2.0` ではビルドで `NU1902`（脆弱性・中）** が出ることがある（**ビルドは通る**）。**`3.3.0` 以降は解消＝0 警告**
+> （実測：develop の Core MVC は `3.3.0`）。いずれにせよ**セットアップ側で無理に差し替えない**（本体の版に従う。
+> 出ても無害・出なくても正常＝どちらでも「おかしい」と迷わない）。
 
 ## `build-app.ps1`（restore → WebForms ソリューションを一括ビルド → ツール）
 

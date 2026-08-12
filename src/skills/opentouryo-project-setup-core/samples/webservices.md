@@ -37,8 +37,9 @@ WS/3層依存サンプルは、別サンプル **`WS_sample` の `WSIFType_sampl
   `WSIFType_sample`/`WSServer_sample` が無ければ **VS でビルド対象にならず `nuget restore <sln>` の対象からも漏れる**。
   `Project("{…}") = "<名>", "<相対パス>.csproj", "{GUID}"` 行＋`ProjectConfigurationPlatforms`（各プラットフォーム×2行）を足す。
   （WSClient の `_all.sln` は下記③に既述。**WebForms 等の単体 sln でも同じ**＝`samples/webforms.md`。）
-  - **★ この追加は「静かに失敗」しうる＝改行を合わせ、行数で検算する（#14）。** sln の**改行コードは ref／ファイルで割れる**
-    （実測：ある ref では csproj＝LF・**develop では sln も csproj も CRLF**）＝**決め打ちせず、編集するファイルの実際の改行を確認して合わせる**。
+  - **★ この追加は「静かに失敗」しうる＝改行を合わせ、行数で検算する（#14）。** sln の**改行コードは ref／ファイル／
+    チェックアウト設定（`core.autocrlf`）で割れる**（実測でも同じ sln が ref により LF だったり CRLF だったりする＝
+    「develop は CRLF」等と決め打ちしない）＝**編集するファイルの実際の改行を毎回確認して合わせる**。
     改行/アンカー不一致だと **`Project(...)` 行は入っても `ProjectConfigurationPlatforms` 行だけ無反応**になり、
     しかも **ProjectReference 経由でビルドは通る＝偽の成功**（VS で開いて初めて構成欠落が判明する）。
     → **追加後、`GlobalSection(ProjectConfigurationPlatforms)` 内の当該 GUID の行（＝構成数×2）を数えて実際に入ったか検算する**。
@@ -146,7 +147,8 @@ WinCone＝WSIFType のみ）＝csproj を見て張り替える。
   `ASPNETWebService`/`WCFService` の **`app.config`** に `C:\root\files\resource\...` が**6キー**（`FxXMLMSGDefinition` /
   `FxXMLTCDefinition` / `FxXMLTMInProcessDefinition` / `FxLog4NetConfFile` / `SqlTextFilePath` / `SpRp_RsaCerFilePath`）＝
   `%OT_RESOURCE_ROOT%\...` 化する。**ASPNETWebService は `Web.config` の `<appSettings file="app.config">` で app.config を
-  実行時マージ**（`Web.config` だけ見ると絶対パスが無く見落とす）。綴りは ASPNETWebService=`Xml`／WCFService=`XML`（`resource-config.md` の綴り罠）。
+  実行時マージ**（`Web.config` だけ見ると絶対パスが無く見落とす）。**綴りは ref で割れる**（実測：ASPNETWebService=`Xml`／
+  WCFService=`XML` の ref もあれば、両ホストとも `XML` の ref もある。実フォルダはいずれも `Xml`）＝**決め打ちせず実測して合わせる**（`resource-config.md` の綴り罠）。
 - **復元**：`WCFService` は `PackageReference`＝`msbuild /t:Restore`。**`ASPNETWebService` は `packages.config`＝要注意**：
   `_all.sln` 一括 `nuget restore` はパッケージをソリューション ディレクトリ（client 側）に入れるが、`ASPNETWebService.csproj`
   の HintPath / `.targets` インポートは **csproj 相対 `packages\...`**（`Microsoft.Data.SqlClient.SNI.targets` 等）。

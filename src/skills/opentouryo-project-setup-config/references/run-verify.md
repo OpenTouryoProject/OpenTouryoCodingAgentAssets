@@ -41,12 +41,39 @@
   （例：`リソースファイル[\Log\SampleLogConf.xml]は見つかりませんでした`）。原因＝常駐シェルが `SetEnvironmentVariable`
   より前に起動し古い環境ブロックを継承したケース等 → **手順2 のとおり起動コマンドで `$env:OT_RESOURCE_ROOT` を明示**する。
 
+## ★ 302 を非対話で正しく測る（PS7 の罠が2つ）
+
+スモークの合格基準は**生のステータスコード**（`Ping.aspx`＝302→login／net48 MVC の `Ping/Index`＝302）だが、
+PowerShell で素直に書くと**2通りとも間違える**：
+
+1. `Invoke-WebRequest` は**既定でリダイレクトを追う**ので、302 が追跡後の **200 に化ける**（→「スキルの記述が誤り」と誤診する）。
+2. 止める `-MaximumRedirection 0` は `-SkipHttpErrorCheck` と併用すると、PS7 では**全リクエストが**
+   `Operation is not valid due to the current state of the object` で落ちる（2xx でも発生＝サーバは正常なのに「実行失敗」に見える）。
+
+→ **`HttpClient` で追跡を切って測る**（実測で安定）：
+
+```powershell
+$h = [System.Net.Http.HttpClientHandler]::new(); $h.AllowAutoRedirect = $false
+$c = [System.Net.Http.HttpClient]::new($h); $c.Timeout = [TimeSpan]::FromSeconds(150)
+$r = $c.GetAsync("http://localhost:$Port$path").Result
+"{0} {1}" -f [int]$r.StatusCode, $r.Headers.Location
+```
+
 ## ★ WebForms のポストバック検証は hidden を全件返す（#T2）
 
 WebForms を**非対話でポストバック**（ボタン押下相当）で叩くとき、**GET で受け取った `<input type="hidden">` を全件そのまま次の POST に載せる**。
 `__VIEWSTATE`/`__EVENTVALIDATION` だけを返すと、フレームワークが持つ **`ctl00$RequestTicketGuid`・`ScreenGuid`・`WindowGuid`・`SubmitFlag`** 等が欠けて
 **`FrameworkException:不正操作チェック処理でエラーが発生しました。`** になる（実測。ビルドも設定も正しいのに「実行失敗」に見える＝紛らわしい）。
 ＝MVC 側の antiforgery（下記 #11）と対。
+
+- **★ 押すボタンの name はマスタページ側のことがある**：「件数取得」等の submit は `ctl00$ContentPlaceHolder…$…` でなく
+  **`ctl00$btnMButton1`（マスタページ上のフッタ ボタン）**だったりする。非対話では **`<input type="submit">` を列挙して name を拾う**
+  （その name を `__EVENTTARGET` 相当のキーとして POST に載せる。hidden 全件返しと併用）。
+- **★ ポストバック検証は StateServer 稼働が前提（＝昇格不可なら一時 InProc）**：ログインで `Session["nonce"]` を書くため、
+  ASP.NET State Service 未起動だと **`HttpException:セッション状態要求を…作成できませんでした`（500）** で止まり、以降の検証に入れない。
+  起動は**要管理者**（`opentouryo-project-setup-config` ⑦）。昇格できないときは **`Web.config` の `sessionState` を一時的に `InProc` に変えて検証し、
+  直後に `StateServer` へ戻す**（**作業ツリーは `StateServer` のまま残す**＝⑦ の方針を壊さない）。セッションに触れないパス
+  （`/`・`/Home/Index`・`/Ping/Index`・`Ping.aspx`）のスモークは**未起動でも通る**（InProc 化は postback を伴う検証のときだけ）。
 
 ## ★ 自動スモークの罠：分離レベルの先頭 option は `NC`（NotConnect）（#18）
 
