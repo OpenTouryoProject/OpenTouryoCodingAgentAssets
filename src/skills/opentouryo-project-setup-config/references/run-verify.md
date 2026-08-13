@@ -113,6 +113,11 @@ dotnet run --project "<repo>\MVC_Sample_Core\MVC_Sample" --urls http://localhost
 **POST /Crud1/SelectCount**（`DdlIso=RC` を明示＝先頭 `NC` を避ける〔#18〕）。成功＝「3件のデータがあります」＋`SQLTRACE` に `SELECT COUNT(*)`。
 **トークンと Cookie を引き回さないと弾かれる**（WebForms の hidden 全件返し〔#T2〕と対の、MVC 版の非対話手順）。
 
+**★ ただしアクション URL への直接 POST「だけ」で合否を判定しない（MVC 固有）**：`POST /Xxx/SelectCount` を直接叩くのはボタンを経由しないので、
+**submit ボタンがフォームに紐付いていなくても必ず緑になる**（`@section` に置いたフッタ ボタンが `<form>` の外に出ていても素通り＝`opentouryo-layer-p-mvc` の `@section` 罠）。
+ボタン経由の動作まで見るには、**生成 HTML から各 submit の所属フォーム（`<form>` 内包 or `form="<実在ID>"`）を解決して押下を再現する**
+（どのフォームにも属さないボタンは NG）。ビルドも `aspnet_compiler` も通るため、直接 POST と併せて紐付けも検証する。
+
 ## デスクトップ（WinForms / WPF・2CS・リッチクライアント）＝ exe
 
 Web ではないので HTTP スモークは無い。**exe を起動してプロセスが生存する（起動時クラッシュしない）ことを確認**する

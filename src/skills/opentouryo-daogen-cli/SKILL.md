@@ -49,6 +49,7 @@ $exe = "OT_Tools\DaoGen_Tool\bin\Debug\net10.0-windows7.0\OpenTouryo.DaoGen_Tool
 
 ```powershell
 $work = "C:/temp/daogen"        # ★ 出力先は / 区切り（下の罠 a）
+New-Item -ItemType Directory -Force "$work/gen" | Out-Null   # ★ DAOSQLGEN の /OUTPUT フォルダは事前に作る（下の罠 b）
 # スキーマ → D層定義 CSV（DB 接続要）
 & $exe /CUI /MODE DAODEFGEN /OUTPUT "$work/DaoDef.csv" /DAP SQL /TABLES "Shippers,Orders"
 # 定義 CSV → Dao/DTO/SQL（DB 非接続。/TEMPLATE にテンプレート ルート）
@@ -56,6 +57,8 @@ $work = "C:/temp/daogen"        # ★ 出力先は / 区切り（下の罠 a）
 ```
 
 ※上の引数は例。**実際の必須/任意・既定値は `/HELP` で確認**する（`/MODE` の既定は `DAOSQLGEN`）。
+- **★ 罠 b：`DAOSQLGEN` の `/OUTPUT` フォルダは事前に存在していないと失敗する**（`出力ファイル…のルート フォルダが存在しません。`＝
+  終了コード 2）。`DAODEFGEN` の `/OUTPUT` はファイル指定で親フォルダがあれば足りる＝**挙動が非対称**。DAOSQLGEN 前に `New-Item -ItemType Directory -Force` で作る。
 
 ## ★ エージェントが踏む罠（3つ・README 実測）
 

@@ -73,7 +73,9 @@ this.ShowYesNoMessageDialog("messageID", "保存しますか？", "確認");
 （例：編集中の `DataTable` を `Session` に保持＝`opentouryo-batch-update`。ローカル変数は次ポストバックまで残らない）。
 
 後処理は `UOC_YesNoDialog_Yes_Click` / `_No_Click` / `_X_Click(FxEventArgs parentFxEventArgs)` を
-`override`（**コードは `references/snippets.md`**）。
+`override`（**コードは `references/snippets.md`**）。**★ 戻り値は `void`**＝`protected override void UOC_YesNoDialog_Yes_Click(...)`
+（モーダルの `UOC_ModalDialog_End` も `void`）。同じ画面コードに並ぶ `UOC_（コントロール名）_（イベント名）` は
+**`string`（遷移先 URL）**なので、釣られて `string` で書くと `CS0508`（戻り値の型は `void` でなければならない）になる。
 
 **`parentFxEventArgs.ButtonID` で、どのボタンからダイアログを開いたかを判別する。**
 1画面に確認ダイアログが複数ある場合、`switch` で振り分ける。

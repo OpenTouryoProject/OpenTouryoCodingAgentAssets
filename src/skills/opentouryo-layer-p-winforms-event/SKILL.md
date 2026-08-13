@@ -65,6 +65,11 @@ metadata:
 載せられる（マルチプル/マルチキャストにも使える）。`MenuItem` は親クラス2 のカスタマイズ不要で、`UOC_FormInit` で
 各 `MenuItem.Click` に共通ハンドラ（`Item_Click`）を結線して使える。
 
+**★ 接頭辞で自動結線させるコントロールを動的に足すなら、コンストラクタ（`InitializeComponent()` の直後）で足す。`UOC_FormInit` では遅い。**
+基底 `BaseControllerWin.Form_Load` は **接頭辞走査＆結線（`GetCtrlAndSetClickEventHandler2`。1回きり）→ `UOC_CMNFormInit` → `UOC_FormInit`** の順（実ソースで裏取り）。
+`UOC_FormInit` の中で `Controls.Add()` したボタンは**走査済みで結線対象にならず、接頭辞 `btn` を付けても押下無反応**（実測：コンストラクタ追加＝結線1／`UOC_FormInit` 追加＝結線0）。
+※上の `MenuItem`（`Item_Click` を**手動**結線）や動的 UserControl（`LstUserControl` で別途自動収集）は成立する＝**「接頭辞による自動結線」だけがこの順序制約に掛かる**。
+
 ## ハンドラをどこに書くか（Control の所在別）
 
 **Control が「Form 上」か「UserControl 上」かで、UOC を書く場所が変わる**（実装 `GetMethodName` / `CMN_Event_Handler`。Web Forms のコンテンツ/マスタ/UC 命名に相当）。
@@ -76,6 +81,7 @@ metadata:
 | **UserControl 上**（Form 側で受ける） | `UOC_（UserControl の Name）_（コントロール名）_（イベント名）` | **Form クラス**（UC の Name が接頭辞） |
 
 - **★ ベースForm 上の Control に接頭辞は不要。** フレームワークはコントロールツリーを**再帰検索**する（`RcMyCmnFunction`）ので、ベースForm から継承した Control も自動で見つかる。**Web Forms のマスタページのような「マスタ名の接頭辞」（`UOC_（マスタ名）_…`）は WinForms では要らない**（Form 側は所在に関わらず `UOC_（名）_（イベント）`）。
+  → **フッタ等の共通レイアウトを中間 BaseForm（`MyBaseControllerWin` を継承）に置いて各画面で共有する定石**は `opentouryo-layer-p-winforms-screen`（継承したフッタ ボタンも接頭辞不要で自動結線＝この再帰検索が効く）。
 - **UserControl は Form 側が優先。** フレームワークは **Form → 各 UserControl** の順に UOC を探す。Form 側に UC 用ハンドラ（UC の Name を接頭辞にした形）があればそれを、無ければ UserControl 自身のハンドラ（接頭辞なし）を使う。
 - **UserControl は自動収集される**（`LstUserControl`＝手動登録不要）。**動的な追加/削除**にも対応（`groupBox.Controls.Add(new 〈UserControl〉())`）。
 - 参考サンプル：`Samples/WS_sample/WSClient_sample/WSClientWin2_sample`（`Form3` ＋ `UserControl3`/`UserControlChild`/`UserControlParent`）。※サンプルは削除されうるので**上の規則を正とする**。

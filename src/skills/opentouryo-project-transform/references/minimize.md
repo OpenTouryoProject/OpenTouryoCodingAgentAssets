@@ -56,9 +56,11 @@
 
 ## master 上コントロールのハンドラ（`MyBaseController`・削除は任意）
 
-master 上のコントロール（ボタン等）のイベントハンドラは、命名契約 **`UOC_<マスタ名(拡張子なし)>_<control>_<event>`** で
-`MyBaseController`（親クラス2）に束ねられる（例 `UOC_sampleScreen_btnMButton101_Click`。`opentouryo-layer-p-webforms-screen`）。
-**`MyBaseController` を編集・カスタマイズするなら `opentouryo-base2-customize`。**
+master 上のコントロール（ボタン等）のイベントハンドラは、命名契約 **`UOC_<マスタ名(拡張子なし)>_<control>_<event>`**
+（例 `UOC_sampleScreen_btnMButton101_Click`）で結線される。**実装先は画面コードクラス（コンテンツ側のコードビハインド）でよい**
+（名前はマスタ名だが実装はコンテンツ側＝`opentouryo-layer-p-webforms-event` の実装先表）。**サンプルはたまたま `MyBaseController`（親クラス2）に束ねている**が、
+**フッタ共通ボタンの実装に親クラス2 のカスタマイズは必須ではない**（画面ごとに画面コードクラスへ書けば、親クラス2 を触らずに済む）。
+`MyBaseController` 側に束ねる場合に編集・カスタマイズするなら `opentouryo-base2-customize`。
 
 - **削除は任意（残してよい）。** 最小化で master 上のコントロール（や、その master 自体）を外すと、その**ハンドラは結線されず＝到達不能・
   デッドコードになる**だけで、呼ばれないので大きな問題にはならない。無理に消さなくてよい（実測では `#region マスタ ページ上の…` を

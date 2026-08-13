@@ -64,6 +64,10 @@ P→B には**2経路**があり、**既定は処理方式で決まる**（ど�
 | メソッド名 | **文字列で明示** | **文字列で明示** | `this.ActionName`（自動） |
 | ユーザ情報 | `this.UserInfo` | `MyBaseControllerWin.UserInfo`（**static**） | `this.UserInfo` |
 
+**★ ユーザ情報（引数の `user`）は null 不可。** 親クラス2（例 `MyFcBaseLogic2CS.UOC_PreAction`）が内部でユーザ情報を参照するため、
+`null` を渡すと `DoBusinessLogic` の中で `NullReferenceException` になる（実測）。実画面は上表の値（`this.UserInfo` や static の
+`MyBaseControllerWin.UserInfo`＝既定値入り）を渡すので起きないが、**バッチ／テスト ハーネスなど画面外から B層を叩くときに踏む**（既定の `MyUserInfo` を渡す）。
+
 **メソッド名が B層の振り分けキー。** B層（`MyFcBaseLogic`）が `"UOC_" + メソッド名` で
 レイトバインドする。MVC はアクション名が自動で入るが、Web Forms / Windows Forms は
 イベントハンドラ名と対応しないため**文字列リテラルで明示する**。綴りがズレると実行時に

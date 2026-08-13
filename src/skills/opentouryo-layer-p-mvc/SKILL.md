@@ -275,6 +275,22 @@ GetConfigParameter.InitConfiguration(configuration);
 | `MyHttpContext` | 不要 | `_AddHttpContextAccessor()` / `_UseHttpContextAccessor()` が必要 |
 | 構成の初期化 | 不要 | `GetConfigParameter.InitConfiguration()` が必要 |
 
+## ビュー（`.cshtml`）の落とし穴（net48 特有・ランタイム非対称）
+
+**Razor のコンパイル時期がランタイムで違う**：**net48 は実行時コンパイル**（`.aspx`/`.master` と同じ）、
+**Core は `dotnet build` 時に Razor SDK がコンパイル**。だから次の罠は **net48 MVC だけ**に出る（Core は build/実行で早期に露見する）。
+
+- **★ net48 の `.cshtml` は msbuild で検証されない＝`aspnet_compiler` で事前検証する。** Razor 構文エラー
+  （例 `@if { … @for(…) }` の不要 `@`）は **`msbuild` は Build OK**・**実行しても 500 にならず本文だけ空描画**（レイアウトは出る＝一見動く）。
+  `aspnet_compiler` で初めて `ASPPARSE:"@" 文字の後に予期しない…` を検出できる（`.aspx` は 500 になるぶん、`.cshtml` は白画面で発見が遅れる）。
+- **★ `@section` の中身は `@RenderBody()` の外に描画される。** レイアウトの `@RenderSection` 位置に出るため、ビューで
+  `Html.BeginForm` の `using` ブロック内に置いても、生成 HTML では `<form>` の**外**に出る。`type="submit"` はフォーム外だと
+  **押しても何も起きない**（実測：フッタ［件数確認］が無反応）。→ **`@section` に置く submit には HTML5 の `form="<フォームID>"` を付けて明示的に紐付ける**。
+  Web Forms は `<form runat="server">` がマスタページ全体を包むので起きない＝**MVC 固有**。検証は `references/run-verify.md`（アクション URL への直接 POST だけで判定しない）。
+- **★ net48 MVC のビューは UTF-8 BOM が必須**（`.cshtml`）。net48 MVC の `Web.config` には **`<globalization fileEncoding>` が無く**
+  （WebForms サンプルには有る）、BOM 無し UTF-8 を実行時 Razor が OS コードページ（Shift-JIS）で誤読して**画面テキストが文字化け**する。
+  しかも CP932 の2バイト目が直後の ASCII（`</button>` の `<` 等）を食ってタグを壊し**ボタンも動かなくなる**——ビルドも `aspnet_compiler` も素通りする。`opentouryo-comment-convention`。
+
 ## やってはいけないこと
 
 - **P層に `UOC_` メソッドを書く** — MVC に UOC は無い。アクションメソッドを書く

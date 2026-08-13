@@ -42,6 +42,28 @@ WPF は **B層・D層のみを利用**し、画面は素の WPF として実装�
 public partial class Form1 : MyBaseControllerWin
 ```
 
+## 共通レイアウト（フッタ ボタン等）を複数画面で共有するなら中間 BaseForm に置く
+
+**複数画面で同じフッタ（5ボタン等）を共有したいときの定石**＝`MyBaseControllerWin` を継承した**中間の具象 BaseForm**
+（例 `SuppliersBaseForm`）を1枚作り、そこに共通 UI（フッタ ボタン等）を置く。各画面 `Form` はこの BaseForm を継承する。
+**Web Forms の Master Page／MVC の `_Layout.cshtml` に相当**する WinForms 版（フォーム継承＝ビジュアル継承）。
+
+```csharp
+public partial class SuppliersBaseForm : MyBaseControllerWin { /* フッタ5ボタンをここに配置 */ }
+public partial class SuppliersScreenA : SuppliersBaseForm { /* 画面固有のコントロール */ }
+```
+
+- **★ 中間 BaseForm は VS デザイナで編集できる＝共通 UI をデザイナで置ける。** `MyBaseControllerWin` は**具象クラス**
+  （親クラス1 `BaseControllerWin` が `abstract` なので `MyBaseControllerWin` 側は abstract を**外してある**）だから、それを継承した
+  BaseForm はデザイナが基底面を生成できる。**ただし `MyBaseControllerWin` 自体は直接デザイナで開けない**（基底 `BaseControllerWin`
+  が abstract でインスタンス化できない）→ **共通 UI をデザイナで組みたいなら、素の `MyBaseControllerWin` でなく中間 BaseForm を挟む。**
+- **継承したフッタ ボタンも接頭辞不要で自動結線される**（フレームワークがコントロールツリーを再帰検索するため）。ハンドラ
+  `UOC_btnMainN_Click(RcFxEventArgs)` は**各画面（派生の末端 Form）に書く**（`opentouryo-layer-p-winforms-event`）。
+- **画面ごとのボタン制御**（キャプション変更・活性/非活性）は各 Form の初期処理 `UOC_FormInit` で動的に行う。
+  なお**コントロールを動的に足すならコンストラクタで**（`UOC_FormInit` は結線後に走る＝`opentouryo-layer-p-winforms-event`）。
+- サンプル（`2CSClientWin_sample` 等）は `MyBaseControllerWin` を**直接**継承する（中間 BaseForm 無し）＝**共有したい共通レイアウトが
+  あるとき**にこの中間 BaseForm を足す、という位置づけ。
+
 ## UOC メソッドの分界
 
 **`CMN` が付くものは親クラス2 の共通処理。** Web Forms と同じ命名体系。

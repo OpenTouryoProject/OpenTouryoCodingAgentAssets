@@ -93,7 +93,8 @@ msbuild は `.cs` しかコンパイルせず、`.aspx`/`.master` 側のエラ�
 `TagPrefix` 未登録・designer 宣言漏れ）は**実行時まで出ない**。ビルド成功＝マークアップ健全ではない。事前に
 `aspnet_compiler.exe -v / -p <プロジェクトディレクトリ> -f <出力先>` でマークアップをコンパイル検証する
 （`opentouryo-project-setup-config` の検証にも併記）。
-**★ 新規 `.cs` は UTF-8 BOM を後付けする**（BOM 無しだと `csc` が Shift-JIS 解釈で日本語コメントが文字化け。`opentouryo-comment-convention`）。
+**★ 新規に作った／書き直した `.cs` とビュー（`.aspx`/`.master`）は UTF-8 BOM を後付けする**（BOM 無しだと既定コードページ
+＝Shift-JIS 解釈で日本語が文字化け。WebForms は `Web.config` に `<globalization fileEncoding="utf-8">` があり比較的安全だが、規約として付ける。`opentouryo-comment-convention`）。
 
 ## 認証（Forms 認証）
 
