@@ -200,6 +200,21 @@ TODO
 - **新規 `.cs`/`.vb` にはファイルヘッダ**（所属機能名バナー＋クラス情報＋更新履歴表を言語コメントで）。クラス・メソッドは XML doc（`/// <summary>`）。詳細＝`opentouryo-comment-convention`。
 - TODO
 
+## MS 系開発ツールの落とし穴（横断）
+
+MS ツールチェーン起因で**「ビルドは通るのに壊れる／静かに失敗する」**罠。**authoring 時に複数スキルへ横断で効くものだけここに集約**する
+（詳細はリンク先スキル。setup/build 時の罠〔`.bat`＝ASCII 限定／`.ps1`＝PS5.1 のエンコード／exit-code 不信＝生成物で判定／MAX_PATH／
+`Select-Object -First` でスクリプト停止／sln の CRLF・LF 依存〕は `opentouryo-project-setup-build` に集約している）。
+
+- **新規に作った／書き直したソースとビューは UTF-8 BOM を付ける。** BOM 無し UTF-8 を MS ツールが既定コードページ
+  （日本語＝Shift-JIS）で誤読し日本語が化ける。**対象は `.cs`/`.vb` だけでなく、実行時コンパイルされるビュー `.cshtml`/`.aspx`/`.master`**。
+  実害が確認済みなのは **net48 MVC のビュー**（`Web.config` に `<globalization fileEncoding>` が無い）＝CP932 の2バイト目が直後の ASCII
+  （`</button>` の `<` 等）を食ってタグも壊す＝**文字化け＝ボタンも動かない**。ビルドも `aspnet_compiler` も素通り。**書き直すたびに BOM を確認**
+  （エディタが剥がす）。詳細＝`opentouryo-comment-convention`。
+- **ビューはビルドで検証されない → `aspnet_compiler` で事前検証する。** `.aspx`/`.master`、および **net48 の `.cshtml`** は構文エラーでも
+  `msbuild` は通り、実行しても 500 にならず白画面になることがある（発見が遅れる）。**Core の `.cshtml` は `dotnet build` 時にコンパイルされ非対称**。
+  詳細＝`opentouryo-layer-p-mvc`（net48 MVC）／`opentouryo-layer-p-webforms-screen`（`.aspx`/`.master`）。
+
 ## 非推奨クラス・メソッド
 
 以下は `[Obsolete]` が付いている。**新規に書くコードで使ってはならない。**

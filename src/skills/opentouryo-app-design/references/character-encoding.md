@@ -31,7 +31,8 @@
 ## DB・ファイル・コード側（既存スキルへ）
 
 - **SQL 定義ファイルのエンコード＝`FxSqlEncoding`**（`opentouryo-config`）。
-- **新規 `.cs`/`.vb` は UTF-8 BOM**（`csc` の Shift-JIS 誤読で日本語コメントが化ける対策＝`opentouryo-comment-convention`）。
+- **新規／書き直したソースとビュー（`.cshtml`/`.aspx`/`.master`）は UTF-8 BOM**（MS ツールの既定コードページ誤読対策。実害が確認済みなのは
+  net48 の実行時コンパイル ビュー＝`opentouryo-comment-convention`／配布 `AGENTS.md`「MS 系開発ツールの落とし穴」）。
 - **多言語メッセージ**＝`opentouryo-message`（`.resx` / `MSGDefinition`）。
 - **DB の文字コード／照合順序**：SQL Server は `nvarchar`（Unicode）、MySQL は **`utf8mb4`**（絵文字＝4バイト対応。`utf8`〔3バイト〕は不可）。列型・照合順序を Unicode で統一。
 
