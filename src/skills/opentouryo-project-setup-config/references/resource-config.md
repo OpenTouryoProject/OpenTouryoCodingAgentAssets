@@ -23,7 +23,7 @@
 | `FxXMLSPDefinition` / `FxXMLMSGDefinition` / `FxXMLSCDefinition` / `FxXMLTCDefinition` / `FxXMLTMProtocolDefinition` / `FxXMLTMInProcessDefinition` | `%OT_RESOURCE_ROOT%\Xml\*.xml` |
 | `SqlTextFilePath` | `%OT_RESOURCE_ROOT%\Sql`（**※同梱型は例外＝下記**） |
 | `SpRp_RsaCerFilePath` | `%OT_RESOURCE_ROOT%\X509\*.cer` |
-| `TestFilePath` | `%OT_RESOURCE_ROOT%\Test`（実測で WebForms `app.config` に存在。値は `…\test`＝**綴りの罠**＝実フォルダは `Test`。#3） |
+| `TestFilePath` | `%OT_RESOURCE_ROOT%\Test`（実測で WebForms `app.config` に存在。値は `…\test`＝**綴りの罠**＝実フォルダは `Test`） |
 
 **★ ただしこの表を全部前提にしない。** キー集合はサンプル/ランタイムで違う（下記「キー集合・綴り・区切り」）＝**config に在るキーだけ**張り替える。
 
@@ -32,7 +32,7 @@
 フレームワークは設定値を**フルパス前提**でファイル API に渡す。相対パス（`resource\...`）は実行プロセスの CWD 基準で解決され、
 IIS Express / w3wp の CWD はアプリ フォルダでないため 500 になる。`ResourceLoader` が**パス解決直前に展開する `%環境変数%`** を使う。
 
-## ★ 例外：デスクトップ（2CS・リッチクライアント）は相対・埋め込みが正＝「絶対パスのキーだけ」張り替える（#24）
+## ★ 例外：デスクトップ（2CS・リッチクライアント）は相対・埋め込みが正＝「絶対パスのキーだけ」張り替える
 
 「相対パスは不可」は **Web 前提**（IIS/w3wp の CWD がアプリ外だから）。**exe 起動のデスクトップ サンプルは意図的に相対＋埋め込み**で、
 そのままが正。実測（`2CSClientWin_sample`）：
@@ -59,7 +59,7 @@ IIS Express / w3wp の CWD はアプリ フォルダでないため 500 にな�
 解決されるが、その中身は OpenTouryo が展開せずログライブラリへそのまま渡す**（log4net＝`XmlConfigurator`／NLog＝`XmlLoggingConfiguration`）。
 ＝**展開は各ログライブラリの書式**で行う。`LogLib`（log4net / NLog）の選択は `opentouryo-logging`。
 
-**★ 絶対パスを持つログ定義は `SampleLogConf.xml` だけではない（#4）。** 実測（`resource\Log\`）で
+**★ 絶対パスを持つログ定義は `SampleLogConf.xml` だけではない。** 実測（`resource\Log\`）で
 `SampleLogConf.xml` / `SampleLogConfWebService.xml` / `SampleLogConf_N.xml`（NLog）/ `Examples of rolling of date+size.xml` /
 `NLogConfigTemplate.xml` の**5ファイル**に `C:\root\files\resource\Log\...` がある
 （`Log4NetConfigTemplate.xml` は `File` 値がプレースホルダ `（★ファイルパス）`で絶対パスを持たない＝対象外。
@@ -77,7 +77,7 @@ IIS Express / w3wp の CWD はアプリ フォルダでないため 500 にな�
   ```
   テンプレート `resource\Log\NLogConfigTemplate.xml` の `（★ファイルパス）` を上の `${OT_RESOURCE_ROOT}\Log\...` に埋める。
 
-## ★ キー集合・綴り・区切りはサンプル/ランタイムで割れる（決め打ち禁止・#11/#15/#16）
+## ★ キー集合・綴り・区切りはサンプル/ランタイムで割れる（決め打ち禁止）
 
 **パス系キーの「集合」も「綴り」も「区切り」もサンプル/ランタイムで違う。上の表を全部前提にせず、config に在るキーだけ張り替える**（実測）：
 
@@ -89,7 +89,7 @@ IIS Express / w3wp の CWD はアプリ フォルダでないため 500 にな�
 
 - **綴り（`Xml`/`Test`）**：実フォルダは `Xml`／`Test`。Windows は無視するが、**Linux で core を動かすなら実フォルダの綴りに合わせる**
   （core MVC は `XML`＝要修正）。
-- **core（`appsettings.json`）固有（#16）**：
+- **core（`appsettings.json`）固有**：
   - **値はスラッシュ区切り**（`C:/root/files/resource/XML/...`）。JSON なので `%OT_RESOURCE_ROOT%\\Xml\\...` と
     **バックスラッシュを2重エスケープ**して張り替える（`/` のままでも Windows では通るが、repo 内 net48 側と表記が割れる）。
   - **`//` コメント入り（JSONC）**。ASP.NET Core の JSON プロバイダはコメントを許容する＝**そのまま残す**

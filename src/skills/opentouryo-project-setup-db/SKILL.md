@@ -29,7 +29,7 @@ Docker でまとめて立てる構成。<https://github.com/NetDevInfraWGinOSSCo
 （マシン全体のインフラ。成果物 repo に取り込むと汚染＋`.gitignore` 問題になる）を前提に、具体パスをユーザに聞いてから
 clone する。clone したら**用途に合う起動スクリプトを実行**する。
 
-- **★ まず既存の DB を試す（#21）**：**「ポートが空いているか」だけでなく「使える DB が既に応答するか」を先に確認**する。
+- **★ まず既存の DB を試す**：**「ポートが空いているか」だけでなく「使える DB が既に応答するか」を先に確認**する。
   `localhost:1433` に**使える SQL Server（Northwind）が既に在るなら、それを使ってこのスキルはスキップ**する——
   **Docker とは別のネイティブ SQL Server が応答することがある**（実測：Docker デーモン停止中でも 1433 が `sa`/Northwind で応答した）。
   手順：`Test-NetConnection localhost -Port 1433` で疎通 → 続けて Northwind へ接続確認 → 繋がれば構築不要。塞がっていて別 DB なら別ポート/スキップ。

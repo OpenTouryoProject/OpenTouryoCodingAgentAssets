@@ -80,7 +80,7 @@ metadata:
 ＝`DamManagedOdp`/`DamMySQL`/`DamPstGrS`。`DamOLEDB`/`DamODBC` は `Public`〔親クラス1〕同居で外さない）／④config の `ConnectionString_<code>`
 （開発支援ツール `DaoGen_Tool` は親クラス2 を経由せず自前で `Odbc/OleDbConnection` を開く＝キーは残す）／④'サンプル UI の DAP 選択肢
 （残すと最後の `else` が SQL へ黙ってフォールバック＝最も気付きにくい）**。
-根拠と T16〜T20（`#if` 不揃い・`Public` 同居・ツール除外・UI フォールバック・DLL 反映確認は型名 UTF-8/リテラル UTF-16 で走査）は **`references/snippets.md`**。
+根拠（`#if` 不揃い・`Public` 同居・ツール除外・UI フォールバック・DLL 反映確認は型名 UTF-8/リテラル UTF-16 で走査）は **`references/snippets.md`**。
 
 ## 変更 → 反映のループ
 
@@ -97,7 +97,7 @@ metadata:
 3. 生成された `OpenTouryo.Business.dll`（2CS を直したなら `OpenTouryo.Business.RichClient.dll` も）を導入プロジェクトへ配布
    （`opentouryo-project-setup-build` のベンダ先 `OpenTouryoAssemblies\Build_*`）。
 4. 依存アプリを再ビルドして反映。**破壊的変更（シグネチャ・挙動）は全依存アプリに波及**する。
-   反映確認（バイナリ走査）のエンコード注意は下の「面」チェックリスト＋`references/snippets.md`（T20）。
+   反映確認（バイナリ走査）のエンコード注意は下の「面」チェックリスト＋`references/snippets.md`。
 
 ## バージョン管理（オーバーレイ ＋ 固定タグ）
 
@@ -118,8 +118,8 @@ metadata:
 ```
 
 - **取得元は固定タグに固定する**（`develop` は土台が動きオーバーレイの当たりがズレる。**overlay はファイル丸ごと差し替え＝
-  `develop` を引き直すと上流の当該ファイル変更を巻き戻す**（T13）。`opentouryo-project-setup-selection` ②で固定タグを選ぶ）。
-  **★ `develop` 立ての repo に後から overlay を足すなら、まず固定タグへ焼き直す**（ベンダを作り直してから overlay。#T5）。
+  `develop` を引き直すと上流の当該ファイル変更を巻き戻す**。`opentouryo-project-setup-selection` ②で固定タグを選ぶ）。
+  **★ `develop` 立ての repo に後から overlay を足すなら、まず固定タグへ焼き直す**（ベンダを作り直してから overlay）。
 - ビルド スクリプトは `3_Build_Business_*` の**前に**オーバーレイを展開ツリー（`<extract>`。MAX_PATH 回避で短ルート `C:\otr\...` のことも）へ上書きする（`opentouryo-project-setup-build`）：
 
   ```powershell

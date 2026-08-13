@@ -166,7 +166,7 @@ Community/Professional/Enterprise を網羅）。VS18 の BuildTools/Professiona
 少なくとも **`OpenTouryo.Business.dll`**（Business ビルドの生成物で、`MSB3553` 等で最も失敗しやすい）が
 ベンダ先にあることを確かめる。無ければビルドは失敗している（ビルド出力を確認する）。
 
-**★ 確認パスはランタイムで違う（#14）**：net48 は `Build_net48\` 直下（平坦）だが、**core は `Build_netcore100\<TFM>\`
+**★ 確認パスはランタイムで違う**：net48 は `Build_net48\` 直下（平坦）だが、**core は `Build_netcore100\<TFM>\`
 （`net10.0\`・`net10.0-windows7.0\`）配下**でベンダ先直下に無い＝**直下確認だと core は必ず偽の失敗**。core は
 `net10.0\OpenTouryo.Business.dll` か `-Recurse` で確認する（`examples.md` netcore 雛形）。
 
@@ -180,7 +180,7 @@ Community/Professional/Enterprise を網羅）。VS18 の BuildTools/Professiona
 - **アドホックなコマンド羅列で済ませる** — スクリプト化して **`scripts/` に**残す（ルート直置きにしない）
 - **作業ツリー `Temp/`（基盤ソース＝親クラス2 を含む）をコミットする** — `.gitignore` で除外
 - **`base2-overlay` があるのに `develop` で焼く** — 固定タグにする（再現性）
-- **★ 素の ref をビルドするのに、前回 overlay を適用した展開ツリーを再利用する（#1）** — 前回の親クラス2 改変が残り
+- **★ 素の ref をビルドするのに、前回 overlay を適用した展開ツリーを再利用する** — 前回の親クラス2 改変が残り
   **素でない DLL がベンダされる**（差分はビルド結果に出ず気付けない）＝**overlay 無しの素ビルドは展開ツリーを作り直す**（`examples.md` の `-Fresh` 相当）
 - **★ 親クラス2 をカスタマイズするのに、短ルートの展開ツリーをワークスペースに入れない** — 基盤ソースは
   `C:\otr\OpenTouryo-<ref>\...\Frameworks\Infrastructure` に在る。深いリポへコピーせず、**短ルートをワークスペースに

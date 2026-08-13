@@ -3,11 +3,11 @@
 `opentouryo-project-setup-core` でこのサンプルを取り出すときの、**サンプル固有の癖**。
 （WS/3層まわりの共通機構は `webservices.md`、HintPath の edge case は `references/reference-rewrite.md`。）
 
-## ★ MVC(net48) の WS 参照は「未使用の陳腐化参照」＝実使用を確認して削除（#10・目視検出で是正）
+## ★ MVC(net48) の WS 参照は「未使用の陳腐化参照」＝実使用を確認して削除（目視検出で是正）
 
 `MVC_Sample.csproj`(net48) は `WSIFType_sample`/`WSServer_sample` を **`..\..\..\WS_sample\Build\*.dll`（DLL 参照）**で持つが、
 **MVC のコードは WS 型を一切使っていない**（実測：`.cs`/`.cshtml` に `using WSIFType_sample`・`WSServer_sample`・WS 型が **0 件**）
-＝**陳腐化した未使用参照**（`About`/`Contact.cshtml` の残骸 #9 と同類）。
+＝**陳腐化した未使用参照**（`About`/`Contact.cshtml` の残骸と同類）。
 
 - → **WS 参照を (A) ProjectReference 化・`.sln` に追加してはいけない**（不要な参照・sln 肥大が残る＝**目視で検出された不具合**）。
 - **取り出し時に `.cs`/`.cshtml` を grep して WS 型の実使用を確認**し、無ければ **WS 参照（DLL 参照）を csproj から削除**する
@@ -28,7 +28,7 @@
 - config は `appsettings.json`（**キー集合・綴り・スラッシュ区切り・JSONC が net48 と割れる**＝`opentouryo-project-setup-config` /
   `references/resource-config.md`。core の ⑥ は見落とされやすい）。
 
-## 上流の残骸：`Views\Home\{About,Contact}.cshtml`（#9・develop）
+## 上流の残骸：`Views\Home\{About,Contact}.cshtml`（develop）
 
 `MVC_Sample.csproj`(net48/develop) は `Views\Home\About.cshtml` / `Contact.cshtml` を `<Content Include>` するが
 **実ファイルが ZIP に無い**（参照するアクション・リンクも無い＝陳腐化した残骸）。`Content` なのでビルドは通るが、
