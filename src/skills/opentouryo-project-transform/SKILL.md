@@ -32,6 +32,8 @@ metadata:
 | **`ws-decouple`** | **WS 依存の切り離し**（俗称「2層化」） | `references/ws-decouple.md` | 2層化 / 3層を削る / WS 依存を切り離す / CS0246 |
 
 - 関係：`ws-decouple` は**2層サンプル画面を残して WS だけ外す**。`minimize` は**サンプル画面ごと骨格まで落とす**（3層画面の除去も内包）。end-state が違う。
+  **★ 両方を当てるなら `ws-decouple` の実行時確認を `minimize` より前に済ませる**（実測）。確認に使う伝送制御画面 `~/Aspx/sample/crud/sampleScreen_cc.aspx` は
+  `minimize` の削除対象（`~/Aspx/sample/**`）にあり、後回しにすると**404 になるだけで「2層化が壊れた」のか「画面がもう無い」のか区別できない**。
 - `/opentouryo-project-transform <sub>` の引数、または自動起動時は**タスク内容から subcommand を選び、該当 `references/<sub>.md` を読んでから**作業する。
 
 ## 現行の前提（裏取りの範囲）

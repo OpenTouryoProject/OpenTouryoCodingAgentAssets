@@ -144,6 +144,11 @@ Web ではないので HTTP スモークは無い。**exe を起動してプロ�
   $p.Kill()   # 生存＝startup OK
   ```
 
+- **★ 実アセンブリを外から叩くハーネス**（別 exe で app の DLL を参照し B/D 層や結線を直接検査する等）**は、`.exe.config` と「埋め込みリソースのエントリ アセンブリ依存」を必ず合わせる**（実測）。
+  合わないと**アプリ側の回帰に化ける**：`.exe.config` が無いと接頭辞定義（`FxPrefixOf*`）が読めず結線数が 0 になる／埋め込みログ定義は**エントリ アセンブリ基準**で解決されるため、
+  エントリが `<Harness>.exe` になると `リソースファイル[…SampleLogConf2CS.xml]は見つかりませんでした` で `Form_Load` が例外→**残りの `Load` ハンドラが呼ばれず、例外は `Application.ThreadException` に回って黙って消える**。
+  → ハーネスに app の `.exe.config` を揃え、`FxLog4NetConfFile` はファイル指定にする。
+
 - **3層リッチクライアント（`WSClient_*`）は WS ホスト側の起動も要る**：WS ホスト＝`WS_sample\ServiceInterface`
   （既定 `ASPNETWebService`）を起動してからクライアント exe を起動する。ホストの引き込み・張替は
   `opentouryo-project-setup-core` の `samples/webservices.md`（③ WS ホスト節）。ホスト未起動ならインプロセス兼用で開ける。

@@ -42,6 +42,8 @@ metadata:
 （`[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12`）。
 `WebClient.DownloadFile()` は既定 TLS が古く **GitHub codeload に 404**（`HEAD` は 200 が返るので原因が紛れる＝実測）。
 
+**★ `develop`（moving ref）は ZIP を消して取得を強制する**（`examples.md` の `-Redownload`）＝古い ZIP を焼くと**0 エラーで「再取得した」と誤報告**になる（`-Fresh` の作業ツリー作り直しとは別操作・実測）。
+
 **作業ツリーの置き場所は MAX_PATH(260) を避けて選ぶ**（実測）。既定はリポジトリ直下の `Temp\` だが、
 **リポジトリ パスが深いと net48 Business ビルドが `MSB3553` で失敗する**：生成物
 `obj\...\MyBusinessApplicationExceptionMessageResource.ja-JP.resources` の完全修飾パスが 260 文字を超える。
@@ -56,14 +58,11 @@ metadata:
 `Frameworks\Infrastructure`（特に `Business`）は、ビルドのために展開した
 **`C:\otr\OpenTouryo-<ref>\root\programs\CS\Frameworks\Infrastructure` に既に在る**。
 
-以前は「これを深いリポへコピーバックする」手順にしていたが、**実測でこのコピーが繰り返し抜けた**。
-そこでコピーはやめ、**展開ツリーをそのまま作業場所にする**：短ルート `C:\otr` をワークスペースに追加する
-（VS Code なら「フォルダーをワークスペースに追加」。エージェントは絶対パス `C:\otr\...\Frameworks\Infrastructure` を
-直接読み書きしてよい）。こうすれば「ソースが無くて始められない」も「コピー忘れ」も起きない（基盤ソースは展開時点で在る）。
+以前の「深いリポへコピーバック」は**実測で繰り返し抜けた**ので廃止し、**展開ツリーをそのまま作業場所にする**：短ルート `C:\otr` を
+ワークスペースに追加し（VS Code なら「フォルダーをワークスペースに追加」）、絶対パス `C:\otr\...\Frameworks\Infrastructure` を直接読み書きする。
 
 - **深いリポへコピーしない**（MAX_PATH でどのみち深いリポではビルドできない）。基盤ソースの作業実体は `C:\otr` 側、
-  **リポにコミットするのは差分 `base2-overlay/` だけ**（展開ツリーは使い捨て。`opentouryo-base2-customize`）。
-- 取得元 `<ref>` は**固定タグ**にする（`develop` は土台が動いて再現性を失う）。
+  **リポにコミットするのは差分 `base2-overlay/` だけ**（展開ツリーは使い捨て。取得元は固定タグ＝再現性。`opentouryo-base2-customize`）。
 - 長パスを有効化できるなら、リポ直下で展開・ビルドして**分離自体を無くす**のも可（その場合この節は不要。
   ただし `Frameworks/Infrastructure` はコミットせず `.gitignore`）。
 
@@ -171,7 +170,7 @@ Community/Professional/Enterprise を網羅）。VS18 の BuildTools/Professiona
 `net10.0\OpenTouryo.Business.dll` か `-Recurse` で確認する（`examples.md` netcore 雛形）。
 
 **★ ベンダした `<ref>`・ランタイム・実施日を `OpenTouryoAssemblies\build-ref.txt` に記録しコミット**（無いと後で
-`opentouryo-project-policy` が上流ソースを引けない）。
+`opentouryo-project-policy` が上流ソースを引けない。**moving ref は取得 ZIP のハッシュも併記**〔`examples.md`〕）。
 
 ## やってはいけないこと
 

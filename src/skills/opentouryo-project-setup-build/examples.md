@@ -87,8 +87,13 @@ $overlay = Join-Path $repo 'base2-overlay'   # present only when customizing 親
 #   handler removals persist; the diff never shows in build output). For a pristine
 #   ref (no overlay this round) rebuild the tree. Same $extract is reused by the
 #   netcore script, so this guard applies there too.
-$Fresh = $false   # set $true to force a clean re-extract (素の ref を焼くとき)
+$Fresh      = $false   # set $true to force a clean re-extract (素の ref を焼くとき)
+$Redownload = $false   # ★ moving ref (develop) 用：set $true で <ref>.zip を消してから取得（展開ツリーも道連れ）
 New-Item -ItemType Directory -Force -Path $work | Out-Null
+# ★「作業ツリーの作り直し」($Fresh) と「ZIP の取り直し」($Redownload) は別操作。
+#   develop のような moving ref は $Redownload を付けないと、上流が動いても古い ZIP が使われ続ける
+#   （0 エラーでビルド・ベンダは通り「再取得した」と誤報告になる）。固定タグは不変なので $false でよい。
+if ($Redownload) { Remove-Item $zip, $extract -Recurse -Force -ErrorAction SilentlyContinue }
 if ($Fresh -and (Test-Path $extract)) { Remove-Item $extract -Recurse -Force }
 if (-not (Test-Path $extract)) {
     if (-not (Test-Path $zip)) {
@@ -100,6 +105,7 @@ if (-not (Test-Path $extract)) {
     }
     Expand-Archive -Path $zip -DestinationPath $work -Force
 }
+$zipHash = (Get-FileHash $zip -Algorithm SHA256).Hash.Substring(0,12)   # ref=develop は成果物を同定しないので build-ref.txt に残す
 
 # --- 1b. apply base2 overlay BEFORE building (NOT optional: if base2-overlay\ exists it MUST be applied) ---
 # If this repo customizes the framework Business layer, its edited *.cs live in
@@ -176,6 +182,11 @@ if ($needRichClient -or (Test-Path $overlay)) {
     }
 }
 Get-ChildItem $vendor -Filter 'OpenTouryo.*.dll' | Select-Object -ExpandProperty Name
+
+# build-ref.txt に「何を焼いたか」を残す（develop は ref だけでは同定できない＝zip ハッシュを併記）
+$rc = ($needRichClient -or (Test-Path $overlay))
+"{0}`tnet48`tref={1}`trichclient={2}`tzip={3}" -f (Get-Date -Format 'yyyy-MM-dd HH:mm'), $ref, $rc, $zipHash |
+    Add-Content -Path (Join-Path $repo 'OpenTouryoAssemblies\build-ref.txt')
 ```
 
 ## `setup-build-netcore.ps1`（net10.0 基盤ビルド → ベンダ）
@@ -195,6 +206,8 @@ $vendor  = Join-Path $repo 'OpenTouryoAssemblies\Build_netcore100'
 $needRichClient = $true   # 標的が 2CS / rich client（TFM net10.0-windows7.0）なら true。Web/MVC/Bat/CLI は false
 
 # --- 1. 既存 extract を流用（無ければ ZIP 取得）。net48 で展開済みなら再 DL しない ---
+# ★ moving ref (develop) は net48 側を -Redownload で先に走らせて $extract を最新化すること
+#   （ここは extract を流用するだけ＝古い展開ツリーが残っていると古い develop を焼く）。
 if (-not (Test-Path $cs)) {
     $zip = Join-Path $work "OpenTouryo-$ref.zip"
     if (-not (Test-Path $zip)) {

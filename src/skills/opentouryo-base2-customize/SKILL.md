@@ -119,7 +119,7 @@ metadata:
 
 - **取得元は固定タグに固定する**（`develop` は土台が動きオーバーレイの当たりがズレる。**overlay はファイル丸ごと差し替え＝
   `develop` を引き直すと上流の当該ファイル変更を巻き戻す**。`opentouryo-project-setup-selection` ②で固定タグを選ぶ）。
-  **★ `develop` 立ての repo に後から overlay を足すなら、まず固定タグへ焼き直す**（ベンダを作り直してから overlay）。
+  **★ `develop` 立ての repo に後から overlay を足すなら、まず固定タグへ焼き直す**（ベンダを作り直してから overlay。引き直すなら pristine と diff＝`references/snippets.md`）。
 - ビルド スクリプトは `3_Build_Business_*` の**前に**オーバーレイを展開ツリー（`<extract>`。MAX_PATH 回避で短ルート `C:\otr\...` のことも）へ上書きする（`opentouryo-project-setup-build`）：
 
   ```powershell

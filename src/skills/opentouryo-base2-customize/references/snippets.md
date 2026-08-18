@@ -3,6 +3,24 @@
 出典：UserGuide 纏め者編 §3-§7、`Frameworks/Infrastructure/Business/**`（実ソース）で裏取り。**on-demand 参照**（SKILL 予算外）。
 親クラス2 は override して共通処理を注入する。**アプリ側は触らない**（`opentouryo-project-policy`）。
 
+## overlay ドリフト確認（`develop` を引き直したら overlay 適用前に diff）
+
+**overlay はファイル丸ごと差し替え**なので、`develop` を引き直すと**上流が同じファイルに入れた変更を黙って巻き戻す**（ビルドは通るので露見しない・#T13）。
+やむを得ず moving ref で運用するなら、**引き直すたびに pristine と diff して「意図した変更しか無い」ことを確かめる**：
+
+```powershell
+# 新しい ZIP から overlay 対象ファイルだけ取り出し、overlay 版と1ファイルずつ diff する
+foreach ($f in (Get-ChildItem base2-overlay -Recurse -File -Filter *.cs)) {
+    $rel      = $f.FullName.Substring((Resolve-Path base2-overlay).Path.Length + 1)
+    $pristine = Join-Path "<extract>\root\programs\CS" $rel   # 新しい develop の素のファイル
+    "==== $rel ===="
+    Compare-Object (Get-Content $pristine) (Get-Content $f.FullName)   # 差分＝overlay で入れた変更のはず
+}
+```
+
+**意図した変更（OLE/ODBC 分岐削除・master ページ ハンドラ削除等）以外の差分が出たら、上流の変更を巻き戻している**＝overlay を新 pristine に対して作り直す。
+実測（2026-08-19 の develop 引き直し）では overlay 5ファイルとも意図した差分のみ＝影響なしだった。
+
 ## DBMS を足す/減らすときの「面」＝チェックリストの根拠
 
 SKILL の「5つの面」の詳細。実測（develop）で裏取り済み。

@@ -23,6 +23,8 @@
 
 - **テスト/デモの content 画面**：`testScreen*`、`sampleScreen.aspx` / `sampleScreen_cc.aspx`（＝画面本体）等の動作確認画面、
   Web ユーザ コントロール（`Aspx\Common\Wuc\`）。
+  **★ 削除対象が「検証手段」を兼ねていないか先に確認する**（`SCDefinition.xml` 掃除と同じ「静かに腐る」系）。例：`sampleScreen_cc.aspx` は
+  **`ws-decouple`（2層化）の実行時確認に使う伝送制御画面**＝消す前に `ws-decouple` の実行時確認を済ませる（順序制約は `opentouryo-project-transform` の「関係」節）。
 - **3層（3Tier）画面**：`Aspx\sample\3Tier\` 等。※これは **WS 依存ではない**（`_3TierEngine` 等は基盤側＝`ws-decouple` 参照）。
   「最小化で消す」判断であって「WS 切り離し」とは別。専用周辺（`AppCode\sample\3TierTableAdapter\*`・`AppCode\sample\Business\GetMasterData.cs`）も。
 - **無参照になったマスタ**：画面を消した結果、どの残存画面の `MasterPageFile` からも指されなくなったマスタは**削る**（`sample*`/`test*` 名でも）。
