@@ -78,10 +78,33 @@ Web で複数回のポストバックに跨って編集する場合、**編集�
 （`RowState` を保つため）。**サーバ メモリの消費に注意**（大きなデータを持たない・使用後は消す）。
 **StateServer/SQLServer セッション モードなら保持する型は直列化可能に**（`DataTable` は可。`opentouryo-config`）。
 
-**★ ASP.NET Core（net10.0）の Session は net48 と違い `byte[]`/`string`/`int` しか置けない**（オブジェクトを直接置けない）。
-JSON 直列化では `RowState` と `DataRowVersion.Original` が落ちてバッチ更新が成立しないので、**スキーマ＋差分で往復させる**：
-保存＝`DataTable.WriteXmlSchema` ＋ `WriteXml(XmlWriteMode.DiffGram)`（DiffGram は RowState と変更前の値を保持）→ バイト列にして `ISession.Set`。
-復元＝`ReadXmlSchema`→`ReadXml`（実測）。
+### DataSet/DataTable を JSON 化して持つ（Session 格納・WebAPI 転送）
+
+**この直列化が要るのは net10.0（Core）の Session だけ。** net48 は `DataSet`/`DataTable` が binary シリアライズ可能で、
+**InProc は object を直接保持・StateServer/SQLServer も BinaryFormatter で自動直列化＝`RowState` も `DataRowVersion.Original` も保たれ手当て不要**。
+一方 **net10.0（Core）の `ISession` は `byte[]`/`string` しか持てず BinaryFormatter も無い**ので、`DataSet`/`DataTable` を Session に置くには
+自前で直列化する＝**フレームワークの `DTTables`（`Touryo.Infrastructure.Public.Dto`）で JSON 化する**（素朴な `System.Text.Json` は `RowState` も変更前値も落とすので使わない）：
+
+```csharp
+string json = DTTables.DTTablesToJson(DTTables.FromDataSet(ds));   // DataTable 単体は DTTable.FromDataTable(dt)
+session.SetString("edit", json);                                    // 復元：DTTables.JsonToDTTables(json).ToDataSet()
+```
+
+**`RowState`（Added/Modified/Deleted/Unchanged）は往復で保持**＝Session 復元後もバッチ CUD の振り分けができる。
+**同じ API で WebAPI の `DataSet`/`DataTable` ⇄ JSON 転送にも使える**（`RowState` が相手に届くので、受信側で INSERT/UPDATE/DELETE を振り分けられる）。
+
+**★ 変更前値（`DataRowVersion.Original`）は既定では往復で保たれない**が、**`DTTable.FromDataTable(dt, keepOriginal: true)` を渡せば保持できる**（#567）：
+
+```csharp
+DTTables dtts = new DTTables();
+foreach (DataTable dt in ds.Tables) dtts.Add(DTTable.FromDataTable(dt, keepOriginal: true));  // ← FromDataSet には引数が無い
+string json = DTTables.DTTablesToJson(dtts);   // Modified 行だけ変更前セルも載る（転送量はほぼ増えない）
+```
+
+`keepOriginal: true` なら往復後も `Original ≠ Current` が復元され、**「全列 `Original` を WHERE に入れる」楽観排他が Session/JSON 往復をまたいでも成立する**。
+**※ `DTTables.FromDataSet(ds)` は `keepOriginal=false` 固定**なので、DataSet で保つときは上のように表ごとに `FromDataTable(dt, true)` で組み立てる。
+**既定（保持しない）のまま全列 `Original` 排他をすると、変更前値＝現在値になり DB の旧値と一致せず誤って「競合」＝件数0**になる
+（保持しない構成では `rowversion`/`timestamp` 列で排他する＝現在値のセルなので往復で保つ）。
 
 **★ バッチ更新を Web 画面で行うなら、`DataTable` を Session に持つ＝件数がメモリを圧迫する。**
 → **レコード件数に上限を設ける**か、**ページングを前提にする**（`opentouryo-app-design/references/list-paging.md`）。

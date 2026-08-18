@@ -40,10 +40,11 @@ Git 操作は人が手動で行う。
 
 スキルの記述（クラス名・メソッド・分岐・パス・csproj の参照等）は、必ず**実物**で確認してから書く。
 
-- C# 実ソース：**`C:\otr\OpenTouryo-03-20\root\programs\CS`**（実クローン。tag 03-20）。
-- ドキュメント：**`D:\git\local\OpenTouryoProject\OpenTouryoDocuments\documents`**。
-- 作者提示の as-built 成果物（例：`D:\git\local\OpenTouryoProject\OTRVCAS`）があれば `git diff`（閲覧のみ）で突き合わせる。
-- **in-repo の `files/` ミラーは削除済み**（2026-07-20 以降は上記を参照）。裏が取れないことは書かず、確認するか作者に聞く。
+- ドキュメント：**`D:\git\local\OpenTouryoProject\OpenTouryoDocuments\`**。**`D:\git\local\OpenTouryoProject\OpenTouryo.wiki`**。
+- C# 実ソース：**`C:\otr\OpenTouryo-0X-XX\root\programs\CS`**（tag 0X-XX）。**`C:\OpenTouryo\root\programs\CS`**（branch develop）
+- スキル検証リポジトリ（例：`D:\git\local\OpenTouryoProject\OT_Verify_CA_Skills`）
+
+があれば突き合わせる。裏が取れないことは書かず、確認するか作者に聞く。
 
 ### トークン規律（SKILL.md は目安 ~5000 以内）
 

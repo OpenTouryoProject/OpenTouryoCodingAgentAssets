@@ -1,0 +1,253 @@
+# コピー元スニペット：MVC テーブル保守 CRUD（一覧＆更新）
+
+`opentouryo-mvc-crud-screens` の実装コード。**Core MVC（net10.0）想定**。表は `Suppliers`（`SupplierID` は IDENTITY）を例にした worked example。
+Session 直列化は **`DTTables` JSON**（`Touryo.Infrastructure.Public.Dto`）を使う（net48 MVC なら `DataTable` を直接 Session に置けるのでこの直列化は不要）。
+
+## コントローラ（画面Ｂ＝一覧・行追加／行削除・バッチ更新）
+
+```csharp
+[Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+public class SuppliersBController : MyBaseMVControllerCore
+{
+    private const string SessionKey = "SuppliersEditing";   // Core Session は string/byte[] のみ
+
+    // --- Session への DataTable の出し入れ（Core＝DTTables JSON。net48 なら直接置ける） ---
+    private DataTable LoadEditingTable()
+    {
+        string json = this.HttpContext.Session.GetString(SessionKey);
+        if (string.IsNullOrEmpty(json)) { return null; }
+        return DTTables.JsonToDTTables(json).ToDataSet().Tables["Suppliers"];
+    }
+
+    private void SaveEditingTable(DataTable dt)
+    {
+        if (dt == null) { this.HttpContext.Session.Remove(SessionKey); return; }
+
+        DataSet ds = new DataSet();
+        ds.Tables.Add(dt.Copy());
+        // 全列 Original の楽観排他を使うなら FromDataTable(dt, keepOriginal:true) で組む（FromDataSet は引数が無い）
+        this.HttpContext.Session.SetString(SessionKey, DTTables.DTTablesToJson(DTTables.FromDataSet(ds)));
+    }
+
+    // --- 画面表示（開き直したら編集内容は破棄） ---
+    [HttpGet]
+    public IActionResult Index(SuppliersViewModel model)
+    {
+        this.SaveEditingTable(null);
+        return View(model);
+    }
+
+    // --- 一覧取得 ---
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SelectAll(SuppliersViewModel model)
+    {
+        // ↓B層実行：Suppliers の一覧を取得------------------------------------------------
+        SuppliersParameterValue pv = new SuppliersParameterValue(
+            this.ControllerName, "-", this.ActionName, "SQL", this.UserInfo);
+        SuppliersReturnValue rv = (SuppliersReturnValue)await (new SuppliersLayerB())
+            .DoBusinessLogicAsync(pv, DbEnum.IsolationLevelEnum.User);
+        // ↑B層実行：Suppliers の一覧を取得------------------------------------------------
+
+        if (rv.ErrorFlag) { model.Message = rv.ErrorMessage; }
+        else
+        {
+            this.SaveEditingTable(rv.Suppliers);
+            model.Suppliers = rv.Suppliers;
+            model.Message = "一覧を取得しました（" + rv.Suppliers.Rows.Count + " 件）。";
+        }
+        return View("Index", model);
+    }
+
+    // --- 行追加（RowState=Added。IDENTITY は負値で仮採番） ---
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult AddRow(SuppliersViewModel model)
+    {
+        DataTable dt = this.LoadEditingTable();
+        if (dt == null) { model.Message = "先に一覧を取得して下さい。"; return View("Index", model); }
+
+        this.ReadRowsIntoTable(dt, model);     // 画面の編集を読み戻してから
+        dt.Rows.Add(dt.NewRow());              // 空行を足す＝Added
+        this.SaveEditingTable(dt);
+        model.Suppliers = dt; model.Message = "行を追加しました。";
+        return View("Index", model);
+    }
+
+    // --- 行削除（RowState=Deleted。Rows.Remove ではない） ---
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult DeleteRow(SuppliersViewModel model, int rowIndex)
+    {
+        DataTable dt = this.LoadEditingTable();
+        if (dt == null) { model.Message = "先に一覧を取得して下さい。"; return View("Index", model); }
+
+        this.ReadRowsIntoTable(dt, model);
+        if (0 <= rowIndex && rowIndex < dt.Rows.Count) { dt.Rows[rowIndex].Delete(); }
+        this.SaveEditingTable(dt);
+        model.Suppliers = dt; model.Message = "行を削除しました（［更新］でDBに反映）。";
+        return View("Index", model);
+    }
+
+    // --- バッチ更新（CUD を一括反映） ---
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> BatchUpdate(SuppliersViewModel model)
+    {
+        DataTable dt = this.LoadEditingTable();
+        if (dt == null) { model.Message = "先に一覧を取得して下さい。"; return View("Index", model); }
+
+        this.ReadRowsIntoTable(dt, model);     // この代入で Modified が立つ
+
+        // ↓B層実行：Suppliers のバッチ更新------------------------------------------------
+        SuppliersParameterValue pv = new SuppliersParameterValue(
+            this.ControllerName, "-", this.ActionName, "SQL", this.UserInfo);
+        pv.Suppliers = dt;
+        SuppliersReturnValue rv = (SuppliersReturnValue)await (new SuppliersLayerB())
+            .DoBusinessLogicAsync(pv, DbEnum.IsolationLevelEnum.User);
+        // ↑B層実行：Suppliers のバッチ更新------------------------------------------------
+
+        if (rv.ErrorFlag)
+        {
+            // 業務例外＝ロールバック済み。RowState を残してやり直せるようにする
+            this.SaveEditingTable(dt);
+            model.Suppliers = dt; model.Message = rv.ErrorMessage;
+            return View("Index", model);
+        }
+
+        dt.AcceptChanges();   // 反映できたので確定
+
+        // IDENTITY の採番値は DataTable に戻らないので、一覧を取り直す
+        SuppliersParameterValue reloadPv = new SuppliersParameterValue(
+            this.ControllerName, "-", "SelectAll", "SQL", this.UserInfo);
+        SuppliersReturnValue reloadRv = (SuppliersReturnValue)await (new SuppliersLayerB())
+            .DoBusinessLogicAsync(reloadPv, DbEnum.IsolationLevelEnum.User);
+
+        this.SaveEditingTable(reloadRv.Suppliers);
+        model.Suppliers = reloadRv.Suppliers;
+        model.Message = "更新しました（挿入 " + rv.InsertCount + " 件／更新 " + rv.UpdateCount + " 件／削除 " + rv.DeleteCount + " 件）。";
+        return View("Index", model);
+    }
+
+    // --- 画面のセル値を DataTable へ読み戻す（RowIndex で対応・Deleted は飛ばす） ---
+    private void ReadRowsIntoTable(DataTable dt, SuppliersViewModel model)
+    {
+        if (model.Rows == null) { return; }
+        foreach (SupplierRowViewModel row in model.Rows)
+        {
+            if (row.RowIndex < 0 || dt.Rows.Count <= row.RowIndex) { continue; }
+            DataRow dr = dt.Rows[row.RowIndex];
+            if (dr.RowState == DataRowState.Deleted) { continue; }
+
+            SetIfChanged(dr, "CompanyName", row.CompanyName);
+            SetIfChanged(dr, "ContactName", row.ContactName);
+            SetIfChanged(dr, "City", row.City);
+            SetIfChanged(dr, "Country", row.Country);
+            SetIfChanged(dr, "Phone", row.Phone);
+        }
+    }
+
+    // --- 値が変わっているときだけ代入（無駄 Modified を作らない・空文字は DBNull へ） ---
+    private static void SetIfChanged(DataRow dr, string col, string newValue)
+    {
+        string current = dr[col] == DBNull.Value ? "" : Convert.ToString(dr[col]);
+        string edited = newValue ?? "";
+        if (current == edited) { return; }
+        dr[col] = (edited.Length == 0) ? (object)DBNull.Value : edited;
+    }
+}
+```
+
+**ViewModel**（一覧は `DataTable`、ポストバックで戻る明細は `List<行VM>`。`RowIndex` は DataTable の行インデックス）：
+
+```csharp
+public class SuppliersViewModel : BaseViewModel
+{
+    public string Message { get; set; } = "";
+    public DataTable Suppliers { get; set; }                 // 表示用
+    public List<SupplierRowViewModel> Rows { get; set; } = new();   // 編集後の明細（モデルバインド）
+}
+public class SupplierRowViewModel
+{
+    public int RowIndex { get; set; }   // ★ Deleted 行は描画しないので表示連番でなくこの値で DataRow を引く
+    public string CompanyName { get; set; }
+    public string ContactName { get; set; }
+    public string City { get; set; }
+    public string Country { get; set; }
+    public string Phone { get; set; }
+}
+```
+
+## ビュー（`Views/SuppliersB/Index.cshtml`）
+
+```cshtml
+@using System
+@using System.Data
+@model SuppliersViewModel
+@{ ViewBag.Title = "Suppliers 画面Ｂ"; }
+
+<form id="formB" method="post" asp-controller="SuppliersB" asp-action="SelectAll">
+    @Html.AntiForgeryToken()
+
+    @* グリッド外の［行追加］（フッタではない）。formaction で送信先アクションを分岐 *@
+    <button type="submit" class="btn btn-success btn-sm"
+            formaction="@Url.Action("AddRow", "SuppliersB")">行追加</button>
+
+    @* 一覧は table を自前生成し tr をループ *@
+    <table class="table table-sm table-bordered">
+        <thead><tr><th>SupplierID</th><th>CompanyName</th><th>ContactName</th><th>City</th><th>Country</th><th>Phone</th><th>操作</th></tr></thead>
+        <tbody>
+        @if (Model.Suppliers != null)
+        {
+            @* ★ ここはコード文脈なので for に @ を付けない（付けると Razor パースエラー） *@
+            for (int i = 0; i < Model.Suppliers.Rows.Count; i++)
+            {
+                DataRow dr = Model.Suppliers.Rows[i];
+                if (dr.RowState == DataRowState.Deleted) { continue; }   @* ★ Deleted は描画しない *@
+
+                string id = (dr["SupplierID"] == DBNull.Value || Convert.ToInt32(dr["SupplierID"]) < 0) ? "(採番)" : dr["SupplierID"].ToString();
+                int idx = i;   @* ★ 表示連番でなく DataTable の行インデックスを持ち回る *@
+                <tr>
+                    <td>@id<input type="hidden" name="Rows[@idx].RowIndex" value="@idx" /></td>
+                    <td><input class="form-control form-control-sm" name="Rows[@idx].CompanyName" value="@(dr["CompanyName"] == DBNull.Value ? "" : dr["CompanyName"].ToString())" /></td>
+                    <td><input class="form-control form-control-sm" name="Rows[@idx].ContactName" value="@(dr["ContactName"] == DBNull.Value ? "" : dr["ContactName"].ToString())" /></td>
+                    <td><input class="form-control form-control-sm" name="Rows[@idx].City" value="@(dr["City"] == DBNull.Value ? "" : dr["City"].ToString())" /></td>
+                    <td><input class="form-control form-control-sm" name="Rows[@idx].Country" value="@(dr["Country"] == DBNull.Value ? "" : dr["Country"].ToString())" /></td>
+                    <td><input class="form-control form-control-sm" name="Rows[@idx].Phone" value="@(dr["Phone"] == DBNull.Value ? "" : dr["Phone"].ToString())" /></td>
+                    <td><button type="submit" class="btn btn-danger btn-sm"
+                                formaction="@Url.Action("DeleteRow", "SuppliersB", new { rowIndex = idx })">削除</button></td>
+                </tr>
+            }
+        }
+        </tbody>
+    </table>
+</form>
+
+@* ★ フッタのメイン5ボタン：@section は <form> の外に描画されるので form="formB" で紐付ける *@
+@section FooterButtonsSection{
+    <button type="submit" form="formB" id="btnMain1" class="btn btn-primary"
+            formaction="@Url.Action("SelectAll", "SuppliersB")">一覧取得</button>
+    <button type="submit" form="formB" id="btnMain2" class="btn btn-warning"
+            formaction="@Url.Action("BatchUpdate", "SuppliersB")"
+            onclick="return window.confirm('更新します。よろしいですか？');">更新</button>
+    <button type="button" id="btnMain3" class="btn btn-secondary"
+            onclick="location.href='@Url.Action("Index", "SuppliersA")';">戻る</button>
+    <button type="button" id="btnMain4" class="btn btn-secondary" disabled>－</button>
+    <button type="button" id="btnMain5" class="btn btn-secondary" disabled>－</button>
+}
+
+@* 通知ダイアログは JavaScript（@Json.Serialize でエスケープ） *@
+@section FooterScriptsSection{
+    <script type="text/javascript">
+        @if (!string.IsNullOrEmpty(Model.Message)) { <text>window.alert(@Json.Serialize(Model.Message));</text> }
+    </script>
+}
+```
+
+**画面Ａ（件数確認・画面遷移）** は同じ骨格で `[HttpPost] SelectCount` だけ持ち、`window.confirm` 不要・遷移は `location.href='@Url.Action("Index","SuppliersB")'`。
+
+## 注意（このスニペットの前提）
+
+- `@section FooterButtonsSection`／`FooterScriptsSection`／`HeaderScriptsSection` は共通レイアウト `_Layout.cshtml` の `@RenderSection(..., required: false)` に対応（`opentouryo-layer-p-mvc`）。名前はプロジェクトのレイアウトに合わせる。
+- B層（`SuppliersLayerB`）の `UOC_SelectAll`/`UOC_BatchUpdate`（RowState 振り分け）と負値仮採番・楽観排他は `opentouryo-batch-update`／`opentouryo-layer-b`。
+- **Session の直列化は Core だけの話**（net48 MVC は `DataTable` を Session に直接置ける）＝`opentouryo-batch-update`「DataSet/DataTable を JSON 化して持つ」。

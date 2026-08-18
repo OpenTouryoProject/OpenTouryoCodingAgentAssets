@@ -66,6 +66,7 @@ docs/
 | └ `opentouryo-daogen-cli` | 自動生成Dao をツール（墨壺）の CLI（`/CUI`・非対話）で生成するとき |
 | `opentouryo-batch-update` | DataTable の RowState でグリッド明細を一括更新（追加/更新/削除）するとき |
 | `opentouryo-webforms-crud-screens` | Web Forms のテーブル保守 CRUD 画面を作るとき（一覧→詳細／一覧＆更新・ページング・結果セット固定） |
+| `opentouryo-mvc-crud-screens` | ASP.NET (Core) MVC のテーブル保守 CRUD 画面を作るとき（一覧→詳細／一覧＆更新・RowState バッチ・`@section`＋`form=`・Core は編集中 DataTable を `DTTables` JSON で Session 保持） |
 | `opentouryo-query-definition` | SQL 定義ファイル（`.sql` / `.xml`）を書くとき |
 | `opentouryo-comment-convention` | **全層・全ファイル共通**：新規コードファイルのヘッダ（所属機能名／クラス情報／更新履歴）とコメント規則 |
 

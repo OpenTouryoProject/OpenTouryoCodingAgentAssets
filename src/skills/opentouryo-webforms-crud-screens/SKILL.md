@@ -47,6 +47,7 @@ metadata:
 - **D層**：**`ROW_NUMBER() OVER (ORDER BY …) BETWEEN @from AND @to`** で SQL ページング（DBMS 別＝SQL Server は `WITH … CTE`／Oracle は別式。`opentouryo-app-design/references/list-paging.md`）。総件数は別途 `COUNT`。
   ※ サンプルの `_3TierEngine` は内部でこの ROW_NUMBER SQL を自動生成している（`_3TierEngine.cs`）。
 - **★ (2) はバッチ更新のため編集中の `DataTable` を `Session` に持つ＝件数がメモリを圧迫する。** **レコード件数に上限を設けるか、ページングを前提にする**
+  （Web Forms は net48＝`DataTable` は binary シリアライズ可能で InProc も StateServer/SQLServer も直列化の手当ては要らない。Core の MVC で JSON 化が要る話は `opentouryo-mvc-crud-screens`）
   （大量一覧では必須）。**ページングする場合は編集開始後にページングを止める**（上記「結果セット固定」。`opentouryo-batch-update`）。
 
 ## 推奨実装への置き換え（自動生成 → 推奨）
