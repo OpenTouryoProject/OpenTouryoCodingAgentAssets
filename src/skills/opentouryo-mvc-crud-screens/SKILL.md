@@ -45,7 +45,11 @@ metadata:
 - **net48 MVC**：`DataTable` は binary シリアライズ可能＝Session に直接置ける（InProc も StateServer/SQLServer も手当て不要。`RowState`・`Original` とも保つ）。
 - **net10.0（Core）MVC**：`ISession` は `byte[]`/`string` のみ・BinaryFormatter 無し＝**`DTTables` JSON で往復させる**：
   `session.SetString(key, DTTables.DTTablesToJson(DTTables.FromDataSet(ds)))` ／復元は `DTTables.JsonToDTTables(json).ToDataSet()`（`Touryo.Infrastructure.Public.Dto`）。
-  **`RowState` は保持**。**全列 `Original` の楽観排他が要るなら `DTTable.FromDataTable(dt, keepOriginal:true)`**（既定は変更前値 非保持）。詳細と注意は `opentouryo-batch-update`。
+  - **`RowState`〔Added/Modified/Deleted〕は保持**＝Session 復元後もバッチ CUD を振り分けられる。
+  - **列の属性は落ちる**（`AutoIncrement`/`Seed`/`PrimaryKey`/`AllowDBNull`。JSON は列名・型・値・`RowState` だけ）が**実害は小さい**：IDENTITY 主キーは INSERT で
+    設定しない（`D1_Insert`）＝仮採番値は無関係、しかも往復で `AllowDBNull` も落ちる＝`NewRow()`＋`Rows.Add` は例外を出さない（`NoNullAllowedException` は往復しない net48 の話）。
+    → **追加行の主キーを実際に使うとき〔`Rows.Find`／`PrimaryKey` 制約／安定した仮 ID 表示〕だけ**負値仮採番を掛け直す（`LoadEditingTable` スニペット・`references/snippets.md`。`opentouryo-batch-update`）。
+  - **`Original`〔変更前値〕は既定 非保持**（`DTTable.FromDataTable(dt, keepOriginal:true)` で保持可＝全列 Original 排他も往復で成立。`FromDataSet` は引数無し＝表ごとに組む）。使わないなら **PK＋timestamp で排他**（`opentouryo-batch-update`）。
 - **メモリ**：件数が Session を圧迫する＝**上限を設けるかページング前提**（`opentouryo-app-design/references/list-paging.md`）。
 
 ## RowState バッチ（一覧＆更新の核）

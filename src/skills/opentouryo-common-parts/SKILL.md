@@ -88,7 +88,7 @@ metadata:
 | --- | --- |
 | `DataToPoco` / `PocoToPoco` | `DataTable` ⇔ POCO、POCO ⇔ POCO の詰め替え |
 | `DataToDictionary` | `DataTable` → `Dictionary` |
-| **`DTTables` / `DTTable`** | **`DataSet`/`DataTable` ⇄ JSON 文字列**の相互変換（`DTTables.FromDataSet`/`ToDataSet`・`DTTable.FromDataTable`/`ToDataTable`・`DTTables.DTTablesToJson`/`JsonToDTTables`〔`SaveJson`/`LoadJson` は `TextWriter`/`Reader` 版〕）。**`RowState`〔Added/Modified/Deleted〕を往復で保持**＝WebAPI 転送や Core の Session 格納に使う。**`DataRowVersion.Original`〔変更前値〕は既定 非保持だが `FromDataTable(dt, keepOriginal:true)` で保持可**（#567）。詳細＝`opentouryo-batch-update` |
+| **`DTTables` / `DTTable`** | **`DataSet`/`DataTable` ⇄ JSON 文字列**の相互変換（`DTTables.FromDataSet`/`ToDataSet`・`DTTable.FromDataTable`/`ToDataTable`・`DTTables.DTTablesToJson`/`JsonToDTTables`〔`SaveJson`/`LoadJson` は `TextWriter`/`Reader` 版〕）。**`RowState`〔Added/Modified/Deleted〕を往復で保持**＝WebAPI 転送や Core の Session 格納に使う。**`Original`〔変更前値〕は既定 非保持・`FromDataTable(dt, keepOriginal:true)` で保持可**、列属性〔`AutoIncrement`/`PrimaryKey` 等〕は非保持。詳細＝`opentouryo-batch-update` |
 
 ## その他
 

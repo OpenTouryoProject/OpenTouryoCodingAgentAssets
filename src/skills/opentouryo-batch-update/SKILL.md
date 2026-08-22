@@ -93,18 +93,15 @@ session.SetString("edit", json);                                    // 復元：
 **`RowState`（Added/Modified/Deleted/Unchanged）は往復で保持**＝Session 復元後もバッチ CUD の振り分けができる。
 **同じ API で WebAPI の `DataSet`/`DataTable` ⇄ JSON 転送にも使える**（`RowState` が相手に届くので、受信側で INSERT/UPDATE/DELETE を振り分けられる）。
 
-**★ 変更前値（`DataRowVersion.Original`）は既定では往復で保たれない**が、**`DTTable.FromDataTable(dt, keepOriginal: true)` を渡せば保持できる**（#567）：
+**★ 変更前値（`DataRowVersion.Original`）は既定では往復で保たれない**（既定 `keepOriginal=false`＝`Modified` 行の `Original` に現在値が入る。`Deleted` 行の主キーだけは元値が残り DELETE の WHERE に使える）。
+**保ちたいなら `DTTable.FromDataTable(dt, keepOriginal: true)` を渡す**（`Modified` 行だけ変更前セルも JSON に載る＝転送量はほぼ増えない）。そうすれば往復後も `Original ≠ Current` が復元され、
+**全列 `Original` を WHERE に入れる楽観排他が Session/JSON 往復をまたいでも成立する**。**※ `DTTables.FromDataSet(ds)` に `keepOriginal` 引数は無い**ので、DataSet で保つなら表ごとに
+`dtts.Add(DTTable.FromDataTable(dt, true))` で組み立てる。keepOriginal を使わないなら、往復をまたぐ排他は `rowversion`/`timestamp` 列（現在値のセル＝往復で保つ）で行う。
 
-```csharp
-DTTables dtts = new DTTables();
-foreach (DataTable dt in ds.Tables) dtts.Add(DTTable.FromDataTable(dt, keepOriginal: true));  // ← FromDataSet には引数が無い
-string json = DTTables.DTTablesToJson(dtts);   // Modified 行だけ変更前セルも載る（転送量はほぼ増えない）
-```
-
-`keepOriginal: true` なら往復後も `Original ≠ Current` が復元され、**「全列 `Original` を WHERE に入れる」楽観排他が Session/JSON 往復をまたいでも成立する**。
-**※ `DTTables.FromDataSet(ds)` は `keepOriginal=false` 固定**なので、DataSet で保つときは上のように表ごとに `FromDataTable(dt, true)` で組み立てる。
-**既定（保持しない）のまま全列 `Original` 排他をすると、変更前値＝現在値になり DB の旧値と一致せず誤って「競合」＝件数0**になる
-（保持しない構成では `rowversion`/`timestamp` 列で排他する＝現在値のセルなので往復で保つ）。
+**列の属性（`AutoIncrement`/`Seed`/`PrimaryKey`/`AllowDBNull`）も往復で落ちる**（JSON は列名・型・値・`RowState` だけ）が、**バッチ更新への実害は小さい**：
+IDENTITY 主キーは INSERT で設定しない（`D1_Insert`）＝仮採番値は無関係。さらに**往復で `AllowDBNull` も落ちる＝上の `NoNullAllowedException` は往復後は起きない**
+（あれは往復しない net48 in-proc の DataTable の話）。→ **追加行の主キーを実際に使う場合〔`Rows.Find`／`PrimaryKey` 制約／安定した仮 ID 表示〕だけ、取り出しのたびに
+負値仮採番を掛け直す**（そのときシードは `-1` 固定でなく「既にある仮採番の最小 - 1」＝`-1` 固定だと2行目以降が重複＝実測）。
 
 **★ バッチ更新を Web 画面で行うなら、`DataTable` を Session に持つ＝件数がメモリを圧迫する。**
 → **レコード件数に上限を設ける**か、**ページングを前提にする**（`opentouryo-app-design/references/list-paging.md`）。

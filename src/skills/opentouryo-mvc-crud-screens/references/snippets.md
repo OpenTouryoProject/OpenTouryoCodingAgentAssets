@@ -16,7 +16,31 @@ public class SuppliersBController : MyBaseMVControllerCore
     {
         string json = this.HttpContext.Session.GetString(SessionKey);
         if (string.IsNullOrEmpty(json)) { return null; }
-        return DTTables.JsonToDTTables(json).ToDataSet().Tables["Suppliers"];
+
+        DataTable dt = DTTables.JsonToDTTables(json).ToDataSet().Tables["Suppliers"];
+        // ★ 任意：DTTables 往復で列属性（AutoIncrement 等）が落ちるが、標準フローでは掛け直し不要
+        //   （IDENTITY は INSERT しない＝仮採番値は無関係／往復で AllowDBNull も落ち NewRow+Add は例外を出さない）。
+        //   追加行の主キーを実際に使うとき（Rows.Find／PrimaryKey 制約／安定した仮 ID 表示）だけ呼ぶ。
+        RestoreTempNumbering(dt);
+        return dt;
+    }
+
+    // ★ IDENTITY 主キーの負値仮採番を掛け直す（上記のとおり任意）。シードは -1 固定でなく「既にある仮採番の最小 - 1」
+    //   （-1 固定だと往復のたびに巻き戻り、2行目以降の追加行が -1 で重複する＝実測）。
+    //   PrimaryKey / AllowDBNull も落ちるが、行特定はクライアント都合なので戻さない（DB 側の主キーが本体）。
+    private static void RestoreTempNumbering(DataTable dt)
+    {
+        int minTemp = 0;   // 既存の最も小さい負値（＝仮採番）。無ければ 0 のまま
+        foreach (DataRow r in dt.Rows)
+        {
+            if (r.RowState == DataRowState.Deleted) { continue; }   // Deleted は現在値を読めない
+            if (r["SupplierID"] != DBNull.Value && Convert.ToInt32(r["SupplierID"]) < minTemp)
+            {
+                minTemp = Convert.ToInt32(r["SupplierID"]);
+            }
+        }
+        DataColumn pk = dt.Columns["SupplierID"];
+        pk.AutoIncrement = true; pk.AutoIncrementSeed = minTemp - 1; pk.AutoIncrementStep = -1;   // 無ければ -1 から
     }
 
     private void SaveEditingTable(DataTable dt)
@@ -25,7 +49,6 @@ public class SuppliersBController : MyBaseMVControllerCore
 
         DataSet ds = new DataSet();
         ds.Tables.Add(dt.Copy());
-        // 全列 Original の楽観排他を使うなら FromDataTable(dt, keepOriginal:true) で組む（FromDataSet は引数が無い）
         this.HttpContext.Session.SetString(SessionKey, DTTables.DTTablesToJson(DTTables.FromDataSet(ds)));
     }
 
