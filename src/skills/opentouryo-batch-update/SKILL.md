@@ -92,6 +92,8 @@ session.SetString("edit", json);                                    // 復元：
 
 **`RowState`（Added/Modified/Deleted/Unchanged）は往復で保持**＝Session 復元後もバッチ CUD の振り分けができる。
 **同じ API で WebAPI の `DataSet`/`DataTable` ⇄ JSON 転送にも使える**（`RowState` が相手に届くので、受信側で INSERT/UPDATE/DELETE を振り分けられる）。
+**★ これが DTTables の本来の用途**（クライアント⇄サーバの往復）＝サーバ/クライアント両側の型は `opentouryo-webapi-server`/`opentouryo-webapi-client`。
+**Session 格納はこの転送 DTO を「同一サーバ内の往復」に流用したもの**（Core は `ISession` が byte[]/string のみなので下記。クライアント保持〔hidden/SPA〕にすればサーバはステートレス＝`opentouryo-mvc-crud-screens`）。
 
 **★ 変更前値（`DataRowVersion.Original`）は既定では往復で保たれない**（既定 `keepOriginal=false`＝`Modified` 行の `Original` に現在値が入る。`Deleted` 行の主キーだけは元値が残り DELETE の WHERE に使える）。
 **保ちたいなら `DTTable.FromDataTable(dt, keepOriginal: true)` を渡す**（`Modified` 行だけ変更前セルも JSON に載る＝転送量はほぼ増えない）。そうすれば往復後も `Original ≠ Current` が復元され、

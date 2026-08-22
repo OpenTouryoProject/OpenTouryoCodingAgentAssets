@@ -38,19 +38,25 @@ metadata:
   **★ `Deleted` 行は描画しない＝表示連番でなく DataTable の行インデックスを `RowIndex` で持ち回る**（連番だと Deleted でズレる）。
 - **ダイアログは JavaScript**（確認＝`onclick="return window.confirm('…')"`、通知＝`window.alert(@Json.Serialize(Model.Message))` を `@section` のスクリプトで）。
 
-## 編集中 DataTable の Session 保持（複数リクエストを跨ぐ）
+## 編集中 DataTable を複数リクエストに跨って持つ（保持の置き場を選ぶ）
 
-一覧取得〜行追加/削除/編集〜更新は複数リクエストに跨るので、**編集中の `DataTable` を Session に保持**する（`RowState` を保つため）。**画面を開き直したら Session を破棄**する。
+一覧取得〜行追加/削除/編集〜更新は複数リクエストに跨るので、**編集中の `DataTable`（`RowState` 付き）をどこかに保つ**（画面を開き直したら破棄）。
+**★ `DTTables` JSON は本来 WebAPI の転送 DTO**（クライアントへ送って戻す＝`opentouryo-webapi-server`/`-client`）。MVC ではこの DTO の**置き場が2通り**ある：
 
-- **net48 MVC**：`DataTable` は binary シリアライズ可能＝Session に直接置ける（InProc も StateServer/SQLServer も手当て不要。`RowState`・`Original` とも保つ）。
-- **net10.0（Core）MVC**：`ISession` は `byte[]`/`string` のみ・BinaryFormatter 無し＝**`DTTables` JSON で往復させる**：
-  `session.SetString(key, DTTables.DTTablesToJson(DTTables.FromDataSet(ds)))` ／復元は `DTTables.JsonToDTTables(json).ToDataSet()`（`Touryo.Infrastructure.Public.Dto`）。
-  - **`RowState`〔Added/Modified/Deleted〕は保持**＝Session 復元後もバッチ CUD を振り分けられる。
-  - **列の属性は落ちる**（`AutoIncrement`/`Seed`/`PrimaryKey`/`AllowDBNull`。JSON は列名・型・値・`RowState` だけ）が**実害は小さい**：IDENTITY 主キーは INSERT で
-    設定しない（`D1_Insert`）＝仮採番値は無関係、しかも往復で `AllowDBNull` も落ちる＝`NewRow()`＋`Rows.Add` は例外を出さない（`NoNullAllowedException` は往復しない net48 の話）。
-    → **追加行の主キーを実際に使うとき〔`Rows.Find`／`PrimaryKey` 制約／安定した仮 ID 表示〕だけ**負値仮採番を掛け直す（`LoadEditingTable` スニペット・`references/snippets.md`。`opentouryo-batch-update`）。
-  - **`Original`〔変更前値〕は既定 非保持**（`DTTable.FromDataTable(dt, keepOriginal:true)` で保持可＝全列 Original 排他も往復で成立。`FromDataSet` は引数無し＝表ごとに組む）。使わないなら **PK＋timestamp で排他**（`opentouryo-batch-update`）。
-- **メモリ**：件数が Session を圧迫する＝**上限を設けるかページング前提**（`opentouryo-app-design/references/list-paging.md`）。
+- **(a) サーバの Session に置く**（クラシックな MVC ポストバック UI）。簡単だが**件数が Session のメモリを圧迫**・スケールアウトは out-of-proc Session が要る。
+- **(b) クライアントに持たせて往復させる**（hidden フィールド／SPA が保持）＝**サーバはステートレス**。**これは WebAPI クライアントと同じ機構**（DTTables JSON が HTTP を往復）。UI を API 駆動にするなら、
+  **バッチ更新を Web API として公開し（`opentouryo-webapi-server`）ページ/SPA をそのクライアントに（`opentouryo-webapi-client`）するのが本来の形**。ただし**全表が毎回転送される**＝大きい結果セットでは (a) より重い。
+- **★ (a)/(b) いずれも「編集対象の全結果セットを丸ごと持つ」＝レコード件数に上限を設けるかページング前提**（`opentouryo-app-design/references/list-paging.md`）。
+  **ページングするなら編集（バッチ更新）開始後は結果セットを固定**する——ページ切替で再取得すると `RowState` が消えるため（`opentouryo-webforms-crud-screens` の「一覧＆更新」と同じ）。
+
+**net48 MVC** は `DataTable` を Session に直接置ける（binary＝`RowState`/`Original` とも保つ・手当て不要）。**net10.0（Core）MVC で (a) を採る**なら `ISession` は `byte[]`/`string` のみ＝**`DTTables` JSON で往復**させる
+（**(b) も同じ API**＝Session の代わりに hidden フィールド等へ入れるだけ）：`session.SetString(key, DTTables.DTTablesToJson(DTTables.FromDataSet(ds)))` ／復元 `DTTables.JsonToDTTables(json).ToDataSet()`（`Touryo.Infrastructure.Public.Dto`）。
+
+- **`RowState`〔Added/Modified/Deleted〕は保持**＝復元後もバッチ CUD を振り分けられる。
+- **列の属性は落ちる**（`AutoIncrement`/`Seed`/`PrimaryKey`/`AllowDBNull`。JSON は列名・型・値・`RowState` だけ）が**実害は小さい**：IDENTITY 主キーは INSERT で
+  設定しない（`D1_Insert`）＝仮採番値は無関係、しかも往復で `AllowDBNull` も落ちる＝`NewRow()`＋`Rows.Add` は例外を出さない（`NoNullAllowedException` は往復しない net48 の話）。
+  → **追加行の主キーを実際に使うとき〔`Rows.Find`／`PrimaryKey` 制約／安定した仮 ID 表示〕だけ**負値仮採番を掛け直す（`LoadEditingTable` スニペット・`references/snippets.md`。`opentouryo-batch-update`）。
+- **`Original`〔変更前値〕は既定 非保持**（`DTTable.FromDataTable(dt, keepOriginal:true)` で保持可＝全列 Original 排他も往復で成立。`FromDataSet` は引数無し＝表ごとに組む）。使わないなら **PK＋timestamp で排他**（`opentouryo-batch-update`）。
 
 ## RowState バッチ（一覧＆更新の核）
 
