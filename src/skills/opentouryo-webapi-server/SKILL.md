@@ -85,6 +85,13 @@ DataTable dt = dtts["Suppliers"].ToDataTable();
 - **appsettings で切り替える**（`opentouryo-config`。既定は従来動作）：`UseHttpsRedirection`（TLS 自前終端時 on。**リダイレクト先ポートが要る**＝`--urls https://…` か `ASPNETCORE_HTTPS_PORT`〈単数〉）／
   **`UseForwardedHeaders`＋`ForwardedHeadersKnownProxies`**（リバースプロキシで TLS 終端すると `Request.IsHttps` が false になる＝`X-Forwarded-Proto` を取り込む。**パイプライン先頭に置く**・コンテナは既知プロキシを空＝制限解除）。環境変数上書きは `appSettings__<キー>`（区切り `__`）。
 
+## net48 版（レガシー・優先度低）
+
+net48 のクラシック ASP.NET Web API（System.Web.Http／OWIN）でも同じリソースサーバを組める。**業務の骨格（`[MyBaseAsyncApiController]` 属性・`GetClaims`・
+B層 `DoBusinessLogicAsync`・DTTables JSON〈`keepOriginal:true`〉・エラー形・`test()` 疎通）は同一**で、違うのはホスティングと応答の作法だけ：
+コントローラ基底は `ApiController`（`ControllerBase`＋`[ApiController]` でない）／ルーティングは `[RoutePrefix]`＋アクション毎 `[Route]`／応答は `Task<HttpResponseMessage>`＋`Request.CreateResponse(...)`／
+camelCase は `WebApiConfig` で一括／CORS は `[EnableCors]` 属性＋`config.EnableCors()`／ホストは OWIN `Startup`＋`Web.config`＋`packages.config`／OpenAPI は無し。**差の一覧と雛形は `references/net48.md`**。クライアント（`opentouryo-webapi-client`）は net48/Core の両サーバに同じ叩き方。
+
 ## やってはいけないこと
 
 - **画面コントローラのように基底クラスを継承する** — Web API は `ControllerBase`＋`[MyBaseAsyncApiController]` 属性。
