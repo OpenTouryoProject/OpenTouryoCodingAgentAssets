@@ -79,6 +79,8 @@ docs/
 | `opentouryo-transaction-control` | トランザクション パターンを定義するとき（`TCDefinition.xml`） |
 | `opentouryo-screen-transition` | 画面遷移制御を定義するとき（`SCDefinition.xml`。Web Forms 専用） |
 | `opentouryo-transmission` | 通信制御（サービス論理名で B層を呼ぶ）を扱うとき |
+| `opentouryo-webapi-server` | ASP.NET Core の Web API サーバ（OAuth2 リソースサーバ）を作るとき（`[MyBaseAsyncApiController]`・Bearer・DTTables JSON・OpenAPI/CORS） |
+| `opentouryo-webapi-client` | その Web API を .NET から呼ぶとき（HTTP＋JSON・Bearer・DataTable を DTTables JSON で往復） |
 | `opentouryo-logging` | ログを出力するとき |
 | `opentouryo-config` | 設定値を読むとき、構成ファイルを書くとき |
 | `opentouryo-auth` | 認証・ユーザ情報を扱うとき |
