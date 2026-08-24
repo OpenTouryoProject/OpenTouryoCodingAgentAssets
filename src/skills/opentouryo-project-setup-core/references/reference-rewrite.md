@@ -31,6 +31,18 @@ HintPath が他サンプルのビルド出力（`..\..\..\WS_sample\Build\...`�
 `OpenTouryo.*` と同様にベンダ先へ張り替える。**触らないのは NuGet 復元される 3rd-party だけ**
 （net48＝`packages.config`、core＝`PackageReference`）。
 
+### ★ moving ref で基盤が 3rd-party の版を上げたら、アプリ側の版も合わせる（「触らない」の例外）
+
+**上のルール（3rd-party は NuGet 復元に任せる）は固定タグでは成り立つが、`develop`（moving ref）を再取得すると崩れることがある**：
+基盤（例 netcore100）の `Microsoft.Data.SqlClient` が上がる（実測 6.1.3→7.0.0）と、アプリの `.csproj`／`packages.config` が旧版のままでも
+**`dotnet build` は成功する**（出るのは `MSB3277`〔バージョン競合〕警告1件だけ）。ところが**実行時に DB 接続の瞬間**
+`FileNotFoundException: Could not load file or assembly 'Microsoft.Data.SqlClient, Version=7.0.0.0'` で落ちる（画面は汎用エラーのみ＝ログを見ないと分からない）。
+
+- **対処**：moving ref を再取得・再ベンダしたら、**アプリの `PackageReference`／`packages.config` を基盤の `.csproj` と突き合わせて版を合わせる**。
+- **合否判定は「エラー0」でなく「警告0＝`MSB3277` が出ていないこと」**にする（`opentouryo-project-setup-build` の run-verify）。
+  「ビルドは通るのに実行で落ちる」型＝AGENTS.md「MS 系開発ツールの落とし穴」の系列。固定タグは版が動かないので不要。
+- **どの版に合わせるかは面によって別**：実測では **net48 側の基盤は 6.0.2 のままでアプリ（`packages.config`）とも一致＝影響は netcore100 のみ**だった。両面を各々突き合わせる。
+
 **※ 例外＝`WSServer_sample`/`WSIFType_sample` は DLL 張替の対象外**（ベンダ先 `Build_*\` に含まれない＝サンプル自身の
 B・D層/型）。これらは **ProjectReference に切り替える**（`WS_sample\Build\*.dll` の DLL 参照は削除。`samples/webservices.md`）。
 

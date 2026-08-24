@@ -48,6 +48,8 @@ HintPath は2階層＝`..\..\`。`samples/daogentool.md` / `samples/dpquerytool.
   その `Reference` をそのまま使い、`HintPath` だけ直す。
 - **触らないのは NuGet 復元される 3rd-party だけ**（net48＝`packages.config`、core＝`PackageReference`）。
   相対パス（`..\` の数）はプロジェクトの配置に合わせる。
+  **★ ただし `develop`（moving ref）を再取得したら 3rd-party の版も基盤 `.csproj` に合わせる**——基盤が上げた `Microsoft.Data.SqlClient` 等をアプリが旧版のままだと
+  **ビルドは通り実行時に `FileNotFoundException`**（`MSB3277` 警告が唯一の兆候＝合否は「警告0」で見る。詳細 `references/reference-rewrite.md`）。
 
 **間違えやすい edge case は `references/reference-rewrite.md`**（末尾フォルダ名 `Build\`→`Build_net48\` も変わる／
 `MySql`・`Oracle` もベンダ張替＝NuGet 非復元／net48 でも `PackageReference` 併用時は restore／MAX_PATH フラット化）。

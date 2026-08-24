@@ -62,10 +62,15 @@ metadata:
 > ①**IDENTITY 主キーは `S1_Insert()` で採番値が `DataTable` に戻らない**→ 反映後は一覧を再 SELECT して返す（追加直後の行に続けて操作しない）。
 > ②同じキーを使い回すなら `switch(dr.RowState)` は **Deleted → Added の順**（Added を先に流すと旧行と衝突）。
 > ③楽観排他は取得時の値を WHERE に入れて件数0で検知（タイムスタンプ列が無ければ全列 `Original`・`NULL`→`IS NULL`）。
-> **★ `text`/`ntext`/`image` 列があると「全列 `Original` を WHERE」は使えない**——SQL Server はこれらを `=` 比較できず
-> `Msg 402`（`ntext と nvarchar は equal to 演算子では互換性がありません`）で落ちる（実測。`Suppliers.HomePage`＝ntext）。
-> この場合は**主キーのみ WHERE の `S3_Update`/`S4_Delete`** に留める（＝件数0で「他者が先に削除」は検知できるが Lost Update は検知不能）か、
-> **`rowversion`/`timestamp` 列の追加を検討**する。
+> **★ `text`/`ntext`/`image` 列は「全列 `Original` を WHERE」に入れられない**——SQL Server はこれらを `=` 比較できず
+> `Msg 402`（`ntext と nvarchar は equal to 演算子では互換性がありません`）で落ちる（実測。`Suppliers.HomePage`＝ntext）。対処は順に：
+> **①その列だけ WHERE から外す**＝`D3_Update`/`D4_Delete`（動的）で**その列の WHERE 用 `@パラメタ` を設定しない**。生成 `.xml` は WHERE 列が1列ずつ
+> `<IF>AND [col]=@col<ELSE>AND [col] IS NULL</ELSE></IF>` なので、**未設定なら `<IF>` ごと消える**＝残り全列で Original 排他が成立する（実測の生成 SQL でも `ntext` 列だけ抜けて確認）。
+> **②主キーのみ WHERE の `S3_Update`/`S4_Delete`** に留める（Lost Update を検知できなくなる妥協＝①が組めないときだけ）。**③`rowversion`/`timestamp` 列の追加**。
+> **★ ①の「外す」を取り違えると3通りとも静かに壊れる**（例外でなく更新件数0＝過敏な楽観排他に化け原因に辿れない。`<IF>` 3状態＝`opentouryo-query-definition`）：
+> **未設定＝消える〔正〕／`null` 設定＝`AND [col] IS NULL`〔値のある行は必ず不一致〕／`DBNull` 設定＝`AND [col]=@col`(NULL)〔決して一致せず・ntext は Msg 402〕**。
+> **★ WHERE に使う `Original` が `DBNull` の列は `null` に読み替えて渡す**（`DBNull` のままだと `=@col`(NULL) で永久不一致。**SET 句は逆に `DBNull` を渡す**＝役割が逆・同じ関数で済ませない）。
+> **★ 更新と削除で手当てが違う**：全列 Original の往復保持（下記 `keepOriginal`）が効くのは **`Modified` 行＝`D3_Update` 用**だけ。`Deleted` 行は `keepOriginal` 不問で元値主キーが残る（`S4_Delete` は成立）が、**削除も全列 Original で排他するなら `D4_Delete` に同じ WHERE を別途組む**。
 
 ## 反映後の後始末
 
