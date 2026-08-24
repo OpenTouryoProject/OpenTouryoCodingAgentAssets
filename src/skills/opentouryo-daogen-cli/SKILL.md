@@ -88,6 +88,7 @@ New-Item -ItemType Directory -Force "$work/gen" | Out-Null   # ★ DAOSQLGEN の
 
 - `DAODEFGEN` … 定義 CSV に対象テーブルが並んでいる。
 - `DAOSQLGEN` … **テーブルごとに Dao(`.cs`)×1・SQL×8**（静的/動的の CRUD）が揃っている（`/ENTITY` 時は DTO も）。
+- **★ 生成 SQL 定義（`.sql`/`.xml`）が `resource\Sql` 同梱物と同名のことがある**（ヘッダ〔生成日・エンコーディング表記〕以外は同一）。**上書きは他サンプルに影響する**ので、**同名の同梱があるときは生成物のうち `.cs`（Dao クラス）だけ採用し、SQL 定義は同梱を使う**。
 
 ## やってはいけないこと
 

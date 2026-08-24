@@ -138,11 +138,20 @@ Web ではないので HTTP スモークは無い。**exe を起動してプロ�
 
   ```powershell
   $env:OT_RESOURCE_ROOT = "<repo>\resource"
-  $p = Start-Process "<exe>" -PassThru
+  $exe = "<exe>"
+  # ★ -WorkingDirectory を必ず付ける：付けないと CWD が exe フォルダにならず、相対名で参照する定義ファイル
+  #   （WSClient の TMProtocolDefinition2.xml / TMInProcessDefinition.xml 等）が解決できず、
+  #   CallController の TypeInitializationException（内部 FileNotFoundException）で画面が出ない。
+  #   手で（エクスプローラから）起動すると再現しない＝エージェント/CI だけが踏む（実測）。
+  $p = Start-Process $exe -WorkingDirectory (Split-Path -Parent $exe) -PassThru
   Start-Sleep -Seconds 6
   if ($p.HasExited) { throw "起動直後に終了（startup NG）＝resource/config を確認" }
   $p.Kill()   # 生存＝startup OK
   ```
+
+- **★ GUI を UI Automation で操作して DB 到達まで見るなら手当てが要る**（起動生存までは上記で足りる）：OpenTouryo のリッチクライアントのボタンは
+  UIA から **`ControlType.Pane`** に見え `InvokePattern` を持たない・**`Panel` に載せたフッタ ボタンは UIA ツリーに現れない**（実測）。
+  → **座標クリック**（`BoundingRectangle`／クライアント座標）と**キーボード**（`^{END}`→`{HOME}`/`{TAB}`→`SPACE`）を併用する。
 
 - **★ 実アセンブリを外から叩くハーネス**（別 exe で app の DLL を参照し B/D 層や結線を直接検査する等）**は、`.exe.config` と「埋め込みリソースのエントリ アセンブリ依存」を必ず合わせる**（実測）。
   合わないと**アプリ側の回帰に化ける**：`.exe.config` が無いと接頭辞定義（`FxPrefixOf*`）が読めず結線数が 0 になる／埋め込みログ定義は**エントリ アセンブリ基準**で解決されるため、

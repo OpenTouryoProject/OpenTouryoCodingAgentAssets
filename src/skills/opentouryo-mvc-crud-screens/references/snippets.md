@@ -19,8 +19,9 @@ public class SuppliersBController : MyBaseMVControllerCore
 
         DataTable dt = DTTables.JsonToDTTables(json).ToDataSet().Tables["Suppliers"];
         // ★ 任意：DTTables 往復で列属性（AutoIncrement 等）が落ちるが、標準フローでは掛け直し不要
-        //   （IDENTITY は INSERT しない＝仮採番値は無関係／往復で AllowDBNull も落ち NewRow+Add は例外を出さない）。
-        //   追加行の主キーを実際に使うとき（Rows.Find／PrimaryKey 制約／安定した仮 ID 表示）だけ呼ぶ。
+        //   （そもそも ExecSelectFill_DT は制約を取り込まない＝PrimaryKey/NOT NULL 無し・NewRow+Add は例外なし。
+        //    IDENTITY は INSERT しない＝仮採番値は無関係。DB 側 NOT NULL 列は値を入れて INSERT＝空 DBNull は SqlException 515）。
+        //   追加行の仮主キーを実際に使うとき（Rows.Find／自前 PrimaryKey／安定した仮 ID 表示）だけ呼ぶ。
         RestoreTempNumbering(dt);
         return dt;
     }
@@ -91,7 +92,9 @@ public class SuppliersBController : MyBaseMVControllerCore
         if (dt == null) { model.Message = "先に一覧を取得して下さい。"; return View("Index", model); }
 
         this.ReadRowsIntoTable(dt, model);     // 画面の編集を読み戻してから
-        dt.Rows.Add(dt.NewRow());              // 空行を足す＝Added
+        DataRow nr = dt.NewRow();
+        nr["CompanyName"] = "";                // ★ DB 側 NOT NULL 列は "" で初期化（DBNull のまま INSERT すると SqlException 515。ExecSelectFill_DT は制約を落とすので dt からは判定できない＝アプリが知っておく）
+        dt.Rows.Add(nr);                       // 空行を足す＝Added
         this.SaveEditingTable(dt);
         model.Suppliers = dt; model.Message = "行を追加しました。";
         return View("Index", model);
@@ -162,7 +165,7 @@ public class SuppliersBController : MyBaseMVControllerCore
             DataRow dr = dt.Rows[row.RowIndex];
             if (dr.RowState == DataRowState.Deleted) { continue; }
 
-            SetIfChanged(dr, "CompanyName", row.CompanyName);
+            SetIfChanged(dr, "CompanyName", row.CompanyName, notNull: true);   // ★ DB 側 NOT NULL 列
             SetIfChanged(dr, "ContactName", row.ContactName);
             SetIfChanged(dr, "City", row.City);
             SetIfChanged(dr, "Country", row.Country);
@@ -170,13 +173,15 @@ public class SuppliersBController : MyBaseMVControllerCore
         }
     }
 
-    // --- 値が変わっているときだけ代入（無駄 Modified を作らない・空文字は DBNull へ） ---
-    private static void SetIfChanged(DataRow dr, string col, string newValue)
+    // --- 値が変わっているときだけ代入（無駄 Modified を作らない） ---
+    //   ★ 空欄は DB の NULL 可否で分ける：NOT NULL 列は "" のまま／NULL 可列は DBNull（DBNull を NOT NULL 列へ送ると INSERT で SqlException 515）。
+    //     ExecSelectFill_DT は AllowDBNull を落とすので dt からは判定できない＝アプリが NOT NULL 列を知っておく。
+    private static void SetIfChanged(DataRow dr, string col, string newValue, bool notNull = false)
     {
         string current = dr[col] == DBNull.Value ? "" : Convert.ToString(dr[col]);
         string edited = newValue ?? "";
         if (current == edited) { return; }
-        dr[col] = (edited.Length == 0) ? (object)DBNull.Value : edited;
+        dr[col] = (edited.Length == 0 && !notNull) ? (object)DBNull.Value : (object)edited;
     }
 }
 ```
@@ -231,6 +236,8 @@ public class SupplierRowViewModel
                 string id = (dr["SupplierID"] == DBNull.Value || Convert.ToInt32(dr["SupplierID"]) < 0) ? "(採番)" : dr["SupplierID"].ToString();
                 int idx = i;   @* ★ 表示連番でなく DataTable の行インデックスを持ち回る *@
                 <tr>
+                    @* ★ 添字 idx は Deleted を飛ばすので 0 起点連番でない → Rows.Index が無いとコレクション バインドが空になり編集が静かに捨てられる（追加行が NULL→SqlException 515） *@
+                    <input type="hidden" name="Rows.Index" value="@idx" />
                     <td>@id<input type="hidden" name="Rows[@idx].RowIndex" value="@idx" /></td>
                     <td><input class="form-control form-control-sm" name="Rows[@idx].CompanyName" value="@(dr["CompanyName"] == DBNull.Value ? "" : dr["CompanyName"].ToString())" /></td>
                     <td><input class="form-control form-control-sm" name="Rows[@idx].ContactName" value="@(dr["ContactName"] == DBNull.Value ? "" : dr["ContactName"].ToString())" /></td>

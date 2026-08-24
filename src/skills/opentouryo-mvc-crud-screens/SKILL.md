@@ -31,12 +31,13 @@ metadata:
   B層の振り分けは引数クラスの `MethodName`（サンプルに倣い `this.ActionName` を渡す）＝`opentouryo-layer-p-mvc`。P→B は `new LayerB().DoBusinessLogicAsync(pv, iso)`。
 - **フォームと CSRF**＝`<form method="post" asp-action="…">`＋`@Html.AntiForgeryToken()`／**POST アクションに `[ValidateAntiForgeryToken]`**。
 - **1フォームから複数アクションへ**＝ボタンの `formaction="@Url.Action("<action>","<ctrl>")"` で送信先を分岐（`SelectAll`/`AddRow`/`DeleteRow`/`BatchUpdate`）。
-- **★ 行ボタンの配置3パターンは Web Forms と同型**（`opentouryo-webforms-crud-screens`／`opentouryo-batch-update`）＝**[削除]のみ／[更新][削除]／[編集][削除]**。ただし **MVC に `ButtonField`/`RowCommand`/`EditIndex` は無い**＝各行ボタンを **`formaction` で per-row アクションに飛ばし当該行の `RowIndex` を送る**：**[更新]**＝その行だけ読み戻して `Modified`（例 `UpdateRow(rowIndex)`）・**[編集]**＝その行の input だけ編集可にして（他行は `readonly`／編集中行 index を hidden で持つ）編集後 [更新]・**[削除]**＝`DeleteRow(rowIndex)`＝`dr.Delete()`。**実 CUD はグリッド外 [バッチ更新]（`BatchUpdate`）で一括**（下記）。※既定の骨格は行別 [更新] を置かず、`BatchUpdate` 時に全行を一括読み戻し（下記 step 4）。
+- **★ 行ボタンの配置3パターンは Web Forms と同型**（`opentouryo-webforms-crud-screens`／`opentouryo-batch-update`）＝**[削除]のみ／[更新][削除]／[編集][削除]**。ただし **MVC に `ButtonField`/`RowCommand`/`EditIndex` は無い**＝各行ボタンを **`formaction` で per-row アクションに飛ばし当該行の `RowIndex` を送る**：**[更新]**（例 `UpdateRow(rowIndex)`）・**[編集]**＝その行の input だけ編集可にして（他行は `readonly`／編集中行 index を hidden で持つ）編集後 [更新]・**[削除]**＝`DeleteRow(rowIndex)`＝`dr.Delete()`。**実 CUD はグリッド外 [バッチ更新]（`BatchUpdate`）で一括**（下記）。**★ [更新]/[削除] のハンドラは当該行だけでなく全行を読み戻す**——当該行だけだと入力途中の追加行等が消える（`RowState` は変わった行にだけ立つ）。※既定の骨格は行別 [更新] を置かず `BatchUpdate` 時に全行一括読み戻し（下記 step 4）。
 - **★ フッタのメイン5ボタンは `@section` に置く→ `form="<フォームID>"` で紐付ける。** `@section` の中身は `@RenderBody()`＝`<form>` の外に描画されるので、
   付けないと押しても送信されない（`opentouryo-layer-p-mvc` の `@section` 罠）。キャプションは画面ごと・不要は `disabled`。
 - **一覧は `<table>` を自前生成し `<tr>` をループ**（`for` はコード文脈なので `@` を付けない＝付けると Razor パースエラー）。各行に **hidden `Rows[i].RowIndex`＋各列の
   `input name="Rows[i].<列>"`** を出し、ポストバックで **`List<行VM>`（`RowIndex`＋編集列）にモデルバインド**する。
   **★ `Deleted` 行は描画しない＝表示連番でなく DataTable の行インデックスを `RowIndex` で持ち回る**（連番だと Deleted でズレる）。
+  **★ 添字 `i` が 0 起点の連番でない〔Deleted を飛ばす〕とき、各行に `<input type="hidden" name="Rows.Index" value="@i" />` も出す**——ASP.NET (Core) MVC のコレクション モデルバインドは**非連番の添字は `Rows.Index` が無いとバインドしない**＝`model.Rows` が空のまま `BatchUpdate` が走り**編集が静かに捨てられる**（実測：追加行が `NULL` で INSERT→`SqlException 515`。ビルドも 200 も通る）。スニペット＝`references/snippets.md`。
 - **ダイアログは JavaScript**（確認＝`onclick="return window.confirm('…')"`、通知＝`window.alert(@Json.Serialize(Model.Message))` を `@section` のスクリプトで）。
 
 ## 編集中 DataTable を複数リクエストに跨って持つ（保持の置き場を選ぶ）
@@ -54,9 +55,8 @@ metadata:
 （**(b) も同じ API**＝Session の代わりに hidden フィールド等へ入れるだけ）：`session.SetString(key, DTTables.DTTablesToJson(DTTables.FromDataSet(ds)))` ／復元 `DTTables.JsonToDTTables(json).ToDataSet()`（`Touryo.Infrastructure.Public.Dto`）。
 
 - **`RowState`〔Added/Modified/Deleted〕は保持**＝復元後もバッチ CUD を振り分けられる。
-- **列の属性は落ちる**（`AutoIncrement`/`Seed`/`PrimaryKey`/`AllowDBNull`。JSON は列名・型・値・`RowState` だけ）が**実害は小さい**：IDENTITY 主キーは INSERT で
-  設定しない（`D1_Insert`）＝仮採番値は無関係、しかも往復で `AllowDBNull` も落ちる＝`NewRow()`＋`Rows.Add` は例外を出さない（`NoNullAllowedException` は往復しない net48 の話）。
-  → **追加行の主キーを実際に使うとき〔`Rows.Find`／`PrimaryKey` 制約／安定した仮 ID 表示〕だけ**負値仮採番を掛け直す（`LoadEditingTable` スニペット・`references/snippets.md`。`opentouryo-batch-update`）。
+- **列の属性は落ちる**（`AutoIncrement`/`Seed`/`PrimaryKey`/`AllowDBNull`。JSON は列名・型・値・`RowState` だけ）が**実害は小さい**：そもそも `ExecSelectFill_DT` は制約を取り込まない（`Fill` は `FillSchema` せず＝往復前から `PrimaryKey`/NOT NULL 無し）・IDENTITY 主キーは `D1_Insert` が INSERT しない。
+  **★ 真の罠は「DB 側 NOT NULL 列を `DBNull` で INSERT→`SqlException 515`」＝アプリ側で担保する**（Added 行の NOT NULL 列に値を入れ、読み戻しは NULL 可否で `""`/`DBNull`。`opentouryo-batch-update`）。**追加行の仮主キーを使うとき〔`Rows.Find`／自前 `PrimaryKey`〕だけ**負値仮採番（`LoadEditingTable` スニペット・`references/snippets.md`）。
 - **`Original`〔変更前値〕は既定 非保持**（`DTTable.FromDataTable(dt, keepOriginal:true)` で保持可＝全列 Original 排他も往復で成立。`FromDataSet` は引数無し＝表ごとに組む）。使わないなら **PK＋timestamp で排他**（`opentouryo-batch-update`）。
 
 ## RowState バッチ（一覧＆更新の核）

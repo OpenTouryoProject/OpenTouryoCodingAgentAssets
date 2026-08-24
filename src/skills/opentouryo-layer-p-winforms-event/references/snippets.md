@@ -6,6 +6,8 @@
 
 Web Forms と違い **`RcFxEventArgs`**・**戻り値 void**（画面遷移の概念が無い）。
 
+> **名前空間（`using` が無いと `CS0246`）**：`RcFxEventArgs` は **`Touryo.Infrastructure.Framework.RichClient.Presentation`**／3層の `CallController` は **`Touryo.Infrastructure.Framework.Transmission`**。
+
 ```csharp
 // コンテンツ（Form）上のコントロール
 protected void UOC_btnButton_Click(RcFxEventArgs rcFxEventArgs)

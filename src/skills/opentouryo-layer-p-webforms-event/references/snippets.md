@@ -48,6 +48,8 @@ protected string UOC_TestScreen_btnMasterIdvdl_Click(FxEventArgs fxEventArgs)
 
 ## FxEventArgs のプロパティ
 
+> **`FxEventArgs` は `Touryo.Infrastructure.Framework.Presentation`**（`using` を1行足す＝無いと `CS0246`）。
+
 | プロパティ | 内容 |
 | --- | --- |
 | `ButtonID` | イベント発生元のコントロール名 |

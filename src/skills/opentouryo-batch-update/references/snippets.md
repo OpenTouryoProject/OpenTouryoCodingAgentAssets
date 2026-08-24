@@ -22,17 +22,27 @@ dr.Delete();
 - **`RowDeleting` は該当行を `Delete()` して再バインドするだけ**で足りる＝`e.Cancel` は不要（`DataTable` バインド〔`DataSourceID` 無し〕では GridView 自身は削除処理を持たない。実サンプル `testGridView` も `e.Cancel` を設定しない）。
 - **WinForms（`DataGridView`）**：`DataTable`（`BindingSource` 経由）をバインド。**[追加]／[削除] は通常のボタン**
   （`btn`＝`UOC_btnAdd_Click` / `UOC_btnDelete_Click`。`DataGridView` は自動結線外＝`opentouryo-layer-p-winforms-event`）。
+  **★ 行内 [更新] は不要**（グリッドの編集は `DataTable` へ自動反映＝グリッド内は [削除] のみ＝行ボタン①配置。実 CUD はフッタ [更新]＝バッチ更新で一括）。
+  **★ ただし保留中の編集は `CommitGridEdits()` で確定してから**［追加］/［削除］/バッチ更新・**確認ダイアログの前**に進む——`EndEdit()` は**セルの編集しか確定せず**、行（`DataRowView`）の保留編集は `CurrencyManager.EndCurrentEdit()` まで確定しない＝そのまま進むと入力が失われる（実測）。
 
 ```csharp
 // WinForms: バインド
 BindingSource bs = new BindingSource { DataSource = dt };
 this.dataGridView1.DataSource = bs;
 
-// [追加]（UOC_btnAdd_Click）：空行 → Added
+// ★ グリッドの保留中の編集を確定（各操作＝追加/更新/削除/バッチ更新・確認ダイアログの前に呼ぶ）
+void CommitGridEdits() {
+    this.dataGridView1.EndEdit();          // セルの編集を確定
+    bs.CurrencyManager.EndCurrentEdit();   // ★ 行(DataRowView)の保留編集を確定（これが無いと追加/更新で入力が消える）
+}
+
+// [追加]（UOC_btnAdd_Click）：空行 → Added（★ DB 側 NOT NULL 列には値を入れる＝DBNull のままだと INSERT で SqlException 515）
+CommitGridEdits();
 DataRow nr = dt.NewRow();
 dt.Rows.Add(nr);
 
 // [削除]（UOC_btnDelete_Click）：選択行を Delete → Deleted
+CommitGridEdits();
 if (bs.Current is DataRowView drv) drv.Row.Delete();   // ★ Delete（Remove ではない）
 ```
 

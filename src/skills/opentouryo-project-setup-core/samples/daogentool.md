@@ -31,6 +31,7 @@
      `Microsoft.Data.SqlClient` は **SNI ネイティブ**を要するため **restore が正道**（ベンダ先 DLL への HintPath 差し替えでも
      compile は通るが、ネイティブ依存を落として GUI 起動で失敗しやすい）。core の 3rd-party も同じく restore に任せる。
 3. ビルドして起動確認（WinForms なので Windows で実行）。
+4. **★ テンプレートも取り出す**（`/CUI` の `/TEMPLATE` に渡す `DGenTemplates`）＝**`Frameworks\Tools` 配下ではなく `root\files\tools\DGenTemplates`** にあるので ⑤ の取り出し対象（`Samples`/`Frameworks/Tools`）から漏れる＝**リポジトリに存在しないまま**になりやすい。**`OT_Tools\DGenTemplates\` に置く**（`DaoTemplate*.cs`/`.sql`/`.xml` が平置き）。生成 Dao の名前空間・親クラス2 名等はこのテンプレートで決まる（`opentouryo-daogen-cli`）。
 
 ## 使い方の要点
 

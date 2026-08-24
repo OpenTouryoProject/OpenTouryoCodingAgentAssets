@@ -33,7 +33,7 @@ metadata:
 | 変更なし | — | `Unchanged`（対象外） |
 
 > ★ 削除は **`dr.Delete()`**。`dt.Rows.Remove(dr)` だと行が切り離され `Deleted` にならず、バッチが DELETE を出せない。
-> ★ **行ボタンは [削除]のみ／[更新][削除]／[編集][削除] の3配置**：[更新]＝その行を読み戻して `Modified`・[編集]＝その行だけ編集可にして編集後 [更新]・[削除]＝`dr.Delete()`。**実 CUD は出さず `RowState` を作るだけ＝実反映はグリッド外 [バッチ更新] で一括**（実装＝`opentouryo-webforms-crud-screens`・`opentouryo-mvc-crud-screens`）。
+> ★ **グリッド行ボタンは [削除]のみ／[更新][削除]／[編集][削除] の3配置**（実 CUD はグリッド外 [バッチ更新] で一括）。**★ 再バインドを伴う UI では読み戻しは常に全行**——当該行だけだと入力途中の追加行等の未確定入力が消える（`RowState` は変わった行にだけ立つ）。配置と実装＝`opentouryo-webforms-crud-screens`／`opentouryo-mvc-crud-screens`。
 
 ## B層での一括処理（核心）
 
@@ -108,9 +108,8 @@ session.SetString("edit", json);                                    // 復元：
 `dtts.Add(DTTable.FromDataTable(dt, true))` で組み立てる。keepOriginal を使わないなら、往復をまたぐ排他は `rowversion`/`timestamp` 列（現在値のセル＝往復で保つ）で行う。
 
 **列の属性（`AutoIncrement`/`Seed`/`PrimaryKey`/`AllowDBNull`）も往復で落ちる**（JSON は列名・型・値・`RowState` だけ）が、**バッチ更新への実害は小さい**：
-IDENTITY 主キーは INSERT で設定しない（`D1_Insert`）＝仮採番値は無関係。さらに**往復で `AllowDBNull` も落ちる＝上の `NoNullAllowedException` は往復後は起きない**
-（あれは往復しない net48 in-proc の DataTable の話）。→ **追加行の主キーを実際に使う場合〔`Rows.Find`／`PrimaryKey` 制約／安定した仮 ID 表示〕だけ、取り出しのたびに
-負値仮採番を掛け直す**（そのときシードは `-1` 固定でなく「既にある仮採番の最小 - 1」＝`-1` 固定だと2行目以降が重複＝実測）。
+そもそも `ExecSelectFill_DT` は制約を取り込まない（下記）＝往復前から `PrimaryKey`/NOT NULL は無い・IDENTITY 主キーは `D1_Insert` が INSERT しない＝仮採番値は無関係。
+→ **追加行の仮主キーを実際に使う場合〔`Rows.Find`／自前 `PrimaryKey` 制約／安定した仮 ID 表示〕だけ、取り出しのたびに負値仮採番を掛け直す**（シードは `-1` 固定でなく「既にある仮採番の最小 - 1」＝`-1` 固定だと2行目以降が重複＝実測）。
 
 **★ バッチ更新を Web 画面で行うなら、`DataTable` を Session に持つ＝件数がメモリを圧迫する。**
 → **レコード件数に上限を設ける**か、**ページングを前提にする**（`opentouryo-app-design/references/list-paging.md`）。
@@ -124,25 +123,17 @@ IDENTITY 主キーは INSERT で設定しない（`D1_Insert`）＝仮採番値�
   **素朴に `dt.Rows[e.RowIndex]` としない。**
 - **`DataKeyNames`＋`DataKeys[i]` はバッチ更新では使えない**（`opentouryo-layer-p-webforms-event` は通常これを勧めるが、
   **追加行の主キーが未採番＝`DBNull`** なので成立しない）。バッチ更新時は DataRow 側で対応付ける。
-- **★ IDENTITY 主キーの追加行は「負値で仮採番」する**：`ExecSelectFill_DT` は DB スキーマ（NOT NULL 制約）も取り込むため、
-  `NewRow()` した空行に主キーを入れないと `NoNullAllowedException:列 'SupplierID' に nulls を使用することはできません` になる（実測）。
-  一覧取得後に `pk.AutoIncrement = true; pk.AutoIncrementSeed = -1; pk.AutoIncrementStep = -1;` を設定し、**実データと衝突しない
-  負値で仮採番**する（INSERT には渡さない）。追加行にも主キーが付くので `dt.Rows.Find()` で引け、上の index ズレを index に頼らず解ける。
+- **★ `ExecSelectFill_DT` は制約を取り込まない**（実体 `new SqlDataAdapter(cmd).Fill(dt)`＝`FillSchema` せず・実ソース確認）＝`PrimaryKey`/NOT NULL 無し・`AllowDBNull` は全列 true。∴ `NewRow()`+`Add()` は**例外を出さない**（旧記述の `NoNullAllowedException` は誤り）。
+  **真の罠は「DB 側 NOT NULL 列〔主キー以外も〕を `DBNull` で INSERT→`SqlException 515`」**＝INSERT 時に出て**ビルドも 200 応答も通り静かに壊れる**。→ **Added 行は DB-NOT-NULL 列すべてに値を入れ**、**読み戻しは NULL 可否に合わせる**（NOT NULL→空は `""`／NULL 可→空は `DBNull`）。**仮主キーが要るとき〔`Rows.Find`／自前 `PrimaryKey`／仮 ID 表示〕だけ負値仮採番**（`dt.PrimaryKey` 自前設定＋シード＝既存仮採番の最小-1。INSERT には渡さない。`references/snippets.md`）。
 - **セル編集は自動では `DataTable` に入らない** → グリッドのセルから **DataRow へ読み戻す**（`Modified` はこの代入で立つ）。
   **★ 元が `DBNull` の列に `""` を代入すると無駄な `Modified`（無駄 UPDATE）が量産される** → **現在値と一致するなら代入しない**。
   読み戻しスニペットは `references/snippets.md`。
 
 ## 大量データ（性能）
 
-フレームワーク経由は 1 件 ≈ 0.5ms のオーバーヘッド。件数が多いなら次のいずれか：
-
-- **配列バインド**（ODP.NET／HiRDB が対応）：`((DamManagedOdp)this.GetDam()).ArrayBindCount` に件数を設定し、各パラメタを
-  **配列**で渡す（`OracleDbType` の明示が必須）。詳細は `opentouryo-dao-custom`。
-- **バッチ SQL**（配列バインド非対応 DBMS の代替。サンプルは SQL Server）：**`SQLUtility`**（`Touryo.Infrastructure.Public.Db`）の
-  `GetInsertSQLParts(dt)` / `GetUpdateSQLParts(dt, pk[])` で SQL パーツを生成し、1文に複数 VALUES を並べて `CmnDao` で実行（例は snippet）。
-- **`ExecGenerateSQL`（実行せず SQL 文字列を生成）**：**自動生成 Dao は公開の2引数 `ExecGenerateSQL(fileName, sqlUtil)`** を持つ
-  （内部で `SetSqlByFile2(fileName)`→`SetParametersFromHt()`→`base.ExecGenerateSQL(sqlUtil)`）。基底は `BaseDao.ExecGenerateSQL(sqlUtil)`（1引数・`protected`）／
-  `CmnDao` は1引数 `public new`／実体は `BaseDam`。生成した静的 SQL を連結して `CmnDao` で流す。
+フレームワーク経由は 1 件 ≈ 0.5ms のオーバーヘッド。件数が多いなら：**①配列バインド**（ODP.NET／HiRDB。`((DamManagedOdp)GetDam()).ArrayBindCount` に件数・各パラメタを配列で・`OracleDbType` 明示。`opentouryo-dao-custom`）／
+**②バッチ SQL**（配列バインド非対応 DBMS の代替）＝**`SQLUtility`**（`Public.Db`）の `GetInsertSQLParts(dt)`/`GetUpdateSQLParts(dt, pk[])` で SQL パーツを作り 1文に複数 VALUES を並べ `CmnDao` で実行／
+**③`ExecGenerateSQL`**（実行せず SQL 文字列を生成）＝自動生成 Dao の公開2引数 `ExecGenerateSQL(fileName, sqlUtil)`（基底 `BaseDao` は1引数 `protected`・`CmnDao` は1引数 `public new`・実体 `BaseDam`）。例は `references/snippets.md`。
 
 ## やってはいけないこと
 
