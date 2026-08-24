@@ -43,7 +43,7 @@ metadata:
 一覧取得〜行追加/削除/編集〜更新は複数リクエストに跨るので、**編集中の `DataTable`（`RowState` 付き）をどこかに保つ**（画面を開き直したら破棄）。
 **★ `DTTables` JSON は本来 WebAPI の転送 DTO**（クライアントへ送って戻す＝`opentouryo-webapi-server`/`-client`）。MVC ではこの DTO の**置き場が2通り**ある：
 
-- **(a) サーバの Session に置く**（クラシックな MVC ポストバック UI）。簡単だが**件数が Session のメモリを圧迫**・スケールアウトは out-of-proc Session が要る。
+- **(a) サーバの Session に置く**（クラシックな MVC ポストバック UI）。簡単だが**件数が Session のメモリを圧迫**・スケールアウトは out-of-proc Session が要る・**使用後の後始末（明示削除）も要る**。→ 後始末を避けたいなら (b)（**MVC に ViewState は無い**が、hidden 保持が Web Forms の ViewState に相当＝NW は増えるがサーバ資源も後始末も不要。`opentouryo-app-design/references/state-management.md`）。
 - **(b) クライアントに持たせて往復させる**（hidden フィールド／SPA が保持）＝**サーバはステートレス**。**これは WebAPI クライアントと同じ機構**（DTTables JSON が HTTP を往復）。UI を API 駆動にするなら、
   **バッチ更新を Web API として公開し（`opentouryo-webapi-server`）ページ/SPA をそのクライアントに（`opentouryo-webapi-client`）するのが本来の形**。ただし**全表が毎回転送される**＝大きい結果セットでは (a) より重い。
 - **★ (a)/(b) いずれも「編集対象の全結果セットを丸ごと持つ」＝レコード件数に上限を設けるかページング前提**（`opentouryo-app-design/references/list-paging.md`）。

@@ -49,6 +49,8 @@ metadata:
 - **★ (2) はバッチ更新のため編集中の `DataTable` を `Session` に持つ＝件数がメモリを圧迫する。** **レコード件数に上限を設けるか、ページングを前提にする**
   （Web Forms は net48＝`DataTable` は binary シリアライズ可能で InProc も StateServer/SQLServer も直列化の手当ては要らない。Core の MVC で JSON 化が要る話は `opentouryo-mvc-crud-screens`）
   （大量一覧では必須）。**ページングする場合は編集開始後にページングを止める**（上記「結果セット固定」。`opentouryo-batch-update`）。
+- **★ 置き場は `Session` か `ViewState` か**：(2) は同一画面のポストバックで完結するので **`ViewState` も検討する**（`this.ViewState["dt"] = dt;`／復元 `(DataTable)this.ViewState["dt"]` を `Session` の代わりに使い、`DataSource=dt` で GridView に再バインド）。
+  **NW オーバーヘッドは増える（`__VIEWSTATE` に全表が載って往復する）が、サーバ メモリを使わず後始末が要らない**のが大きな利点（`Session` は使用後に消す／LRU 上限が要る）。件数が多いと ViewState が肥大するので上限/ページングは同様に要る（`opentouryo-app-design/references/state-management.md`）。
 
 ## 推奨実装への置き換え（自動生成 → 推奨）
 

@@ -82,6 +82,7 @@ metadata:
 Web で複数回のポストバックに跨って編集する場合、**編集中の `DataTable` を `Session` などに保持**する
 （`RowState` を保つため）。**サーバ メモリの消費に注意**（大きなデータを持たない・使用後は消す）。
 **StateServer/SQLServer セッション モードなら保持する型は直列化可能に**（`DataTable` は可。`opentouryo-config`）。
+**★ 同一画面のポストバックで完結するなら `Session` の代わりに `ViewState` も検討**（Web Forms 専用）＝`__VIEWSTATE` で往復するので **NW は増えるが、サーバ メモリも後始末も不要**（`Session` は使用後に消す必要がある。画面遷移をまたぐ持ち回りには使えない。`opentouryo-app-design/references/state-management.md`）。
 
 ### DataSet/DataTable を JSON 化して持つ（Session 格納・WebAPI 転送）
 

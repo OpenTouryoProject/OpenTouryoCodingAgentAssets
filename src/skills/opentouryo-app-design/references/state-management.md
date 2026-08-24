@@ -37,7 +37,12 @@
 | レスポンス／データのキャッシュ（Cache） | `FxCacheControl`（レスポンス無効化）／`FxSqlCacheSwitch`（SQL）／`IMemoryCache`・`IDistributedCache`（Core） | `references/cache-control.md` |
 | アプリ共通の**定数**（Application 的な固定値） | **共有情報**（`SPDefinition.xml`＋`GetSharedProperty`）＝ユーザ状態でなく設定値 | `opentouryo-shared-property` |
 | 認証チケット（Cookie）・`machineKey` | Forms 認証（net48）／Cookie 認証（Core） | `opentouryo-auth`・`opentouryo-config` |
-| 複数ポストバックに跨る編集（`DataTable`） | Session 保持（StateServer/SQLServer なら直列化可能に） | `opentouryo-batch-update` |
+| 複数ポストバックに跨る編集（`DataTable`） | **Session 保持**（StateServer/SQLServer なら直列化可能に）／**同一画面のポストバック内なら ViewState も検討**（下記） | `opentouryo-batch-update` |
+
+> **★ 編集中 `DataTable` の置き場は Session と ViewState のトレードオフ**（同一画面のポストバックで完結する編集）：
+> **Session**＝サーバ メモリを消費し**後始末が要る**（`FxSessionAbandon`／明示削除・LRU 上限。切り忘れると次ユーザ・タイムアウトまで残る）が NW は増えない。
+> **ViewState**（**Web Forms 専用**・同一画面のポストバック限定）＝`__VIEWSTATE` に載せて往復＝**NW オーバーヘッドは増える**が、**リクエストと共に消える＝サーバ資源も後始末も不要**なのが大きな利点。
+> ただし**画面遷移をまたぐ持ち回り〔(1) の PK＋TS〕には使えない**（そこは Session/Query String）。件数が多いと ViewState 自体が肥大するので、**上限/ページングは Session と同様に要る**。
 
 ## ★ 共通情報の持ち回り（2経路）
 
