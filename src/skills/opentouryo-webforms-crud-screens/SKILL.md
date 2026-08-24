@@ -40,6 +40,11 @@ metadata:
   **理由：ページングはページ切替で再取得するため `RowState` を保てない。** 固定後は同一結果セット上で複数行を編集し、**[バッチ更新] で RowState バッチ更新**（`opentouryo-batch-update` 本文）。
 - **INSERT は一覧でやらず詳細画面へ**（採番・全列入力が要るため）。
 - グリッド index↔DataRow は **`Deleted` を飛ばして数える**、セルは **DataRow へ読み戻す**（`opentouryo-batch-update`「Web グリッド ↔ DataRow」＝本サンプルが実例）。
+- **★ 行ボタンの配置は3パターン**（MVC も同型＝`opentouryo-mvc-crud-screens`。ただし MVC は `formaction`＋`RowIndex` で分岐＝`ButtonField`/`RowCommand`/`EditIndex` は使わない）：**① [削除] のみ／② [更新][削除]／③ [編集][削除]**。サンプル（`ProductsSearchAndUpdate.aspx`）は行に **`<asp:ButtonField CommandName="Update" Text="更新"/>`＋`CommandName="Delete" Text="削除"`**＝**② 型**。`UOC_gvwGridView1_RowCommand` で **`fxEventArgs.InnerButtonID`** を `switch` し、`PostBackValue` の表示 index から当該 `DataRow` を引く（`Added`/`Deleted` を飛ばして数える）。
+  - **[更新]＝当該行の更新イベント**：その行の `txt<列>`/`ddl<列>` を `DataRow` に読み戻して **`Modified`**（DB へはまだ出さない）。
+  - **[編集]＝当該行だけ編集可**にする（GridView の `EditIndex` にその行を設定＝他行は表示のまま）→ 編集後に **[更新]** を押して読み戻す。※ 本サンプルは全行を常時 TextBox 編集可＝[編集] 無しの ② 型。
+  - **[削除]＝`dr.Delete()`**（`Deleted`。`Added` 行は Delete できないのでスキップ）。
+  - **どの行ボタンも実 CUD は出さない＝`RowState` を作るだけ。実反映はグリッド外 [バッチ更新]（`btnBatUpd`「下記の結果セットをバッチ更新する」）で一括**。行ボタン押下後は結果セット固定（`AllowPaging=false`→`DataSource=dt` 再バインド）＝上記のとおり。
 
 ## ページング（P層 ⇄ D層）
 

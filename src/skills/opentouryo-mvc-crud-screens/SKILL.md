@@ -31,6 +31,7 @@ metadata:
   B層の振り分けは引数クラスの `MethodName`（サンプルに倣い `this.ActionName` を渡す）＝`opentouryo-layer-p-mvc`。P→B は `new LayerB().DoBusinessLogicAsync(pv, iso)`。
 - **フォームと CSRF**＝`<form method="post" asp-action="…">`＋`@Html.AntiForgeryToken()`／**POST アクションに `[ValidateAntiForgeryToken]`**。
 - **1フォームから複数アクションへ**＝ボタンの `formaction="@Url.Action("<action>","<ctrl>")"` で送信先を分岐（`SelectAll`/`AddRow`/`DeleteRow`/`BatchUpdate`）。
+- **★ 行ボタンの配置3パターンは Web Forms と同型**（`opentouryo-webforms-crud-screens`／`opentouryo-batch-update`）＝**[削除]のみ／[更新][削除]／[編集][削除]**。ただし **MVC に `ButtonField`/`RowCommand`/`EditIndex` は無い**＝各行ボタンを **`formaction` で per-row アクションに飛ばし当該行の `RowIndex` を送る**：**[更新]**＝その行だけ読み戻して `Modified`（例 `UpdateRow(rowIndex)`）・**[編集]**＝その行の input だけ編集可にして（他行は `readonly`／編集中行 index を hidden で持つ）編集後 [更新]・**[削除]**＝`DeleteRow(rowIndex)`＝`dr.Delete()`。**実 CUD はグリッド外 [バッチ更新]（`BatchUpdate`）で一括**（下記）。※既定の骨格は行別 [更新] を置かず、`BatchUpdate` 時に全行を一括読み戻し（下記 step 4）。
 - **★ フッタのメイン5ボタンは `@section` に置く→ `form="<フォームID>"` で紐付ける。** `@section` の中身は `@RenderBody()`＝`<form>` の外に描画されるので、
   付けないと押しても送信されない（`opentouryo-layer-p-mvc` の `@section` 罠）。キャプションは画面ごと・不要は `disabled`。
 - **一覧は `<table>` を自前生成し `<tr>` をループ**（`for` はコード文脈なので `@` を付けない＝付けると Razor パースエラー）。各行に **hidden `Rows[i].RowIndex`＋各列の

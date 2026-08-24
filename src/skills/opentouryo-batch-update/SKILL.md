@@ -33,6 +33,7 @@ metadata:
 | 変更なし | — | `Unchanged`（対象外） |
 
 > ★ 削除は **`dr.Delete()`**。`dt.Rows.Remove(dr)` だと行が切り離され `Deleted` にならず、バッチが DELETE を出せない。
+> ★ **行ボタンは [削除]のみ／[更新][削除]／[編集][削除] の3配置**：[更新]＝その行を読み戻して `Modified`・[編集]＝その行だけ編集可にして編集後 [更新]・[削除]＝`dr.Delete()`。**実 CUD は出さず `RowState` を作るだけ＝実反映はグリッド外 [バッチ更新] で一括**（実装＝`opentouryo-webforms-crud-screens`・`opentouryo-mvc-crud-screens`）。
 
 ## B層での一括処理（核心）
 
