@@ -20,9 +20,9 @@ dr.Delete();
   該当行を `Delete()`、追加ボタンの `UOC_btnAdd_Click` で `NewRow()`＋`Rows.Add()`（`opentouryo-layer-p-webforms-event`。
   `DataList` はイベント自動結線外＝ボタンで扱う）。複数ポストバックに跨るなら `DataTable` を Session に保持。
 - **`RowDeleting` は該当行を `Delete()` して再バインドするだけ**で足りる＝`e.Cancel` は不要（`DataTable` バインド〔`DataSourceID` 無し〕では GridView 自身は削除処理を持たない。実サンプル `testGridView` も `e.Cancel` を設定しない）。
-- **WinForms（`DataGridView`）**：`DataTable`（`BindingSource` 経由）をバインド。**[追加]／[削除] は通常のボタン**
-  （`btn`＝`UOC_btnAdd_Click` / `UOC_btnDelete_Click`。`DataGridView` は自動結線外＝`opentouryo-layer-p-winforms-event`）。
-  **★ 行内 [更新] は不要**（グリッドの編集は `DataTable` へ自動反映＝グリッド内は [削除] のみ＝行ボタン①配置。実 CUD はフッタ [更新]＝バッチ更新で一括）。
+- **WinForms（`DataGridView`）**：`DataTable`（`BindingSource` 経由）をバインド。**セル編集は自動でバインド先 `DataTable` に反映される**（Web と違い読み戻し不要）＝**行内 [更新] ボタンは不要**。
+  **行削除も標準の Delete キーで可**（バインド経由＝`DataRowView.Delete()`＝`Deleted` になる。`Rows.Remove` ではない）＝**[削除] ボタンも基本は不要**だが、**発見可能性・アクセシビリティのために足すこともある**
+  （`UOC_btnDelete_Click`）。[追加] は通常のボタン（`UOC_btnAdd_Click`）。`DataGridView` は自動結線外＝`opentouryo-layer-p-winforms-event`。実 CUD はフッタ [更新]＝バッチ更新で一括。
   **★ ただし保留中の編集は `CommitGridEdits()` で確定してから**［追加］/［削除］/バッチ更新・**確認ダイアログの前**に進む——`EndEdit()` は**セルの編集しか確定せず**、行（`DataRowView`）の保留編集は `CurrencyManager.EndCurrentEdit()` まで確定しない＝そのまま進むと入力が失われる（実測）。
 
 ```csharp
@@ -41,7 +41,7 @@ CommitGridEdits();
 DataRow nr = dt.NewRow();
 dt.Rows.Add(nr);
 
-// [削除]（UOC_btnDelete_Click）：選択行を Delete → Deleted
+// [削除]（任意。Delete キーでも同じ＝バインド経由で Deleted になる）
 CommitGridEdits();
 if (bs.Current is DataRowView drv) drv.Row.Delete();   // ★ Delete（Remove ではない）
 ```
