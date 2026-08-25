@@ -21,14 +21,17 @@ foreach ($f in (Get-ChildItem base2-overlay -Recurse -File -Filter *.cs)) {
 **意図した変更（OLE/ODBC 分岐削除・master ページ ハンドラ削除等）以外の差分が出たら、上流の変更を巻き戻している**＝overlay を新 pristine に対して作り直す。
 実測（2026-08-19 の develop 引き直し）では overlay 5ファイルとも意図した差分のみ＝影響なしだった。
 
+**★ ヘッダの「更新履歴」行を機械挿入するときの位置**：基盤ソースはファイルヘッダに更新履歴表を持つ＝挿入は **Apache License region の直後ではなく、最後の `//*  YYYY/MM/DD` 行の直後**（履歴表の末尾）に入れる（`opentouryo-comment-convention`）。
+
 ## DBMS を足す/減らすときの「面」＝チェックリストの根拠
 
-SKILL の「5つの面」の詳細。実測（develop）で裏取り済み。
+SKILL の「面①〜⑥」の詳細。実測（develop）で裏取り済み。
 
 - **①ロジック分岐は4クラス全部（`MyFcBaseLogic`/`MyBaseLogic`〔`[Obsolete]`〕/`MyFcBaseLogic2CS`/`MyBaseLogic2CS`）。置換後は grep で残存確認。**
   upstream は同じ分岐でも**ガードの `#if` が4クラスで不揃い**（`#if NETCOREAPP` と `#if NETCOREAPP2_0` が混在。`net10` は
   `NETCOREAPP2_0` 未定義＝`#else` 側が有効）。片方の `#if` を目印にした機械置換は**当たらないクラスを無言で残す**
   （ビルドは通るので気付けない）＝置換後に4クラスを grep して残存ゼロを確認する。
+  **★ どの分岐がどのランタイムか（実ソース `MyFcBaseLogic.cs`）＝`OLE` は net48 のみ〔`#if NETCOREAPP` の `#else`〕・`NPS` は core のみ〔`#if NET48` の `#else`〕・`SQL`/`ODB`/`ODP`/`MCN` は両方（ガード無し）・`ORA`/`DB2`/`HIR` はコメントアウト＝分岐無しで `else`（SQL）へ。**「`OLE`/`ODB` はまとめて net48」と決め打たない（`ODB` は core でも有効）。
 - **②③は「Dam が別アセンブリの DBMS」だけ。** ②csproj の `<Reference>`+`HintPath`／③ベンダ Dam DLL を `Build_*` から外す、は
   Dam が**別 DLL**（`OpenTouryo.DamManagedOdp`/`.DamMySQL`/`.DamPstGrS`）のときだけ該当。
   **`DamOLEDB`/`DamODBC` は `Public`（親クラス1）に同居**（`Public\Db\Dam{OLEDB,ODBC}.cs`）＝**外せない・外してはいけない**
@@ -38,10 +41,14 @@ SKILL の「5つの面」の詳細。実測（develop）で裏取り済み。
   （実測：両ホストに `ConnectionString_OLE`/`_ODBC`。3層構成で「アプリ側だけ」と書くとホストを取りこぼす）。
   一方 **開発支援ツール `OT_Tools\DaoGen_Tool`（墨壺）は対象外**：親クラス2 を経由せず自前で `OdbcConnection`/`OleDbConnection` を開く（`Form1.cs`）
   ＝キーを消すとツールが壊れる＝**残すのが正**。
+  **★ ①のランタイム差が config に出る**：`OLE` は net48 の config だけ・`ODB`/`ODP` は両方＝**core の config は `_ODBC` はあるが `_OLE` は無い**（実測：`2_MVC_Sample_Core/appsettings.json`）。削除対象がランタイムで非対称＝core に `_OLE` が無いのを「消し漏れ」や「未対応」と誤認しない。
 - **④' サンプル UI の DAP 選択肢（第5の面）。** 分岐を消しても、サンプルのドロップダウンに DBMS コードが残ると、
   選んだとき `UOC_ConnectionOpen` の**最後の `else` が SQL Server に黙ってフォールバック**する（エラーにならず別 DBMS で動く＝
   最も気付きにくい壊れ方）。UI 側（`Form1.cs`/`CrudViweModel.cs` 等）の選択肢も揃える。
   **傍証**：MVC core の picker は `DB2`/`HIR` を出すのに親クラス2 にその分岐は無い（コメントアウト）＝上流の時点で同じ不整合。
+  → 消す DBMS の選択肢を削るだけでなく、**分岐の無い選択肢（`else` フォールバック予備軍）が他に無いか**も突き合わせる（`DB2`/`HIR` は今回範囲外なら残置と記録）。
+- **⑥ DBMS 別の SQL 資産・手順書。** `resource\Sql\ole_odbc\`（ODBC/OLEDB 用の `.sql`/`.xml` 一式＋`Configuration steps ODBC.txt`）のような
+  **DBMS 別リソース**は、分岐を消しても残る＝**どこからも参照されないまま「静かに腐る」**（ビルドにも実行にも出ない）。参照の有無を確認して残す/消すを判断する（未参照でも実害は無いが、面の一覧に載せて見落とさない）。
 - **反映確認（バイナリ走査）のエンコード。** 「DLL に反映されたか」を非対話で見るとき、**型名・メソッド名（メタデータ）は UTF-8、
   `ldstr` の文字列リテラル（`ConnectionString_<code>` 等）は UTF-16（`#US` ヒープ）**。ASCII/UTF-8 一律で走査すると接続キー等が
   全 False になり誤判定する＝型名は UTF-8、リテラルは UTF-16 で見る。
@@ -54,7 +61,7 @@ public abstract class MyFcBaseLogic : BaseLogic
     // DB 初期化（DAM 生成・接続・分離レベル・Tx 開始）＝実装必須
     protected override void UOC_ConnectionOpen(BaseParameterValue pv, DbEnum.IsolationLevelEnum iso)
     {
-        // actionType の先頭[0]で DBMS を選ぶ（#if でランタイム別。OLE/ODB/ODP=net48、NPS=core）
+        // actionType の先頭[0]で DBMS を選ぶ（ランタイム別＝OLE は net48 のみ・NPS は core のみ・SQL/ODB/ODP/MCN は両方。分岐無しは else で SQL）
         BaseDam dam;
         switch (pv.ActionType.Split('%')[0])
         {

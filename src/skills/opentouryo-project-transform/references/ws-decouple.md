@@ -50,6 +50,7 @@ WS 参照を削る（「3層/2層」は呼び方の別で、判断軸は **WS �
 ## 確実な進め方
 
 WS 参照（`WSIFType_sample` / `WSServer_sample`）を csproj・sln から外してビルドし、**`CS0246` が出た箇所を上から潰す**。
+**★ 外したら `bin\` の旧 WS アセンブリも消す（or `Clean`）＝実行時検証の偽陽性を防ぐ**：csproj/sln から参照を外しても **`bin\WSServer_sample.dll`/`WSIFType_sample.dll` は残る**（msbuild は bin を掃除しない）。残ると `Latebind` が見つけて **`TMInProcessDefinition` を直さなくても動く＝「2層化 OK」に見える偽陽性**（上の★罠が発現しない）うえ、成果物に WS アセンブリが同梱されたまま＝切り離し未完了。**bin から2 DLL を削除してから実行検証する**（実測：これで初めて `ArgumentException` が再現）。
 その後**必ず実行して**通信制御画面を叩く（ビルドだけではこの実行時エラーを検出できない）。**ポストバックを伴うので
 StateServer 稼働が前提**（＝要管理者。昇格不可なら一時 InProc で検証し戻す。押すボタン name はマスタページ側のことがある）＝
 非対話手順は `opentouryo-project-setup-config` の `references/run-verify.md`。

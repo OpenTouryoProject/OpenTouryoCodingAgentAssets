@@ -75,12 +75,12 @@ metadata:
 
 ### DBMS を足す/減らすときの"面"（チェックリスト）
 
-`UOC_ConnectionOpen` の分岐だけでは不完全。**5つの面を揃える**（どれか残すと半端に生き続ける）：
+`UOC_ConnectionOpen` の分岐だけでは不完全。**面を揃える**（①〜⑥。残すと半端に生きる）：
 **①ロジック分岐（4クラス全部・置換後 grep で残存確認）／②csproj `<Reference>`・③ベンダ Dam DLL を外す（②③は Dam が別 DLL のときだけ
 ＝`DamManagedOdp`/`DamMySQL`/`DamPstGrS`。`DamOLEDB`/`DamODBC` は `Public`〔親クラス1〕同居で外さない）／④config の `ConnectionString_<code>`
-（開発支援ツール `DaoGen_Tool` は親クラス2 を経由せず自前で `Odbc/OleDbConnection` を開く＝キーは残す）／④'サンプル UI の DAP 選択肢
-（残すと最後の `else` が SQL へ黙ってフォールバック＝最も気付きにくい）**。
-根拠（`#if` 不揃い・`Public` 同居・ツール除外・UI フォールバック・DLL 反映確認は型名 UTF-8/リテラル UTF-16 で走査）は **`references/snippets.md`**。
+（`DaoGen_Tool` は自前で `Odbc/OleDb` を開く＝キーは残す）／④'サンプル UI の DAP 選択肢
+（残すと最後の `else` が SQL へ黙ってフォールバック）／⑥DBMS 別 SQL 資産（`resource\Sql\ole_odbc\` 等＝未参照でも残る）**。
+**★ ①④はランタイム非対称**（`OLE`=net48 のみ・`NPS`=core のみ・他は両方＝**core config は `_ODBC` あり `_OLE` 無し**。実ソース）。詳細は **`references/snippets.md`**。
 
 ## 変更 → 反映のループ
 

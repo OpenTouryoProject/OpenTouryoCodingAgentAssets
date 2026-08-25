@@ -34,6 +34,7 @@
 - **★ 初回リクエストは待つ**：ビルド直後の**初回リクエストは初回コンパイル**（WebForms＝`.aspx` コンパイル／core＝JIT・起動）で
   **30 秒を超える**ことがある（実測：`/Ping/Index` が 30s タイムアウト→ウォーム後は正常）。**タイムアウト＝失敗と誤判定しない**
   ＝初回は **120s 程度のタイムアウト**にするか、**1発ウォームアップしてから判定**する。
+- **★ `app.config`（`<appSettings file="app.config">` の外部ファイル）を書き換えたら iisexpress を起こし直す**：WebForms は `Web.config` の `<appSettings file="app.config"/>` で外部ファイルを読むが、**この外部ファイルの変更は ASP.NET の再起動監視の対象外**＝直しても直前の設定で動き続ける（実測）。config を変えて再検証するなら **iisexpress を止めて起こし直す**（または `Web.config` 本体を touch して app ドメインを再起動させる）。知らないと「直したのに直っていない＝手順が誤りに見える」。
 - **500 が出たら resource パス／config 解決の失敗を疑う**（フレームワーク初期化で XML 定義・log4net を
   `%OT_RESOURCE_ROOT%` から読む＝ここが実行時検証の勘所。⑥ / `references/resource-config.md`）。
   **典型症状＝`System.ArgumentException: リソースファイル[…]は見つかりませんでした。`（`at Touryo.Infrastructure.Public.IO.ResourceLoader.Exists`）**。
