@@ -173,6 +173,8 @@ public class SuppliersBController : MyBaseMVControllerCore
     //   ★ 追加行は常に／既存行は「確定する行（targetRowIndex）」だけ／削除行は対象外。
     //     追加行は DB に戻す値が無く落とすと再バインドで空行に戻る＝毎回読み戻す。
     //     既存行は取得時値が dt に残る＝その行の[更新]が押されたときだけ読み戻せばよい（無駄 Modified も減る）。
+    //   ※ 行[更新]を置かない（[削除]のみ）パターンは既存行を per-row 確定する手段が無い
+    //     ＝BatchUpdate で全行読み戻す（この判定を外した read-all 版を別に用意する）。
     private void ReadRowsIntoTable(DataTable dt, SuppliersViewModel model, int targetRowIndex)
     {
         if (model.Rows == null) { return; }
