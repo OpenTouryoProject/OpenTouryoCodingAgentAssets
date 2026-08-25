@@ -33,7 +33,7 @@ metadata:
 | 変更なし | — | `Unchanged`（対象外） |
 
 > ★ 削除は **`dr.Delete()`**。`dt.Rows.Remove(dr)` だと行が切り離され `Deleted` にならず、バッチが DELETE を出せない。
-> ★ **グリッド行ボタンは [削除]のみ／[更新][削除]／[編集][削除] の3配置**（実 CUD はグリッド外 [バッチ更新] で一括）。**★ 再バインドを伴う UI では読み戻しは常に全行**——当該行だけだと入力途中の追加行等の未確定入力が消える（`RowState` は変わった行にだけ立つ）。配置と実装＝`opentouryo-webforms-crud-screens`／`opentouryo-mvc-crud-screens`。
+> ★ **グリッド行ボタン（[削除]のみ／[更新][削除]／[編集][削除]・配置は各 CRUD スキル）でも実 CUD はグリッド外 [バッチ更新] で一括**。**★ ポストバックの読み戻し＝「追加行は常に／既存行はその行の [更新] のときだけ／削除行は対象外」**（追加行は DB に戻す値が無く落とすと空行化／既存行は取得時値が DataTable に残る＝読み戻さず未確定で可＝無駄 Modified も減る）。実装＝`opentouryo-webforms-crud-screens`／`opentouryo-mvc-crud-screens`。
 
 ## B層での一括処理（核心）
 

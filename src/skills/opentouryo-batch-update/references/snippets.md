@@ -51,8 +51,10 @@ if (bs.Current is DataRowView drv) drv.Row.Delete();   // ★ Delete（Remove �
 セル編集は自動では `DataTable` に入らない。**グリッドのセル → DataRow へ読み戻す**（`Modified` はこの代入で立つ）。
 `Deleted` 行は表示から外れるので `e.RowIndex` と `dt.Rows[i]` はずれる → **`Deleted` を飛ばして数える**。
 `DataKeyNames` は追加行の PK が `DBNull` で使えない。
+**★ 読み戻す行は「追加行は常に／既存行はその行の [更新] のときだけ／削除行は対象外」**（追加行は DB に戻す値が無く落とすと再バインドで空行化＝要保護／既存行は取得時値が `dt` に残る＝読み戻さず「未確定」で可）。呼び出し側で `targetDisplayIndex` を渡す（[更新]＝当該行・[削除]/[バッチ更新]＝-1）。
 
 ```csharp
+// targetDisplayIndex ＝ [更新] が押された行の表示 index（[削除]/[バッチ更新] は -1＝追加行のみ）
 foreach (GridViewRow gvr in this.gvwSuppliers.Rows)
 {
     if (gvr.RowType != DataControlRowType.DataRow) continue;
@@ -60,10 +62,13 @@ foreach (GridViewRow gvr in this.gvwSuppliers.Rows)
     // 表示 index → DataRow（Deleted を飛ばしながら数える。★ dt.Rows[gvr.RowIndex] としない）
     DataRow dr = GetDataRowForDisplayIndex(dt, gvr.RowIndex);
 
+    // ★ 追加行は常に読み戻す（DB に戻す値が無く、落とすと再バインドで空行化）。既存行はその行の [更新] のときだけ。
+    if (dr.RowState != DataRowState.Added && gvr.RowIndex != targetDisplayIndex) continue;
+
     string edited = ((TextBox)gvr.FindControl("txtCompanyName")).Text;
 
-    // ★ 追加行（Added）は全列が DBNull 始まり。下の skip 判定に掛けると値を入れない列が DBNull のまま残り、
-    //   S1_Insert() が NOT NULL 列へ NULL を送って落ちる → Added は skip せず無条件代入する
+    // ★ 追加行（Added）は全列が DBNull 始まり。skip 判定に掛けると値を入れない列が DBNull のまま残り、
+    //   NOT NULL 列へ NULL を送って INSERT が SqlException 515 → Added は skip せず無条件代入する
     //   （下の「空↔空は変更なし」は Unchanged/Modified 行だけの話）
     if (dr.RowState == DataRowState.Added) { dr["CompanyName"] = edited; continue; }
 

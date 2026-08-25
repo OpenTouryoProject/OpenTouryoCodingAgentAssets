@@ -91,7 +91,7 @@ public class SuppliersBController : MyBaseMVControllerCore
         DataTable dt = this.LoadEditingTable();
         if (dt == null) { model.Message = "先に一覧を取得して下さい。"; return View("Index", model); }
 
-        this.ReadRowsIntoTable(dt, model);     // 画面の編集を読み戻してから
+        this.ReadRowsIntoTable(dt, model, -1);     // -1＝追加行のみ読み戻す（既存行は各行の[更新]で確定済み）
         DataRow nr = dt.NewRow();
         nr["CompanyName"] = "";                // ★ DB 側 NOT NULL 列は "" で初期化（DBNull のまま INSERT すると SqlException 515。ExecSelectFill_DT は制約を落とすので dt からは判定できない＝アプリが知っておく）
         dt.Rows.Add(nr);                       // 空行を足す＝Added
@@ -108,10 +108,24 @@ public class SuppliersBController : MyBaseMVControllerCore
         DataTable dt = this.LoadEditingTable();
         if (dt == null) { model.Message = "先に一覧を取得して下さい。"; return View("Index", model); }
 
-        this.ReadRowsIntoTable(dt, model);
+        this.ReadRowsIntoTable(dt, model, -1);   // -1＝追加行のみ読み戻す
         if (0 <= rowIndex && rowIndex < dt.Rows.Count) { dt.Rows[rowIndex].Delete(); }
         this.SaveEditingTable(dt);
         model.Suppliers = dt; model.Message = "行を削除しました（［更新］でDBに反映）。";
+        return View("Index", model);
+    }
+
+    // --- 行［更新］（既存行をその場で確定＝Modified。追加行＋当該行だけ読み戻す） ---
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult UpdateRow(SuppliersViewModel model, int rowIndex)
+    {
+        DataTable dt = this.LoadEditingTable();
+        if (dt == null) { model.Message = "先に一覧を取得して下さい。"; return View("Index", model); }
+
+        this.ReadRowsIntoTable(dt, model, rowIndex);   // 当該既存行＋追加行を読み戻す
+        this.SaveEditingTable(dt);
+        model.Suppliers = dt; model.Message = "行を更新しました（［更新］でDBに反映）。";
         return View("Index", model);
     }
 
@@ -123,7 +137,7 @@ public class SuppliersBController : MyBaseMVControllerCore
         DataTable dt = this.LoadEditingTable();
         if (dt == null) { model.Message = "先に一覧を取得して下さい。"; return View("Index", model); }
 
-        this.ReadRowsIntoTable(dt, model);     // この代入で Modified が立つ
+        this.ReadRowsIntoTable(dt, model, -1);     // -1＝追加行のみ（既存行は各行の[更新]で確定済み）
 
         // ↓B層実行：Suppliers のバッチ更新------------------------------------------------
         SuppliersParameterValue pv = new SuppliersParameterValue(
@@ -155,15 +169,19 @@ public class SuppliersBController : MyBaseMVControllerCore
         return View("Index", model);
     }
 
-    // --- 画面のセル値を DataTable へ読み戻す（RowIndex で対応・Deleted は飛ばす） ---
-    private void ReadRowsIntoTable(DataTable dt, SuppliersViewModel model)
+    // --- 画面のセル値を DataTable へ読み戻す（RowIndex で対応） ---
+    //   ★ 追加行は常に／既存行は「確定する行（targetRowIndex）」だけ／削除行は対象外。
+    //     追加行は DB に戻す値が無く落とすと再バインドで空行に戻る＝毎回読み戻す。
+    //     既存行は取得時値が dt に残る＝その行の[更新]が押されたときだけ読み戻せばよい（無駄 Modified も減る）。
+    private void ReadRowsIntoTable(DataTable dt, SuppliersViewModel model, int targetRowIndex)
     {
         if (model.Rows == null) { return; }
         foreach (SupplierRowViewModel row in model.Rows)
         {
             if (row.RowIndex < 0 || dt.Rows.Count <= row.RowIndex) { continue; }
             DataRow dr = dt.Rows[row.RowIndex];
-            if (dr.RowState == DataRowState.Deleted) { continue; }
+            if (dr.RowState == DataRowState.Deleted) { continue; }                        // 削除行は対象外
+            if (dr.RowState != DataRowState.Added && row.RowIndex != targetRowIndex) { continue; }   // ★ 追加行は常に・既存行は対象行だけ
 
             SetIfChanged(dr, "CompanyName", row.CompanyName, notNull: true);   // ★ DB 側 NOT NULL 列
             SetIfChanged(dr, "ContactName", row.ContactName);
@@ -244,8 +262,13 @@ public class SupplierRowViewModel
                     <td><input class="form-control form-control-sm" name="Rows[@idx].City" value="@(dr["City"] == DBNull.Value ? "" : dr["City"].ToString())" /></td>
                     <td><input class="form-control form-control-sm" name="Rows[@idx].Country" value="@(dr["Country"] == DBNull.Value ? "" : dr["Country"].ToString())" /></td>
                     <td><input class="form-control form-control-sm" name="Rows[@idx].Phone" value="@(dr["Phone"] == DBNull.Value ? "" : dr["Phone"].ToString())" /></td>
-                    <td><button type="submit" class="btn btn-danger btn-sm"
-                                formaction="@Url.Action("DeleteRow", "SuppliersB", new { rowIndex = idx })">削除</button></td>
+                    <td>
+                        @* ★ [更新]＝この既存行を確定（追加行＋この行だけ読み戻す）。[削除]＝この行を Deleted *@
+                        <button type="submit" class="btn btn-primary btn-sm"
+                                formaction="@Url.Action("UpdateRow", "SuppliersB", new { rowIndex = idx })">更新</button>
+                        <button type="submit" class="btn btn-danger btn-sm"
+                                formaction="@Url.Action("DeleteRow", "SuppliersB", new { rowIndex = idx })">削除</button>
+                    </td>
                 </tr>
             }
         }
