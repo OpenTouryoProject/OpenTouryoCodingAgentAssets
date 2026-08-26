@@ -38,21 +38,24 @@ CallController cctrl = new CallController(this.UserInfo);
 TestReturnValue rv = (TestReturnValue)cctrl.Invoke("testWebService", parameterValue);
 ```
 
-`Invoke("testWebService", ...)` の解決の流れ。
+`Invoke("testWebService", ...)` の解決は**2段**。**インプロセスか否かで引く定義が分かれ、リモートは「クライアントとサーバの両方」を引く**（実ソースで裏取り＝`CallController.cs`／`FxController.cs`／`WCFTCPSvcForFx.cs`）。
 
 ```
-① TMProtocolDefinition.xml で "testWebService" の protocol を引く
-     protocol="1" → インプロセス
-     protocol="2" → Web サービス
+① クライアント：TMProtocolDefinition で protocol を引く（★ protocol 解決はクライアント側だけ）
 
-② protocol="1" なら
-     TMInProcessDefinition.xml で assemblyName / className を引いて直接呼ぶ
-   protocol="2" なら
-     TMProtocolDefinition.xml で url / timeout / props を引いて通信する
+  protocol="1"（インプロセス）
+    → クライアント：TMInProcessDefinition で assemblyName/className を引き、同一プロセスで直接呼ぶ
+       ★ サーバ側の定義は一切通らない
+  protocol="2"/"4"/"5"（Web サービス／WCF TCP／Web API ＝リモート）
+    → クライアント：TMProtocolDefinition の url/timeout/props で転送する
+    → サーバ（ServiceInterface）：TMInProcessDefinition で assemblyName/className を引き B層を呼ぶ
+       ★ クライアントの TMInProcessDefinition は通らない／サーバは TMProtocolDefinition を持たない
 ```
 
-**同じ論理名のまま、定義ファイルを直すだけでインプロセス⇄Web サービスを切り替えられる。**
-これがこの機能の目的。
+**同じ論理名のまま、定義ファイルを直すだけでインプロセス⇄リモートを切り替えられる。** これがこの機能の目的。
+
+**★ `TMInProcessDefinition.xml` は「クライアント」と「サーバ」の2箇所にある**（同名・別物）。**リモートでも使うサービス論理名は、両方に同じ `id` を登録する**
+（クライアント側＝`protocol="1"` 用・プロジェクト直下の相対パス／サーバ側＝リモート用・`%OT_RESOURCE_ROOT%\Xml\`）。所在と設定キーの**非対称表は `references/snippets.md`**。
 
 `Invoke` の非同期版として `InvokeAsync(serviceName, parameterValue)` もある。
 
@@ -116,12 +119,22 @@ WS クライアント）は、この制約により実質インプロセス呼�
 
 `prop_ref` で参照した `Prop` に `value` 属性が無いと `FrameworkException` になる。
 
+## リモート（3層）で漏らしやすいこと（実測＋実ソースで裏取り）
+
+- **★ サービス論理名を足したら、クライアントとサーバの両方の `TMInProcessDefinition.xml` に登録する。** リモート経路は**サーバ側**を引く（`FxController`／`WCFTCPSvcForFx`＝`ServiceInterface`）ので、クライアント側だけ直しても通らない（＝`Transmissionタグに合致するid属性値がありません`）。
+- **★ `protocol="1"`（インプロセス）の疎通は、3層（リモート）の疎通を保証しない。** protocol=1 は**サーバ側定義を一切通らない**ため、緑でもリモート経路は1行も検証されていない＝**必ず `protocol="4"` か `"5"` でも1回叩いて確認する**。
+- **★ 定義ファイルは `static` にキャッシュされ、編集しても再読込されない**（名前解決サービス `PRT_NS`/`IPR_NS` は `CallController`／`FxController`／`WCFTCPSvcForFx` で `static`＝アプリドメイン起動時に1回だけ読む。実ソース）。編集後は**リサイクル必須**——サーバ＝`iisreset`／アプリプール リサイクル／`Web.config` の更新（IIS Express は `taskkill /IM iisexpress.exe` で落として再起動）、クライアント＝プロセス再起動。
+- **所在の非対称表・新サービス追加チェックリスト・エラー→切り分け表は `references/snippets.md`。**
+
 ## やってはいけないこと
 
 - **`CallController.Invoke()` に呼び出し先の URL やクラス名を渡す** — 渡すのはサービス論理名。
   実体の解決は定義ファイルが行う
 - **`TMProtocolDefinition` だけ書いて `TMInProcessDefinition` を書かない** — 2ファイルで
-  1つの機能。`protocol="1"`（インプロセス）の解決には後者が要る
+  1つの機能。**`protocol="1"` はクライアント側の、`"2"`/`"4"`/`"5"`（リモート）はサーバ側の** `TMInProcessDefinition` が要る
+- **クライアント側の定義だけ直してリモート経路が通ると考える** — リモートは**サーバ側**の `TMInProcessDefinition` を引く（`ServiceInterface`）。両方に同じ `id` を登録する
+- **`protocol="1"` の疎通確認だけで3層を検証済みとする** — サーバ側定義を通らない。`protocol="4"`/`"5"` でも1回叩く
+- **定義ファイルを編集してサーバ／クライアントを再起動せずに試す** — `static` キャッシュ＝リサイクル（サーバ）／プロセス再起動（クライアント）まで反映されない
 - **`id` の先頭に数字を使う** — XML の `ID` 型なので不正
 - **`prop_ref` で参照する `Prop` に `value` 属性を書かない** — `FrameworkException` になる
 - **呼び出し側のコードでインプロセスか Web サービスかを分岐する** — 隠すのがこの機能の目的。

@@ -177,6 +177,7 @@ WinCone は ClickOnce デプロイ版（"Cone"）で csproj に **`SignManifests
   ＋WS ホスト ASPNETWebService/WCFService。P・B・D を1ソリューションで並行開発できる状態）。
 - **WS モード実動の確認は run-verify**：ASPNETWebService を IIS Express で起動 → クライアント exe から
   WS 越しに呼べること（`references/run-verify.md`）。ホスト未起動でもクライアントはインプロセス兼用で開ける。
+- **★ セットアップ後に業務のサービス論理名を足したら、クライアントとサーバの両方の `TMInProcessDefinition.xml` に同じ `id` を登録し、リモート経路（`protocol="4"`/`"5"`）で1回叩く**——リモートは**サーバ側**（`%OT_RESOURCE_ROOT%\Xml\`）を引く。`protocol="1"`（インプロセス）はサーバ側を通らず3層を検証できない。編集後は**リサイクル必須**（`static` キャッシュ）。詳細＝`opentouryo-transmission`。
 - **★ 既定プロトコルは develop で更新済み（実測 `TMProtocolDefinition2.xml`）**：生きているのは
   **`protocol="5"`（Web API＝`https://localhost:44349/WebAPIControllerForFx`）**と `protocol="4"`（net.tcp WCF）。
   **`protocol="2"`（ASMX＝`ServiceForFx.asmx`）と `3`（WCF-HTTP）はコメントアウト**され、`ServiceForFx.asmx` は

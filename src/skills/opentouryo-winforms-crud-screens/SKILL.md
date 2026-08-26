@@ -58,6 +58,7 @@ RowState バッチの中核は `opentouryo-batch-update`、B層呼び出しと**
 - **2CS（2層）は手動トランザクション**：正常系は **`LayerB.CommitAndClose()` を明示的に呼ぶ**（呼ばないと確定しない）。**業務例外でも自動ロールバックしない**＝`catch` で
   **`LayerB.RollbackAndClose()`** を呼ぶ（`opentouryo-p-call-business` ④）。**Web/MVC のように「フレームワークが自動コミット／業務例外で自動ロールバック」を前提にしない。**
 - **3層（WSクライアント）は `CallController.Invoke(<サービス論理名>, pv)`**＝サーバ側がコミットする（`opentouryo-p-call-business`／`opentouryo-transmission`）。
+  **★ サービス論理名はサーバ側の `TMInProcessDefinition`（`%OT_RESOURCE_ROOT%\Xml\`）にも登録する**——リモート経路はサーバ側を引く。クライアント側だけでは通らない（`opentouryo-transmission`）。
 - B層・D層・自動生成 Dao は `opentouryo-layer-b`／`opentouryo-layer-d`／`opentouryo-dao-generated`。
 
 ## やってはいけないこと
