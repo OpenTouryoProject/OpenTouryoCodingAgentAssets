@@ -48,7 +48,7 @@ protected string UOC_〈イベントハンドラ名〉(FxEventArgs fxEventArgs)
 ## 通信制御経由（インプロセス⇄Webサービスをコード無変更で切替）
 
 サービス論理名で呼ぶ。実体解決は `TMProtocolDefinition.xml`／`TMInProcessDefinition.xml`（`opentouryo-transmission`）。
-**リモート（protocol=2）は net48 専用**、net10.0 はインプロセスのみ。
+**リモート（protocol=2〜5・実運用は 4/5＝2/3 は discon）は net48 専用**、net10.0 はインプロセスのみ。
 
 ```csharp
 CallController cctrl = new CallController(this.UserInfo);

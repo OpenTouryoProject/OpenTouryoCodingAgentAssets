@@ -38,3 +38,4 @@
   
 - 一覧表示は `DataGridView`（`DataSource` にバインド）を使用する。
 - また、初期画面は、Program.csから起動した選択ダイアログの結果で振り分けるようにする。
+- なお、WSClientWin_sampleは、画面端に「通信制御機能のサービス論理名」を選択するDDLを配置する。

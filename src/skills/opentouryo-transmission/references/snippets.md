@@ -15,17 +15,18 @@ TestReturnValue rv = (TestReturnValue)cctrl.Invoke("〈サービス論理名〉"
 // ErrorFlag 判定は opentouryo-p-call-business と同じ
 ```
 
-> ★ リモート（protocol=`2`/`4`/`5`）は **net48 専用**。net10.0 はインプロセス（protocol=`1`）のみ
+> ★ リモート（protocol=`2`〜`5`）は **net48 専用**。net10.0 はインプロセス（protocol=`1`）のみ
 > （`BinarySerialize` が core に無い＝core は `2`〜`5` で `FrameworkException` を投げる。`CallController.cs`）。
 
 ## 呼び出し先の名前解決（TMProtocolDefinition.xml）＝クライアント側のみ
 
-`protocol`：`1`=インプロセス／`2`=ASP.NET Web Service／`4`=WCF TCP／`5`=Web API（`4`/`5` は配布 `TMProtocolDefinition.xml` に既定で含まれる）。
+**`protocol`**（`FxEnum.TmProtocol`・実ソース）：`1`=インプロセス／`2`=ASP.NET SOAP〔ASMX〕／`3`=WCF basicHttpBinding／`4`=WCF netTcpBinding／`5`=ASP.NET WebAPI。
+**`2`・`3` は discon（廃止）＝実運用は `1`（インプロセス）と `4`/`5`（リモート）。** `4`/`5` は配布 `TMProtocolDefinition.xml` に既定で含まれる。
 
 ```xml
 <TMD>
   <Transmission id="testInProcess" protocol="1"/>
-  <Transmission id="testWebSrv"    protocol="2" url="http://xxx/Service.asmx" timeout="60"/>
+  <Transmission id="testRemote"    protocol="5" url="https://xxx/WebAPIControllerForFx" timeout="60"/>   <!-- 5=WebAPI（live）。2/3 は discon -->
 </TMD>
 ```
 
@@ -50,10 +51,10 @@ TestReturnValue rv = (TestReturnValue)cctrl.Invoke("〈サービス論理名〉"
 | | クライアント（呼び出し側） | サーバ（`ServiceInterface`＝呼ばれる側） |
 | --- | --- | --- |
 | `FxXMLTMProtocolDefinition`（`TMProtocolDefinition.xml`） | **あり**（プロジェクト直下の相対パス）＝protocol/url/props を解決 | **無し**（protocol 解決はクライアントの関心事＝ホスト `app.config` に該当キー無し） |
-| `FxXMLTMInProcessDefinition`（`TMInProcessDefinition.xml`） | **あり**（同上）＝**`protocol="1"` 用** | **あり**（`%OT_RESOURCE_ROOT%\Xml\`）＝**`protocol="2"/"4"/"5"`〔リモート〕用** |
+| `FxXMLTMInProcessDefinition`（`TMInProcessDefinition.xml`） | **あり**（同上）＝**`protocol="1"` 用** | **あり**（`%OT_RESOURCE_ROOT%\Xml\`）＝**リモート〔`protocol="2"`〜`"5"`〕用** |
 
 - `protocol="1"`（インプロセス）＝クライアントの2ファイルだけ引く（サーバ側は通らない）。
-- リモート（`2`/`4`/`5`）＝クライアントは `TMProtocolDefinition` で転送先を決め、**サーバが自分の `TMInProcessDefinition` で `assemblyName`/`className` を解決**（`FxController.cs`／`WCFTCPSvcForFx.cs`＝`static IPR_NS.NameResolution`）。
+- リモート（`2`〜`5`。実運用は `4`/`5`＝`2`/`3` は discon）＝クライアントは `TMProtocolDefinition` で転送先を決め、**サーバが自分の `TMInProcessDefinition` で `assemblyName`/`className` を解決**（`FxController.cs`／`WCFTCPSvcForFx.cs`＝`static IPR_NS.NameResolution`）。
 
 ## ★ 新しいサービス論理名を足すときのチェックリスト
 

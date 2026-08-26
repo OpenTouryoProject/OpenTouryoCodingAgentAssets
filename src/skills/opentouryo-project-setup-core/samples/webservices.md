@@ -77,7 +77,7 @@ WS 依存が不要なら、後工程 **`opentouryo-project-transform`** で WS �
 
 ## ランタイム注意：core のリモート WS は実用不可
 
-.NET Core では **`BinaryFormatter` が廃止**され、リモート WS 呼び出し（`protocol="2"`）は実質動かない
+.NET Core では **`BinaryFormatter` が廃止**され、リモート WS 呼び出し（`protocol="2"`〜`"5"`）は実質動かない
 （インプロセスのみ）。**3層リッチクライアント（`WSClient_sample`）を実用するなら net48 側**を使う。
 core 版 `Samples4NetCore\Legacy\WS_sample\WSClient_sample\` は起点として勧めない（`opentouryo-transmission` / §4.4）。
 
