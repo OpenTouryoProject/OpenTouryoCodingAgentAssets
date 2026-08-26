@@ -131,9 +131,16 @@ B層の呼び出しと、**2CS 特有の手動トランザクション制御**�
 `RollbackAndClose`、業務例外で自動ロールバックしない）は `opentouryo-p-call-business` を参照。
 イベントハンドラの書き方は `opentouryo-layer-p-winforms-event`。
 
+## 明細グリッド（`DataGridView`）を編集するなら
+
+**テーブル保守（マスタメンテ）CRUD 画面の型は `opentouryo-winforms-crud-screens`／バッチ更新（`DataTable` の `RowState`）は `opentouryo-batch-update`（WinForms 節）。** Web 系と前提が違う要点だけ先に：
+**`DataGridView` はセル編集が自動でバインド先 `DataTable` に反映される**（Web のような読み戻しが要らない）＝**Web 流の行内 [更新] ボタンは不要**。
+**行削除も標準の Delete キーで可**（バインド経由＝`DataRowView.Delete()`＝`Deleted`）＝**[削除] ボタンも原則不要**（発見可能性・アクセシビリティのために足すことはある）。[追加] は通常のボタン。
+
 ## やってはいけないこと
 
 - **WPF でこのスキルを使う** — WPF は P層フレームワークを持たない。B層・D層のみ利用する
+- **グリッド編集に Web 流の行内 [更新]/[削除] ボタンを持ち込む** — `DataGridView` は自動バインドで読み戻し不要＝行内 [更新] 不要・削除は Delete キーで可（上節・`opentouryo-batch-update`）。Web 仕様を字句どおり WinForms に適用しない
 - **`UserInfoHandle` を使う** — Web 系の仕組み。`MyBaseControllerWin.UserInfo`（static）を使う
 - **親クラス1・親クラス2 を修正する** — バイナリ提供。画面コードクラスに実装する
 - **`opentouryo-auth` のセッション／認証チケットの話を持ち込む** — リッチクライアントは
