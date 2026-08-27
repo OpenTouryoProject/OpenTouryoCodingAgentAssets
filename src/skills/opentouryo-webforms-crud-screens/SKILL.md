@@ -22,7 +22,9 @@ metadata:
 | 方式 | 画面構成 | 追加/更新/削除 | 使いどころ |
 | --- | --- | --- | --- |
 | **(1) 一覧→詳細**（`→`＝画面遷移） | 検索一覧 → **詳細** | すべて詳細画面で（単一レコード CRUD） | **オーソドックス。基本はこちら** |
-| **(2) 一覧＆更新**（`＆`＝同一画面） | 検索一覧＝その場で更新/削除 | **UPDATE/DELETE は一覧で（複数行＝RowState バッチ）**・INSERT だけ詳細 | 一覧で直接編集したいとき（仕様がやや特殊） |
+| **(2) 一覧＆更新**（`＆`＝同一画面） | 検索一覧＝その場で追加/更新/削除 | **追加・更新・削除すべて一覧で（複数行＝RowState バッチ・[追加] はグリッド外ボタンで空行＝Added）** | 一覧で直接編集したいとき（**オプショナル**） |
+
+> **★ Web系（MVC／Web Forms）ではバッチ更新〔(2)〕はオプショナル＝通常は (1) 一覧→詳細（詳細画面で単一レコード CRUD）で処理する。** 一覧でその場に複数行を編集したいときだけ (2) を採る。**(2) の追加・更新・削除は MVC と同一仕様**（`opentouryo-mvc-crud-screens`／`opentouryo-batch-update`）。
 
 ## (1) 一覧→詳細
 
@@ -38,7 +40,7 @@ metadata:
 - **★ 最初の [更新]/[削除] で「結果セットを固定」する**：`UOC_gvwGridView1_RowCommand` で当該行を編集（セル読み戻し→`Modified` ／ `dr.Delete()`→`Deleted`）した後、
   **ページングを止め（`AllowPaging=false`）、GridView を `Session` の `DataTable` にバインドし直す**（`DataSource=dt; DataSourceID=null; DataBind()`）。
   **理由：ページングはページ切替で再取得するため `RowState` を保てない。** 固定後は同一結果セット上で複数行を編集し、**[バッチ更新] で RowState バッチ更新**（`opentouryo-batch-update` 本文）。
-- **INSERT は一覧でやらず詳細画面へ**（採番・全列入力が要るため）。
+- **[追加] はグリッド外のボタンで一覧に空行を足す**（`dt.NewRow()`＋`dt.Rows.Add()`＝**Added**）＝**MVC と同一**（`opentouryo-mvc-crud-screens`／`opentouryo-batch-update`）。**DB 側 NOT NULL 列には値を入れる**（`DBNull` のまま INSERT で `SqlException 515`）・**IDENTITY は `D1_Insert`**・仮採番は仮 PK を使うときだけ。※ サンプル（`ProductsSearchAndUpdate`）は追加を詳細画面でやる as-built だが、**本パターンはグリッド外 [追加] で一覧に空行**（追加・更新・削除を一覧で完結）。
 - グリッド index↔DataRow は **`Deleted` を飛ばして数える**、セルは **DataRow へ読み戻す**（`opentouryo-batch-update`「Web グリッド ↔ DataRow」＝本サンプルが実例）。
 - **★ 行ボタンの配置は3パターン**（MVC も同型＝`opentouryo-mvc-crud-screens`。ただし MVC は `formaction`＋`RowIndex` で分岐＝`ButtonField`/`RowCommand`/`EditIndex` は使わない）：**① [削除] のみ／② [更新][削除]／③ [編集][削除]**。サンプル（`ProductsSearchAndUpdate.aspx`）は行に **`<asp:ButtonField CommandName="Update" Text="更新"/>`＋`CommandName="Delete" Text="削除"`**＝**② 型**。`UOC_gvwGridView1_RowCommand` で **`fxEventArgs.InnerButtonID`** を `switch` し、`PostBackValue` の表示 index から当該 `DataRow` を引く（`Added`/`Deleted` を飛ばして数える）。
   - **[更新]＝当該行の更新イベント**：その行の `txt<列>`/`ddl<列>` を `DataRow` に読み戻して **`Modified`**（DB へはまだ出さない）。
@@ -71,7 +73,7 @@ metadata:
 ## やってはいけないこと
 
 - **(2) でページングを止めずに複数行編集する** — ページ切替で再取得＝`RowState` が消える。**最初の編集で結果セットを固定**する。
-- **一覧で INSERT を許す**（(2)）— 採番・全列入力が要る。INSERT は詳細画面へ。
+- **追加行の DB 側 NOT NULL 列を空のまま [バッチ更新] する**（(2)）— INSERT で `SqlException 515`。グリッド外 [追加] で空行を足したら NOT NULL 列に値を入れる（`opentouryo-batch-update`）。
 - **グリッド index をそのまま DataRow index に使う** — `Deleted` で必ずずれる（`opentouryo-batch-update`）。
 - **自動生成（`_3TierEngine`）のまま実装を残す** — 構造の参考に留め、推奨部品で書く。
 
