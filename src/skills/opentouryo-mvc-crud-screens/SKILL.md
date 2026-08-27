@@ -39,6 +39,7 @@ metadata:
   付けないと押しても送信されない（`opentouryo-layer-p-mvc` の `@section` 罠）。キャプションは画面ごと・不要は `disabled`。
 - **一覧は `<table>` を自前生成し `<tr>` をループ**（`for` はコード文脈なので `@` を付けない＝付けると Razor パースエラー）。各行に **hidden `Rows[i].RowIndex`＋各列の
   `input name="Rows[i].<列>"`** を出し、ポストバックで **`List<行VM>`（`RowIndex`＋編集列）にモデルバインド**する。
+  **★ 表示列は対象テーブルの全列（＝自動生成Dao が返す列）を既定とする**（仕様に列数の明記が無くても全列表示。IDENTITY 主キーは `readonly`）。**`snippets.md` の例は列を絞った省略＝そのまま写さない**（列を絞ると B層は書けるのに画面から入力できない列が生まれる）。
   **★ `Deleted` 行は描画しない＝表示連番でなく DataTable の行インデックスを `RowIndex` で持ち回る**（連番だと Deleted でズレる）。
   **★ 添字 `i` が 0 起点の連番でない〔Deleted を飛ばす〕とき、各行に `<input type="hidden" name="Rows.Index" value="@i" />` も出す**——ASP.NET (Core) MVC のコレクション モデルバインドは**非連番の添字は `Rows.Index` が無いとバインドしない**＝`model.Rows` が空のまま `BatchUpdate` が走り**編集が静かに捨てられる**（実測：追加行が `NULL` で INSERT→`SqlException 515`。ビルドも 200 も通る）。スニペット＝`references/snippets.md`。
 - **ダイアログは JavaScript**（確認＝`onclick="return window.confirm('…')"`、通知＝`window.alert(@Json.Serialize(Model.Message))` を `@section` のスクリプトで）。

@@ -42,6 +42,7 @@ metadata:
   **理由：ページングはページ切替で再取得するため `RowState` を保てない。** 固定後は同一結果セット上で複数行を編集し、**[バッチ更新] で RowState バッチ更新**（`opentouryo-batch-update` 本文）。
 - **[追加] はグリッド外のボタンで一覧に空行を足す**（`NewRow`＋`Rows.Add`＝Added。NOT NULL 列に値・IDENTITY は `D1_Insert`・仮採番は `opentouryo-batch-update`）＝**MVC と同一**。※ サンプル（`ProductsSearchAndUpdate`）は追加を詳細画面でやる as-built だが、**本パターンはグリッド外 [追加] で一覧に空行**（追加・更新・削除を一覧で完結）。
 - グリッド index↔DataRow は **`Deleted` を飛ばして数える**、セルは **DataRow へ読み戻す**（`opentouryo-batch-update`「Web グリッド ↔ DataRow」＝本サンプルが実例）。
+- **★ 表示列は対象テーブルの全列（＝自動生成Dao が返す列）を既定とする**（仕様に列数の明記が無くても全列表示。IDENTITY 主キーは表示のみ）。**snippets の例は列を絞った省略＝そのまま写さない**。
 - **★ 行ボタンの3配置（[削除]のみ／[更新][削除]／[編集][削除]）と読み戻し規則は `opentouryo-batch-update`（共通）。** Web Forms の実装＝行に **`<asp:ButtonField CommandName="Update"/"Delete">`**（サンプル `ProductsSearchAndUpdate` は ② 型）、**`UOC_gvwGridView1_RowCommand` で `fxEventArgs.InnerButtonID` を `switch`**し `PostBackValue` の表示 index から `DataRow` を引く（`Added`/`Deleted` を飛ばして数える）：
   - **[更新]**＝その行の `txt<列>`/`ddl<列>` を `DataRow` へ読み戻して `Modified`。**[編集]**＝`EditIndex` にその行を設定（他行は表示のまま）→編集後 [更新]（※サンプルは全行常時 TextBox 編集可＝[編集] 無しの ② 型）。**[削除]**＝`dr.Delete()`。
   - **実 CUD はグリッド外 [バッチ更新]（`btnBatUpd`）で一括**。行ボタン押下後は結果セット固定（`AllowPaging=false`→`DataSource=dt` 再バインド）。

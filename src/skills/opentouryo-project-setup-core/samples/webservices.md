@@ -192,4 +192,4 @@ WinCone は ClickOnce デプロイ版（"Cone"）で csproj に **`SignManifests
 **をリポ直下へフラット化**し、各 `.csproj` の相対 `HintPath`（`OpenTouryo.*` 等）を新配置に合わせて張り替える
 （`long path` 有効化でも可）。
 **※ WS 系（`WS_sample\` 一式）は例外＝フラット化しない**（上の①1。サンプル間 ProjectReference の相対パスを保つため
-`long path` 側で回避）。**★ 余裕はほぼ無い（実測 256/260）**：`ASPNETWebService` の `packages.config` 復元後の最長パスは 256 文字で、リポ ルートが 47 文字（例 `D:\git\local\OpenTouryoProject\VerifyCaSkillsForOT`）のとき＝**ルートがあと 4 文字長いだけで復元が壊れる**。ルートは短く選ぶ（`LongPathsEnabled=0` でも上記なら通った）。
+`long path` 側で回避）。**★ 余裕はほぼ無い（実測 256/260）**：`ASPNETWebService` の `packages.config` 復元後の最長パスは 256 文字で、リポ ルートが 47 文字程度のときで**あと 4 文字長いだけで復元が壊れる**＝**リポ ルートは短く選ぶ**（`LongPathsEnabled=0` でもルートが十分短ければ通る）。

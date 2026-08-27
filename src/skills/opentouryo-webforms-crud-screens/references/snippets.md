@@ -130,7 +130,7 @@ protected string UOC_gvwGridView1_RowCommand(FxEventArgs e)
 }
 ```
 - **バッチ更新ボタン**：`Session["SearchResult"]` の `DataTable`（RowState 保持）を B層で **RowState バッチ更新**。★自動生成は `_3TierEngine` "BatchUpdate"／推奨は業務 `LayerB` の `switch(dr.RowState)`＋自動生成 Dao（`opentouryo-batch-update`）。
-- **INSERT は一覧でやらず詳細へ**（`UOC_btnInsert_Click` → `return "ProductsDetail.aspx";`）。採番・全列入力が要るため。
+- **[追加] はグリッド外のボタンで一覧に空行を足す**（`UOC_btnAdd_Click`→`dt.NewRow()`＋`dt.Rows.Add()`＝Added。MVC と同一＝`opentouryo-batch-update`）。**DB 側 NOT NULL 列に値を入れる**（`SqlException 515`）。※ 一覧の列は例（`ProductName` 等）を短く保つ省略＝**実装は対象テーブルの全列を基準に**表示/編集可否を決める（IDENTITY 主キーは `readonly`）。
 
 ## 4. ページング（P層 ObjectDataSource ⇄ D層 SQL）
 

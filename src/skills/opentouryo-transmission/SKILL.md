@@ -91,7 +91,8 @@ WS クライアント）は、この制約により実質インプロセス呼�
 | `assemblyName` | アセンブリ名 |
 | `className` | クラス名（名前空間を含む完全名） |
 
-## TMProtocolDefinition.xml（プロトコルの名前解決）
+**★ サービス論理名は「呼び先の B層クラス」に対応する（→ 固定エントリ `DoBusinessLogic` を呼ぶ。実ソース `CallController.cs`・`TRANSMISSION_INPROCESS_METHOD_NAME="DoBusinessLogic"`）。実際の業務メソッド（`UOC_<名>`）は `pv.MethodName` で選ぶ＝サービス論理名では選ばない**（`opentouryo-p-call-business`）。
+∴ **呼び先の B層クラスが同じなら、サービス論理名の追加は不要＝既存の論理名を再利用する**（メソッドごとに論理名を増やさない。**B層相乗り**のケースでは既存の論理名を共通で使える）。**新規に論理名が要るのは、呼び先クラス（`assemblyName`/`className`）が変わるとき、または経路（`protocol`）を変えるとき**だけ。
 
 **サービス論理名から、呼び出すプロトコルと URL を解決する。** 定義例は `references/snippets.md`。属性：
 
@@ -122,7 +123,7 @@ WS クライアント）は、この制約により実質インプロセス呼�
 
 ## リモート（3層）で漏らしやすいこと（実測＋実ソースで裏取り）
 
-- **★ サービス論理名を足したら、クライアントとサーバの両方の `TMInProcessDefinition.xml` に登録する。** リモート経路は**サーバ側**を引く（`FxController`／`WCFTCPSvcForFx`＝`ServiceInterface`）ので、クライアント側だけ直しても通らない（＝`Transmissionタグに合致するid属性値がありません`）。
+- **★ サービス論理名を足すなら**（＝呼び先の B層クラスや経路が**新規**のとき。同一クラスなら追加不要＝上記の再利用）、**クライアントとサーバの両方の `TMInProcessDefinition.xml` に登録する。** リモート経路は**サーバ側**を引く（`FxController`／`WCFTCPSvcForFx`＝`ServiceInterface`）ので、クライアント側だけ直しても通らない（＝`Transmissionタグに合致するid属性値がありません`）。
 - **★ 経路（`TMProtocolDefinition`）×実体（`TMInProcessDefinition`）を、使う protocol の数だけ 1対1 で作る。** `protocol="4"`（WCF netTcp）と `"5"`（Web API）は**別々に登録が要る**（片方だけだとその経路は存在しない）。サービス論理名は経路ごとに分けるのが分かりやすい（例 `…WCFTcp`＝4／`…WebAPI`＝5／`…InProcess`＝1）。
 - **★ `TMProtocolDefinition` はクライアントに2ファイルある（`.xml` と `2.xml`）＝両方に入れる。** `app.config` が実際に参照するのは片方だが、**config の切替でもう片方に移ると経路が消える**（実測：`2.xml` にだけ入れて `.xml` が空＝切替で解決不能）。
 - **★ `protocol="1"`（インプロセス）の疎通は、3層（リモート）の疎通を保証しない。** protocol=1 は**サーバ側定義を一切通らない**ため、緑でもリモート経路は1行も検証されていない＝**必ず `protocol="4"`/`"5"` でも1回叩く**。さらに**インプロセスへの暗黙フォールバックでないこと**を、**ホスト（`WCFService`/`ASPNETWebService`）を落とすと 4/5 は失敗し 1 だけ成功する**ことで裏取りする。

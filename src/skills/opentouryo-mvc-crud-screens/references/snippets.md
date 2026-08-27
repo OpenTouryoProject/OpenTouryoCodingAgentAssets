@@ -228,6 +228,8 @@ public class SupplierRowViewModel
 
 ## ビュー（`Views/SuppliersB/Index.cshtml`）
 
+> **★ 表示列は「例を短く保つための省略」（6列）＝実装はこの列数を写さない。** マスタ保守の一覧は**対象テーブルの全列（＝自動生成Dao の `D2_Select` が返す列）を基準に**、表示/編集可否を決める（`SupplierID` など IDENTITY 主キーは表示のみ＝`readonly`）。仕様に列数の明記が無くても**全列表示が既定**（列を絞ると B層は書けるのに画面から入力できない列が静かに生まれる）。ViewModel・読み戻し（`ReadRowsIntoTable`/`SetIfChanged`）も対象列に合わせて増やす。
+
 ```cshtml
 @using System
 @using System.Data

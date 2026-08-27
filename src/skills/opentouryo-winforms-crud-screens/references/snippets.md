@@ -20,7 +20,7 @@ public partial class SuppliersScreenB : SuppliersBaseForm
         this.dgvSuppliers.AutoGenerateColumns = true;   // ★ 骨格は自動生成＝全列そのまま。業務画面は列を明示（IDENTITY 主キーは ReadOnly。Web と列を揃えるなら AutoGenerateColumns=false ＋ DataGridViewTextBoxColumn を並べる）
         this.dgvSuppliers.DataSource = _bs;   // グリッドは BindingSource にバインド
         // ★ 一覧の列は「例を短く保つ省略」でなく対象テーブルの全列（＝自動生成Dao の D2_Select が返す列）を基準に表示/編集可否を決める
-        //   （worked example の列を絞ったまま採ると、B層は書けるのに画面から入力できない列が静かに生まれる＝Reporting I2-2 訂正）
+        //   （worked example の列を絞ったまま採ると、B層は書けるのに画面から入力できない列が静かに生まれる）
         // フッタ ボタンのキャプション・活性/非活性はここで動的に（opentouryo-layer-p-winforms-screen）
     }
 
