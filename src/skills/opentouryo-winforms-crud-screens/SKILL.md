@@ -43,15 +43,13 @@ RowState バッチの中核は `opentouryo-batch-update`、B層呼び出しと**
 
 ## (2) 一覧＆更新（RowState バッチの核）
 
-`opentouryo-batch-update` の RowState 振り分けをそのまま使う（コード＝`references/snippets.md`）：
+**RowState 振り分け・[追加]＝グリッド外の空行〔Added〕・削除は `DataRowView.Delete()`〔Deleted・`Rows.Remove` にしない〕・NOT NULL 列に値を入れる〔`SqlException 515`〕・IDENTITY は `D1_Insert`／仮採番・成功後 `AcceptChanges`・IDENTITY 採番後に一覧再取得・楽観排他〔`Original`/timestamp・件数0〕は `opentouryo-batch-update`（共通）。** WinForms 固有だけ（コード＝`references/snippets.md`）：
 
 1. **［一覧取得］** → B層で `DataTable` を取得し、**フォームのフィールドへ**保持＋`BindingSource` にバインド。
-2. **［追加］**（`UOC_btnAdd_Click`）→ `CommitGridEdits()`→`dt.NewRow()`＋`dt.Rows.Add()`＝**Added**。**DB 側 NOT NULL 列には値を入れる**（`ExecSelectFill_DT` は制約を取り込まない＝`DBNull` のまま INSERT すると `SqlException 515`。`opentouryo-batch-update`）。IDENTITY 主キーは仮採番が要るときだけ負値で（同）。
-3. **［削除］**（Delete キー、または任意の [削除] ボタン）→ `DataRowView.Delete()`＝**Deleted**（`Rows.Remove` にしない）。
-4. **セル編集** → バインドで自動的に `DataTable` に入り **Modified**（読み戻し不要）。
-5. **［更新］**（フッタ）→ `CommitGridEdits()` の後 `parameterValue.<表> = dt` で B層へ。**業務例外は `ErrorFlag`（＝2CS はロールバック、下記）＝`RowState` を残してやり直せる**。
-   成功後 **`dt.AcceptChanges()`**。**IDENTITY 採番値は戻らないので一覧を再取得**して再バインド。
-- **楽観排他**＝取得時の値（`DataRowVersion.Original`）または timestamp を WHERE に入れて件数0で検知（`opentouryo-batch-update`／`opentouryo-layer-d`）。
+2. **［追加］**（`UOC_btnAdd_Click`）→ `CommitGridEdits()`→空行を足す（NOT NULL 列に値を入れる）。
+3. **［削除］**（**Delete キー**／任意の [削除] ボタン）→ `DataRowView.Delete()`。
+4. **セル編集** → バインドで自動的に `DataTable` に入り **Modified**（**Web のような読み戻しは不要**）。
+5. **［更新］**（フッタ）→ `CommitGridEdits()` の後 `parameterValue.<表> = dt` で B層へ。**業務例外は `ErrorFlag`（2CS はロールバック・下記）＝`RowState` を残してやり直せる**。反映後は一覧を再取得して再バインド。
 
 ## B層の呼び出しとトランザクション（Web と違う）
 

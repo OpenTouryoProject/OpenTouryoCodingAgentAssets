@@ -33,7 +33,7 @@ metadata:
 | 変更なし | — | `Unchanged`（対象外） |
 
 > ★ 削除は **`dr.Delete()`**。`dt.Rows.Remove(dr)` だと行が切り離され `Deleted` にならず、バッチが DELETE を出せない。
-> ★ **グリッド行ボタン（[削除]のみ／[更新][削除]／[編集][削除]・配置は各 CRUD スキル）でも実 CUD はグリッド外 [バッチ更新] で一括**。**★ 読み戻し：行 [更新] がある型は「追加行は常に／既存行はその行の [更新] のときだけ／削除行は対象外」**（追加行は落とすと空行化＝要保護）／**行 [更新] が無い（[削除]のみ）型は全レコード**（per-row 確定手段が無い）。実装＝`opentouryo-webforms-crud-screens`／`opentouryo-mvc-crud-screens`。
+> ★ **グリッド行ボタン（[削除]のみ／[更新][削除]／[編集][削除]）は Web（MVC / Web Forms）の概念**——`RowState` を作るだけで実 CUD はグリッド外 [バッチ更新] で一括。**配置・読み戻し規則は下記「Web 共通」①**。フレームワーク別の機構＝`opentouryo-webforms-crud-screens`／`opentouryo-mvc-crud-screens`（WinForms は自動バインドで行ボタン/読み戻し不要）。
 
 ## B層での一括処理（核心）
 
@@ -78,43 +78,18 @@ metadata:
 - 成功後に **`dt.AcceptChanges()`** で `RowState` を `Unchanged` に戻す（保存済み状態に同期）。
 - トランザクション境界は B層（`opentouryo-layer-b`）。途中で失敗したら業務例外/システム例外でロールバック。
 
-## Web（複数ポストバックに跨る編集）
+## Web 共通（MVC / Web Forms）：複数ポストバックに跨る編集
 
-Web で複数回のポストバックに跨って編集する場合、**編集中の `DataTable` を `Session` などに保持**する
-（`RowState` を保つため）。**サーバ メモリの消費に注意**（大きなデータを持たない・使用後は消す）。
-**StateServer/SQLServer セッション モードなら保持する型は直列化可能に**（`DataTable` は可。`opentouryo-config`）。
-**★ 同一画面のポストバックで完結するなら `Session` の代わりに `ViewState` も検討**（Web Forms 専用）＝`__VIEWSTATE` で往復するので **NW は増えるが、サーバ メモリも後始末も不要**（`Session` は使用後に消す必要がある。画面遷移をまたぐ持ち回りには使えない。`opentouryo-app-design/references/state-management.md`）。
+**★ 以下は Web（MVC / Web Forms）共通。WinForms は `DataGridView` 自動バインド＝読み戻し不要・編集中 DataTable はフォームのフィールド保持＝Session も不要**（`opentouryo-winforms-crud-screens`）。
 
-### DataSet/DataTable を JSON 化して持つ（Session 格納・WebAPI 転送）
+- **① セルの読み戻し**：Web はポストバックでセルが自動で `DataTable` に入らない＝**グリッドのセル→DataRow へ読み戻す**（`Modified` はこの代入。下記「Web グリッド↔DataRow」）。読み戻す行＝**「追加行は常に／既存行はその行の [更新] のとき／削除行は対象外」**、判定1行＝`if (dr.RowState != DataRowState.Added && rowIndex != targetRowIndex) continue;`（[更新]＝当該行・[削除]/[バッチ更新]＝-1。行 [更新] を置かない [削除]のみ型は全行）。行ボタンは `RowState` を作るだけ＝**実 CUD はグリッド外 [バッチ更新] で一括**。
+- **② 編集中 DataTable の保持**：一覧取得〜編集〜更新が複数ポストバックに跨るので保持する（開き直したら破棄）。置き場は **(a) サーバ `Session`**（後始末〔明示削除〕要・メモリ圧迫・スケールアウトは out-of-proc）／**(b) クライアント保持**（hidden／Web Forms は `ViewState`・SPA＝サーバ ステートレス・後始末不要だが全表が毎回往復＝NW 増。`opentouryo-app-design/references/state-management.md`）。**StateServer/SQLServer なら保持型は直列化可能に**（`DataTable` は可・`opentouryo-config`）。
 
-**この直列化が要るのは net10.0（Core）の Session だけ。** net48 は `DataSet`/`DataTable` が binary シリアライズ可能で、
-**InProc は object を直接保持・StateServer/SQLServer も BinaryFormatter で自動直列化＝`RowState` も `DataRowVersion.Original` も保たれ手当て不要**。
-一方 **net10.0（Core）の `ISession` は `byte[]`/`string` しか持てず BinaryFormatter も無い**ので、`DataSet`/`DataTable` を Session に置くには
-自前で直列化する＝**フレームワークの `DTTables`（`Touryo.Infrastructure.Public.Dto`）で JSON 化する**（素朴な `System.Text.Json` は `RowState` も変更前値も落とすので使わない）：
-
-```csharp
-string json = DTTables.DTTablesToJson(DTTables.FromDataSet(ds));   // DataTable 単体は DTTable.FromDataTable(dt)
-session.SetString("edit", json);                                    // 復元：DTTables.JsonToDTTables(json).ToDataSet()
-```
-
-**`RowState`（Added/Modified/Deleted/Unchanged）は往復で保持**＝Session 復元後もバッチ CUD の振り分けができる。
-**同じ API で WebAPI の `DataSet`/`DataTable` ⇄ JSON 転送にも使える**（`RowState` が相手に届くので、受信側で INSERT/UPDATE/DELETE を振り分けられる）。
-**★ これが DTTables の本来の用途**（クライアント⇄サーバの往復）＝サーバ/クライアント両側の型は `opentouryo-webapi-server`/`opentouryo-webapi-client`。
-**Session 格納はこの転送 DTO を「同一サーバ内の往復」に流用したもの**（Core は `ISession` が byte[]/string のみなので下記。クライアント保持〔hidden/SPA〕にすればサーバはステートレス＝`opentouryo-mvc-crud-screens`）。
-
-**★ 変更前値（`DataRowVersion.Original`）は既定では往復で保たれない**（既定 `keepOriginal=false`＝`Modified` 行の `Original` に現在値が入る。`Deleted` 行の主キーだけは元値が残り DELETE の WHERE に使える）。
-**保ちたいなら `DTTable.FromDataTable(dt, keepOriginal: true)` を渡す**（`Modified` 行だけ変更前セルも JSON に載る＝転送量はほぼ増えない）。そうすれば往復後も `Original ≠ Current` が復元され、
-**全列 `Original` を WHERE に入れる楽観排他が Session/JSON 往復をまたいでも成立する**。**※ `DTTables.FromDataSet(ds)` に `keepOriginal` 引数は無い**ので、DataSet で保つなら表ごとに
-`dtts.Add(DTTable.FromDataTable(dt, true))` で組み立てる。keepOriginal を使わないなら、往復をまたぐ排他は `rowversion`/`timestamp` 列（現在値のセル＝往復で保つ）で行う。
-
-**列の属性（`AutoIncrement`/`Seed`/`PrimaryKey`/`AllowDBNull`）も往復で落ちる**（JSON は列名・型・値・`RowState` だけ）が、**バッチ更新への実害は小さい**：
-そもそも `ExecSelectFill_DT` は制約を取り込まない（下記）＝往復前から `PrimaryKey`/NOT NULL は無い・IDENTITY 主キーは `D1_Insert` が INSERT しない＝仮採番値は無関係。
-→ **追加行の仮主キーを実際に使う場合〔`Rows.Find`／自前 `PrimaryKey` 制約／安定した仮 ID 表示〕だけ、取り出しのたびに負値仮採番を掛け直す**（シードは `-1` 固定でなく「既にある仮採番の最小 - 1」＝`-1` 固定だと2行目以降が重複＝実測）。
-
-**★ バッチ更新を Web 画面で行うなら、`DataTable` を Session に持つ＝件数がメモリを圧迫する。**
-→ **レコード件数に上限を設ける**か、**ページングを前提にする**（`opentouryo-app-design/references/list-paging.md`）。
-**ページングする場合は、編集（バッチ更新）開始後はページングを止める**——ページ切替で再取得すると `RowState` が消えるため。
-最初の編集で結果セットを固定する（`opentouryo-webforms-crud-screens` の「一覧＆更新」）。
+- **③ ランタイム別の直列化**：**net48 は `DataTable` を Session/ViewState に直接置ける**（binary＝`RowState`/`Original` とも保つ・手当て不要）。**net10.0（Core・MVC のみ。Web Forms は net48 専用）は `ISession` が `byte[]`/`string`＝`DTTables`〔`Public.Dto`〕で JSON 化して往復**（素朴な `System.Text.Json` は `RowState`/変更前値を落とすので不可）：
+  `session.SetString(key, DTTables.DTTablesToJson(DTTables.FromDataSet(ds)))`／復元 `DTTables.JsonToDTTables(json).ToDataSet()`。**`RowState` は往復で保持**。
+  **変更前値 `Original` は既定 非保持**＝`DTTable.FromDataTable(dt, keepOriginal:true)` で保持可（`Modified` 行だけ変更前セルも載る＝転送量ほぼ増えず、全列 `Original` 排他が往復で成立。`FromDataSet` は引数無し＝表ごとに組む）。使わないなら往復排他は `rowversion`/`timestamp`。列属性は落ちるが実害小（`ExecSelectFill_DT` が制約非取込＝往復前から無い。仮採番の掛け直しは仮主キーを使うときだけ）。
+  **★ `DTTables` の本来の用途は WebAPI 転送**（クライアント⇄サーバ往復＝`opentouryo-webapi-server`/`-client`）＝Session/hidden 保持はこの DTO を「同一サーバ内の往復」に流用したもの。
+- **④ 件数**：(a)/(b) とも**全結果セットを丸ごと持つ**＝**レコード件数に上限か、ページング前提**（`opentouryo-app-design/references/list-paging.md`）。**編集（バッチ更新）開始後はページングを止め、結果セットを固定**する（ページ切替で再取得すると `RowState` が消える）。
 
 ### ★ Web グリッド ↔ DataRow の対応付け（index がずれる）
 

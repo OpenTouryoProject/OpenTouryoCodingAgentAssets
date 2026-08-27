@@ -40,14 +40,12 @@ metadata:
 - **★ 最初の [更新]/[削除] で「結果セットを固定」する**：`UOC_gvwGridView1_RowCommand` で当該行を編集（セル読み戻し→`Modified` ／ `dr.Delete()`→`Deleted`）した後、
   **ページングを止め（`AllowPaging=false`）、GridView を `Session` の `DataTable` にバインドし直す**（`DataSource=dt; DataSourceID=null; DataBind()`）。
   **理由：ページングはページ切替で再取得するため `RowState` を保てない。** 固定後は同一結果セット上で複数行を編集し、**[バッチ更新] で RowState バッチ更新**（`opentouryo-batch-update` 本文）。
-- **[追加] はグリッド外のボタンで一覧に空行を足す**（`dt.NewRow()`＋`dt.Rows.Add()`＝**Added**）＝**MVC と同一**（`opentouryo-mvc-crud-screens`／`opentouryo-batch-update`）。**DB 側 NOT NULL 列には値を入れる**（`DBNull` のまま INSERT で `SqlException 515`）・**IDENTITY は `D1_Insert`**・仮採番は仮 PK を使うときだけ。※ サンプル（`ProductsSearchAndUpdate`）は追加を詳細画面でやる as-built だが、**本パターンはグリッド外 [追加] で一覧に空行**（追加・更新・削除を一覧で完結）。
+- **[追加] はグリッド外のボタンで一覧に空行を足す**（`NewRow`＋`Rows.Add`＝Added。NOT NULL 列に値・IDENTITY は `D1_Insert`・仮採番は `opentouryo-batch-update`）＝**MVC と同一**。※ サンプル（`ProductsSearchAndUpdate`）は追加を詳細画面でやる as-built だが、**本パターンはグリッド外 [追加] で一覧に空行**（追加・更新・削除を一覧で完結）。
 - グリッド index↔DataRow は **`Deleted` を飛ばして数える**、セルは **DataRow へ読み戻す**（`opentouryo-batch-update`「Web グリッド ↔ DataRow」＝本サンプルが実例）。
-- **★ 行ボタンの配置は3パターン**（MVC も同型＝`opentouryo-mvc-crud-screens`。ただし MVC は `formaction`＋`RowIndex` で分岐＝`ButtonField`/`RowCommand`/`EditIndex` は使わない）：**① [削除] のみ／② [更新][削除]／③ [編集][削除]**。サンプル（`ProductsSearchAndUpdate.aspx`）は行に **`<asp:ButtonField CommandName="Update" Text="更新"/>`＋`CommandName="Delete" Text="削除"`**＝**② 型**。`UOC_gvwGridView1_RowCommand` で **`fxEventArgs.InnerButtonID`** を `switch` し、`PostBackValue` の表示 index から当該 `DataRow` を引く（`Added`/`Deleted` を飛ばして数える）。
-  - **[更新]＝当該行の更新イベント**：その行の `txt<列>`/`ddl<列>` を `DataRow` に読み戻して **`Modified`**（DB へはまだ出さない）。
-  - **[編集]＝当該行だけ編集可**にする（GridView の `EditIndex` にその行を設定＝他行は表示のまま）→ 編集後に **[更新]** を押して読み戻す。※ 本サンプルは全行を常時 TextBox 編集可＝[編集] 無しの ② 型。
-  - **[削除]＝`dr.Delete()`**（`Deleted`。`Added` 行は Delete できないのでスキップ）。
-  - **どの行ボタンも実 CUD は出さない＝`RowState` を作るだけ。実反映はグリッド外 [バッチ更新]（`btnBatUpd`「下記の結果セットをバッチ更新する」）で一括**。行ボタン押下後は結果セット固定（`AllowPaging=false`→`DataSource=dt` 再バインド）＝上記のとおり。
-  - **★ 読み戻しは「追加行は常に／既存行はその行の [更新] のときだけ／削除行は対象外」（重要・実測）**：`RowCommand` は再バインド（`DataSource=dt`）を伴う。**追加行は DB に戻す値が無く、読み戻しを落とすと再バインドで空行に戻る**＝どの行ボタンでも毎回読み戻す。**既存行は取得時の値が `DataTable` に残る**＝その行の [更新] が押されたときだけ読み戻せばよい（読み戻さない＝「未確定」で [更新] を押すまで DB に出ない。**無駄 `Modified`／過敏な楽観排他も減る**）。判定1行＝`if (dr.RowState != DataRowState.Added && 表示index != 対象index) continue;`（[更新]＝当該行 index・[削除]/[バッチ更新]＝-1＝追加行のみ）。**※ 行 [更新] を置かない（[削除]のみ）パターンは、既存行を per-row 確定する手段が無いので [バッチ更新] で全レコードを読み戻す。**
+- **★ 行ボタンの3配置（[削除]のみ／[更新][削除]／[編集][削除]）と読み戻し規則は `opentouryo-batch-update`（共通）。** Web Forms の実装＝行に **`<asp:ButtonField CommandName="Update"/"Delete">`**（サンプル `ProductsSearchAndUpdate` は ② 型）、**`UOC_gvwGridView1_RowCommand` で `fxEventArgs.InnerButtonID` を `switch`**し `PostBackValue` の表示 index から `DataRow` を引く（`Added`/`Deleted` を飛ばして数える）：
+  - **[更新]**＝その行の `txt<列>`/`ddl<列>` を `DataRow` へ読み戻して `Modified`。**[編集]**＝`EditIndex` にその行を設定（他行は表示のまま）→編集後 [更新]（※サンプルは全行常時 TextBox 編集可＝[編集] 無しの ② 型）。**[削除]**＝`dr.Delete()`。
+  - **実 CUD はグリッド外 [バッチ更新]（`btnBatUpd`）で一括**。行ボタン押下後は結果セット固定（`AllowPaging=false`→`DataSource=dt` 再バインド）。
+  - 読み戻しの判定1行・規則は `opentouryo-batch-update`「Web 共通」①（[更新]＝当該行・[削除]/[バッチ更新]＝-1・[削除]のみ型は全行）。
 
 ## ページング（P層 ⇄ D層）
 
