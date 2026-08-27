@@ -67,6 +67,8 @@ RowState バッチの中核は `opentouryo-batch-update`、B層呼び出しと**
 - **削除を `dt.Rows.Remove()` で行う** — `Deleted` にならず DELETE が出ない。`DataRowView.Delete()`。
 - **編集中 `DataTable` を Session／`DTTables` JSON にしようとする** — WinForms はフォームのフィールドにオブジェクトを直接持てる（Web の話＝`opentouryo-mvc-crud-screens`）。
 - **2CS で `CommitAndClose()` を呼び忘れる／業務例外で自動ロールバックを期待する** — どちらも `opentouryo-p-call-business` の作法に従う。
+- **`MyBaseControllerWin.UserInfo`（`protected`）を Form 外から使う** — `CS0122`。Form 外（ハーネス等）は `MyUserInfo` を自前生成して渡す。
+- **サンプルの `ComboBoxItem` をフレームワーク型と思って別 Form から使う** — 実体は `Form1` の `private` 入れ子クラス（`CS0234`/`CS0122`）。3層のサービス論理名 DDL 等は**同じ形のクラスを自前で用意**する。
 
 > ※ 配布サンプル（`2CSClientWin_sample`／`WSClientWin_sample`）に本パターンそのままのマスタ保守画面が無いこともある＝**本パターンを正**とし、
 > `opentouryo-layer-p-winforms-screen`＋`opentouryo-layer-p-winforms-event`＋`opentouryo-batch-update`＋`opentouryo-p-call-business` で組む。

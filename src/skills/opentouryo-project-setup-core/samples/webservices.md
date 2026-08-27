@@ -43,6 +43,7 @@ WS/3層依存サンプルは、別サンプル **`WS_sample` の `WSIFType_sampl
     改行/アンカー不一致だと **`Project(...)` 行は入っても `ProjectConfigurationPlatforms` 行だけ無反応**になり、
     しかも **ProjectReference 経由でビルドは通る＝偽の成功**（VS で開いて初めて構成欠落が判明する）。
     → **追加後、`GlobalSection(ProjectConfigurationPlatforms)` 内の当該 GUID の行（＝構成数×2）を数えて実際に入ったか検算する**。
+  - **★ 行の「右辺」に何を書くか＝ソリューション構成 ≠ プロジェクト構成**（これを間違えるとビルドが落ちる）。`_all.sln` のソリューション構成は **8 種**（`Debug\|.NET`/`Debug\|Any CPU`/`Debug\|Mixed Platforms`/`Debug\|x86` ×2）だが、`WSIFType_sample`/`WSServer_sample` の csproj が持つのは **`AnyCPU` だけ**。素直に恒等写像（`{GUID}.Debug\|Mixed Platforms.ActiveCfg = Debug\|Mixed Platforms`）を書くと **`BaseOutputPath/OutputPath プロパティが設定されていません`（`Platform='Mixed Platforms'`）でビルド失敗**。→ **同じ sln の既存プロジェクト（client/WCFService/ASPNETWebService）の行を雛形にして GUID だけ差し替える**（既存は 8 構成すべてを `Any CPU` へ写像している。**恒等写像にしない**）。源の 3proj sln に**最初の WS を追加する経路**でこれを踏む。
 - **`<Project>` GUID を参照先と一致させる。** `<ProjectReference>` の `<Project>{GUID}</Project>` は
   **参照先 csproj の `<ProjectGuid>` と一致**させる（ずれると VS が再解決・警告）。
 - **張替後、全プロジェクトで `ProjectReference` の実在を確認する。** 機械挿入の目印にする
@@ -130,9 +131,9 @@ WinCone＝WSIFType のみ）＝csproj を見て張り替える。
 配下に集約**するため **`WS_sample\ServiceInterface\` に置く**（`WSClient_sample`/`WSIFType_sample`/`WSServer_sample` と兄弟）。
 これはフレームワーク*ライブラリ*の改造ではない（WS ホスト アプリを配置・起動するだけ＝「Frameworks を取り込んで改造しない」に当たらない）。
 
-> **⚠ 源を取り違えない**：`Samples\WS_sample\ASPNETWebService\` は **README だけのスタブ**（develop で
-> `OpenTouryoProject/ResourceServerTemplates` へ移動済み）。**実体の WS ホスト源は `Frameworks\Infrastructure\ServiceInterface\{ASPNETWebService,WCFService}`**。
-> スタブを誤って引き込まない（④ の Include 突き合わせでも中身が空と分かる）。
+> **⚠ 源を取り違えない**：**実体の WS ホスト源は `Frameworks\Infrastructure\ServiceInterface\{ASPNETWebService,WCFService}`**。
+> **判定根拠は「中身が空か」ではなく「`_all.sln` が参照しているのはどちらか」**（`WSClientWin_sample_all.sln` がそのパスを参照＝裏取り）。
+> ※ 現行 develop の `Samples\WS_sample\ASPNETWebService\` は**スタブではなく実体のある Web API サンプル**（17 ファイル。過去 ref では README だけだった）＝「空だから違う」で確認に行くと**空でないもの**を見て混乱する。「引き込むのはどちらか」だけが判断軸。
 - **既定は `ASPNETWebService`**（クライアント app.config が `FxXMLTMProtocolDefinition=TMProtocolDefinition2.xml`＝Web API
   経路を選択。`WCFService` は代替＝`TMProtocolDefinition.xml`）。通常は ASPNETWebService を建てれば足りる。
 - **引き込み位置**：`WS_sample\ServiceInterface\<host>\`（`<host>`＝`ASPNETWebService`/`WCFService`）。
@@ -191,4 +192,4 @@ WinCone は ClickOnce デプロイ版（"Cone"）で csproj に **`SignManifests
 **をリポ直下へフラット化**し、各 `.csproj` の相対 `HintPath`（`OpenTouryo.*` 等）を新配置に合わせて張り替える
 （`long path` 有効化でも可）。
 **※ WS 系（`WS_sample\` 一式）は例外＝フラット化しない**（上の①1。サンプル間 ProjectReference の相対パスを保つため
-`long path` 側で回避）。
+`long path` 側で回避）。**★ 余裕はほぼ無い（実測 256/260）**：`ASPNETWebService` の `packages.config` 復元後の最長パスは 256 文字で、リポ ルートが 47 文字（例 `D:\git\local\OpenTouryoProject\VerifyCaSkillsForOT`）のとき＝**ルートがあと 4 文字長いだけで復元が壊れる**。ルートは短く選ぶ（`LongPathsEnabled=0` でも上記なら通った）。

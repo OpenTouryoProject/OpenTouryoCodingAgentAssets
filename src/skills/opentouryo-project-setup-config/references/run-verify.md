@@ -70,6 +70,7 @@ WebForms を**非対話でポストバック**（ボタン押下相当）で叩�
 - **★ 押すボタンの name はマスタページ側のことがある**：「件数取得」等の submit は `ctl00$ContentPlaceHolder…$…` でなく
   **`ctl00$btnMButton1`（マスタページ上のフッタ ボタン）**だったりする。非対話では **`<input type="submit">` を列挙して name を拾う**
   （その name を `__EVENTTARGET` 相当のキーとして POST に載せる。hidden 全件返しと併用）。
+- **★ YES/NO 確認ダイアログの YES を非対話で押す**（`opentouryo-webforms-dialog`）：ダイアログは別ページで、YES は `window.parent.Fx_CallbackOfYesNoMessageDialog(2)` が **`ctl00$SubmitFlag`** を設定して**親フォームをボタン名なしで submit** する（値＝`1`=×／`2`=YES／`3`=NO。`Scripts/touryo/common.js`）。→ 非対話の YES は「**直前ページの hidden 全件 ＋ `ctl00$SubmitFlag=2` を親 URL へ POST**」。確認ダイアログを含む画面（追加→YES→INSERT 等）はこれで検証できる。
 - **★ ポストバック検証は StateServer 稼働が前提（＝昇格不可なら一時 InProc）**：ログインで `Session["nonce"]` を書くため、
   ASP.NET State Service 未起動だと **`HttpException:セッション状態要求を…作成できませんでした`（500）** で止まり、以降の検証に入れない。
   起動は**要管理者**（`opentouryo-project-setup-config` ⑦）。昇格できないときは **`Web.config` の `sessionState` を一時的に `InProc` に変えて検証し、
@@ -113,6 +114,8 @@ dotnet run --project "<repo>\MVC_Sample_Core\MVC_Sample" --urls http://localhost
 （`name="__RequestVerificationToken"` の hidden ＋ 同名 Cookie）を拾い、それを載せて **POST /Home/Login** → **セッション（Cookie）を維持**して
 **POST /Crud1/SelectCount**（`DdlIso=RC` を明示＝先頭 `NC` を避ける）。成功＝「3件のデータがあります」＋`SQLTRACE` に `SELECT COUNT(*)`。
 **トークンと Cookie を引き回さないと弾かれる**（WebForms の hidden 全件返しと対の、MVC 版の非対話手順）。
+- **★ ログインのフォーム項目名**（net48/core 共通・実測）：ユーザ名＝**`UserName`**（`UserId` ではない）／**submit ボタン名 `normal` も送る**（`HomeController.Login` は `Request.Form.Keys.Any(x=>x=="external")` で分岐＝通常ログインは `normal`）。`Crud1/SelectCount` の項目は `DdlDap`/`DdlMode1`/`DdlMode2`/`DdlIso`/`DdlExRollback`。
+- **★ core は日本語をエンコードして返す＝判定前にデコードする**（ランタイム非対称）：**Razor 出力は数値文字参照**（`3&#x4EF6;…`）＝リテラル「3件のデータがあります」を検索すると0件で**成功を失敗と誤判定**。さらに **`@Json.Serialize`（JS ダイアログ経路）は `System.Text.Json` 既定で非 ASCII を `\uXXXX` にエスケープ**する。→ **判定は HTML エンティティと `\uXXXX` の両方をデコードしてから照合**する（net48 は素のまま返る＝デコード不要。画面はブラウザが復元＝アプリの不具合ではない）。
 
 **★ ただしアクション URL への直接 POST「だけ」で合否を判定しない（MVC 固有）**：`POST /Xxx/SelectCount` を直接叩くのはボタンを経由しないので、
 **submit ボタンがフォームに紐付いていなくても必ず緑になる**（`@section` に置いたフッタ ボタンが `<form>` の外に出ていても素通り＝`opentouryo-layer-p-mvc` の `@section` 罠）。
@@ -132,6 +135,7 @@ Web ではないので HTTP スモークは無い。**exe を起動してプロ�
 セットアップの不備ではない）。DB は選択式 `opentouryo-project-setup-db` で立てられる（既定が SQL Server/Northwind と一致）。
 
 - exe の場所：net48＝`bin\Debug\<app>.exe`、core＝`bin\Debug\net10.0-windows7.0\<app>.exe`（`dotnet run --project <proj>` でも可）。
+  **★ ただし断定せず csproj の `OutputPath` を見る**：例 `WCFService` は `OutputPath=bin\`（`Debug` サブフォルダ無し）＝`bin\<app>.exe`。「`bin\Debug\` に無い＝ビルド失敗」と誤判定しない。
 - **★ 2CS 等のログは `resource\Log\` でなく exe と同じフォルダに出る**（同梱ログ定義の `File` が相対名 `ACCESS_2CS` 等＝
   `references/resource-config.md` の埋め込み/相対）。起動生存を裏取りするときは **`bin\Debug\*.log`** を見る
   （Web の癖で `resource\Log` を見ると「ログが出ない＝失敗」と誤判定する）。
@@ -167,6 +171,7 @@ Web ではないので HTTP スモークは無い。**exe を起動してプロ�
     **`GET /test`（`FxController`）が 200＋固定 JSON**／**`GET /WebAPIControllerForFx` が 405**（POST 専用＝ルート生存の証拠）。
     **`GET /`（既定ドキュメント無し）はタイムアウトするので判定に使わない**。実 WS 呼び出し（既定 `protocol="5"` の Web API）は
     クライアント GUI 起点＝到達点は「ホスト稼働＋クライアント起動生存」まで（`samples/webservices.md`）。
+  - **★ 初回プローブは 503（Service Unavailable）を返しうる**（実測：1回目 503→数秒後 200）＝**503 はリトライしてから判定**（単発の 503 を結論にしない）。**ウォームアップは `GET /`（タイムアウトする）でなく判定対象パス（`GET /test`）で行う**——`/` でウォームアップするとタイムアウト待ちで時間を食い潰し、本番プローブが起動中に当たって 3連続 503＝失敗に見える。
 
 ## バッチ / CLI（コンソール）＝ exe（引数あり）
 

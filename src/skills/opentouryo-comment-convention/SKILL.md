@@ -57,6 +57,7 @@ metadata:
   （ビルドも `aspnet_compiler` も素通り。net48 MVC の詳細は `opentouryo-layer-p-mvc`／WebForms は `<globalization fileEncoding="utf-8">` 同梱で安全）。
   `.cs` も規約として BOM を付ける（環境により早期コンパイラが既定コードページで解釈しうる＝防御的に付与。`opentouryo-base2-customize` の BOM 保持と同旨）。
   **★ ファイルを書き直したら BOM が落ちていないか毎回確認する**（エディタが BOM 無しで書き戻すため、一度付けても再編集で外れる）。
+  **★ 目視でなく機械的にスキャンする**（ビルドも `aspnet_compiler` も素通りするので専用チェックが要る＝実測で混在を踏んだ）：**「非 ASCII を含むのに先頭3バイトが `EF BB BF` でない `.cs`/`.vb`/`.cshtml`/`.aspx`/`.ascx`/`.master`/`.asax`」を全件列挙**して洗い出す（該当を BOM 付きで再保存）。対象は**新規に作った／書き直したファイル**（上流由来は触らない）。
 - **`.aspx` / `.master` などマークアップにはバナーを付けない**（`<%@ Page … %>` で始まる）。コメントは `<!-- -->`／`<%-- --%>`。ただし**コードビハインド `.aspx.cs` には付ける**。
 - **自動生成ファイル（自動生成 Dao 等）はツールがヘッダを付ける**ので手で足さない・書き換えない（`opentouryo-dao-generated`）。
 

@@ -102,6 +102,10 @@ this.ReturnValue = testReturn;   // ← 先に設定する
 ASP.NET Core MVC のサンプルでは、コントローラの `this.ActionName` を `MethodName` に渡している。
 つまり **アクション名と `UOC_` メソッド名が対応する**。
 
+**★ `this.ActionName` を渡すのは「B層が画面専用」のとき。既存の共有 LayerB に相乗りするなら `MethodName` に UOC 名を明示する**（実測）。
+汎用なアクション名（例 `SelectCount`）を渡すと、その LayerB に既にある**別の `UOC_SelectCount(別の引数型)` にレイトバインドで飛び**、引数型が違って失敗する。
+しかも**例外はフレームワークに捕捉され画面はメッセージ無しで再描画されるだけ**（500 にならない）＝原因に辿りにくい。相乗り時は `new SuppliersParameterValue(…, "SuppliersSelectCount", …)` のように**衝突しない UOC 名**を渡す。
+
 ## 引数クラス・戻り値クラス
 
 **定義テンプレート（`MyParameterValue`/`MyReturnValue` を継承・Base コンストラクタへ引き渡し）は

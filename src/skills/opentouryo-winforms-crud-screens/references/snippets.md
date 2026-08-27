@@ -17,8 +17,10 @@ public partial class SuppliersScreenB : SuppliersBaseForm
 
     protected override void UOC_FormInit()
     {
-        this.dgvSuppliers.AutoGenerateColumns = true;
+        this.dgvSuppliers.AutoGenerateColumns = true;   // ★ 骨格は自動生成＝全列そのまま。業務画面は列を明示（IDENTITY 主キーは ReadOnly。Web と列を揃えるなら AutoGenerateColumns=false ＋ DataGridViewTextBoxColumn を並べる）
         this.dgvSuppliers.DataSource = _bs;   // グリッドは BindingSource にバインド
+        // ★ 一覧の列は「例を短く保つ省略」でなく対象テーブルの全列（＝自動生成Dao の D2_Select が返す列）を基準に表示/編集可否を決める
+        //   （worked example の列を絞ったまま採ると、B層は書けるのに画面から入力できない列が静かに生まれる＝Reporting I2-2 訂正）
         // フッタ ボタンのキャプション・活性/非活性はここで動的に（opentouryo-layer-p-winforms-screen）
     }
 
@@ -86,6 +88,8 @@ protected void UOC_btnBatchUpdate_Click(RcFxEventArgs e)
     CommitGridEdits();
     if (MessageBox.Show("更新します。よろしいですか？", "確認", MessageBoxButtons.YesNo) != DialogResult.Yes) return;
 
+    // ★ MyBaseControllerWin.UserInfo は protected＝画面クラス（MyBaseControllerWin 派生 Form）の中からのみ可。
+    //   Form でないクラス（検証ハーネス／ユーティリティ）からは CS0122＝MyUserInfo を自前で生成して渡す。
     SuppliersParameterValue pv = new SuppliersParameterValue(/* 画面名, "-", this の ActionName 相当, "SQL", MyBaseControllerWin.UserInfo */);
     pv.Suppliers = _dt;                      // RowState 付きの DataTable をそのまま渡す
     SuppliersLayerB layerB = new SuppliersLayerB();

@@ -38,6 +38,7 @@
   `TMInProcessDefinition_<App>.xml`）は消えた `LayerB` を指したまま残る。→ **`SC`/`TMInProcess`/`SP`/`TC` 定義（`resource\Xml`）と
   `app.config` の該当キーから、消した画面/クラスのエントリを掃除する**（2層化〔`ws-decouple`〕で作ったアプリ専用 TMInProcess 定義は、
   B層ごと消えたら空＋書式テンプレのコメントに戻す）。
+  **★ 複数サンプルが単一の `resource\` を共有する repo では、共有ファイルをその場で掃除すると他サンプルを壊す**（例：`TMInProcessDefinition.xml` は WS ホスト2つと MVC core も参照）。→ **掃除の前にその定義ファイルを他サンプルが参照していないか grep する**。参照が他にあるなら、`ws-decouple` と同じ**アプリ専用ファイル方式**（`SCDefinition_<App>.xml`/`TMInProcessDefinition_<App>.xml` を作り `app.config` を向け替え・**共有ファイルは無改変**）に揃える。
 - 上記からのみ参照される型・`using`。
 
 ## ★トラップ（名前で決めない・結論は版で反転する＝最優先の注意）

@@ -23,7 +23,7 @@
 | `FxXMLSPDefinition` / `FxXMLMSGDefinition` / `FxXMLSCDefinition` / `FxXMLTCDefinition` / `FxXMLTMProtocolDefinition` / `FxXMLTMInProcessDefinition` | `%OT_RESOURCE_ROOT%\Xml\*.xml` |
 | `SqlTextFilePath` | `%OT_RESOURCE_ROOT%\Sql`（**※同梱型は例外＝下記**） |
 | `SpRp_RsaCerFilePath` | `%OT_RESOURCE_ROOT%\X509\*.cer` |
-| `TestFilePath` | `%OT_RESOURCE_ROOT%\Test`（実測で WebForms `app.config` に存在。値は `…\test`＝**綴りの罠**＝実フォルダは `Test`） |
+| `TestFilePath` | `%OT_RESOURCE_ROOT%\Test`（実測で WebForms `app.config` に存在。**綴りは ref で割れる**＝実フォルダ `Test` に合わせる。現行 develop は `Test`） |
 
 **★ ただしこの表を全部前提にしない。** キー集合はサンプル/ランタイムで違う（下記「キー集合・綴り・区切り」）＝**config に在るキーだけ**張り替える。
 
@@ -83,12 +83,11 @@ IIS Express / w3wp の CWD はアプリ フォルダでないため 500 にな�
 
 | サンプル | config | パス系キー数 | 綴り | 区切り | 特記 |
 | --- | --- | --- | --- | --- | --- |
-| WebForms(net48) | `app.config` | 約11 | `XML`／`test` | `\` | `TestFilePath` 有 |
+| WebForms(net48) | `app.config` | 約11 | `Xml`/`Test`（ref 依存） | `\` | `TestFilePath` 有 |
 | MVC(net48) | `app.config` | 5 | `Xml` | `\` | — |
-| MVC(core) | `appsettings.json` | 7 | **`XML`** | **`/`** | `FxXMLTCDefinition`/`FxXMLTMInProcessDefinition` が増える |
+| MVC(core) | `appsettings.json` | 7 | `Xml`（ref 依存） | **`/`** | `FxXMLTCDefinition`/`FxXMLTMInProcessDefinition` が増える |
 
-- **綴り（`Xml`/`Test`）**：実フォルダは `Xml`／`Test`。Windows は無視するが、**Linux で core を動かすなら実フォルダの綴りに合わせる**
-  （core MVC は `XML`＝要修正）。
+- **★ 綴り（`Xml`/`Test`）は ref で割れる＝必ず実測して実フォルダに合わせる**（値を決め打ちしない。過去 ref には `XML`/`test` があり、現行 develop は `Xml`/`Test`＝実フォルダと一致し修正不要）。Windows は綴り無視だが **Linux で core を動かすなら実フォルダの綴りに合わせる**（WS ホストの綴りについて同 md が既にそう書いているのと同じ扱い）。
 - **core（`appsettings.json`）固有**：
   - **値はスラッシュ区切り**（`C:/root/files/resource/XML/...`）。JSON なので `%OT_RESOURCE_ROOT%\\Xml\\...` と
     **バックスラッシュを2重エスケープ**して張り替える（`/` のままでも Windows では通るが、repo 内 net48 側と表記が割れる）。

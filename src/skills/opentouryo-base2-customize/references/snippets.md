@@ -49,9 +49,8 @@ SKILL の「面①〜⑥」の詳細。実測（develop）で裏取り済み。
   → 消す DBMS の選択肢を削るだけでなく、**分岐の無い選択肢（`else` フォールバック予備軍）が他に無いか**も突き合わせる（`DB2`/`HIR` は今回範囲外なら残置と記録）。
 - **⑥ DBMS 別の SQL 資産・手順書。** `resource\Sql\ole_odbc\`（ODBC/OLEDB 用の `.sql`/`.xml` 一式＋`Configuration steps ODBC.txt`）のような
   **DBMS 別リソース**は、分岐を消しても残る＝**どこからも参照されないまま「静かに腐る」**（ビルドにも実行にも出ない）。参照の有無を確認して残す/消すを判断する（未参照でも実害は無いが、面の一覧に載せて見落とさない）。
-- **反映確認（バイナリ走査）のエンコード。** 「DLL に反映されたか」を非対話で見るとき、**型名・メソッド名（メタデータ）は UTF-8、
-  `ldstr` の文字列リテラル（`ConnectionString_<code>` 等）は UTF-16（`#US` ヒープ）**。ASCII/UTF-8 一律で走査すると接続キー等が
-  全 False になり誤判定する＝型名は UTF-8、リテラルは UTF-16 で見る。
+- **反映確認は「バイナリ走査」が正道（リフレクションは使えないことがある）。** PS7（.NET 10）から **net48 の DLL を `Assembly.LoadFrom`→`GetType()` すると `Could not load type 'System.Web.UI.Page' …` で型自体が取れない**（`System.Web` 派生のため。実測）＝リフレクションで確認できない。→ バイナリ（メタデータ）を直接走査する。
+  **エンコードに注意**：**型名・メソッド名（メタデータ）は UTF-8、`ldstr` の文字列リテラル（`ConnectionString_<code>` 等）は UTF-16（`#US` ヒープ）**。ASCII/UTF-8 一律で走査すると接続キー等が全 False になり誤判定する＝型名は UTF-8、リテラルは UTF-16 で見る。
 
 ## B層：MyFcBaseLogic の UOC 群
 

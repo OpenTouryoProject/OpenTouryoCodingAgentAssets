@@ -78,6 +78,7 @@ public partial class sampleScreen : MyBaseController
 読み替える**（無ければ上の骨格＋隠しフィールドから作る。`sampleScreen` は配布物固有名＝自プロジェクトに残さない）。
 **★ マスタ名はマスタ上ボタンのハンドラ名 `UOC_<マスタ名>_<control>_<event>` との契約**（実装先＝親クラス2〔全画面共通〕or 画面コードクラス〔画面固有〕。両者とも編集可）。マスタを**改名・削除したら該当ハンドラも揃えて改名／削除**する（UOC 未発見は例外にならず黙って無反応。`references/snippets.md`）。
 **マスタページはネスト可**（サンプル `testNestMasterScreen`。ルートマスタに Fx 隠しフィールドがあればよい）。
+**★ フッタのメイン5ボタンの既定値（キャプション・活性）は `.master` の宣言（`Text="－" Enabled="false"`）で与え、マスタの `Page_Load` で初期化しない。** ASP.NET のライフサイクルで**マスタ（Page の子コントロール）の `Page_Load` はコンテンツの `UOC_FormInit` より後**に走るため、`Page_Load` で既定化すると各画面が `UOC_FormInit` で設定したキャプション/活性を**毎回上書き**してしまう（ボタンが常に `"－"`・非活性に見える＝ビルドは通り例外も出ない・実測）。
 
 ## 新規ファイルの csproj 登録・designer.cs（★ エージェント文脈で必須）
 
@@ -92,7 +93,7 @@ public partial class sampleScreen : MyBaseController
 msbuild は `.cs` しかコンパイルせず、`.aspx`/`.master` 側のエラー（`Inherits` の綴り・`ContentPlaceHolderID` 不一致・
 `TagPrefix` 未登録・designer 宣言漏れ）は**実行時まで出ない**。ビルド成功＝マークアップ健全ではない。事前に
 `aspnet_compiler.exe -v / -p <プロジェクトディレクトリ> -f <出力先>` でマークアップをコンパイル検証する
-（`opentouryo-project-setup-config` の検証にも併記）。
+（`opentouryo-project-setup-config` の検証にも併記）。**実例**：`<asp:GridView><Columns>` の中に **HTML コメント `<!-- … -->` を書くとパース エラー**（`error ASPPARSE: リテラルの内容 … は 'DataControlFieldCollection' 内では使用できません`）＝**msbuild は 0 error で通り `aspnet_compiler` だけが検出**。サーバ側コメント **`<%-- … --%>`** にすれば通る。
 **★ 新規に作った／書き直した `.cs` とビュー（`.aspx`/`.master`）は UTF-8 BOM を後付けする**（BOM 無しだと既定コードページ
 ＝Shift-JIS 解釈で日本語が文字化け。WebForms は `Web.config` に `<globalization fileEncoding="utf-8">` があり比較的安全だが、規約として付ける。`opentouryo-comment-convention`）。
 

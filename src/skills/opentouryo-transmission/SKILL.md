@@ -123,7 +123,9 @@ WS クライアント）は、この制約により実質インプロセス呼�
 ## リモート（3層）で漏らしやすいこと（実測＋実ソースで裏取り）
 
 - **★ サービス論理名を足したら、クライアントとサーバの両方の `TMInProcessDefinition.xml` に登録する。** リモート経路は**サーバ側**を引く（`FxController`／`WCFTCPSvcForFx`＝`ServiceInterface`）ので、クライアント側だけ直しても通らない（＝`Transmissionタグに合致するid属性値がありません`）。
-- **★ `protocol="1"`（インプロセス）の疎通は、3層（リモート）の疎通を保証しない。** protocol=1 は**サーバ側定義を一切通らない**ため、緑でもリモート経路は1行も検証されていない＝**必ず `protocol="4"` か `"5"` でも1回叩いて確認する**。
+- **★ 経路（`TMProtocolDefinition`）×実体（`TMInProcessDefinition`）を、使う protocol の数だけ 1対1 で作る。** `protocol="4"`（WCF netTcp）と `"5"`（Web API）は**別々に登録が要る**（片方だけだとその経路は存在しない）。サービス論理名は経路ごとに分けるのが分かりやすい（例 `…WCFTcp`＝4／`…WebAPI`＝5／`…InProcess`＝1）。
+- **★ `TMProtocolDefinition` はクライアントに2ファイルある（`.xml` と `2.xml`）＝両方に入れる。** `app.config` が実際に参照するのは片方だが、**config の切替でもう片方に移ると経路が消える**（実測：`2.xml` にだけ入れて `.xml` が空＝切替で解決不能）。
+- **★ `protocol="1"`（インプロセス）の疎通は、3層（リモート）の疎通を保証しない。** protocol=1 は**サーバ側定義を一切通らない**ため、緑でもリモート経路は1行も検証されていない＝**必ず `protocol="4"`/`"5"` でも1回叩く**。さらに**インプロセスへの暗黙フォールバックでないこと**を、**ホスト（`WCFService`/`ASPNETWebService`）を落とすと 4/5 は失敗し 1 だけ成功する**ことで裏取りする。
 - **★ 定義ファイルは `static` にキャッシュされ、編集しても再読込されない**（名前解決サービス `PRT_NS`/`IPR_NS` は `CallController`／`FxController`／`WCFTCPSvcForFx` で `static`＝アプリドメイン起動時に1回だけ読む。実ソース）。編集後は**リサイクル必須**——サーバ＝`iisreset`／アプリプール リサイクル／`Web.config` の更新（IIS Express は `taskkill /IM iisexpress.exe` で落として再起動）、クライアント＝プロセス再起動。
 - **所在の非対称表・新サービス追加チェックリスト・エラー→切り分け表は `references/snippets.md`。**
 

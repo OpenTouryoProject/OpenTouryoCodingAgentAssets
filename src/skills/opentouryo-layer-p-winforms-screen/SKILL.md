@@ -63,6 +63,9 @@ public partial class SuppliersScreenA : SuppliersBaseForm { /* 画面固有の�
   なお**コントロールを動的に足すならコンストラクタで**（`UOC_FormInit` は結線後に走る＝`opentouryo-layer-p-winforms-event`）。
 - サンプル（`2CSClientWin_sample` 等）は `MyBaseControllerWin` を**直接**継承する（中間 BaseForm 無し）＝**共有したい共通レイアウトが
   あるとき**にこの中間 BaseForm を足す、という位置づけ。
+- **★ 中間 BaseForm のフッタ部品は絶対座標＋`Anchor` で置かない＝`Dock` を使う**（実測）。**基底のコンストラクタは派生画面が `this.Width` を設定する前に走る**ため、
+  `Anchor = Top|Right` の「右端からの距離」が**既定フォーム幅（例 300）基準で確定**し、後でフォームを広げると部品が画面外へずれる（例：パネル幅 1004 に対し部品 X=1610＝画面外）。
+  **右ドッキングのパネル（`Dock = Right`＋固定 `Width`）にラベル/コントロールを載せる**か、サイズ確定後（`OnLoad` 等）に配置する。**ビルドは通り例外も出ず「ただ見えないだけ」**なので発見が遅れる。
 
 ## UOC メソッドの分界
 

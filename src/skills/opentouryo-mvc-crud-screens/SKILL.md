@@ -31,6 +31,7 @@ metadata:
 
 - **UOC は無い＝アクションメソッド。** `[HttpGet] Index` で表示、`[HttpPost] SelectAll`/`AddRow`/`DeleteRow`/`BatchUpdate` で操作。
   B層の振り分けは引数クラスの `MethodName`（サンプルに倣い `this.ActionName` を渡す）＝`opentouryo-layer-p-mvc`。P→B は `new LayerB().DoBusinessLogicAsync(pv, iso)`。
+  **★ `this.ActionName` を渡すのは B層が画面専用のとき。既存の共有 LayerB に相乗りするなら `MethodName` に UOC 名を明示**（汎用アクション名だと既存 `UOC_<名>` にレイトバインドで飛び失敗＝画面が無反応。`opentouryo-layer-b`）。
 - **フォームと CSRF**＝`<form method="post" asp-action="…">`＋`@Html.AntiForgeryToken()`／**POST アクションに `[ValidateAntiForgeryToken]`**。
 - **1フォームから複数アクションへ**＝ボタンの `formaction="@Url.Action("<action>","<ctrl>")"` で送信先を分岐（`SelectAll`/`AddRow`/`DeleteRow`/`BatchUpdate`）。
 - **★ 行ボタンの配置3パターン（[削除]のみ／[更新][削除]／[編集][削除]）と読み戻し規則は `opentouryo-batch-update`（共通）。** ただし **MVC に `ButtonField`/`RowCommand`/`EditIndex` は無い**＝各行ボタンを **`formaction` で per-row アクションに飛ばし当該行の `RowIndex` を送る**：[更新]＝`UpdateRow(rowIndex)`・[編集]＝その行の input だけ編集可（他行 `readonly`／編集中行 index を hidden）→編集後 [更新]・[削除]＝`DeleteRow(rowIndex)`。実 CUD はグリッド外 `BatchUpdate` で一括（読み戻しの判定1行・規則は `opentouryo-batch-update`「Web 共通」①。`UpdateRow`＝当該 index・他＝-1）。
