@@ -42,6 +42,7 @@ metadata:
   **★ 表示列は対象テーブルの全列（＝自動生成Dao が返す列）を既定とする**（仕様に列数の明記が無くても全列表示。IDENTITY 主キーは `readonly`）。**`snippets.md` の例は列を絞った省略＝そのまま写さない**（列を絞ると B層は書けるのに画面から入力できない列が生まれる）。
   **★ `Deleted` 行は描画しない＝表示連番でなく DataTable の行インデックスを `RowIndex` で持ち回る**（連番だと Deleted でズレる）。
   **★ 添字 `i` が 0 起点の連番でない〔Deleted を飛ばす〕とき、各行に `<input type="hidden" name="Rows.Index" value="@i" />` も出す**——ASP.NET (Core) MVC のコレクション モデルバインドは**非連番の添字は `Rows.Index` が無いとバインドしない**＝`model.Rows` が空のまま `BatchUpdate` が走り**編集が静かに捨てられる**（実測：追加行が `NULL` で INSERT→`SqlException 515`。ビルドも 200 も通る）。スニペット＝`references/snippets.md`。
+- **★ hidden 項目名とアクション引数名を衝突させない**——ページ移動等をクエリ文字列の引数（例 `Page(… , int pageIndex)`）で渡すとき、フォームに同名の hidden（編集状態保持用の `PageIndex` 等）があると、**モデルバインドは大文字小文字を区別せず衝突しフォーム値がクエリ文字列より優先**＝移動先が無視される（実測：［次ページ］で常に同じページが返る／ビルドも 200 も通る）。**アクション引数名をフォーム項目と別名にする**（`targetPage` 等）。
 - **ダイアログは JavaScript**（確認＝`onclick="return window.confirm('…')"`、通知＝`window.alert(@Json.Serialize(Model.Message))` を `@section` のスクリプトで）。
 
 ## 編集中 DataTable の保持（Web 共通は `opentouryo-batch-update`）

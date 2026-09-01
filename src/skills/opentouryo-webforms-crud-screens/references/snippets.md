@@ -132,6 +132,11 @@ protected string UOC_gvwGridView1_RowCommand(FxEventArgs e)
 - **バッチ更新ボタン**：`Session["SearchResult"]` の `DataTable`（RowState 保持）を B層で **RowState バッチ更新**。★自動生成は `_3TierEngine` "BatchUpdate"／推奨は業務 `LayerB` の `switch(dr.RowState)`＋自動生成 Dao（`opentouryo-batch-update`）。
 - **[追加] はグリッド外のボタンで一覧に空行を足す**（`UOC_btnAdd_Click`→`dt.NewRow()`＋`dt.Rows.Add()`＝Added。MVC と同一＝`opentouryo-batch-update`）。**DB 側 NOT NULL 列に値を入れる**（`SqlException 515`）。※ 一覧の列は例（`ProductName` 等）を短く保つ省略＝**実装は対象テーブルの全列を基準に**表示/編集可否を決める（IDENTITY 主キーは `readonly`）。
 
+## DDL（`DropDownList`）列の注意（FK をマスタ選択にするとき）
+
+- **`ListItem` があいまい参照（`CS0104`）になったら完全修飾**：コードビハインドで `ListItem` が別名前空間の型と衝突する場合は `System.Web.UI.WebControls.ListItem` と書く。
+- **検索条件 DDL の空選択肢を二重に足さない**：グリッド内 DDL 用のバインド ヘルパが先頭に空 `ListItem` を入れる作りだと、検索条件側で `Items.Insert(0, new ListItem("（すべて）", ""))` すると空が2つ並ぶ。**検索条件側は先頭の空選択肢を「（すべて）」に置き換える**（追加しない）。
+
 ## 4. ページング（P層 ObjectDataSource ⇄ D層 SQL）
 
 `.aspx`：`<asp:ObjectDataSource EnablePaging="True" TypeName="…ProductsTableAdapter" SelectMethod="SelectMethod" SelectCountMethod="SelectCountMethod" MaximumRowsParameterName="maximumRows" StartRowIndexParameterName="startRowIndex">`。

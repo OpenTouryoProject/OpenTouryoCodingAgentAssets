@@ -35,6 +35,7 @@ RowState バッチの中核は `opentouryo-batch-update`、B層呼び出しと**
   **[削除] ボタンも原則不要**。**発見可能性・アクセシビリティのために [削除] ボタンを足すことはある**（その場合、下記のとおり `DataGridViewButtonColumn` は自動結線外＝素の `CellContentClick` で拾う）。
 - **[追加] はグリッド外の通常ボタン**（`UOC_btnAdd_Click`）＝空行 `dt.NewRow()`＋`dt.Rows.Add()`＝**Added**。
 - **★ `DataGridViewButtonColumn`（グリッド内ボタン列）はフレームワークの自動結線対象外**（`btn` 接頭辞の `UOC_btn…_Click` にならない）。付けるなら `DataGridView.CellContentClick` で `e.ColumnIndex`/`e.RowIndex` を見て自前で分岐する（`opentouryo-layer-p-winforms-event`）。**そもそも行内ボタンは原則不要**（上記）なので、まず不要と判断する。
+- **★ FK 列を `DataGridViewComboBoxColumn`（DDL 列）にするなら `DataError` を握りつぶす**——セル値が `NULL` やマスタ（データソース）に無い値の行で **`DataError` が起き画面に例外ダイアログが出る**。`dgv.DataError += (s, e) => e.ThrowException = false;` で抑止する（マスタ関連項目を DDL 化する仕様だと必ず踏む）。
 - **★ 保留中の編集は `CommitGridEdits()` で確定してから**［追加］/［削除］/バッチ更新・**確認ダイアログの前**に進む。`DataGridView.EndEdit()` は**セルの編集しか確定せず**、
   行（`DataRowView`）の保留編集は `CurrencyManager.EndCurrentEdit()`（`BindingSource.CurrencyManager`）まで確定しない＝呼ばずに進むと入力が失われる（実測）。実装は `references/snippets.md`。
 - **編集中の `DataTable` はフォームのフィールド（メンバ変数）に保持する。** Web のような **Session／`DTTables` JSON 化は不要**（プロセス内オブジェクトをそのまま持てる＝`RowState`・`Original` とも保たれる）。
@@ -55,7 +56,7 @@ RowState バッチの中核は `opentouryo-batch-update`、B層呼び出しと**
 
 - **2CS（2層）は手動トランザクション**：正常系は **`LayerB.CommitAndClose()` を明示的に呼ぶ**（呼ばないと確定しない）。**業務例外でも自動ロールバックしない**＝`catch` で
   **`LayerB.RollbackAndClose()`** を呼ぶ（`opentouryo-p-call-business` ④）。**Web/MVC のように「フレームワークが自動コミット／業務例外で自動ロールバック」を前提にしない。**
-- **3層（WSクライアント）は `CallController.Invoke(<サービス論理名>, pv)`**＝サーバ側がコミットする（`opentouryo-p-call-business`／`opentouryo-transmission`）。
+- **3層（WSクライアント）は `CallController.Invoke(<サービス論理名>, pv)`**＝サーバ側がコミットする（`opentouryo-p-call-business`／`opentouryo-transmission`）。**`Invoke` は `(serviceName, pv)` の2引数＝分離レベルは渡せない**（サーバ側が制御。2CS の `DoBusinessLogic(pv, iso)` と違う）。
   **★ サービス論理名はサーバ側の `TMInProcessDefinition`（`%OT_RESOURCE_ROOT%\Xml\`）にも登録する**——リモート経路はサーバ側を引く。クライアント側だけでは通らない（`opentouryo-transmission`）。
 - B層・D層・自動生成 Dao は `opentouryo-layer-b`／`opentouryo-layer-d`／`opentouryo-dao-generated`。
 
