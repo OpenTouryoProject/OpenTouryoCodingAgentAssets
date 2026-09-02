@@ -134,7 +134,7 @@ protected string UOC_gvwGridView1_RowCommand(FxEventArgs e)
 
 ## DDL（`DropDownList`）列の注意（FK をマスタ選択にするとき）
 
-- **`ListItem` があいまい参照（`CS0104`）になったら完全修飾**：コードビハインドで `ListItem` が別名前空間の型と衝突する場合は `System.Web.UI.WebControls.ListItem` と書く。
+- **`ListItem` は完全修飾する（`CS0104`）**：コードビハインドに `using Touryo.Infrastructure.CustomControl;` があると、`new ListItem(...)` が **`Touryo.Infrastructure.CustomControl.ListItem` と `System.Web.UI.WebControls.ListItem` のあいまい参照（`CS0104`）**になる。DDL にマスタをバインドする画面では必ず出る＝**`new System.Web.UI.WebControls.ListItem(...)` と書く**。
 - **検索条件 DDL の空選択肢を二重に足さない**：グリッド内 DDL 用のバインド ヘルパが先頭に空 `ListItem` を入れる作りだと、検索条件側で `Items.Insert(0, new ListItem("（すべて）", ""))` すると空が2つ並ぶ。**検索条件側は先頭の空選択肢を「（すべて）」に置き換える**（追加しない）。
 
 ## 4. ページング（P層 ObjectDataSource ⇄ D層 SQL）

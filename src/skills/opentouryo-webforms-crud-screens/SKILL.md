@@ -33,6 +33,8 @@ metadata:
 - **詳細画面**：**`Session` の PK 有無でモード分岐** — **無＝INSERT モード**（編集可・更新/削除ボタン不活性）、**有＝表示モード**（レコード取得・`ReadOnly`・編集ボタンで編集可に）。Insert/Update/Delete を実行。
   更新/削除は **PK＋タイムスタンプで楽観排他**（件数0チェック＝`opentouryo-layer-d`・`opentouryo-dao-generated`）。
 - **状態持ち回り**：選択→詳細は別画面・別ポストバックをまたぐので **`Session` に PK＋TS**（`opentouryo-app-design/references/state-management.md`）。
+- **★ 戻り（詳細→一覧）で検索条件を復元する**：検索条件も `Session` に退避し、画面Ａの `UOC_FormInit` で復元して再検索する（遷移の機構〔URL 返し／ラベル返し〕とは独立の話。**画面遷移制御は既定では無効**＝`FxScreenTransitionMode=off` なので条件復元に `SCDefinition.xml` は要らない＝`opentouryo-screen-transition`）。復元しないと「一覧→詳細→一覧」で条件が消える（MVC は `Session` を避けクエリ文字列で持ち回る＝`opentouryo-mvc-crud-screens`）。
+- **★ 単票の追加・削除の後は二重実行を防ぐ**：詳細画面はボタン1回押しで完結するので、追加/削除の直後に同じボタンをもう一度押すと二重実行になる（追加は2件・削除は「件数0＝他のユーザによって更新されています」の誤メッセージ）。**追加・削除後は該当ボタンを非活性にし [戻る] を促す**（更新は `AcceptChanges` で `Original` が現在値に揃い続けて実行できる）。
 
 ## (2) 一覧＆更新（特殊）
 

@@ -40,6 +40,8 @@ metadata:
 <cc1:WebCustomButton ID="btnButton1" runat="server" Text="検索" />
 ```
 
+> **★ コードビハインドで `ListItem` は完全修飾する（`CS0104`）。** `.cs` に `using Touryo.Infrastructure.CustomControl;` があると `new ListItem(...)` が **`CustomControl.ListItem` と `System.Web.UI.WebControls.ListItem` のあいまい参照**になる（DDL にマスタをバインドする画面で必ず出る）＝**`new System.Web.UI.WebControls.ListItem(...)`** と書く。
+
 ## 接頭辞の一覧とイベント名
 
 **接頭辞は設定ファイル（`app.config` の `appSettings`）で定義する。**
@@ -123,7 +125,7 @@ protected string UOC_（コントロール名）_（イベント名）(FxEventAr
 | 要素 | 決まり |
 | --- | --- |
 | アクセス修飾子 | `protected`。**`private` にすると呼ばれない** |
-| 戻り値 | `string`。**遷移先 URL**。遷移しないなら `string.Empty` を返す |
+| 戻り値 | `string`。**遷移先 URL**（`FxScreenTransitionMode=T`/`R` のときは代わりに**遷移ラベル**＝`opentouryo-screen-transition`）。遷移しないなら `string.Empty` を返す |
 | 引数 | `FxEventArgs` |
 
 GridView の `RowUpdating` / `RowDeleting` / `PageIndexChanging` / `Sorting` だけ、
