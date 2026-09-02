@@ -40,6 +40,8 @@ Web Forms の画面実装そのものは `opentouryo-layer-p-webforms-screen` /
 
 **∴ 定義ファイルを使うには主スイッチを `T`/`R` にすることが前提。** これを知らないと「`off` のまま `SCDefinition.xml` を書いて `return "ラベル"`」＝ラベルが URL 扱いで **404**、逆に「`T`/`R` で `return "url.aspx"`」＝未定義ラベルで **`FrameworkException`**、のどちらかに必ず陥る。`ScreenTransitionMethod`（`1`/`2`）と `FxScreenTransitionMode`（T/R/off）は**別キー**なので混同しない。
 
+**★ 「`SCDefinition.xml` に定義がある」＝「画面遷移制御を使っている」ではない。** 主スイッチ `off` では定義は読まれず（空の `<SCD/>`）**効いていない**＝`off` のまま整合性のために `SCDefinition.xml` をメンテナンスする〔画面追加・削除に合わせて更新しておく〕のは**便宜として妥当**（将来 `T`/`R` に切り替える布石にもなる）。ただし**「定義したから使えている」と誤認しない**——実際に効いているかは**主スイッチが `T`/`R` かどうか**（＝実 `app.config` の `FxScreenTransitionMode`）で判断し、報告でも「定義あり」と「機能が有効」を区別する。
+
 ## Redirect と Transfer の使い分け（設計比較）
 
 | | **Redirect**（`FxRedirect`＝`Response.Redirect`・`ScreenTransitionMethod=2`） | **Transfer**（`FxTransfer`＝`Server.Transfer`・`=1`） |
