@@ -40,7 +40,7 @@ metadata:
 `foreach (DataRow dr in dt.Rows)` で回し、**`switch (dr.RowState)`** で自動生成 Dao の CUD を呼ぶ。
 行ごとに `dao.ClearParametersFromHt()` でパラメタをクリアする。コード全文は `references/snippets.md`。
 
-- **`Added`** → `S1_Insert()`（**全列必須**＝生成 INSERT が全列に `@param` を持つ。列を1つでも設定しないと実行時エラー。**裏を返せば IDENTITY が無く全列に値を入れる子明細は `S1_Insert` が素直**）。
+- **`Added`** → `S1_Insert()`（**全列必須**＝生成 INSERT が全列に `@param` を持つ。列を1つでも設定しないと実行時エラー。**裏を返せば IDENTITY が無く全列に値を入れる表なら `S1_Insert` が素直**）。
   **一覧が全列でないなら `D1_Insert()`**（動的＝設定した列だけ INSERT する。生成 SQL を読んで判断＝`opentouryo-dao-generated`）。
   **★ IDENTITY（自動採番）列があるテーブルは列数に関わらず `D1_Insert()` 一択**——DaoGen CLI の `S1_Insert` は
   **生成時に IDENTITY 列も列リスト/VALUES に含める**ため、そのまま実行すると `IDENTITY_INSERT が OFF…` で必ず失敗する
