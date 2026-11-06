@@ -96,14 +96,12 @@
     # ------------------------------------------------------------------
     #   値の最初の語が Vocabulary に無ければ止める（終了コード 1）。
     #   RequiredWhen（メッセージに当てる正規表現）に当たるのにトレーラーが無ければ、警告に留める。
-    #   **語彙は人が承認してから入れる**（Found-By は OpenTouryoCodingAgentAssets#5）。
+    #   Found-By（OpenTouryoCodingAgentAssets#5）は共通の規則にある。同じ Name で書くと置き換える。
     TrailerRules = @(
         # @{
-        #     Name         = 'Found-By'
-        #     Vocabulary   = @('spec-check', 'type-review', 'test-added', 'test-failure', 'review-other-model',
-        #                      'review-same-model', 'static-analysis', 'downstream', 'upstream', 'user-report')
+        #     Name         = 'Spec-Id'
         #     RequiredWhen = '(?i)\bfixed\s+#\d+'
-        #     MissingHint  = 'バグの修正なら、見つけた手段を書く（Found-By: <手段> [<補足>]）。'
+        #     MissingHint  = '仕様の ID（EV-*・VAL-* など）を書く。'
         # }
     )
 

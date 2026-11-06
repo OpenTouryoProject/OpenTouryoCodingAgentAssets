@@ -74,8 +74,9 @@ docs/expectation-guard/                段階 4 の下書き（このリポジ�
 - psd1 にはスクリプトを書けないので、**固有の比べ方は `Comparer`（スクリプトのパス）で差し込む**。
   約束：`& <Comparer> -Pairs <Path・Expected・Actual の並び>` → 対ごとに `Path`・`Changed`・`Detail`。
   コミットごとに 1 回だけ呼ぶ（OpenTouryo の `2_RunAllTests.ps1 -List` を毎ファイル呼ばないため）。
-- `TrailerRules`（#5 の `Found-By:`）：語彙に無い値は止め（1）、`RequiredWhen` に当たるのに無ければ警告（0）。
-  **語彙は承認前なので、見本ではコメントにしてある。**
+- `TrailerRules`（#5 の `Found-By:`）：語彙に無い値は止め（1）、`RequiredWhen`（`fixed #NNN`）に当たるのに無ければ警告（0）。
+  **`Found-By` は共通の規則（`rules.common.psd1`）に入れた**（#5・2026-11-06。語彙は Issue の 10 語のまま）。
+  同じ `Name` の規則を `rules.psd1` に書くと置き換わる（二重に数えない）。集計は `git log --format='%h %(trailers:key=Found-By,valueonly,separator=|)' <範囲>`。
 
 ## 4. 分かれていた点と、本体での扱い
 
@@ -132,6 +133,11 @@ SANDBOX（NetDevInfraWGinOSSConsortium/Sandbox）に `install.ps1 -TargetRoot . 
 - 段 2（commit-msg）も SANDBOX の手元で動いた（トレーラー付きのコミットを承認済みとして通した）。
 - 未確認：Linux・macOS の clone での commit-msg の実行属性（`100755` で入っていることは確かめた）。
 
+| PR | シナリオ（#5 の `Found-By:`） | 結果 |
+| --- | --- | --- |
+| #5 | 写し直して `Found-By` の検査を入れる PR | 成功。**CI はベース側（検査の無い版）で見るので、検査が効くのはマージの後の PR から**（設計どおり） |
+| #6 | `fixed #2` に `Found-By:` が無い／語彙にある値／語彙に無い値（`gut-feeling`） | 無いと警告の注釈でジョブは成功、語彙に無い値を足すと失敗。手元の commit-msg でも同じ（無い＝警告、誤り＝拒否） |
+
 ## 7. 実測した落とし穴
 
 - **`Import-PowerShellDataFile` を使わない。** PowerShell 7 から起動した git の sh で commit-msg フックが `powershell.exe`（5.1）を動かすと、
@@ -156,3 +162,4 @@ SANDBOX（NetDevInfraWGinOSSConsortium/Sandbox）に `install.ps1 -TargetRoot . 
 - 既存の `.github/workflows/expectation-change.yml` は雛形で上書きされないので、手で合わせる
   （MultiPurposeAuthSite は `-CheckTestCases` → `-CheckGenerated`、判定の用例のジョブを足す、`-VerifyCopy` の手順を足す）。
 - 置き換えのコミット自体が「仕組みの変更」になる。トレーラーを付ける。
+- 共通の規則に `Found-By` の検査が入ったので、置き換えの前後の比較では、導入の後の `fixed #NNN` のコミットに**警告が増える**（終了コードは変わらない。過去のコミットに語彙に無い値は無い前提。比べるときに確かめる）。

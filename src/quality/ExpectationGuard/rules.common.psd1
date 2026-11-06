@@ -17,6 +17,31 @@
         '^\.github/workflows/expectation-change\.yml$'
     )
 
+    # トレーラーの検査（OpenTouryoCodingAgentAssets#5）。
+    #   Found-By: <手段> [<補足>] … バグの修正（fixed #NNN）を、どこで・何で見つけたか。
+    #   値の最初の語が語彙に無ければ止める。fixed #NNN なのに無ければ警告に留める（バグかどうかは機械に分からない）。
+    #   集計：git log --format='%h %(trailers:key=Found-By,valueonly,separator=|)' <範囲>
+    #   rules.psd1 に同じ Name の規則を書くと、こちらを置き換える。
+    TrailerRules = @(
+        @{
+            Name         = 'Found-By'
+            Vocabulary   = @(
+                'spec-check'          # 原典（RFC・仕様）の確認。根拠（[Basis]）を付ける作業を含む
+                'type-review'         # 型ごと・類似不良の見直し
+                'test-added'          # テスト（単体・E2E）を足して見つかった
+                'test-failure'        # 既存のテスト・CI の失敗（断続的なものを含む）
+                'review-other-model'  # 書いたモデルとは別のモデルのレビュー
+                'review-same-model'   # 書いたモデルのレビュー（別のセッションを含む）
+                'static-analysis'     # CodeQL などの静的解析
+                'downstream'          # 利用する側（サンプル・汎用認証サイト・アプリ）の作業
+                'upstream'            # ライブラリの変更の取り込み・波及
+                'user-report'         # 利用者からの報告
+            )
+            RequiredWhen = '(?i)\bfixed\s+#\d+'
+            MissingHint  = 'バグの修正なら、見つけた手段を書く（Found-By: <手段> [<補足>]）。機能の追加なら不要。'
+        }
+    )
+
     # 段 1：コマンドで書き換えそうな操作（2>$null・*>&1 のような、捨てるだけのリダイレクトは除く）。
     #   FileRules・GeneratedRules の CommandPattern と両方に当たると、人の確認付きにする（**推測である。** 漏れは段 2・段 3 が塞ぐ）。
     WriteInCommand = '(?<![0-9*])>(?!\s*(\$null|/dev/null|&))|\b(Set-Content|Add-Content|Out-File|Copy-Item|Move-Item|Remove-Item|Rename-Item|WriteAll(Text|Bytes|Lines))\b|(^|[\s;|&(])(cp|mv|rm|copy|move|del|tee)\s|\bsed\s+(-\w*\s+)*-i|\bgit\s+(checkout|restore|reset|stash|apply|am|cherry-pick)\b'

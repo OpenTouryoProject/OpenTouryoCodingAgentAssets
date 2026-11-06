@@ -213,6 +213,10 @@ function Read-Rules([string]$CommonPath, [string]$RepoPath)
     {
         if (-not $rules.ContainsKey($k)) { $rules[$k] = @() } else { $rules[$k] = @($rules[$k]) }
     }
+    # トレーラーの規則は、同じ Name なら後（リポジトリの規則）が前（共通の規則）を置き換える（二重に数えない）
+    $byName = [ordered]@{}
+    foreach ($t in $rules["TrailerRules"]) { $byName[$t.Name] = $t }
+    $rules["TrailerRules"] = @($byName.Values)
     if (-not $rules.ContainsKey("ApprovalTrailer")) { $rules["ApprovalTrailer"] = "Expectation-Change" }
     if (-not $rules.ContainsKey("CommentLine"))     { $rules["CommentLine"] = '^\s*//' }
     return $rules

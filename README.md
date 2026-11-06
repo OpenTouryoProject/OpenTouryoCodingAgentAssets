@@ -154,6 +154,8 @@ Golden の変更・検出の仕組み自体の変更など）を検出し、コ�
 ./install/install.ps1 -TargetRoot C:\git\MyApp -IncludeQualityGuard
 ```
 
+あわせて、バグの修正（`fixed #NNN`）のトレーラー `Found-By: <手段>` を検査する（語彙に無い値は拒否、無ければ警告。語彙は `rules.common.psd1`）。
+
 何を期待値と呼ぶかは、導入先の `rules.psd1`（初回だけ見本から置く。以後は導入先が持つ）に書く。
 本体・共通の規則・フックは**写し**で、先頭付近に原本の版と SHA-256 の行が入る。写しは直さず、原本を直して写し直す。
 詳細は [src/quality/ExpectationGuard/rules.sample.psd1](src/quality/ExpectationGuard/rules.sample.psd1) と

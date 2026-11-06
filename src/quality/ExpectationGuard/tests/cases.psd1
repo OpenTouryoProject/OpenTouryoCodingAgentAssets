@@ -230,6 +230,12 @@ public class FooTests
             Expect = @{ Exit = 1; Kinds = @() }
         }
         @{
+            Id = 'D18'; Category = '検出する'; Title = 'トレーラーの規則は同じ Name で置き換わる（共通の語彙にあっても、リポジトリの語彙に無ければ止める）'
+            Commits = @(@{ Message = "fixed #12 直した`n`nFound-By: user-report"; Files = @{ 'src/A.cs' = "class A {}`n" } })
+            Expect = @{ Exit = 1; Kinds = @(); Warnings = 0 }
+            Note = 'W01 の警告が 1 件（共通とリポジトリで二重に数えない）ことと併せて見る'
+        }
+        @{
             Id = 'D16'; Category = '検出する'; Title = '生成物の作り直しの漏れ'
             Mode = 'Generated'
             Commits = @(@{ Message = '手順を足す'; Files = @{ 'tests/E2E/LoginTests.cs' = @'
