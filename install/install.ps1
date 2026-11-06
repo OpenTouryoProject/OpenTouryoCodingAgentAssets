@@ -41,13 +41,42 @@
     docs/spec・docs/plan は利用者が実仕様/実計画を置く作業ディレクトリのため、
     既存ファイルは上書きしない（上書きするには -Force）。
 
+.PARAMETER IncludeQualityGuard
+    期待値の変更の検出器（src/quality/ExpectationGuard。段 1〜3）を導入先へ写す。既定では写さない（opt-in）。
+      <QualityGuardPath>/CheckExpectationChange.ps1   本体
+      <QualityGuardPath>/rules.common.psd1           共通の規則
+      <QualityGuardPath>/rules.psd1                  リポジトリごとの規則（無いときだけ、rules.sample.psd1 から置く）
+      <QualityGuardPath>/ExpectationGuard.Tests/     判定の用例（Run-Tests.ps1）
+      .claude/hooks/ExpectationGuard.ps1             段 1（PreToolUse フック）
+      .githooks/commit-msg                           段 2（commit-msg フック）
+      .github/workflows/expectation-change.yml       段 3（CI の雛形。無いときだけ置く）
+      .claude/settings.json                          段 1 の登録（無いときだけ置く。あれば登録の例を表示する）
+    写したファイルの先頭付近に「expectation-guard-source: <原本の版> <原本のパス> sha256:<中身>」の行を書く。
+    導入先の CI は本体の -VerifyCopy で、写しが写したときのままかを確かめる（ずれは警告）。
+    この行のあるファイルは再実行で上書きする（**写しは直さず、原本を直して写し直す**）。
+
+.PARAMETER QualityGuardPath
+    -IncludeQualityGuard の本体を置くフォルダ（導入先のルートから）。既定は tools/ExpectationGuard。
+
+    -IncludeQualityGuard だけで -Product を省くと、検出器だけを写す（AGENTS.md・CLAUDE.md・スキルには触れない）。
+    既に自前の検出器を持つリポジトリ（印の行の無いフック・検出器がある）を置き換えるときは、これに -Force を付ける
+    （-Product と併せて -Force を付けると、導入先の AGENTS.md なども上書きされる）。
+
 .EXAMPLE
     ./install.ps1 -Product claude -TargetRoot C:\git\MyApp
     Claude Code 向けに全スキルをインストールする。
 
 .EXAMPLE
+    ./install.ps1 -Product claude -TargetRoot C:\git\MyApp -IncludeQualityGuard
+    スキルに加えて、期待値の変更の検出器を tools/ExpectationGuard/ とフック・CI の場所へ写す。
+
+.EXAMPLE
     ./install.ps1 -Product claude -TargetRoot C:\git\MyApp -IncludeTutorial
     スキルに加えて、評価用チュートリアル一式（src/docs 配下の全ファイル）も docs/ へ配置する。
+
+.EXAMPLE
+    ./install.ps1 -TargetRoot C:\git\OpenTouryo -IncludeQualityGuard -QualityGuardPath root/programs -Force
+    検出器だけを写す（インストラクション・スキルには触れない）。自前の検出器を置き換える場合。
 
 .EXAMPLE
     ./install.ps1 -Product claude,copilot -Skill opentouryo-layer-d,opentouryo-layer-b
@@ -59,7 +88,6 @@
 #>
 [CmdletBinding(SupportsShouldProcess)]
 param(
-    [Parameter(Mandatory)]
     [ValidateSet('claude', 'copilot', 'agents')]
     [string[]]$Product,
 
@@ -69,7 +97,11 @@ param(
 
     [switch]$Force,
 
-    [switch]$IncludeTutorial
+    [switch]$IncludeTutorial,
+
+    [switch]$IncludeQualityGuard,
+
+    [string]$QualityGuardPath = 'tools/ExpectationGuard'
 )
 
 Set-StrictMode -Version Latest
@@ -160,6 +192,156 @@ function Install-Skills {
     }
 }
 
+# ---- 期待値の変更の検出器（-IncludeQualityGuard） ----
+
+$QualitySource = Join-Path $SourceRoot 'src/quality/ExpectationGuard'
+# 写したファイルの印。本体（CheckExpectationChange.ps1 -VerifyCopy）と同じ。
+$QualityMarker = 'expectation-guard-source:'
+
+# 原本の版（このリポジトリのコミット。原本に未コミットの変更があれば +dirty）
+function Get-GuardRevision {
+    $rev = & git -C $SourceRoot rev-parse --short=12 HEAD 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $rev) { return 'unknown' }
+    $dirty = & git -C $SourceRoot status --porcelain -- 'src/quality' 2>$null
+    if ($dirty) { $rev += '+dirty' }
+    return $rev
+}
+
+# 本体の Get-CopyHash と同じ計算（改行を LF にそろえ、印の行を除いた残りの SHA-256）
+function Get-GuardHash {
+    param([string]$Text)
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    $bytes = (New-Object System.Text.UTF8Encoding($false)).GetBytes(($Text -replace "`r`n", "`n"))
+    return ([BitConverter]::ToString($sha.ComputeHash($bytes)) -replace '-', '').ToLowerInvariant()
+}
+
+function Test-GuardCopy {
+    param([string]$Path)
+    if (-not (Test-Path -LiteralPath $Path)) { return $false }
+    $head = @([System.IO.File]::ReadAllLines($Path) | Select-Object -First 3)
+    return [bool]($head | Where-Object { $_ -match ('^\s*#.*' + [regex]::Escape($QualityMarker)) })
+}
+
+# 原本を写す。印の行を先頭（shebang があればその次）に入れる。
+#   -Template : 雛形。無いときだけ置き、以後は導入先が持つ（印の行は付けるが、中身の検査はしない＝sha256:-）
+#   -NoMarker : 印の行を付けない（rules.psd1。導入先が持つ）
+function Copy-GuardFile {
+    param(
+        [string]$Source,
+        [string]$Destination,
+        [hashtable]$Replace = @{},
+        [switch]$Bom,
+        [switch]$Template,
+        [switch]$NoMarker
+    )
+
+    $exists = Test-Path -LiteralPath $Destination
+    if ($exists) {
+        if ($NoMarker -or $Template) {
+            if (-not $Force -or $NoMarker) {
+                Write-Host "  そのまま（導入先が持つ）: $Destination"
+                return
+            }
+        }
+        elseif (-not (Test-GuardCopy $Destination) -and -not $Force) {
+            Write-Warning "スキップ（既存ファイルを保護）: $Destination`n  上書きするには -Force を指定してください。"
+            return
+        }
+    }
+
+    $text = [System.IO.File]::ReadAllText($Source) -replace "`r`n", "`n"
+    foreach ($k in $Replace.Keys) { $text = $text.Replace($k, $Replace[$k]) }
+
+    if (-not $NoMarker) {
+        $relSource = ($Source.Substring($SourceRoot.Length).TrimStart('\', '/') -replace '\\', '/')
+        $hash = $(if ($Template) { '-' } else { Get-GuardHash $text })
+        $marker = "# $QualityMarker OpenTouryoCodingAgentAssets@$script:guardRevision $relSource sha256:$hash"
+        $lines = New-Object System.Collections.ArrayList
+        $lines.AddRange(@($text -split "`n"))
+        $at = $(if ($lines.Count -gt 0 -and $lines[0].StartsWith('#!')) { 1 } else { 0 })
+        $lines.Insert($at, $marker)
+        $text = ($lines -join "`n")
+    }
+
+    if ($PSCmdlet.ShouldProcess($Destination, '写す')) {
+        $dir = Split-Path -Parent $Destination
+        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+        # .ps1・.psd1 は BOM 付き UTF-8（Windows PowerShell 5.1 は BOM 無しを ANSI として読み、日本語が化ける）。
+        # commit-msg は sh が読むので BOM 無し・LF。
+        [System.IO.File]::WriteAllText($Destination, $text, (New-Object System.Text.UTF8Encoding($Bom.IsPresent)))
+        Write-Host "  写す: $Destination"
+    }
+}
+
+function Install-QualityGuard {
+    if (-not (Test-Path $QualitySource)) {
+        throw "検出器の原本が見つかりません: $QualitySource"
+    }
+    $script:guardRevision = Get-GuardRevision
+
+    $rel = ($QualityGuardPath -replace '\\', '/').Trim('/')
+    if (-not $rel -or $rel -eq '.') { $checker = 'CheckExpectationChange.ps1' } else { $checker = "$rel/CheckExpectationChange.ps1" }
+    $checkerWin = $checker -replace '/', '\'
+    $testsWin = (Split-Path -Parent $checkerWin) + '\ExpectationGuard.Tests\Run-Tests.ps1'
+    $testsWin = $testsWin.TrimStart('\')
+    $replace = @{ '@@CHECKER@@' = $checker; '@@CHECKER_WIN@@' = $checkerWin; '@@TESTS_WIN@@' = $testsWin }
+
+    $dest = Join-Path $TargetRoot $rel
+    Write-Host "  原本の版: OpenTouryoCodingAgentAssets@$script:guardRevision"
+    Copy-GuardFile -Source (Join-Path $QualitySource 'CheckExpectationChange.ps1') -Destination (Join-Path $dest 'CheckExpectationChange.ps1') -Bom
+    Copy-GuardFile -Source (Join-Path $QualitySource 'rules.common.psd1') -Destination (Join-Path $dest 'rules.common.psd1') -Bom
+    Copy-GuardFile -Source (Join-Path $QualitySource 'rules.sample.psd1') -Destination (Join-Path $dest 'rules.psd1') -Bom -NoMarker
+
+    $testsSource = Join-Path $QualitySource 'tests'
+    foreach ($f in Get-ChildItem -Path $testsSource -File) {
+        Copy-GuardFile -Source $f.FullName -Destination (Join-Path (Join-Path $dest 'ExpectationGuard.Tests') $f.Name) -Bom
+    }
+
+    Copy-GuardFile -Source (Join-Path $QualitySource 'ExpectationGuard.ps1') -Destination (Join-Path $TargetRoot '.claude/hooks/ExpectationGuard.ps1') -Replace $replace -Bom
+    Copy-GuardFile -Source (Join-Path $QualitySource 'commit-msg') -Destination (Join-Path $TargetRoot '.githooks/commit-msg') -Replace $replace
+    Copy-GuardFile -Source (Join-Path $QualitySource 'expectation-change.yml') -Destination (Join-Path $TargetRoot '.github/workflows/expectation-change.yml') -Replace $replace -Template
+
+    # 段 1 の登録。settings.json は利用者の他の設定も持つので、あれば書き換えない。
+    $settingsPath = Join-Path $TargetRoot '.claude/settings.json'
+    $hookEntry = @'
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell.exe",
+            "args": ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "${CLAUDE_PROJECT_DIR}/.claude/hooks/ExpectationGuard.ps1"]
+          }
+        ]
+      }
+    ]
+  }
+}
+'@
+    if (-not (Test-Path -LiteralPath $settingsPath)) {
+        if ($PSCmdlet.ShouldProcess($settingsPath, '書き込み')) {
+            $dir = Split-Path -Parent $settingsPath
+            if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+            [System.IO.File]::WriteAllText($settingsPath, ($hookEntry -replace "`r`n", "`n") + "`n", (New-Object System.Text.UTF8Encoding($false)))
+            Write-Host "  書き込み: $settingsPath"
+        }
+    }
+    else {
+        Write-Warning ("そのまま（既存の設定を保護）: $settingsPath`n  段 1 を使うには、hooks.PreToolUse に次を足してください。`n" + $hookEntry)
+    }
+
+    Write-Host ''
+    Write-Host '  導入先で行うこと（人が行う）:'
+    Write-Host "    1. $rel/rules.psd1 を、そのリポジトリのテストのパス・属性に合わせる（TODO の箇所）"
+    Write-Host '    2. git config core.hooksPath .githooks（段 2 を有効にする。人ごとの設定）'
+    Write-Host '    3. git add --chmod=+x .githooks/commit-msg（実行属性。Linux・macOS の sh で要る）'
+    Write-Host "    4. 判定の用例を回す: $testsWin"
+    Write-Host '    5. 既に検出器があるリポジトリでは、この変更自体が「仕組みの変更」になる。コミットにトレーラー Expectation-Change: <理由> を付ける'
+}
+
 # ---- 実行 ----
 
 if (-not (Test-Path $InstructionsSource)) {
@@ -172,7 +354,23 @@ install.ps1 だけを他所へコピーしても、隣接する src/instructions
 "@
 }
 
+if (-not $Product -and -not $IncludeQualityGuard) {
+    throw '-Product を指定してください（-IncludeQualityGuard だけのときは省けます）。'
+}
+
 $TargetRoot = (Resolve-Path $TargetRoot).Path
+
+# 検出器だけを写す（-Product を省いたとき）
+if (-not $Product) {
+    Write-Host "インストール先: $TargetRoot"
+    Write-Host ''
+    Write-Host '期待値の変更の検出器:'
+    Install-QualityGuard
+    Write-Host ''
+    Write-Host '完了しました。'
+    return
+}
+
 $skills = Resolve-Skills -Requested $Skill
 # UTF-8 で読む（PS 5.1 の Get-Content 既定 ANSI だと AGENTS.md の日本語が文字化けする）。
 $instructionsBody = [System.IO.File]::ReadAllText($InstructionsSource)
@@ -211,6 +409,13 @@ if ($IncludeTutorial) {
             Write-AssetFile -Path $destPath -Content $tutorialBody
         }
     }
+}
+
+# 期待値の変更の検出器（opt-in・プロダクト非依存。段 1 のフックは Claude Code 用）。
+if ($IncludeQualityGuard) {
+    Write-Host ''
+    Write-Host '期待値の変更の検出器 (opt-in):'
+    Install-QualityGuard
 }
 
 foreach ($p in $Product) {

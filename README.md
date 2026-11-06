@@ -12,10 +12,12 @@ src/
   instructions/AGENTS.md        概要・規約（常時コンテキストに載る / これが原本）
   skills/                       全スキル（用途別の一覧・使いどころは下の「スキル一覧」節）
   docs/                         配布物：spec/plan/tutorial の見本（-IncludeTutorial で導入先の docs/ へ）
+  quality/ExpectationGuard/     配布物：期待値の変更の検出器の原本（-IncludeQualityGuard で導入先へ写す）
 install/
   install.ps1                   対象リポジトリへのインストーラ
 docs/
   authoring.md                  アセット執筆ガイド（このリポジトリ用・導入先へは配らない）
+  expectation-guard.md          検出器の切り分け・設計・検証の記録（このリポジトリ用）
 ```
 
 **インストラクション**（概要）と**スキル**（具体的なコードの書き方）に分かれている。
@@ -132,6 +134,30 @@ cd OpenTouryoCodingAgentAssets
 規模のある変更は **spec → plan → 実装** で進めるのを推奨する（仕様を `docs/spec/`、計画を `docs/plan/` に置いてから実装）。
 `-IncludeTutorial` を付けると、この流れを通しで試すサンプル（`docs/spec|plan|tutorial/tutorial1.md`）を導入先へ配置する。
 `docs/spec`・`docs/plan` は利用者の作業ディレクトリなので、**再実行しても既存ファイルは上書きしない**（`-Force` でのみ上書き）。
+
+### 期待値の変更の検出器（opt-in）
+
+`-IncludeQualityGuard` を付けると、承認したテストの期待値を後から変える変更（テストの削除・Skip / Ignore の追加・根拠の削除・
+Golden の変更・検出の仕組み自体の変更など）を検出し、コミット メッセージのトレーラー `Expectation-Change: <理由>` を求める仕組みを写す。
+
+| 段 | 何をするか | 導入先のファイル |
+| --- | --- | --- |
+| 1 | エージェントがテストを弱める編集をしたら、人の確認付きにする（止めない） | `.claude/hooks/ExpectationGuard.ps1`（`.claude/settings.json` に登録） |
+| 2 | トレーラーの無い期待値の変更のコミットを拒否する | `.githooks/commit-msg`（`git config core.hooksPath .githooks`） |
+| 3 | PR で同じ検出をする（ベース側の版の検出器で見る） | `.github/workflows/expectation-change.yml`（雛形） |
+
+```powershell
+# スキルと併せて（本体は tools/ExpectationGuard/。-QualityGuardPath で変えられる）
+./install/install.ps1 -Product claude -TargetRoot C:\git\MyApp -IncludeQualityGuard
+
+# 検出器だけ（AGENTS.md・スキルには触れない）
+./install/install.ps1 -TargetRoot C:\git\MyApp -IncludeQualityGuard
+```
+
+何を期待値と呼ぶかは、導入先の `rules.psd1`（初回だけ見本から置く。以後は導入先が持つ）に書く。
+本体・共通の規則・フックは**写し**で、先頭付近に原本の版と SHA-256 の行が入る。写しは直さず、原本を直して写し直す。
+詳細は [src/quality/ExpectationGuard/rules.sample.psd1](src/quality/ExpectationGuard/rules.sample.psd1) と
+[docs/expectation-guard.md](docs/expectation-guard.md)。
 
 ### 配置先
 
