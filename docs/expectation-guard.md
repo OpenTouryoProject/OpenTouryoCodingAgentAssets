@@ -117,6 +117,21 @@ docs/expectation-guard/                段階 4 の下書き（このリポジ�
 
 段階 4 では、写した本体と `rules.psd1` で同じ比較をやり直す（`-New` に写した本体、`-Rules` に導入先の `rules.psd1`）。
 
+### 6.1 段 3（GitHub Actions）の実地の試験（SANDBOX・2026-11-06）
+
+SANDBOX（NetDevInfraWGinOSSConsortium/Sandbox）に `install.ps1 -TargetRoot . -IncludeQualityGuard`（原本 `e1f2257`）で写し、PR で確かめた。
+
+| PR | シナリオ | 結果 |
+| --- | --- | --- |
+| #1 | 導入の PR（ベースに検出器が無い） | PR 側の版を使い `::warning::` が出る。3 ジョブとも成功。判定の用例 40 件が `windows-latest` の 5.1 で全件期待どおり |
+| #2 | トレーラーの無いテストの削除（`--no-verify` で段 2 を迂回） | `expectation-change` が失敗（「テストの削除」）。メッセージを書き直して force push すると成功（承認済み） |
+| #3 | PR の中で `rules.psd1` を緩め、テストを消す | **ベース側の版（とベースの規則）で見るので失敗**（「仕組みの変更」「テストの削除」） |
+| #4 | 写し（`rules.common.psd1`）を手で直す（トレーラー付き） | `expectation-change` は成功、`Verify copies` が PR に警告の注釈を出す。続けてトレーラーの無いコミットを足すと、検査は失敗し、**写しの検査も回る** |
+
+- **雛形を直した：** 検査のステップが落ちると、後ろの `Verify copies` が飛ばされていた（#3 で判明）→ `if: always()` を足した。#4 で確かめた。
+- 段 2（commit-msg）も SANDBOX の手元で動いた（トレーラー付きのコミットを承認済みとして通した）。
+- 未確認：Linux・macOS の clone での commit-msg の実行属性（`100755` で入っていることは確かめた）。
+
 ## 7. 実測した落とし穴
 
 - **`Import-PowerShellDataFile` を使わない。** PowerShell 7 から起動した git の sh で commit-msg フックが `powershell.exe`（5.1）を動かすと、

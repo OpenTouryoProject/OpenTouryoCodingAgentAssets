@@ -65,7 +65,9 @@ jobs:
           exit $LASTEXITCODE
 
       # The copies written by install.ps1 must match the original (warning only).
+      # always(): 上の検査が落ちても回す（落ちた PR でこそ、写しを手で直していないかを見たい）。
       - name: Verify copies
+        if: always()
         shell: powershell
         run: |
           & (Join-Path $env:GITHUB_WORKSPACE "@@CHECKER_WIN@@") -VerifyCopy
