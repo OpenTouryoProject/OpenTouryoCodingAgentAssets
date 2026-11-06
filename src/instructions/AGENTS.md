@@ -271,19 +271,21 @@ MS ツールチェーン起因で**「ビルドは通るのに壊れる／静か
 <!-- TODO: このプロジェクト固有の具体的なコマンドを埋める。ランタイム別の一般則は下記。 -->
 
 - ビルド: net48 は msbuild（非 SDK csproj・VS Build Tools 前提）、net10.0 は `dotnet build`
-- テスト: TODO
+- テスト: B層の単体テストは NUnit（`<Webプロジェクト名>.Tests`）。net10.0 は `dotnet test <csproj>`、net48 は MSBuild で組んで `dotnet test <csproj> --no-build`（`opentouryo-test-layer-b`）
 - 実行: TODO
 
 **新規プロジェクトの立ち上げ**（OpenTouryo を取得・ビルドし、サンプルを起点に構成する）は
 `opentouryo-project-setup` を参照。基盤はビルド済み DLL を参照する（ソースを取り込まない）。
 
-## 開発の進め方（spec → plan → 実装：推奨）
+## 開発の進め方（spec → テスト → plan → 実装：推奨）
 
 規模のある変更は、いきなり実装せず次の順で進めるのを既定とする（小さな修正は省略してよい）。
 
 1. **仕様**：何を作るかを `docs/spec/<名前>.md` に書く（要件・受入条件）。
-2. **計画**：どう作るかを `docs/plan/<名前>.md` に書く（対象ファイル・使用スキル・手順。**設計事項の漏れ防止は `opentouryo-app-design`**）。
-3. **実装**：計画に沿って実装する。着手前に該当スキルを読む。
+2. **テスト仕様とテスト（Red）**：B層のルート メソッドのテストケースを `docs/spec/<名前>-tests.md` に起こし（各ケースに根拠の ID）、
+   テストを書いて失敗を確かめる。**どちらも人の承認を待つ。手順と、承認したテストの守り方は `TESTING.md`**。
+3. **計画**：どう作るかを `docs/plan/<名前>.md` に書く（対象ファイル・使用スキル・手順。**設計事項の漏れ防止は `opentouryo-app-design`**）。
+4. **実装（Green）**：計画に沿って、テストが通るまで実装する。**テストは変えない**。着手前に該当スキルを読む。
 
 `docs/tutorial/` に、スキル群を通しで試す実例がある（`docs/spec` / `docs/plan` の書き方の見本）。
 インストーラの `-IncludeTutorial` で配置される。

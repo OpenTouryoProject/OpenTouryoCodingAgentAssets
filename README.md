@@ -10,6 +10,7 @@ Assets used by coding agents utilizing OpenTouryo
 ```
 src/
   instructions/AGENTS.md        概要・規約（常時コンテキストに載る / これが原本）
+  instructions/TESTING.md       テスト先行の進め方とテストの保護（AGENTS.md から参照。AGENTS.md と同じくルートへ）
   skills/                       全スキル（用途別の一覧・使いどころは下の「スキル一覧」節）
   docs/                         配布物：spec/plan/tutorial の見本（-IncludeTutorial で導入先の docs/ へ）
   quality/ExpectationGuard/     配布物：期待値の変更の検出器の原本（-IncludeQualityGuard で導入先へ写す）
@@ -60,6 +61,7 @@ docs/
 | `opentouryo-p-call-business` | P層から B層を呼ぶとき（引数クラス・`DoBusinessLogic`・`ErrorFlag`） |
 | `opentouryo-richclient-async` | リッチクライアント（WinForms / WPF）で B層を非同期に呼ぶとき |
 | `opentouryo-layer-b` | 業務ロジックを実装するとき |
+| `opentouryo-test-layer-b` | B層のルート メソッドの単体テスト（NUnit・`<Web>.Tests`）を先に書くとき（テスト先行＝`TESTING.md` の段 2） |
 | `opentouryo-exception` | 例外を扱うとき（**全層で常用する横断・層を問わず参照**。「業務例外はリスローされない」等の必須ルール） |
 | `opentouryo-layer-d` | D層の全体像と Dao 3系統の使い分け（**概観。配下は下記 `└`**） |
 | └ `opentouryo-dao-custom` | 個別Dao（業務固有のデータアクセス）を実装するとき |
@@ -131,7 +133,8 @@ cd OpenTouryoCodingAgentAssets
 
 ### 開発の進め方とチュートリアル
 
-規模のある変更は **spec → plan → 実装** で進めるのを推奨する（仕様を `docs/spec/`、計画を `docs/plan/` に置いてから実装）。
+規模のある変更は **spec → テスト → plan → 実装** で進めるのを推奨する（仕様を `docs/spec/`、計画を `docs/plan/` に置いてから実装）。
+テストの段（テスト仕様 → Red を人が承認 → Green ではテストを変えない）は、導入先のルートに置かれる `TESTING.md` に書いてある。
 `-IncludeTutorial` を付けると、この流れを通しで試すサンプル（`docs/spec|plan|tutorial/tutorial1.md`）を導入先へ配置する。
 `docs/spec`・`docs/plan` は利用者の作業ディレクトリなので、**再実行しても既存ファイルは上書きしない**（`-Force` でのみ上書き）。
 

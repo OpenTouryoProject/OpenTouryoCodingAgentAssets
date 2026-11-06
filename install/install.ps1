@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     src/instructions/AGENTS.md（概要）と src/skills/*（コードの書き方）を、
-    プロダクトごとの規定の場所へ配置する。
+    プロダクトごとの規定の場所へ配置する。AGENTS.md から参照される本文（TESTING.md）も、AGENTS.md と同じくルートへ置く。
 
     スキルは Agent Skills のオープン標準（SKILL.md）に準拠しているため全プロダクト共通で、
     配置先が異なるだけ。インストラクションのみプロダクト差分を吸収する。
@@ -112,6 +112,8 @@ $GeneratedMarker = '<!-- opentouryo-agent-assets:generated -->'
 
 $SourceRoot = Split-Path -Parent $PSScriptRoot
 $InstructionsSource = Join-Path $SourceRoot 'src/instructions/AGENTS.md'
+# AGENTS.md から参照される本文（AGENTS.md と同じく、導入先のルートへ置く）
+$InstructionsExtraSources = @('src/instructions/TESTING.md') | ForEach-Object { Join-Path $SourceRoot $_ }
 $SkillsSource = Join-Path $SourceRoot 'src/skills'
 $DocsSource = Join-Path $SourceRoot 'src/docs'
 
@@ -335,7 +337,7 @@ function Install-QualityGuard {
 
     Write-Host ''
     Write-Host '  導入先で行うこと（人が行う）:'
-    Write-Host "    1. $rel/rules.psd1 を、そのリポジトリのテストのパス・属性に合わせる（TODO の箇所）"
+    Write-Host "    1. $rel/rules.psd1 を確かめる（既定はテストが <Webプロジェクト名>.Tests/ の NUnit。違うなら Paths を合わせる）"
     Write-Host '    2. git config core.hooksPath .githooks（段 2 を有効にする。人ごとの設定）'
     Write-Host '    3. git add --chmod=+x .githooks/commit-msg（実行属性。Linux・macOS の sh で要る）'
     Write-Host "    4. 判定の用例を回す: $testsWin"
@@ -384,6 +386,10 @@ Write-Host ''
 Write-Host 'インストラクション (共通):'
 $agentsMd = "$GeneratedMarker`n$instructionsBody"
 Write-AssetFile -Path (Join-Path $TargetRoot 'AGENTS.md') -Content $agentsMd
+foreach ($extra in $InstructionsExtraSources) {
+    $extraBody = [System.IO.File]::ReadAllText($extra)
+    Write-AssetFile -Path (Join-Path $TargetRoot (Split-Path -Leaf $extra)) -Content "$GeneratedMarker`n$extraBody"
+}
 
 # チュートリアル一式（opt-in・プロダクト非依存）。src/docs 配下の全ファイルを、
 # 相対パスを保ったまま導入先の docs/ 配下へ配置する。

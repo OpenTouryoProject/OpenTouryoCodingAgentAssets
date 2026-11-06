@@ -13,7 +13,7 @@
     # IntroducedBy = 'tools/ExpectationGuard/CheckExpectationChange.ps1'
 
     # 行の差し引きで読む diff の範囲（git の pathspec。ルートから）。省略時はリポジトリ全体。
-    # DiffScope = @('tests/')
+    # DiffScope = @('src/')
 
     # 表示に添える、期待値の変更の定義の参照（例 'QUALITY.md 3 節'）。省略可。
     # Reference = 'QUALITY.md 3 節'
@@ -31,28 +31,38 @@
     #   Match の要素に Paths を書くと、そのパスのファイルでだけ当てる（1 行は、規則ごとに 1 回だけ数える）。
     #   属性の並び（[Test, Ignore("...")]）にも当たるよう、[ か , の直後を見る。
     LineRules = @(
+        # アプリ開発の既定（OpenTouryoCodingAgentAssets#4）：テストは NUnit、テストのプロジェクトは <Webプロジェクト名>.Tests/
+        #   （スキル opentouryo-test-layer-b・TESTING.md 3 節）。別の置き場所なら Paths を合わせる。
         @{
             Name  = 'テストの削除'
-            Paths = @('^tests/.+\.cs$')          # TODO: テストのプロジェクトのパスに合わせる
+            Paths = @('^(.+/)?[^/]+\.Tests/.+\.cs$')
             Count = 'Removed'
             Match = @(
-                @{ Pattern = '[\[,]\s*(Test|TestCase|TestCaseSource|Fact|Theory|InlineData|MemberData|ClassData|TestMethod|DataRow)\s*[\],(]' }
+                @{ Pattern = '[\[,]\s*(Test|TestCase|TestCaseSource)\s*[\],(]' }
             )
         }
         @{
-            Name  = 'Skip・Ignore の追加'
-            Paths = @('^tests/.+\.cs$')
+            Name  = 'Ignore の追加'
+            Paths = @('^(.+/)?[^/]+\.Tests/.+\.cs$')
             Count = 'Added'
             Match = @(
-                @{ Pattern = '[\[,]\s*(Ignore|Explicit)\s*[\],(]|\bAssert\s*\.\s*(Ignore|Inconclusive)\s*\(|[\[,(]\s*Skip\s*=|\bSkip\s*\.\s*(If|IfNot)\s*\(' }
+                @{ Pattern = '[\[,]\s*(Ignore|Explicit)\s*[\],(]|\bAssert\s*\.\s*Ignore\s*\(' }
             )
         }
         @{
             Name  = '根拠の削除'
-            Paths = @('^tests/.+\.cs$')
+            Paths = @('^(.+/)?[^/]+\.Tests/.+\.cs$')
             Count = 'Removed'
             Match = @(
                 @{ Pattern = '[\[,]\s*Basis\s*\(' }
+            )
+        }
+        @{
+            Name  = '検証の削除'
+            Paths = @('^(.+/)?[^/]+\.Tests/.+\.cs$')
+            Count = 'Removed'
+            Match = @(
+                @{ Pattern = '\bAssert\s*\.' }
             )
         }
     )
