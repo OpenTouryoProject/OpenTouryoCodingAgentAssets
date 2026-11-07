@@ -341,7 +341,8 @@ function Install-QualityGuard {
     Write-Host '    2. git config core.hooksPath .githooks（段 2 を有効にする。人ごとの設定）'
     Write-Host '    3. git add --chmod=+x .githooks/commit-msg（実行属性。Linux・macOS の sh で要る）'
     Write-Host "    4. 判定の用例を回す: $testsWin"
-    Write-Host '    5. 既に検出器があるリポジトリでは、この変更自体が「仕組みの変更」になる。コミットにトレーラー Expectation-Change: <理由> を付ける'
+    Write-Host '    5. 既に検出器があるリポジトリ（入れ直しを含む）では、この変更自体が「仕組みの変更」になる。コミットにトレーラー Expectation-Change: <理由> を付ける'
+    Write-Host '       （写しの中身が同じでも、印の行の版が変わるだけで止まる。理由には版の変化と、中身が変わったかどうかを書く）'
 }
 
 # ---- 実行 ----

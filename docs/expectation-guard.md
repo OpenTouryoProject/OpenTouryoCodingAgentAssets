@@ -38,6 +38,11 @@ docs/expectation-guard/                段階 4 の下書き（このリポジ�
 | `expectation-change.yml` | `.github/workflows/expectation-change.yml` | **しない**（雛形。`-Force` のときだけ） |
 | （本体が生成） | `.claude/settings.json` | **無いときだけ置く**。あれば登録の例を表示する |
 
+**入れ直し（写し直し）のコミットには、トレーラー `Expectation-Change:` が要る。** 写しは仕組みのファイル（`Guard`）なので、
+中身が同じでも、印の行の版（`<原本>@<sha>`）が変わるだけで「仕組みの変更」として commit-msg フックが止める（設計どおり。
+VerifyCaTddForOT `8908524` で実測）。理由には、版の変化と中身が変わったかどうかを書く
+（例：`Expectation-Change: 検出器の写しを入れ直した（印の行の版が fdbb27f → e57599f に変わっただけ。sha256 は同じ）`）。
+
 ## 2. 共通の処理（本体へ移したもの）
 
 両方にあった処理。**中身は同じか、片方が他方の上位互換**だったので、本体に 1 つだけ持つ。
