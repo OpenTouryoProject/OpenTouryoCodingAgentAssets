@@ -68,7 +68,9 @@ B層の書き方そのものは `opentouryo-layer-b`、呼び出し方は `opent
   - `methodName` は `UOC_` の後ろと**完全一致**（綴りが違うと実行時に見つからない）。
   - `actionType` の **`%` で区切った先頭が DB の種類**（`SQL` なら SQL Server。親クラス2 の `UOC_ConnectionOpen` が見る）。2 つ目以降は業務が決める。
   - **`MyUserInfo` を null にしない**（親クラス2 の前処理が利用者名を参照する）。
-- **分離レベル**：P層の呼び出しと同じ値を渡す（分からなければ `DbEnum.IsolationLevelEnum.User`。`opentouryo-layer-b`）。
+- **分離レベル**：P層の呼び出しと同じ値を渡す（P層の `DoBusinessLogic` の第 2 引数を読む。`opentouryo-layer-b`）。
+  **テストを先に書く（P層がまだ無い）ときは、テスト仕様（段 1）で値を決め、段 4 で P層もその値で呼ぶ**
+  （決めずに `User` で書くと、後から作る画面の値〔例 `ReadCommitted`〕とずれる。実測）。
 - **確かめること**（イベント仕様書の「出力・検証内容・エラーハンドリング」から）
 
 | 仕様に書かれていること | テストで確かめること |

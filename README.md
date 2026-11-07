@@ -62,6 +62,7 @@ docs/
 | `opentouryo-richclient-async` | リッチクライアント（WinForms / WPF）で B層を非同期に呼ぶとき |
 | `opentouryo-layer-b` | 業務ロジックを実装するとき |
 | `opentouryo-test-layer-b` | B層のルート メソッドの単体テスト（NUnit・`<Web>.Tests`）を先に書くとき（テスト先行＝`TESTING.md` の段 2） |
+| `opentouryo-test-e2e-web` | 画面の E2E テスト（NUnit・Playwright・`<Web>.E2ETests`。ASP.NET Core MVC で実測）を先に書くとき |
 | `opentouryo-exception` | 例外を扱うとき（**全層で常用する横断・層を問わず参照**。「業務例外はリスローされない」等の必須ルール） |
 | `opentouryo-layer-d` | D層の全体像と Dao 3系統の使い分け（**概観。配下は下記 `└`**） |
 | └ `opentouryo-dao-custom` | 個別Dao（業務固有のデータアクセス）を実装するとき |

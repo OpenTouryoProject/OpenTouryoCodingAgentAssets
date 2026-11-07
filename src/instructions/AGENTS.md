@@ -271,7 +271,7 @@ MS ツールチェーン起因で**「ビルドは通るのに壊れる／静か
 <!-- TODO: このプロジェクト固有の具体的なコマンドを埋める。ランタイム別の一般則は下記。 -->
 
 - ビルド: net48 は msbuild（非 SDK csproj・VS Build Tools 前提）、net10.0 は `dotnet build`
-- テスト: B層の単体テストは NUnit（`<Webプロジェクト名>.Tests`）。net10.0 は `dotnet test <csproj>`、net48 は MSBuild で組んで `dotnet test <csproj> --no-build`（`opentouryo-test-layer-b`）
+- テスト: B層の単体テストは NUnit（`<Webプロジェクト名>.Tests`）。net10.0 は `dotnet test <csproj>`、net48 は MSBuild で組んで `dotnet test <csproj> --no-build`（`opentouryo-test-layer-b`）。画面の E2E は NUnit・Playwright（`<Webプロジェクト名>.E2ETests`。`opentouryo-test-e2e-web`）
 - 実行: TODO
 
 **新規プロジェクトの立ち上げ**（OpenTouryo を取得・ビルドし、サンプルを起点に構成する）は
