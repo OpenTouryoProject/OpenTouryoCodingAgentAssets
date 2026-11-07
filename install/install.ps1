@@ -75,7 +75,7 @@
     スキルに加えて、評価用チュートリアル一式（src/docs 配下の全ファイル）も docs/ へ配置する。
 
 .EXAMPLE
-    ./install.ps1 -TargetRoot C:\git\OpenTouryo -IncludeQualityGuard -QualityGuardPath root/programs -Force
+    ./install.ps1 -TargetRoot $env:OTR_PATH -IncludeQualityGuard -QualityGuardPath root/programs -Force
     検出器だけを写す（インストラクション・スキルには触れない）。自前の検出器を置き換える場合。
 
 .EXAMPLE
