@@ -114,6 +114,7 @@ dotnet run --project "<repo>\MVC_Sample_Core\MVC_Sample" --urls http://localhost
 （`name="__RequestVerificationToken"` の hidden ＋ 同名 Cookie）を拾い、それを載せて **POST /Home/Login** → **セッション（Cookie）を維持**して
 **POST /Crud1/SelectCount**（`DdlIso=RC` を明示＝先頭 `NC` を避ける）。成功＝「3件のデータがあります」＋`SQLTRACE` に `SELECT COUNT(*)`。
 **トークンと Cookie を引き回さないと弾かれる**（WebForms の hidden 全件返しと対の、MVC 版の非対話手順）。
+**core の `POST /Home/Login` は 302 ではなく 200 を返す**（実測）＝ログインの成否はその応答で判定せず、続く `/Crud1/...` が通ることで判定する。
 - **★ ログインのフォーム項目名**（net48/core 共通・実測）：ユーザ名＝**`UserName`**（`UserId` ではない）／**submit ボタン名 `normal` も送る**（`HomeController.Login` は `Request.Form.Keys.Any(x=>x=="external")` で分岐＝通常ログインは `normal`）。`Crud1/SelectCount` の項目は `DdlDap`/`DdlMode1`/`DdlMode2`/`DdlIso`/`DdlExRollback`。
 - **★ core は日本語をエンコードして返す＝判定前にデコードする**（ランタイム非対称）：**Razor 出力は数値文字参照**（`3&#x4EF6;…`）＝リテラル「3件のデータがあります」を検索すると0件で**成功を失敗と誤判定**。さらに **`@Json.Serialize`（JS ダイアログ経路）は `System.Text.Json` 既定で非 ASCII を `\uXXXX` にエスケープ**する。→ **判定は HTML エンティティと `\uXXXX` の両方をデコードしてから照合**する（net48 は素のまま返る＝デコード不要。画面はブラウザが復元＝アプリの不具合ではない）。
 

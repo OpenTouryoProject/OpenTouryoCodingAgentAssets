@@ -20,6 +20,7 @@ metadata:
 1. OpenTouryo の **`root/files/resource`**（`Log` / `Sql` / `Xml` / `X509` / `Test`）を導入リポジトリ**直下**へ
    コピーする（展開済み ZIP から。＝リポジトリ直下に `resource\` ができる）。
 2. `app.config` / `appsettings.json` の**パス系キーを環境変数方式 `%OT_RESOURCE_ROOT%\...` に張り替える**
+   （**対象は値に `C:\root\`・`C:/root/` を持つキー全部**＝キー名の一覧で決めない。張り替えた後に残りが無いことを検索で確かめ、資料と違えば報告する）
    （絶対 `C:\root\files\resource\...` から。**相対パスは不可**。既設と衝突するなら番号付き `%OT_RESOURCE_ROOTn%`＝例 `%OT_RESOURCE_ROOT1%`）。
 3. **ログ定義ファイル `resource\Log\*.xml`（`SampleLogConf.xml` 等）の出力先パスも同様に張り替える**——ただし
    **張り替えなくても起動する**（`<param name="File" value="C:\root\files\resource\Log\...">` が残ってもログが旧パスへ出るだけ＝一部設定は空/誤りでも起動）。
