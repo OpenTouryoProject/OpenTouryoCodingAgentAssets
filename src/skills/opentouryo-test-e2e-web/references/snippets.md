@@ -194,31 +194,48 @@ namespace <Web>.E2ETests
         [SetUp]
         public async Task SetUpAsync()
         {
-            // テスト用の顧客と、その受注 25 件（20 件で 1 ページなら 2 ページ）。キーは列の型と書式に合わせて作る
-            // 受注日は B層のテスト（2199 年）と重ならない範囲（並行して動くため）
-            cust = new string(Enumerable.Range(0, 5).Select(_ => (char)('A' + Rnd.Next(26))).ToArray());
-            TestDb.Scalar("INSERT INTO Customers (CustomerID, CompanyName) VALUES (@c, @n)", ("@c", cust), ("@n", "E2E-" + cust));
-            for (int i = 0; i < 25; i++)
-                TestDb.Scalar("INSERT INTO Orders (CustomerID, EmployeeID, OrderDate, ShipVia, Freight) VALUES (@c, 1, @d, 1, 0)",
-                    ("@c", cust), ("@d", new DateTime(2198, 1, 1).AddDays(i)));
+            // NUnit は [SetUp] が例外のとき [TearDown] を呼ばない。データを入れた後で落ちたら、ここで後始末をして投げ直す
+            try
+            {
+                // テスト用の顧客と、その受注 25 件（20 件で 1 ページなら 2 ページ）。キーは列の型と書式に合わせて作る
+                // 受注日は B層のテスト（2199 年）と重ならない範囲（並行して動くため）
+                cust = new string(Enumerable.Range(0, 5).Select(_ => (char)('A' + Rnd.Next(26))).ToArray());
+                TestDb.Scalar("INSERT INTO Customers (CustomerID, CompanyName) VALUES (@c, @n)", ("@c", cust), ("@n", "E2E-" + cust));
+                for (int i = 0; i < 25; i++)
+                    TestDb.Scalar("INSERT INTO Orders (CustomerID, EmployeeID, OrderDate, ShipVia, Freight) VALUES (@c, 1, @d, 1, 0)",
+                        ("@c", cust), ("@d", new DateTime(2198, 1, 1).AddDays(i)));
 
-            context = await AppHost.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = AppHost.BaseUrl });
-            page = await context.NewPageAsync();
+                context = await AppHost.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = AppHost.BaseUrl });
+                page = await context.NewPageAsync();
 
-            // ログイン（アプリごとに、ログインの画面とコントローラを読んで書く）
-            await page.GotoAsync("/Home/Login");
-            await page.FillAsync("#UserName", "e2e");
-            await page.FillAsync("#Password", "x");
-            await page.ClickAsync("input[name=normal]");
-            await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                // ログイン（アプリごとに、ログインの画面とコントローラを読んで書く）
+                await page.GotoAsync("/Home/Login");
+                await page.FillAsync("#UserName", "e2e");
+                await page.FillAsync("#Password", "x");
+                await page.ClickAsync("input[name=normal]");
+                await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            }
+            catch
+            {
+                await CleanUpAsync();
+                throw;
+            }
         }
 
         [TearDown]
-        public async Task TearDownAsync()
+        public async Task TearDownAsync() => await CleanUpAsync();
+
+        /// <summary>後始末（[TearDown] と [SetUp] の失敗時の両方から呼ぶ）。途中までしか作れていなくても落ちない</summary>
+        private async Task CleanUpAsync()
         {
-            await context.CloseAsync();                       // ブラウザを閉じてから
-            TestDb.Scalar("DELETE FROM Orders WHERE CustomerID = @c", ("@c", cust));      // 子から消す
-            TestDb.Scalar("DELETE FROM Customers WHERE CustomerID = @c", ("@c", cust));
+            if (context != null) await context.CloseAsync();   // ブラウザを閉じてから
+            if (cust != null)
+            {
+                TestDb.Scalar("DELETE FROM Orders WHERE CustomerID = @c", ("@c", cust));      // 子から消す
+                TestDb.Scalar("DELETE FROM Customers WHERE CustomerID = @c", ("@c", cust));
+            }
+            // NUnit は 1 つのインスタンスを全テストで使い回す。フィールドを戻し、次のテストに持ち越さない（一覧なら Clear）
+            context = null; page = null; cust = null;
         }
 
         [Test, Basis("EV-ORD-104"), Basis("SC-ORD-01-B05")]
