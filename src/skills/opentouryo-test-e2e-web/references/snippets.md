@@ -195,11 +195,12 @@ namespace <Web>.E2ETests
         public async Task SetUpAsync()
         {
             // テスト用の顧客と、その受注 25 件（20 件で 1 ページなら 2 ページ）。キーは列の型と書式に合わせて作る
+            // 受注日は B層のテスト（2199 年）と重ならない範囲（並行して動くため）
             cust = new string(Enumerable.Range(0, 5).Select(_ => (char)('A' + Rnd.Next(26))).ToArray());
             TestDb.Scalar("INSERT INTO Customers (CustomerID, CompanyName) VALUES (@c, @n)", ("@c", cust), ("@n", "E2E-" + cust));
             for (int i = 0; i < 25; i++)
                 TestDb.Scalar("INSERT INTO Orders (CustomerID, EmployeeID, OrderDate, ShipVia, Freight) VALUES (@c, 1, @d, 1, 0)",
-                    ("@c", cust), ("@d", new DateTime(2199, 1, 1).AddDays(i)));
+                    ("@c", cust), ("@d", new DateTime(2198, 1, 1).AddDays(i)));
 
             context = await AppHost.Browser.NewContextAsync(new BrowserNewContextOptions { BaseURL = AppHost.BaseUrl });
             page = await context.NewPageAsync();
