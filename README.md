@@ -12,6 +12,7 @@ src/
   instructions/AGENTS.md        概要・規約（常時コンテキストに載る / これが原本）
   instructions/TESTING.md       テスト先行の進め方とテストの保護（AGENTS.md から参照。AGENTS.md と同じくルートへ）
   skills/                       全スキル（用途別の一覧・使いどころは下の「スキル一覧」節）
+  agents/                       役の定義：テスト先行の実装役・レビュー役（TESTING.md 5。-Product claude で .claude/agents へ）
   docs/                         配布物：spec/plan/tutorial の見本（-IncludeTutorial で導入先の docs/ へ）
   quality/ExpectationGuard/     配布物：期待値の変更の検出器の原本（-IncludeQualityGuard で導入先へ写す）
 install/
@@ -110,7 +111,7 @@ Claude Code / GitHub Copilot / Cursor / Codex CLI / Gemini CLI など、標準�
 ## インストール
 
 このリポジトリを **git clone** し、**clone した場所からインストーラを実行する**。
-`install.ps1` は隣接する `src/`（`instructions` / `skills`）を読むため、**単体でコピーしても動かない**。
+`install.ps1` は隣接する `src/`（`instructions` / `skills` / `agents`）を読むため、**単体でコピーしても動かない**。
 導入先のアプリ リポジトリは `-TargetRoot` で指定する（既定はカレント ディレクトリ）。
 **Windows PowerShell 5.1 / PowerShell 7 のどちらでも動く。**
 

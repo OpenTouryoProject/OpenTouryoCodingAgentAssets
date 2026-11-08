@@ -18,6 +18,7 @@
 
     AGENTS.md はどのプロダクトでも対象リポジトリのルートに配置される（これが原本）。
     Claude Code は AGENTS.md を読まないため、@ import する CLAUDE.md を別途生成する。
+    claude では、役の定義（src/agents：テスト先行の実装役・レビュー役）を .claude/agents へ置く。
 
     既存ファイルは、このスクリプトが生成したもの（生成マーカー付き）でない限り上書きしない。
     上書きするには -Force を指定する。
@@ -115,6 +116,8 @@ $InstructionsSource = Join-Path $SourceRoot 'src/instructions/AGENTS.md'
 # AGENTS.md から参照される本文（AGENTS.md と同じく、導入先のルートへ置く）
 $InstructionsExtraSources = @('src/instructions/TESTING.md') | ForEach-Object { Join-Path $SourceRoot $_ }
 $SkillsSource = Join-Path $SourceRoot 'src/skills'
+# 役の定義（Claude Code のサブ エージェント。TESTING.md 5 の実装役・レビュー役）
+$AgentsSource = Join-Path $SourceRoot 'src/agents'
 $DocsSource = Join-Path $SourceRoot 'src/docs'
 
 # プロダクト別のスキル配置先。
@@ -442,6 +445,15 @@ $GeneratedMarker
 <!-- TODO: Claude Code でのみ有効にしたい指示があればここに追記する。不要なら節ごと削除してよい。 -->
 "@
             Write-AssetFile -Path (Join-Path $TargetRoot 'CLAUDE.md') -Content $claudeMd
+
+            # 役の定義（.claude/agents）。原本に生成マーカーを入れてあるので、再実行で上書きされる。
+            Write-Host '  役の定義:'
+            if (Test-Path $AgentsSource) {
+                foreach ($a in Get-ChildItem -Path $AgentsSource -Filter '*.md' -File) {
+                    $agentBody = [System.IO.File]::ReadAllText($a.FullName)
+                    Write-AssetFile -Path (Join-Path $TargetRoot ".claude/agents/$($a.Name)") -Content $agentBody
+                }
+            }
         }
 
         'copilot' {
