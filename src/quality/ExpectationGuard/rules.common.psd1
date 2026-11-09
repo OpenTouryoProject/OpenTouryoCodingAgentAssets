@@ -25,18 +25,32 @@
     TrailerRules = @(
         @{
             Name         = 'Found-By'
+            # 語彙（この順に一覧を出す）
             Vocabulary   = @(
-                'spec-check'          # 原典（RFC・仕様）の確認。根拠（[Basis]）を付ける作業を含む
-                'type-review'         # 型ごと・類似不良の見直し
-                'test-added'          # テスト（単体・E2E）を足して見つかった
-                'test-failure'        # 既存のテスト・CI の失敗（断続的なものを含む）
-                'review-other-model'  # 書いたモデルとは別のモデルのレビュー
-                'review-same-model'   # 書いたモデルのレビュー（別のセッションを含む）
-                'static-analysis'     # CodeQL などの静的解析
-                'downstream'          # 利用する側（サンプル・汎用認証サイト・アプリ）の作業
-                'upstream'            # ライブラリの変更の取り込み・波及
-                'user-report'         # 利用者からの報告
+                'spec-check'
+                'type-review'
+                'test-added'
+                'test-failure'
+                'review-other-model'
+                'review-same-model'
+                'static-analysis'
+                'downstream'
+                'upstream'
+                'user-report'
             )
+            # 語の意味。値を誤ったとき・書き忘れたときに、語と並べて出す
+            Meanings     = @{
+                'spec-check'         = '原典（RFC・仕様）の確認で見つけた。根拠（[Basis]）を付ける作業を含む'
+                'type-review'        = '型ごと・類似の不良の見直しで見つけた'
+                'test-added'         = 'テスト（単体・E2E）を足して見つけた'
+                'test-failure'       = '既存のテスト・CI の失敗で見つけた（断続的なものを含む）'
+                'review-other-model' = '書いたモデルとは別のモデルのレビューで見つけた'
+                'review-same-model'  = '書いたモデルのレビューで見つけた（別のセッションを含む）'
+                'static-analysis'    = 'CodeQL などの静的解析で見つけた'
+                'downstream'         = '利用する側（サンプル・汎用認証サイト・アプリ）の作業で見つけた（このリポジトリを使う側）'
+                'upstream'           = '使っているライブラリの変更の取り込み・波及で見つけた（このリポジトリが使う側）'
+                'user-report'        = '利用者からの報告'
+            }
             RequiredWhen = '(?i)\bfixed\s+#\d+'
             MissingHint  = 'バグの修正なら、見つけた手段を書く（Found-By: <手段> [<補足>]）。機能の追加なら不要。'
         }

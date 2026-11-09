@@ -80,6 +80,7 @@ VerifyCaTddForOT `8908524` で実測）。理由には、版の変化と中身�
   約束：`& <Comparer> -Pairs <Path・Expected・Actual の並び>` → 対ごとに `Path`・`Changed`・`Detail`。
   コミットごとに 1 回だけ呼ぶ（OpenTouryo の `2_RunAllTests.ps1 -List` を毎ファイル呼ばないため）。
 - `TrailerRules`（#5 の `Found-By:`）：語彙に無い値は止め（1）、`RequiredWhen`（`fixed #NNN`）に当たるのに無ければ警告（0）。
+  どちらのときも語彙の一覧を出し、`Meanings`（語 → 意味）があれば意味も並べる（2026-11-09。止まった人が規則のファイルを開かずに選べるように）。
   **`Found-By` は共通の規則（`rules.common.psd1`）に入れた**（#5・2026-11-06。語彙は Issue の 10 語のまま）。
   同じ `Name` の規則を `rules.psd1` に書くと置き換わる（二重に数えない）。集計は `git log --format='%h %(trailers:key=Found-By,valueonly,separator=|)' <範囲>`。
 

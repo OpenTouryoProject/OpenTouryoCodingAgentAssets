@@ -19,6 +19,7 @@
                          （コメント アウトは「消えた」と数える）。
       KeyedArgumentRules 呼び出しの引数を、**コミット全体で**キーごとに比べる（ファイルをまたいで移しただけなら数えない）。
       TrailerRules       トレーラーの値の検査。語彙に無い値は止め、必要なのに無いときは警告する。
+                         どちらのときも語彙の一覧（Meanings があれば意味も）を出す。
       GeneratedRules     -CheckGenerated のとき、生成物の作り直しの漏れを見る（期待値の変更の代わりに）。
     **アサーションの緩和は見ない**（機械的に判定できない）。レビューの観点で拾う。
 
@@ -868,21 +869,26 @@ try
 
     # --- トレーラーの検査 -------------------------------------------------
     $body = (Get-MessageLines $message) -join "`n"
+    $helpRules = @()   # 語彙の一覧（語と意味）を出す規則
     foreach ($t in @($rules.TrailerRules))
     {
         $values = Get-Trailer $message $t.Name
+        $needHelp = $false
         foreach ($v in $values)
         {
             $word = ($v -split '\s+')[0]
             if ($t.Vocabulary -and ($word -cnotin @($t.Vocabulary)))
             {
                 $result.Errors += ("{0}: {1} は語彙にありません（{2}）" -f $t.Name, $word, (@($t.Vocabulary) -join " / "))
+                $needHelp = $true
             }
         }
         if ($values.Count -eq 0 -and $t.RequiredWhen -and $body -match $t.RequiredWhen)
         {
             $result.Warnings += ("{0}（{1}）に {2}: がありません。{3}" -f $label, $Matches[0].Trim(), $t.Name, $t.MissingHint)
+            $needHelp = $true
         }
+        if ($needHelp -and $t.Vocabulary) { $helpRules += $t }
     }
     foreach ($w in $result.Warnings) { Write-Warn $w }
 
@@ -893,8 +899,22 @@ try
         Write-Msg ""
         Write-Msg ("  **トレーラーの値が誤っています**（{0}）" -f $label) -ForegroundColor Red
         foreach ($x in $result.Errors) { Write-Msg ("    " + $x) -ForegroundColor Yellow }
-        Write-Msg ""
         $exit = 1
+    }
+    # 語彙の一覧（語と意味）。意味は規則の Meanings（語 → 意味）。無い語は語だけ出す
+    foreach ($t in $helpRules)
+    {
+        Write-Msg ""
+        Write-Msg ("  {0}: の手段は次から選ぶ（{0}: <手段> [<補足>]）" -f $t.Name)
+        foreach ($w in @($t.Vocabulary))
+        {
+            $m = $(if ($t.Meanings -and $t.Meanings.ContainsKey($w)) { "：" + $t.Meanings[$w] } else { "" })
+            Write-Msg ("    {0}{1}" -f $w, $m)
+        }
+    }
+    if ($result.Errors.Count -gt 0 -or $helpRules.Count -gt 0)
+    {
+        Write-Msg ""
     }
     if ($result.Findings.Count -eq 0) { Complete $exit }
 
