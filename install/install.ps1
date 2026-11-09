@@ -36,8 +36,8 @@
     このスクリプトが生成したものではない既存ファイルも上書きする。
 
 .PARAMETER IncludeTutorial
-    spec→plan→実装 の進め方を試すチュートリアル一式（src/docs 配下の全ファイル。
-    docs/spec・docs/plan・docs/tutorial …）を、相対パスを保ったまま導入先の docs/ へ配置する。
+    spec→テスト→plan→実装 の進め方を試す見本一式（src/docs 配下の全ファイル。
+    docs/spec・docs/plan・docs/prompt）を、相対パスを保ったまま導入先の docs/ へ配置する。
     既定では配置しない（opt-in）。
     docs/spec・docs/plan は利用者が実仕様/実計画を置く作業ディレクトリのため、
     既存ファイルは上書きしない（上書きするには -Force）。

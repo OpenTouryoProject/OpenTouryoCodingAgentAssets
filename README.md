@@ -5,16 +5,22 @@ Assets used by coding agents utilizing OpenTouryo
 [OpenTouryo](https://github.com/OpenTouryoProject/OpenTouryo) を利用したアプリケーション開発を、
 コーディングエージェント（Claude Code / GitHub Copilot / Codex など）に行わせるためのアセット集。
 
-## 構成
+アセットは 3 つに分かれる。
+
+| 部 | 何のためか | 中身（原本） | 導入（`install/install.ps1`） |
+| --- | --- | --- | --- |
+| [1. 書き方](#1-書き方--インストラクションスキル役の定義) | OpenTouryo でどう書くか | `src/instructions/`（`AGENTS.md`・`TESTING.md`）・`src/skills/`（46 本）・`src/agents/`（テスト先行の実装役・レビュー役） | `-Product` |
+| [2. 守り方](#2-守り方--品質の仕組み) | 承認したテストを、後から黙って弱めさせない | `src/quality/ExpectationGuard/`（期待値の変更の検出器・トレーラーの検査・要確認） | `-IncludeQualityGuard`（opt-in） |
+| [3. 進め方](#3-進め方--見本検証教材) | spec → テスト → plan → 実装を通しで回す | `src/docs/`（spec・plan・prompt の見本。テスト先行は司令役の手順） | `-IncludeTutorial`（opt-in） |
 
 ```
 src/
-  instructions/AGENTS.md        概要・規約（常時コンテキストに載る / これが原本）
-  instructions/TESTING.md       テスト先行の進め方とテストの保護（AGENTS.md から参照。AGENTS.md と同じくルートへ）
-  skills/                       全スキル（用途別の一覧・使いどころは下の「スキル一覧」節）
-  agents/                       役の定義：テスト先行の実装役・レビュー役（TESTING.md 5。-Product claude で .claude/agents へ）
-  docs/                         配布物：spec/plan/tutorial の見本（-IncludeTutorial で導入先の docs/ へ）
-  quality/ExpectationGuard/     配布物：期待値の変更の検出器の原本（-IncludeQualityGuard で導入先へ写す）
+  instructions/AGENTS.md        1. 概要・規約（常時コンテキストに載る / これが原本）
+  instructions/TESTING.md       1. テスト先行の進め方と、承認の 2 段（AGENTS.md から参照。AGENTS.md と同じくルートへ）
+  skills/                       1. 全スキル（下の「スキル一覧」）
+  agents/                       1. 役の定義：テスト先行の実装役・レビュー役（Claude Code 向け。.claude/agents へ）
+  quality/ExpectationGuard/     2. 期待値の変更の検出器の原本（導入先へ写す）
+  docs/                         3. spec・plan・prompt の見本（導入先の docs/ へ）
 install/
   install.ps1                   対象リポジトリへのインストーラ
 docs/
@@ -22,11 +28,49 @@ docs/
   expectation-guard.md          検出器の切り分け・設計・検証の記録（このリポジトリ用）
 ```
 
+## インストール
+
+このリポジトリを **git clone** し、**clone した場所からインストーラを実行する**。
+`install.ps1` は隣接する `src/` を読むため、**単体でコピーしても動かない**。
+導入先のアプリ リポジトリは `-TargetRoot` で指定する（既定はカレント ディレクトリ）。
+**Windows PowerShell 5.1 / PowerShell 7 のどちらでも動く。**
+
+```powershell
+# ① このリポジトリを取得
+git clone https://github.com/OpenTouryoProject/OpenTouryoCodingAgentAssets.git
+cd OpenTouryoCodingAgentAssets
+
+# ② 1. 書き方（Claude Code 向けに全スキル・役の定義）
+./install/install.ps1 -Product claude -TargetRoot C:\git\MyApp
+
+# 複数プロダクト・スキルを絞って
+./install/install.ps1 -Product claude,copilot -Skill opentouryo-layer-d -TargetRoot C:\git\MyApp
+
+# 実際には書き込まず、何が行われるか確認
+./install/install.ps1 -Product agents -WhatIf -TargetRoot C:\git\MyApp
+
+# 2. 守り方・3. 進め方も併せて（どちらも opt-in）
+./install/install.ps1 -Product claude -TargetRoot C:\git\MyApp -IncludeQualityGuard -IncludeTutorial
+```
+
+既存ファイルは、インストーラが生成したもの（生成マーカー付き）でない限り上書きされない。上書きするには `-Force` を指定する。
+2・3 の扱い（導入先が持つファイル・写し）は、それぞれの部に書く。
+
+---
+
+## 1. 書き方 — インストラクション・スキル・役の定義
+
 **インストラクション**（概要）と**スキル**（具体的なコードの書き方）に分かれている。
 前者は常にコンテキストへ載り、後者はエージェントが必要と判断したときだけ読まれる。
 使い分けの基準は [docs/authoring.md](docs/authoring.md) を参照。
 
-## スキル一覧
+- `AGENTS.md`：OpenTouryo を使うプロジェクトの概要・規約（層・例外・Git の扱い・コミット メッセージのトレーラーなど）。
+- `TESTING.md`：テスト先行の進め方（テスト仕様 → Red → Green、根拠の ID、期待値の変更とトレーラー）と、**承認の 2 段**
+  （テストの質は実装役と別のレビュー役が確かめ、人は**仕様の決定だけ**を GO/NOGO で判断する）。
+- 役の定義（`src/agents/`）：テスト先行の**実装役**（`opentouryo-test-implementer`）と**レビュー役**（`opentouryo-test-reviewer`。編集できず、テストを自分で実行する）。
+  司令役（指示を受けたセッション）がサブ エージェントとして回す。**Claude Code 向けのみ**（Copilot 向けは未対応）。
+
+### スキル一覧
 
 用途・利用者で分類（アルファベット順ではない）。**エージェントは各スキルの `description` で自動的に選ぶ**ので、この表は
 主に人が俯瞰するための索引。
@@ -34,7 +78,7 @@ docs/
 **`└` はファサード／概観スキルの配下**（親が呼び出す・詳細を委ねる先）を表す：`opentouryo-project-setup`＝セットアップ手順のファサード、
 `opentouryo-layer-d`＝Dao 3系統の概観、`opentouryo-app-design`＝設計フェーズの地図（配下の子スキルは個別課題ごとに順次追加）。その他の関連（利用・相互参照）は厳密な親子ではなく、各スキルの `description` に記載。
 
-### ① 立ち上げ・構成（初期設定：立ち上げ担当／纏め者。主に一度きり）
+#### ① 立ち上げ・構成（初期設定：立ち上げ担当／纏め者。主に一度きり）
 
 | スキル | 使いどころ |
 | --- | --- |
@@ -48,7 +92,7 @@ docs/
 | `opentouryo-project-policy` | 「このプロジェクトではどうなっているか」（親クラス2 の実装で決まる仕様）が分からないとき |
 | `opentouryo-base2-customize` | **纏め者が**親クラス2（基盤 Business 層）の共通処理をカスタマイズするとき（アプリ開発者は使わない） |
 
-### ② 各層のコード実装（日常常用：アプリ開発者）
+#### ② 各層のコード実装（日常常用：アプリ開発者）
 
 | スキル | 使いどころ |
 | --- | --- |
@@ -77,7 +121,7 @@ docs/
 | `opentouryo-query-definition` | SQL 定義ファイル（`.sql` / `.xml`）を書くとき |
 | `opentouryo-comment-convention` | **全層・全ファイル共通**：新規コードファイルのヘッダ（所属機能名／クラス情報／更新履歴）とコメント規則 |
 
-### ③ 制御・定義／横断機能（機能利用：必要になったとき参照）
+#### ③ 制御・定義／横断機能（機能利用：必要になったとき参照）
 
 | スキル | 使いどころ |
 | --- | --- |
@@ -94,91 +138,85 @@ docs/
 | `opentouryo-oauth2-client` | 外部 IdP と連携するとき（OAuth2 / OIDC のクライアント＝RP） |
 | `opentouryo-common-parts` | ユーティリティ（文字列チェック・エンコード等）を自作する前に既存の共通部品を探すとき |
 
-### ④ レビュー・フェーズ（実装・実行の後：実装。実行結果（ログ／エラー／性能）を分析して対応を提案）
+#### ④ レビュー・フェーズ（実装・実行の後：実装。実行結果（ログ／エラー／性能）を分析して対応を提案）
 
 | スキル | 使いどころ |
 | --- | --- |
 | `opentouryo-log-analysis` | 出力ログ（ACCESS / SQLTRACE 等）からエラー・性能の対応を提案するとき |
 
-## スキルの互換性
+### スキルの互換性
 
 スキルは [Agent Skills のオープン標準](https://agentskills.io/specification)（`SKILL.md`）に準拠している。
 Claude Code / GitHub Copilot / Cursor / Codex CLI / Gemini CLI など、標準に対応した
 30以上のツールが同一のスキルを読める。**1回書けば全プロダクトで使える。**
 
-プロダクト差分はインストラクション側にのみ存在し、インストーラが吸収する。
+プロダクト差分はインストラクション側（と、Claude Code 向けの役の定義）にのみ存在し、インストーラが吸収する。
 
-## インストール
+### 配置先
 
-このリポジトリを **git clone** し、**clone した場所からインストーラを実行する**。
-`install.ps1` は隣接する `src/`（`instructions` / `skills` / `agents`）を読むため、**単体でコピーしても動かない**。
-導入先のアプリ リポジトリは `-TargetRoot` で指定する（既定はカレント ディレクトリ）。
-**Windows PowerShell 5.1 / PowerShell 7 のどちらでも動く。**
+| プロダクト | インストラクション | スキル | 役の定義 |
+| --- | --- | --- | --- |
+| `claude` | `CLAUDE.md`（`AGENTS.md` を `@` import） | `.claude/skills/` | `.claude/agents/` |
+| `copilot` | `.github/copilot-instructions.md`（複製） | `.github/skills/` | （未対応） |
+| `agents` | `AGENTS.md` | `.agents/skills/` | （未対応） |
 
-```powershell
-# ① このリポジトリを取得
-git clone https://github.com/OpenTouryoProject/OpenTouryoCodingAgentAssets.git
-cd OpenTouryoCodingAgentAssets
+`AGENTS.md`・`TESTING.md` はどのプロダクトでも対象リポジトリのルートへ配置される（`AGENTS.md` が原本）。
+Claude Code は `AGENTS.md` を読まないため、それを `@` import する `CLAUDE.md` を別途生成する。
 
-# ② clone した場所から実行。導入先は -TargetRoot（Claude Code 向けに全スキル）
-./install/install.ps1 -Product claude -TargetRoot C:\git\MyApp
+---
 
-# 複数プロダクト・スキルを絞って
-./install/install.ps1 -Product claude,copilot -Skill opentouryo-layer-d -TargetRoot C:\git\MyApp
+## 2. 守り方 — 品質の仕組み
 
-# 実際には書き込まず、何が行われるか確認
-./install/install.ps1 -Product agents -WhatIf -TargetRoot C:\git\MyApp
-
-# 評価用チュートリアル一式（docs/spec|plan|tutorial/tutorial1.md）も配置（opt-in）
-./install/install.ps1 -Product claude -TargetRoot C:\git\MyApp -IncludeTutorial
-```
-
-### 開発の進め方とチュートリアル
-
-規模のある変更は **spec → テスト → plan → 実装** で進めるのを推奨する（仕様を `docs/spec/`、計画を `docs/plan/` に置いてから実装）。
-テストの段（テスト仕様 → Red を人が承認 → Green ではテストを変えない）は、導入先のルートに置かれる `TESTING.md` に書いてある。
-`-IncludeTutorial` を付けると、この流れを通しで試すサンプル（`docs/spec|plan|tutorial/tutorial1.md`）を導入先へ配置する。
-`docs/spec`・`docs/plan` は利用者の作業ディレクトリなので、**再実行しても既存ファイルは上書きしない**（`-Force` でのみ上書き）。
-
-### 期待値の変更の検出器（opt-in）
-
-`-IncludeQualityGuard` を付けると、承認したテストの期待値を後から変える変更（テストの削除・Skip / Ignore の追加・根拠の削除・
-Golden の変更・検出の仕組み自体の変更など）を検出し、コミット メッセージのトレーラー `Expectation-Change: <理由>` を求める仕組みを写す。
+`-IncludeQualityGuard` を付けると、**承認したテストの期待値を後から変える変更**（テストの削除・Skip / Ignore の追加・根拠の削除・
+検証の削除・Golden の変更・検出の仕組み自体の変更など）を検出し、コミット メッセージのトレーラー `Expectation-Change: <理由>` を求める仕組みを写す。
+**アサーションの緩和は見ない**（機械的に判定できない。レビューの観点で拾う）。
 
 | 段 | 何をするか | 導入先のファイル |
 | --- | --- | --- |
 | 1 | エージェントがテストを弱める編集をしたら、人の確認付きにする（止めない） | `.claude/hooks/ExpectationGuard.ps1`（`.claude/settings.json` に登録） |
 | 2 | トレーラーの無い期待値の変更のコミットを拒否する | `.githooks/commit-msg`（`git config core.hooksPath .githooks`） |
-| 3 | PR で同じ検出をする（ベース側の版の検出器で見る） | `.github/workflows/expectation-change.yml`（雛形） |
+| 3 | PR で同じ検出をする（**ベース側の版の検出器で見る**＝PR の中で検出器を緩めても素通りしない） | `.github/workflows/expectation-change.yml`（雛形） |
+
+あわせて、次も行う。
+
+| 検査 | 扱い |
+| --- | --- |
+| トレーラー `Found-By: <手段>`（バグの修正 `fixed #NNN` を、どこで・何で見つけたか） | 語彙に無い値は拒否、無ければ警告。どちらのときも語彙と意味の一覧を出す（語彙は `rules.common.psd1`） |
+| **要確認**（`[Obsolete]` の追加、`#pragma warning disable CS0618` の追加） | **止めない・トレーラーを求めない**。一覧に出し、CI では足した行に注釈を付ける（互換のための判断をレビューの目に入れる） |
+| 仕組みのファイル（フック・CI・本体・規則・`.claude/agents/`） | 変更・削除は期待値の変更と同じ扱い（追加は数えない） |
 
 ```powershell
 # スキルと併せて（本体は tools/ExpectationGuard/。-QualityGuardPath で変えられる）
 ./install/install.ps1 -Product claude -TargetRoot C:\git\MyApp -IncludeQualityGuard
 
-# 検出器だけ（AGENTS.md・スキルには触れない）
+# 検出器だけ（AGENTS.md・スキルには触れない。既に自前の検出器があるリポジトリの置き換えには -Force）
 ./install/install.ps1 -TargetRoot C:\git\MyApp -IncludeQualityGuard
 ```
 
-あわせて、バグの修正（`fixed #NNN`）のトレーラー `Found-By: <手段>` を検査する（語彙に無い値は拒否、無ければ警告。語彙は `rules.common.psd1`）。
+- 何を期待値と呼ぶかは、導入先の `rules.psd1`（初回だけ見本から置く。以後は導入先が持つ）に書く。CI の雛形も、初回だけ置いて以後は導入先が持つ（`-Force` でも上書きしない）。
+- 本体・共通の規則・フック・判定の用例は**写し**で、先頭付近に原本の版（`src/quality` に最後に触れたコミット）と SHA-256 の行が入る。
+  **写しは直さず、原本を直して写し直す**（写し直しも仕組みの変更なので、トレーラーが要る）。導入先の CI は `-VerifyCopy` で写しのずれを警告する。
+- 判定の用例（「この差分なら検出する／しない」）を本体と一緒に持ち、導入先の CI でも回す。
+- OpenTouryo・MultiPurposeAuthSite も、この原本の写しを使っている。
+- 詳細は [src/quality/ExpectationGuard/rules.sample.psd1](src/quality/ExpectationGuard/rules.sample.psd1) と [docs/expectation-guard.md](docs/expectation-guard.md)。
 
-何を期待値と呼ぶかは、導入先の `rules.psd1`（初回だけ見本から置く。以後は導入先が持つ）に書く。
-本体・共通の規則・フックは**写し**で、先頭付近に原本の版と SHA-256 の行が入る。写しは直さず、原本を直して写し直す。
-詳細は [src/quality/ExpectationGuard/rules.sample.psd1](src/quality/ExpectationGuard/rules.sample.psd1) と
-[docs/expectation-guard.md](docs/expectation-guard.md)。
+---
 
-### 配置先
+## 3. 進め方 — 見本（検証・教材）
 
-| プロダクト | インストラクション | スキル |
-| --- | --- | --- |
-| `claude` | `CLAUDE.md`（`AGENTS.md` を `@` import） | `.claude/skills/` |
-| `copilot` | `.github/copilot-instructions.md`（複製） | `.github/skills/` |
-| `agents` | `AGENTS.md` | `.agents/skills/` |
+規模のある変更は **spec → テスト → plan → 実装** で進めるのを推奨する（仕様を `docs/spec/`、計画を `docs/plan/` に置いてから実装）。
+`-IncludeTutorial` を付けると、この流れを通しで試す見本（`src/docs/` の全ファイル）を、相対パスを保ったまま導入先の `docs/` へ配置する。
+`docs/spec`・`docs/plan` は利用者の作業ディレクトリなので、**再実行しても既存ファイルは上書きしない**（`-Force` でのみ上書き）。
 
-`AGENTS.md` はどのプロダクトでも対象リポジトリのルートへ配置される（これが原本）。
-Claude Code は `AGENTS.md` を読まないため、それを `@` import する `CLAUDE.md` を別途生成する。
+| 見本 | 中身 |
+| --- | --- |
+| `spec/`・`plan/` の `test1`〜`test5` | セットアップ・構成の変更、マスタ・トランザクションの画面の実装（仕様は [NorthwindDbSampleSpec](https://github.com/OpenTouryoProject/NorthwindDbSampleSpec)） |
+| `spec/test6-testfirst*.md`・`plan/test6-testfirst*.md` | **テスト先行**：共通の決まりと対象（受注一覧 OrdTf）、**司令役の手順**（実装役・レビュー役をサブ エージェントで回す。人には仕様の決定だけを選択肢で聞き、決定記録の案も書く）、レビュー役の観点 |
+| `prompt/検証プロンプト.md` | 上の見本を回すための短い指示（例：司令役への 1 文） |
 
-既存ファイルは、インストーラが生成したもの（生成マーカー付き）でない限り上書きされない。
-上書きするには `-Force` を指定する。
+- 見本の仕様（NorthwindDbSampleSpec）の本文は**意図的に不完全**にしてあり、テストを起こすエージェントが仕様の漏れを見つけられるかを試す教材になる。
+  決まったことは本文ではなく `LLD/Decisions` に記録する。
+- 見本を回す検証用リポジトリは、テンプレート [VerifyCodingAgentSkillsForOtTemplate](https://github.com/NetDevInfraWGinOSSConsortium/VerifyCodingAgentSkillsForOtTemplate) から作れる。
 
 ## ライセンス
 
