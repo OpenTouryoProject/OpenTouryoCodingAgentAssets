@@ -53,6 +53,7 @@
       .github/workflows/expectation-change.yml       段 3（CI の雛形。無いときだけ置く。-Force でも上書きしない＝雛形の変更は手で合わせる）
       .claude/settings.json                          段 1 の登録（無いときだけ置く。あれば登録の例を表示する）
     写したファイルの先頭付近に「expectation-guard-source: <原本の版> <原本のパス> sha256:<中身>」の行を書く。
+    原本の版は、src/quality に最後に触れたコミット（検出器と関係の無いコミットの後に写し直しても、版の行は変わらない）。
     導入先の CI は本体の -VerifyCopy で、写しが写したときのままかを確かめる（ずれは警告）。
     この行のあるファイルは再実行で上書きする（**写しは直さず、原本を直して写し直す**）。
 
@@ -203,9 +204,11 @@ $QualitySource = Join-Path $SourceRoot 'src/quality/ExpectationGuard'
 # 写したファイルの印。本体（CheckExpectationChange.ps1 -VerifyCopy）と同じ。
 $QualityMarker = 'expectation-guard-source:'
 
-# 原本の版（このリポジトリのコミット。原本に未コミットの変更があれば +dirty）
+# 原本の版（src/quality に最後に触れたコミット。原本に未コミットの変更があれば +dirty）
+#   HEAD にしない：検出器と関係の無いコミットの後に写し直すと、中身が同じでも版の行だけが変わり、
+#   導入先で「仕組みの変更」（トレーラーが要る）になるため（OpenTouryo 45cc9114 で判明）。
 function Get-GuardRevision {
-    $rev = & git -C $SourceRoot rev-parse --short=12 HEAD 2>$null
+    $rev = & git -C $SourceRoot log -1 --format=%h --abbrev=12 -- 'src/quality' 2>$null
     if ($LASTEXITCODE -ne 0 -or -not $rev) { return 'unknown' }
     $dirty = & git -C $SourceRoot status --porcelain -- 'src/quality' 2>$null
     if ($dirty) { $rev += '+dirty' }
