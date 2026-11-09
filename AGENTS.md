@@ -40,15 +40,15 @@ Git 操作は人が手動で行う。
 
 スキルの記述（クラス名・メソッド・分岐・パス・csproj の参照等）は、必ず**実物**で確認してから書く。
 
-- ドキュメント：**`%OTRDOC_PATH%\`**（OpenTouryoDocuments）。**`%OTRWIKI_PATH%`**（OpenTouryo.wiki）。
-- C# 実ソース：**`%OTR_PATH%\root\programs\CS`**（OpenTouryo の作業ツリー。branch は `git -C %OTR_PATH% branch --show-current` で確かめる）。
+- ドキュメント：**`%OT_OTRDOC_PATH%\`**（OpenTouryoDocuments）。**`%OT_OTRWIKI_PATH%`**（OpenTouryo.wiki）。
+- C# 実ソース：**`%OT_OTR_PATH%\root\programs\CS`**（OpenTouryo の作業ツリー。branch は `git -C %OT_OTR_PATH% branch --show-current` で確かめる）。
   tag の版は **`C:\otr\OpenTouryo-0X-XX\root\programs\CS`**（tag 0X-XX。版ごとに展開する使い捨ての作業ツリー）。
 - スキル検証リポジトリ（例：`D:\git\local\OpenTouryoProject\OT_Verify_CA_Skills`）
 
 があれば突き合わせる。裏が取れないことは書かず、確認するか作者に聞く。
 
 リポジトリの場所は、リポジトリごとの環境変数で引く（OpenTouryoProject/OpenTouryo#652。一覧と既定の場所は
-`%OTR_PATH%\root\files\tools\PowerShell\_RepoPaths.csv`、登録は同じフォルダの `Register-RepoPaths.ps1`）。
+`%OT_OTR_PATH%\root\files\tools\PowerShell\_RepoPaths.csv`、登録は同じフォルダの `Register-RepoPaths.ps1`）。
 環境変数が無いときは、作者に場所を聞く（推測で探さない）。
 
 ### トークン規律（SKILL.md は目安 ~5000 以内）
