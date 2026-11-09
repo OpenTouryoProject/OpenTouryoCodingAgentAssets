@@ -162,10 +162,17 @@ SANDBOX（NetDevInfraWGinOSSConsortium/Sandbox）に `install.ps1 -TargetRoot . 
 
 ## 9. 段階 4 で各リポジトリが行うこと（メモ）
 
-- `install.ps1 -Product claude -TargetRoot <repo> -IncludeQualityGuard -QualityGuardPath <root/programs | root>`
-  （本体が今の検出器と同じパスに来るので、`IntroducedBy` と手元のフックの設定は変わらない）。
+- `install.ps1 -TargetRoot <repo> -IncludeQualityGuard -QualityGuardPath <root/programs | root> -Force`
+  （**`-Product` は付けない**＝検出器だけを写し、導入先の `AGENTS.md`・`CLAUDE.md`・スキルに触れない。`-Force` は自前の検出器を置き換えるため。
+  本体が今の検出器と同じパスに来るので、`IntroducedBy` と手元のフックの設定は変わらない）。
 - `docs/expectation-guard/` の下書きを `rules.psd1`（OpenTouryo は ＋ `CompareGolden.ps1`）として置く。
-- 既存の `.github/workflows/expectation-change.yml` は雛形で上書きされないので、手で合わせる
-  （MultiPurposeAuthSite は `-CheckTestCases` → `-CheckGenerated`、判定の用例のジョブを足す、`-VerifyCopy` の手順を足す）。
+- 既存の `.github/workflows/expectation-change.yml` は雛形で上書きされない（`-Force` でも）ので、手で合わせる
+  （判定の用例のジョブ・`Verify copies` を足す。**必須のチェックの名前（ジョブ名）は変えない**）。
+- **自前の検出器のスイッチ名が雛形と違うとき**（MultiPurposeAuthSite の `-CheckTestCases` → 本体の `-CheckGenerated`）：
+  CI は**ベース側の検出器**で調べるので、置き換えの PR だけはベース側が旧いスイッチしか知らない。yml を新しいスイッチに変えると、その PR のジョブが引数の誤りで落ちる。
+  → ベース側の検出器がスイッチを持つかで選ぶ（例：`Select-String -LiteralPath $checker -Pattern '\$CheckGenerated\b' -Quiet` なら `-CheckGenerated`、無ければ旧いスイッチ）。
+  マージの後は新しいスイッチだけになるので、分岐は後で外してよい（MultiPurposeAuthSite#335 で判明）。
 - 置き換えのコミット自体が「仕組みの変更」になる。トレーラーを付ける。
 - 共通の規則に `Found-By` の検査が入ったので、置き換えの前後の比較では、導入の後の `fixed #NNN` のコミットに**警告が増える**（終了コードは変わらない。過去のコミットに語彙に無い値は無い前提。比べるときに確かめる）。
+- 結果（2026-11-09）：OpenTouryo#657（`2e4c48a7`。90 コミット）・MultiPurposeAuthSite#335（`f988f351`。62 コミット）とも、PowerShell 7・5.1 で判定が同じ（違いは `Found-By:` の警告だけ）。
+  OpenTouryo は `352c464b` で `a815845`（`.claude/agents/` の追加ほか）に写し直した。
