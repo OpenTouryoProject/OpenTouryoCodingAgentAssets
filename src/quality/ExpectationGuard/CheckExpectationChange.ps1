@@ -562,7 +562,8 @@ try
     # --- 写しの検査 ------------------------------------------------------
     if ($VerifyCopy)
     {
-        $files = (Invoke-GitChecked @("ls-files", "--", ":(top)")).Lines
+        # --full-name：どのフォルダで実行しても、ルートからのパスで受ける（無いとカレントからの相対になり、0 件を見て「違いは 0 件」になる）
+        $files = (Invoke-GitChecked @("ls-files", "--full-name", "--", ":(top)")).Lines
         $top = (Invoke-GitChecked @("rev-parse", "--show-toplevel")).Lines[0]
         $checked = 0; $bad = 0
         foreach ($f in $files)

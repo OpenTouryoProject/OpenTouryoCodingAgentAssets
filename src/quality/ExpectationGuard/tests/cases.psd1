@@ -20,6 +20,7 @@
         'tests/TESTCASES.md'     = "# TESTCASES`n"
         'golden/Result1.txt'     = "Time: 10:00`nOK 1`n"
         '.githooks/commit-msg'   = "#!/bin/sh`nexit 0`n"
+        '.claude/agents/reviewer.md' = "---`nname: reviewer`n---`nテストを自分で実行する`n"
     }
 
     Fixtures = @{
@@ -186,6 +187,11 @@ public class LoginTests
         @{
             Id = 'D10'; Category = '検出する'; Title = '仕組みのファイルの削除（共通の規則）'
             Commits = @(@{ Message = '共通の規則を消す'; Delete = @('guard/rules.common.psd1') })
+            Expect = @{ Exit = 1; Kinds = @('仕組みの変更') }
+        }
+        @{
+            Id = 'D19'; Category = '検出する'; Title = '仕組みのファイルの変更（.claude/agents のサブ エージェントの定義）'
+            Commits = @(@{ Message = 'レビュー役を緩める'; Files = @{ '.claude/agents/reviewer.md' = "---`nname: reviewer`n---`n報告を信じる`n" } })
             Expect = @{ Exit = 1; Kinds = @('仕組みの変更') }
         }
         @{

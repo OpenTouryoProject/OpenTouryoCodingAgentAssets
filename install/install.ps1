@@ -50,7 +50,7 @@
       <QualityGuardPath>/ExpectationGuard.Tests/     判定の用例（Run-Tests.ps1）
       .claude/hooks/ExpectationGuard.ps1             段 1（PreToolUse フック）
       .githooks/commit-msg                           段 2（commit-msg フック）
-      .github/workflows/expectation-change.yml       段 3（CI の雛形。無いときだけ置く）
+      .github/workflows/expectation-change.yml       段 3（CI の雛形。無いときだけ置く。-Force でも上書きしない＝雛形の変更は手で合わせる）
       .claude/settings.json                          段 1 の登録（無いときだけ置く。あれば登録の例を表示する）
     写したファイルの先頭付近に「expectation-guard-source: <原本の版> <原本のパス> sha256:<中身>」の行を書く。
     導入先の CI は本体の -VerifyCopy で、写しが写したときのままかを確かめる（ずれは警告）。
@@ -242,11 +242,11 @@ function Copy-GuardFile {
 
     $exists = Test-Path -LiteralPath $Destination
     if ($exists) {
+        # 雛形・導入先が持つファイルは、-Force でも上書きしない（導入先の固有の設定を失うため。OpenTouryo#657 で判明）
         if ($NoMarker -or $Template) {
-            if (-not $Force -or $NoMarker) {
-                Write-Host "  そのまま（導入先が持つ）: $Destination"
-                return
-            }
+            Write-Host "  そのまま（導入先が持つ）: $Destination"
+            if ($Template) { Write-Host "    雛形の変更は手で合わせる（原本: $($Source.Substring($SourceRoot.Length).TrimStart('\', '/') -replace '\\', '/')）" }
+            return
         }
         elseif (-not (Test-GuardCopy $Destination) -and -not $Force) {
             Write-Warning "スキップ（既存ファイルを保護）: $Destination`n  上書きするには -Force を指定してください。"

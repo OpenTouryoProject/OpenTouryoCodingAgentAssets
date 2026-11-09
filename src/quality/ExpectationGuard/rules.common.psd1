@@ -14,6 +14,7 @@
         '^\.githooks/'
         '^\.claude/settings\.json$'
         '^\.claude/hooks/'
+        '^\.claude/agents/'   # サブ エージェント（レビュー役など）の定義。緩めればレビューも緩む（OpenTouryo#680・MultiPurposeAuthSite#347）
         '^\.github/workflows/expectation-change\.yml$'
     )
 
