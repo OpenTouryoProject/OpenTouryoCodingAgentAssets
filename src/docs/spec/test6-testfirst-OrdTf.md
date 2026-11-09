@@ -21,4 +21,4 @@ ProgramID は **`OrdTf`**（テスト先行。トランザクション2 の `Ord
 | テストのプロジェクト・クラス | `<Webプロジェクト名>.Tests`・`OrdTfBusinessTests`、`<Webプロジェクト名>.E2ETests`・`OrdTfScreenTests` |
 | テスト仕様 | `docs/spec/test6-testfirst-OrdTf-<フレームワーク>-tests.md`（例 `…-OrdTf-mvc-core-tests.md`） |
 | 計画 | `docs/plan/test6-testfirst-OrdTf-<フレームワーク>.md` |
-| 決定のレポート | `docs/spec/test6-testfirst-OrdTf-<フレームワーク>-decisions.md`（人が GO/NOGO を書き込む） |
+| 決定のレポート | `docs/spec/test6-testfirst-OrdTf-<フレームワーク>-decisions.md`（司令役が書き、人の判断を対話で聞いて書き込む） |
