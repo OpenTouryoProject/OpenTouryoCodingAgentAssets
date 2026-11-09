@@ -487,6 +487,59 @@ public class FooTests
         }
 
         # ==============================================================
+        # 要確認（止めない・トレーラーを求めない。一覧に出すだけ）
+        # ==============================================================
+        @{
+            Id = 'R01'; Category = '要確認'; Title = '[Obsolete] の追加（旧版をオーバーロードで温存）'
+            Commits = @(@{ Message = '旧版を残す'; Files = @{ 'src/A.cs' = "class A`n{`n    [Obsolete(""Use B(int)."")]`n    public void B() { }`n    public void B(int x) { }`n}`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Review = 1; ReviewKinds = @('[Obsolete] の追加') }
+        }
+        @{
+            Id = 'R02'; Category = '要確認'; Title = '[Obsolete] の追加（属性の並び）'
+            Commits = @(@{ Message = '旧版を残す'; Files = @{ 'src/A.cs' = "class A`n{`n    [EditorBrowsable(EditorBrowsableState.Never), Obsolete]`n    public void B() { }`n}`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Review = 1; ReviewKinds = @('[Obsolete] の追加') }
+        }
+        @{
+            Id = 'R03'; Category = '要確認'; Title = '#pragma warning disable CS0618 の追加'
+            Commits = @(@{ Message = '旧版を呼ぶテスト'; Files = @{ 'tests/Unit/OldTests.cs' = "#pragma warning disable CS0612, CS0618`npublic class OldTests { }`n#pragma warning restore CS0612, CS0618`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Review = 1; ReviewKinds = @('#pragma warning disable CS0618 の追加') }
+        }
+        @{
+            Id = 'R04'; Category = '要確認'; Title = '番号の無い #pragma warning disable の追加（すべての警告を消す）'
+            Commits = @(@{ Message = '警告を消す'; Files = @{ 'tests/Unit/OldTests.cs' = "#pragma warning disable`npublic class OldTests { }`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Review = 1; ReviewKinds = @('#pragma warning disable CS0618 の追加') }
+        }
+        @{
+            Id = 'R05'; Category = '要確認'; Title = 'コメントの中の [Obsolete]・ほかの番号の #pragma は出さない'
+            Commits = @(@{ Message = 'コメント'; Files = @{ 'src/A.cs' = "class A`n{`n    // [Obsolete] は付けない`n#pragma warning disable CS0168`n    public void B() { }`n}`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Review = 0 }
+        }
+        @{
+            Id = 'R06'; Category = '要確認'; Title = '#pragma を消した（出さない）'
+            Commits = @(
+                @{ Message = '足す'; Files = @{ 'tests/Unit/OldTests.cs' = "#pragma warning disable CS0618`npublic class OldTests { }`n" } }
+                @{ Message = '消す'; Files = @{ 'tests/Unit/OldTests.cs' = "public class OldTests { }`n" } }
+            )
+            Expect = @{ Exit = 0; Kinds = @(); Review = 0 }
+        }
+        @{
+            Id = 'R07'; Category = '要確認'; Title = '[Obsolete] を同じファイルの中で移した（出さない）'
+            Commits = @(
+                @{ Message = '足す'; Files = @{ 'src/A.cs' = "class A`n{`n    [Obsolete]`n    public void B() { }`n    public void C() { }`n}`n" } }
+                @{ Message = '並べ替え'; Files = @{ 'src/A.cs' = "class A`n{`n    public void C() { }`n    [Obsolete]`n    public void B() { }`n}`n" } }
+            )
+            Expect = @{ Exit = 0; Kinds = @(); Review = 0 }
+        }
+        @{
+            Id = 'R08'; Category = '要確認'; Title = '要確認と期待値の変更が同じコミット（期待値の変更は止まる。要確認も出る）'
+            Commits = @(@{ Message = 'B を消し、旧版を残す'; Files = @{
+                'tests/FooTests.cs' = "public class FooTests`n{`n    [Test]`n    public void A() { Assert.That(1, Is.EqualTo(1)); }`n}`n"
+                'src/A.cs' = "class A`n{`n    [Obsolete]`n    public void B() { }`n}`n"
+            } })
+            Expect = @{ Exit = 1; Kinds = @('テストの削除'); Review = 1; ReviewKinds = @('[Obsolete] の追加') }
+        }
+
+        # ==============================================================
         # 既知の取りこぼし（今の判定を固定する）
         # ==============================================================
         @{

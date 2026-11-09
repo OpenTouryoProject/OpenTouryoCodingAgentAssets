@@ -57,6 +57,26 @@
         }
     )
 
+    # 要確認（OpenTouryoCodingAgentAssets#3 の段階 5）。止めない・トレーラーを求めない。一覧と注釈に出すだけ。
+    #   既存のテストを弱めないので期待値の変更には現れないが、互換のための判断なのでレビューの目に入れる。
+    #   ファイルごとに「足した数 − 消した数」が残れば出す（移しただけ・消しただけなら出ない）。コメントの行は数えない。
+    ReviewRules = @(
+        @{
+            Name    = '[Obsolete] の追加'
+            Paths   = @('\.cs$')
+            # [Obsolete]・[Obsolete("…")]・[System.Obsolete]・[ObsoleteAttribute]・[EditorBrowsable(…), Obsolete] など
+            Pattern = '\[\s*(\w+\s*(\([^)]*\))?\s*,\s*)*(System\s*\.\s*)?Obsolete(Attribute)?\b'
+            Hint    = '旧版の振る舞いを温存した。新しい版へ移る道と、旧版を消す時期を確かめる'
+        }
+        @{
+            Name    = '#pragma warning disable CS0618 の追加'
+            Paths   = @('\.cs$')
+            # CS0618 を含む #pragma warning disable と、番号の無い（すべての警告を消す）#pragma warning disable
+            Pattern = '^\s*#\s*pragma\s+warning\s+disable(\s*$|\s*//|[^/]*\bCS0618\b)'
+            Hint    = 'そのファイルの、ほかの [Obsolete] の警告も消える。範囲を restore で閉じているか、本当に旧版を使う必要があるかを確かめる'
+        }
+    )
+
     # 段 1：コマンドで書き換えそうな操作（2>$null・*>&1 のような、捨てるだけのリダイレクトは除く）。
     #   FileRules・GeneratedRules の CommandPattern と両方に当たると、人の確認付きにする（**推測である。** 漏れは段 2・段 3 が塞ぐ）。
     WriteInCommand = '(?<![0-9*])>(?!\s*(\$null|/dev/null|&))|\b(Set-Content|Add-Content|Out-File|Copy-Item|Move-Item|Remove-Item|Rename-Item|WriteAll(Text|Bytes|Lines))\b|(^|[\s;|&(])(cp|mv|rm|copy|move|del|tee)\s|\bsed\s+(-\w*\s+)*-i|\bgit\s+(checkout|restore|reset|stash|apply|am|cherry-pick)\b'

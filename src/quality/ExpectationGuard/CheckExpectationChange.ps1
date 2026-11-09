@@ -21,6 +21,9 @@
       TrailerRules       トレーラーの値の検査。語彙に無い値は止め、必要なのに無いときは警告する。
                          どちらのときも語彙の一覧（Meanings があれば意味も）を出す。
       GeneratedRules     -CheckGenerated のとき、生成物の作り直しの漏れを見る（期待値の変更の代わりに）。
+      ReviewRules        要確認。ファイルごとに、パターンに当たる行を足した数から消した数を引き、残れば一覧に出す。
+                         **止めない・トレーラーを求めない**（終了コードは変えない）。GitHub Actions では注釈（notice）にする。
+                         段 1（PreToolUse）では見ない。
     **アサーションの緩和は見ない**（機械的に判定できない）。レビューの観点で拾う。
 
     承認：コミット メッセージに「Expectation-Change: <理由>」の行があれば、人が承認したものとする。
@@ -210,7 +213,7 @@ function Read-Rules([string]$CommonPath, [string]$RepoPath)
             else { $rules[$k] = $v }
         }
     }
-    foreach ($k in @("Guard", "FileRules", "LineRules", "KeyedArgumentRules", "TrailerRules", "GeneratedRules", "DiffScope"))
+    foreach ($k in @("Guard", "FileRules", "LineRules", "KeyedArgumentRules", "TrailerRules", "GeneratedRules", "ReviewRules", "DiffScope"))
     {
         if (-not $rules.ContainsKey($k)) { $rules[$k] = @() } else { $rules[$k] = @($rules[$k]) }
     }
@@ -532,7 +535,7 @@ function Invoke-PreToolUse($Rules)
 # 本体
 # ------------------------------------------------------------------
 $tempFiles = @()
-$result = [pscustomobject]@{ Target = $null; Commit = $null; Findings = @(); Approved = @(); Warnings = @(); Errors = @(); ExitCode = 0 }
+$result = [pscustomobject]@{ Target = $null; Commit = $null; Findings = @(); Approved = @(); Review = @(); Warnings = @(); Errors = @(); ExitCode = 0 }
 
 function Complete([int]$Code)
 {
@@ -864,6 +867,70 @@ try
                 $r = @($rules.LineRules)[$k]; $c = $count[$p][$k]
                 $n = $(if ($r.Count -eq "Added") { $c.Add - $c.Del } else { $c.Del - $c.Add })
                 if ($n -gt 0) { Add-Finding $r.Name $p $n }
+            }
+        }
+    }
+
+    # --- 要確認（ReviewRules） ---------------------------------------------
+    #   止めない。ファイルごとに、当たる行の「足した数 − 消した数」が残れば一覧に出す（移しただけなら出ない）。
+    #   注釈のために、足した行の番号（新しい側）を覚えておく。
+    if (@($rules.ReviewRules).Count -gt 0)
+    {
+        $scope = @($rules.DiffScope | ForEach-Object { ":(top)$_" })
+        if ($scope.Count -eq 0) { $scope = @(":(top)") }
+        $diff = (Invoke-GitChecked (@("diff", "-M", "-U0", "--no-color") + $diffEnds + @("--") + $scope)).Lines
+        $file = $null
+        $lineNo = 0
+        $rv = @{}   # パス → 規則の番号 → @{ Add; Del; Lines }
+        foreach ($l in $diff)
+        {
+            if ($l -match '^diff --git a/.+ b/(.+)$')
+            {
+                $file = $Matches[1]
+                $active = @()
+                for ($k = 0; $k -lt @($rules.ReviewRules).Count; $k++) { if (Test-AnyMatch $file @($rules.ReviewRules)[$k].Paths) { $active += $k } }
+                if ($active.Count -eq 0) { $file = $null }
+                continue
+            }
+            if (-not $file) { continue }
+            if ($l -match '^@@ -\d+(,\d+)? \+(\d+)(,\d+)? @@') { $lineNo = [int]$Matches[2]; continue }
+            if ($l.StartsWith("+++") -or $l.StartsWith("---")) { continue }
+            if (-not ($l.StartsWith("+") -or $l.StartsWith("-"))) { continue }
+
+            $add = $l.StartsWith("+")
+            $body = $l.Substring(1)
+            $here = $lineNo
+            if ($add) { $lineNo++ }
+            if ($body -match $rules.CommentLine) { continue }
+            foreach ($k in $active)
+            {
+                if ($body -notmatch @($rules.ReviewRules)[$k].Pattern) { continue }
+                if (-not $rv.ContainsKey($file)) { $rv[$file] = @{} }
+                if (-not $rv[$file].ContainsKey($k)) { $rv[$file][$k] = @{ Add = 0; Del = 0; Lines = @() } }
+                if ($add) { $rv[$file][$k].Add++; $rv[$file][$k].Lines += $here } else { $rv[$file][$k].Del++ }
+            }
+        }
+        foreach ($p in ($rv.Keys | Sort-Object))
+        {
+            foreach ($k in ($rv[$p].Keys | Sort-Object))
+            {
+                $r = @($rules.ReviewRules)[$k]; $c = $rv[$p][$k]
+                $n = $c.Add - $c.Del
+                if ($n -gt 0) { $result.Review += [pscustomobject]@{ Kind = $r.Name; Path = $p; Count = $n; Lines = @($c.Lines); Hint = $r.Hint } }
+            }
+        }
+        if ($result.Review.Count -gt 0)
+        {
+            Write-Msg ""
+            Write-Msg ("  要確認 {0} 件（{1}）。止めない。レビューで判断を確かめる" -f $result.Review.Count, $label) -ForegroundColor Cyan
+            foreach ($x in $result.Review)
+            {
+                $hint = $(if ($x.Hint) { "（" + $x.Hint + "）" } else { "" })
+                if ($env:GITHUB_ACTIONS -eq "true")
+                {
+                    foreach ($ln in $x.Lines) { Write-Msg ("::notice file={0},line={1},title=要確認：{2}::{3}{4}" -f $x.Path, $ln, $x.Kind, $label, $hint) }
+                }
+                Write-Msg ("    {0} : {1}（{2} 件。行 {3}）{4}" -f $x.Kind, $x.Path, $x.Count, ($x.Lines -join ","), $hint)
             }
         }
     }
