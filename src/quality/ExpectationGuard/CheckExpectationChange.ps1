@@ -69,9 +69,11 @@
 .EXAMPLE
     .\CheckExpectationChange.ps1 -Staged -MessageFile .git\COMMIT_EDITMSG
 .EXAMPLE
-    .\CheckExpectationChange.ps1 -Range develop..HEAD
+    .\CheckExpectationChange.ps1 -Range origin/develop..HEAD
+    PR の前に手元で、PR の CI と同じ範囲を見る（git fetch の後に）。手元の develop は古いことがあり、
+    取り込み済みのコミットまで範囲に入る（OpenTouryo で、手元の develop..HEAD が 320 件・origin/develop..HEAD が 5 件だった）。
 .EXAMPLE
-    .\CheckExpectationChange.ps1 -Range develop..HEAD -CheckGenerated
+    .\CheckExpectationChange.ps1 -Range origin/develop..HEAD -CheckGenerated
 
 .NOTES
     原本：OpenTouryoCodingAgentAssets の src/quality/ExpectationGuard/（OpenTouryoCodingAgentAssets#3）。
