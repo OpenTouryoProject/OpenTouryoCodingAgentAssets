@@ -671,6 +671,11 @@ public class FooTests
             Commits = @(@{ Message = "規則を足す`n`nExpectation-Change: RT-352.1 の Skip に合わせた`nReviewed-with: opentouryo-expectation-reviewer";Files = @{ 'guard/rules.psd1' = "@{`n    ApprovalReasonPatterns = @('\bRT-\d+')`n}`n" } })
             Expect = @{ Exit = 0; Kinds = @('仕組みの変更'); Warnings = 0 }
         }
+        @{
+            Id = 'A05'; Category = '理由の書式'; Title = '検出した変更が無くても、理由は結果に入れ、書式も見る（アサーションの値の反転に人が付けた理由。OpenTouryo 3bd7586d）'
+            Commits = @(@{ Message = "反転した`n`nExpectation-Change: true から false にした`nTested-with: unit`nReviewed-with: opentouryo-expectation-reviewer"; Files = @{ 'tests/FooTests.cs' = "public class FooTests`n{`n    [Test]`n    public void A() { Assert.That(1, Is.EqualTo(2)); }`n    [Test]`n    public void B() { Assert.That(2, Is.EqualTo(2)); }`n}`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Warnings = 1; Approved = 1 }
+        }
 
         # ==============================================================
         # トレーラーの書き忘れ（#6。TrailerRequirements。止めない）

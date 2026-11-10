@@ -24,7 +24,9 @@ model: sonnet
 1. 検出器を JSON で動かし、検出した一覧・承認の理由・差分のコマンドを得る（リポジトリのルートで）。
    - ステージした変更：`powershell -NoProfile -ExecutionPolicy Bypass -File @@CHECKER@@ -Staged -MessageFile <メッセージ> -Json`
    - コミット：`powershell -NoProfile -ExecutionPolicy Bypass -File @@CHECKER@@ -Commit <sha> -Json`
-   - `Findings` が空なら、期待値の変更は無い。そう返して終わる。`Approved` が空なら、承認の理由が無い（読めない書き方を含む）。そう返して終わる。
+   - `Approved` が空なら、承認の理由が無い（読めない書き方を含む）。そう返して終わる。
+   - **`Findings` が空でも、`Approved` があれば突き合わせる。** 検出器はアサーションの値の反転・緩和を見ないので、
+     人が自分から付けた理由は、差分のテストのすべてと突き合わせる（網羅は「理由が述べる変化が差分にあるか」で見る）
 2. `DiffCommand` の差分を**すべて**読む。`Findings` のファイルは必ず読み、テストなら変わったテストの前後の全体を読む。
 3. 理由が挙げる根拠を、**自分で**読む。
    - Issue：`gh issue view <番号> --comments`
