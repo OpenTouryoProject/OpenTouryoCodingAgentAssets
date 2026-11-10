@@ -120,6 +120,13 @@
     #   RequiredWhen（メッセージに当てる正規表現）に当たるのにトレーラーが無ければ、警告に留める。
     #   止めたとき・警告のときは、書き方（Syntax）・例（Example）・語彙と意味（Meanings）を出す。直した行で、語彙に近い語が無い所は Placeholder。
     #   Found-By・Tested-with・Reviewed-with（OpenTouryoCodingAgentAssets#5・#12）は共通の規則にある。同じ Name で書くと置き換える。
+    # 書き忘れの組（共通の規則の TrailerRequirements に足される。OpenTouryoCodingAgentAssets#6）。止めない（警告）。
+    #   組の中の条件（Message・Trailer・Paths）がすべて当たるのに、Name のトレーラー（Value があれば、それに当たる値）が無ければ警告する。
+    #   例：リスク「高」の名前空間（QUALITY.md の品質マップ）を fixed で変えたら、別モデルのレビュー
+    # TrailerRequirements = @(
+    #     @{ Name = 'Reviewed-with'; Message = '(?i)\bfixed\s+#\d+'; Paths = @('^src/Auth/'); Hint = 'リスク「高」の名前空間なので、fixed の前に別モデルのレビューを回し、Reviewed-with: を書く' }
+    # )
+
     TrailerRules = @(
         # @{
         #     Name         = 'Spec-Id'

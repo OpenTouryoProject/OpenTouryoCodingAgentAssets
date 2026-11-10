@@ -111,6 +111,26 @@
         }
     )
 
+    # トレーラーの書き忘れ（OpenTouryoCodingAgentAssets#6）。止めない（警告）。
+    #   組の中の条件（Message：メッセージ・Trailer：ほかのトレーラーがある・Paths：変えたファイル）がすべて当たるのに、
+    #   Name のトレーラー（Value があれば、それに当たる値）が無ければ警告する。IgnoreLine に当たる行（コメント・空行）だけの変更は数えない。
+    #   リポジトリの規則（rules.psd1）に書くと、組が足される。例：リスク「高」の名前空間を fixed で変えたら、別モデルのレビュー
+    #     @{ Name = 'Reviewed-with'; Message = '(?i)\bfixed\s+#\d+'; Paths = @('^src/Auth/'); Hint = '…' }
+    TrailerRequirements = @(
+        @{
+            Name       = 'Tested-with'
+            Paths      = @('\.(cs|vb)$')
+            IgnoreLine = '^\s*(//|''|/\*|\*|$)'
+            Hint       = '流したテストの種類を書く。流していなければ Tested-with: none（書き忘れと区別する）'
+        }
+        @{
+            Name    = 'Reviewed-with'
+            Trailer = 'Expectation-Change'
+            Value   = '^opentouryo-expectation-reviewer\b'
+            Hint    = 'コミットの前に、突き合わせ役（opentouryo-expectation-reviewer）で理由と差分を突き合わせ、Reviewed-with: opentouryo-expectation-reviewer (<モデル ID>) を書く'
+        }
+    )
+
     # 要確認（OpenTouryoCodingAgentAssets#3 の段階 5）。止めない・トレーラーを求めない。一覧と注釈に出すだけ。
     #   既存のテストを弱めないので期待値の変更には現れないが、互換のための判断なのでレビューの目に入れる。
     #   ファイルごとに「足した数 − 消した数」が残れば出す（移しただけ・消しただけなら出ない）。コメントの行は数えない。

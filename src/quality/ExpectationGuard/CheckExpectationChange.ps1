@@ -18,6 +18,8 @@
                          書き直し（引数を変えるなど）は数えない。CommentLine に当たる行は数えない
                          （コメント アウトは「消えた」と数える）。
       KeyedArgumentRules 呼び出しの引数を、**コミット全体で**キーごとに比べる（ファイルをまたいで移しただけなら数えない）。
+      TrailerRequirements トレーラーの書き忘れ。条件の組（Message・Trailer・Paths。すべて当たれば）なのに Name のトレーラー
+                         （Value があれば、それに当たる値）が無ければ警告する。IgnoreLine に当たる行だけの変更は数えない。
       TrailerRules       トレーラーの値の検査。語彙に無い値は止め、必要なのに無いときは警告する。
                          語彙は Vocabulary と、VocabularyFiles（ファイルの名前。例 .claude/agents/*.md）。List なら「,」で分けて見る。
                          止めたときは、書いた行・直した行・直した最後の段落・書き方（Syntax）・例（Example）・
@@ -224,7 +226,7 @@ function Read-Rules([string]$CommonPath, [string]$RepoPath)
             else { $rules[$k] = $v }
         }
     }
-    foreach ($k in @("Guard", "FileRules", "LineRules", "KeyedArgumentRules", "TrailerRules", "GeneratedRules", "ReviewRules", "DiffScope", "ReviewScope"))
+    foreach ($k in @("Guard", "FileRules", "LineRules", "KeyedArgumentRules", "TrailerRules", "GeneratedRules", "ReviewRules", "DiffScope", "ReviewScope", "TrailerRequirements", "ApprovalReasonPatterns"))
     {
         if (-not $rules.ContainsKey($k)) { $rules[$k] = @() } else { $rules[$k] = @($rules[$k]) }
     }
@@ -1166,6 +1168,48 @@ try
             $helpNames += $t.Name
         }
     }
+
+    # 書き忘れ（TrailerRequirements。#6）。止めない。
+    #   組の中の条件（Message・Trailer・Paths）がすべて当たるのに、Name のトレーラー（Value があれば、それに当たる値）が無ければ警告する。
+    #   Paths は変えたファイルに当て、IgnoreLine があれば、それに当たる行（コメント・空行）だけの変更は数えない。
+    $changedPaths = @($names | Where-Object { $_ } | ForEach-Object { ($_ -split "`t")[-1] })
+    foreach ($q in @($rules.TrailerRequirements))
+    {
+        if (-not $q -or -not $q.Name) { continue }
+        $why = @()
+        if ($q.Message)
+        {
+            if (-not ($body -match $q.Message)) { continue }
+            $why += $Matches[0].Trim()
+        }
+        if ($q.Trailer)
+        {
+            if (@(Select-Trailer $parsed $q.Trailer | Where-Object { $_ -ne "" }).Count -eq 0) { continue }
+            $why += ("{0}: がある" -f $q.Trailer)
+        }
+        if (@($q.Paths | Where-Object { $_ }).Count -gt 0)   # 書いていない組は @($null) が 1 件になるので、空を除いて数える
+        {
+            $hit = @($changedPaths | Where-Object { Test-AnyMatch $_ @($q.Paths) })
+            if ($q.IgnoreLine -and $hit.Count -gt 0)
+            {
+                $hit = @($hit | Where-Object {
+                    $lines = (Invoke-GitChecked (@("diff", "-U0", "--no-color") + $diffEnds + @("--", ":(top)$_"))).Lines
+                    @($lines | Where-Object { ($_.StartsWith("+") -or $_.StartsWith("-")) -and -not ($_.StartsWith("+++") -or $_.StartsWith("---")) -and ($_.Substring(1) -notmatch $q.IgnoreLine) }).Count -gt 0
+                })
+            }
+            if ($hit.Count -eq 0) { continue }
+            $why += ("{0}{1}" -f $hit[0], $(if ($hit.Count -gt 1) { " ほか {0} 件" -f ($hit.Count - 1) } else { "" }))
+        }
+        if ($why.Count -eq 0) { continue }
+        $vals = @(Select-Trailer $parsed $q.Name | Where-Object { $_ -ne "" })
+        if ($q.Value) { $vals = @($vals | Where-Object { $_ -match $q.Value }) }
+        if ($vals.Count -gt 0) { continue }
+        if (@($fixes | Where-Object { $_.Name -eq $q.Name }).Count -gt 0) { continue }   # 書いたが読まれない行は、直す行に出ている
+        $what = $(if ($q.Value) { "{0}: {1}" -f $q.Name, $q.Value } else { "{0}:" -f $q.Name })
+        $result.Warnings += ("{0}（{1}）に {2} がありません。{3}" -f $label, ($why -join "・"), $what, $q.Hint)
+        if (@($rules.TrailerRules | Where-Object { $_.Name -eq $q.Name }).Count -gt 0) { $helpNames += $q.Name }
+    }
+
     foreach ($tr in @(@($parsed) | Where-Object { $_ -and $_.Key -ieq $rules.ApprovalTrailer -and $_.Value -eq "" }))
     {
         $fixes += [pscustomobject]@{ Name = $rules.ApprovalTrailer; Written = ("{0}:" -f $tr.Key); Fixed = $approvalSyntax; Reasons = @("値（理由）がありません"); Key = ("{0}: " -f $tr.Key) }

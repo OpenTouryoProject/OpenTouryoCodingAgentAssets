@@ -30,10 +30,11 @@
 3. **本体の置き場所**（`-QualityGuardPath`。既定 `tools/ExpectationGuard`。写し直しなら今の場所）。
    判定の用例は `<置き場所>/ExpectationGuard.Tests/` に固定である（選べるようにするのは #13 の残り）
 4. **テストの範囲**（`DiffScope`）：期待値の変更を読む範囲。テストのプロジェクト・Golden を含める
-5. **要確認の範囲**（`ReviewScope`）：`[Obsolete]`・`#pragma warning disable` を探す範囲。**製品のコードを含める。** 省略するとリポジトリ全体。
+5. **書き忘れの組**（`TrailerRequirements`）：リスク「高」の名前空間（導入先の `QUALITY.md` の品質マップ）のパスを聞き、`fixed #NNN` で変えたら `Reviewed-with:` を求める組を足すか（警告。`fixing` は数えない）
+6. **要確認の範囲**（`ReviewScope`）：`[Obsolete]`・`#pragma warning disable` を探す範囲。**製品のコードを含める。** 省略するとリポジトリ全体。
    取り込んだ他者のコード（`vendor/` など）を外したいときに絞る
-6. **CI**：雛形を置く（無いとき）／既存の workflow に手で合わせる（ジョブ名・スイッチ名の差を示して聞く）
-7. **文書の反映**：どの節を、どう直すか（6 で案を示す）
+7. **CI**：雛形を置く（無いとき）／既存の workflow に手で合わせる（ジョブ名・スイッチ名の差を示して聞く）
+8. **文書の反映**：どの節を、どう直すか（6 で案を示す）
 
 ## 3. 写す
 
@@ -46,7 +47,7 @@
 
 `rules.psd1` は導入先が持つ（初回だけ見本から置かれ、以後は上書きされない）。書き方は `rules.sample.psd1`。
 
-- `DiffScope`・`ReviewScope`（2 の答え）、各規則の `Paths`（テストのプロジェクト名）、`Guard`（導入先の比較のスクリプトなど）
+- `DiffScope`・`ReviewScope`・`TrailerRequirements`（2 の答え）、各規則の `Paths`（テストのプロジェクト名）、`Guard`（導入先の比較のスクリプトなど）
 - 写し直しでは、原本の `rules.sample.psd1` に新しいキーが増えていないかを見る（例：`ReviewScope`）。増えていれば、要るかを聞く
 
 ## 5. 確かめる
