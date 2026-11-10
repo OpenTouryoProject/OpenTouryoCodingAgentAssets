@@ -10,7 +10,7 @@ Assets used by coding agents utilizing OpenTouryo
 | 部 | 何のためか | 中身（原本） | 導入（`install/install.ps1`） |
 | --- | --- | --- | --- |
 | [1. 書き方](#1-書き方--インストラクションスキル役の定義) | OpenTouryo でどう書くか | `src/instructions/`（`AGENTS.md`・`TESTING.md`）・`src/skills/`（46 本）・`src/agents/`（テスト先行の実装役・レビュー役） | `-Product` |
-| [2. 守り方](#2-守り方--品質の仕組み) | 承認したテストを、後から黙って弱めさせない | `src/quality/ExpectationGuard/`（期待値の変更の検出器・トレーラーの検査・要確認） | `-IncludeQualityGuard`（opt-in） |
+| [2. 守り方](#2-守り方--品質の仕組み) | 承認したテストを、後から黙って弱めさせない | `src/quality/ExpectationGuard/`（期待値の変更の検出器・トレーラーの検査・要確認） | **AI に頼む**（[手順](src/quality/ExpectationGuard/INSTALL.md)。中で `-IncludeQualityGuard` を使う。opt-in） |
 | [3. 進め方](#3-進め方--見本検証教材) | spec → テスト → plan → 実装を通しで回す | `src/docs/`（spec・plan・prompt の見本。テスト先行は司令役の手順） | `-IncludeTutorial`（opt-in） |
 
 ```
@@ -19,7 +19,7 @@ src/
   instructions/TESTING.md       1. テスト先行の進め方と、承認の 2 段（AGENTS.md から参照。AGENTS.md と同じくルートへ）
   skills/                       1. 全スキル（下の「スキル一覧」）
   agents/                       1. 役の定義：テスト先行の実装役・レビュー役（Claude Code 向け。.claude/agents へ）
-  quality/ExpectationGuard/     2. 期待値の変更の検出器の原本（導入先へ写す）
+  quality/ExpectationGuard/     2. 期待値の変更の検出器の原本（導入先へ写す。INSTALL.md は導入する AI が読む手順で、写さない）
   docs/                         3. spec・plan・prompt の見本（導入先の docs/ へ）
 install/
   install.ps1                   対象リポジトリへのインストーラ
@@ -49,9 +49,11 @@ cd OpenTouryoCodingAgentAssets
 # 実際には書き込まず、何が行われるか確認
 ./install/install.ps1 -Product agents -WhatIf -TargetRoot C:\git\MyApp
 
-# 2. 守り方・3. 進め方も併せて（どちらも opt-in）
-./install/install.ps1 -Product claude -TargetRoot C:\git\MyApp -IncludeQualityGuard -IncludeTutorial
+# 3. 進め方も併せて（opt-in）
+./install/install.ps1 -Product claude -TargetRoot C:\git\MyApp -IncludeTutorial
 ```
+
+**2. 守り方（検出器）は、コマンドではなく AI に頼んで導入する**（導入先ごとの判断が多いため。[2. 守り方](#2-守り方--品質の仕組み)）。
 
 既存ファイルは、インストーラが生成したもの（生成マーカー付き）でない限り上書きされない。上書きするには `-Force` を指定する。
 2・3 の扱い（導入先が持つファイル・写し）は、それぞれの部に書く。
@@ -184,8 +186,26 @@ Claude Code は `AGENTS.md` を読まないため、それを `@` import する 
 | トレーラー `Found-By: <手段>`（バグの修正 `fixed #NNN` を、どこで・何で見つけたか） | 語彙に無い値は拒否、無ければ警告。どちらのときも語彙と意味の一覧を出す（語彙は `rules.common.psd1`） |
 | トレーラー `Tested-with: <種類>`・`Reviewed-with: <役>`（そのコミットを、どの種類のテストで・どのレビュー役で確かめたか） | 語彙に無い値は拒否（役の語彙は `.claude/agents/` の役の定義の名前と `human`）。書き忘れは見ない |
 | トレーラーの書き方（git が読む形か：最後の段落に置く・半角の「:」・名前の綴り・値が空でない） | 拒否。**書いた行・直した行・直した最後の段落・コミットの直し方を出す**（人がそのまま写して直せる） |
-| **要確認**（`[Obsolete]` の追加、`#pragma warning disable CS0618` の追加） | **止めない・トレーラーを求めない**。一覧に出し、CI では足した行に注釈を付ける（互換のための判断をレビューの目に入れる） |
+| **要確認**（`[Obsolete]` の追加、`#pragma warning disable CS0618`・`618` の追加） | **止めない・トレーラーを求めない**。一覧に出し、CI では足した行に注釈を付ける（互換のための判断をレビューの目に入れる）。範囲は導入先が選ぶ（`ReviewScope`。省略時はリポジトリ全体） |
 | 仕組みのファイル（フック・CI・本体・規則・`.claude/agents/`） | 変更・削除は期待値の変更と同じ扱い（追加は数えない） |
+
+### 導入：AI に頼む
+
+導入先ごとに決めることが多い（本体の置き場所・テストの範囲・要確認の範囲・CI の差・`-Force` の要否・導入先の文書の直し）。
+そこで、**このリポジトリを clone し、コーディング エージェントに次のように頼む。**
+
+> OpenTouryoCodingAgentAssets の `src/quality/ExpectationGuard/INSTALL.md` に従って、`C:\git\MyApp` に検出器を導入して。
+
+エージェントは [INSTALL.md](src/quality/ExpectationGuard/INSTALL.md) に従い、次を行う。導入先の変更はワーキング ツリーまでで、コミットは人が行う。
+
+1. 導入先を調べる：既存の検出器と版・CI・テストと製品のコードの在りか・`AGENTS.md`・`QUALITY.md`
+2. 判断を対話で聞く：導入の形（新規・写し直し・置き換え）、`-Product` の要否、置き場所、`DiffScope`・`ReviewScope`、CI、文書の反映
+3. `install.ps1` を、聞いた答えの引数で動かす（先に `-WhatIf`）
+4. `rules.psd1` と、導入先の `AGENTS.md`・`QUALITY.md` のトレーラーの節を合わせる（上書きしない）
+5. 判定の用例（5.1・7）・`-VerifyCopy`・実際のコミットでの `-Commit` で確かめ、人が行うことと、コミット メッセージの案を渡す
+
+<details>
+<summary>コマンドで導入するとき（AI が中で使うもの）</summary>
 
 ```powershell
 # スキルと併せて（本体は tools/ExpectationGuard/。-QualityGuardPath で変えられる）
@@ -194,6 +214,12 @@ Claude Code は `AGENTS.md` を読まないため、それを `@` import する 
 # 検出器だけ（AGENTS.md・スキルには触れない。既に自前の検出器があるリポジトリの置き換えには -Force）
 ./install/install.ps1 -TargetRoot C:\git\MyApp -IncludeQualityGuard
 ```
+
+コマンドだけで入れたときは、`rules.psd1` の範囲（`DiffScope`・`ReviewScope`）と導入先の文書を、手で合わせる。
+
+</details>
+
+### 写しと規則
 
 - 何を期待値と呼ぶかは、導入先の `rules.psd1`（初回だけ見本から置く。以後は導入先が持つ）に書く。CI の雛形も、初回だけ置いて以後は導入先が持つ（`-Force` でも上書きしない）。
 - 本体・共通の規則・フック・判定の用例は**写し**で、先頭付近に原本の版（`src/quality` に最後に触れたコミット）と SHA-256 の行が入る。

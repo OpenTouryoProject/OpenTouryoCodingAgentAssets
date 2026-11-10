@@ -25,7 +25,7 @@
       GeneratedRules     -CheckGenerated のとき、生成物の作り直しの漏れを見る（期待値の変更の代わりに）。
       ReviewRules        要確認。ファイルごとに、パターンに当たる行を足した数から消した数を引き、残れば一覧に出す。
                          **止めない・トレーラーを求めない**（終了コードは変えない）。GitHub Actions では注釈（notice）にする。
-                         段 1（PreToolUse）では見ない。
+                         段 1（PreToolUse）では見ない。範囲は ReviewScope（省略時はリポジトリ全体）で、DiffScope は使わない。
     **アサーションの緩和は見ない**（機械的に判定できない）。レビューの観点で拾う。
 
     承認：コミット メッセージに「Expectation-Change: <理由>」の行があれば、人が承認したものとする。
@@ -217,7 +217,7 @@ function Read-Rules([string]$CommonPath, [string]$RepoPath)
             else { $rules[$k] = $v }
         }
     }
-    foreach ($k in @("Guard", "FileRules", "LineRules", "KeyedArgumentRules", "TrailerRules", "GeneratedRules", "ReviewRules", "DiffScope"))
+    foreach ($k in @("Guard", "FileRules", "LineRules", "KeyedArgumentRules", "TrailerRules", "GeneratedRules", "ReviewRules", "DiffScope", "ReviewScope"))
     {
         if (-not $rules.ContainsKey($k)) { $rules[$k] = @() } else { $rules[$k] = @($rules[$k]) }
     }
@@ -1041,9 +1041,11 @@ try
     # --- 要確認（ReviewRules） ---------------------------------------------
     #   止めない。ファイルごとに、当たる行の「足した数 − 消した数」が残れば一覧に出す（移しただけなら出ない）。
     #   注釈のために、足した行の番号（新しい側）を覚えておく。
+    #   範囲は ReviewScope（省略時はリポジトリ全体）で、規則の Paths で絞る。**DiffScope は使わない。**
+    #   DiffScope はテストの在りかで、要確認が見たい製品のコードはその外にある（MultiPurposeAuthSite の DiffScope は root/programs/Tests/）。
     if (@($rules.ReviewRules).Count -gt 0)
     {
-        $scope = @($rules.DiffScope | ForEach-Object { ":(top)$_" })
+        $scope = @($rules.ReviewScope | ForEach-Object { ":(top)$_" })
         if ($scope.Count -eq 0) { $scope = @(":(top)") }
         $diff = (Invoke-GitChecked (@("diff", "-M", "-U0", "--no-color") + $diffEnds + @("--") + $scope)).Lines
         $file = $null

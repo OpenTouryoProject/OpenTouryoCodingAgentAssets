@@ -113,8 +113,9 @@
         @{
             Name    = '#pragma warning disable CS0618 の追加'
             Paths   = @('\.cs$')
-            # CS0618 を含む #pragma warning disable と、番号の無い（すべての警告を消す）#pragma warning disable
-            Pattern = '^\s*#\s*pragma\s+warning\s+disable(\s*$|\s*//|[^/]*\bCS0618\b)'
+            # CS0618 を含む #pragma warning disable と、番号の無い（すべての警告を消す）#pragma warning disable。
+            #   C# は CS を付けない番号（disable 618）も受ける（MultiPurposeAuthSite 399ac20b）
+            Pattern = '^\s*#\s*pragma\s+warning\s+disable(\s*$|\s*//|[^/]*\b(CS)?0*618\b)'
             Hint    = 'そのファイルの、ほかの [Obsolete] の警告も消える。範囲を restore で閉じているか、本当に旧版を使う必要があるかを確かめる'
         }
     )

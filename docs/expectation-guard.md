@@ -65,6 +65,7 @@ VerifyCaTddForOT `8908524` で実測）。理由には、版の変化と中身�
 | --- | --- | --- |
 | `IntroducedBy` | `root/programs/CheckExpectationChange.ps1` | `root/CheckExpectationChange.ps1` |
 | `DiffScope` | `root/programs/` | `root/programs/Tests/` |
+| `ReviewScope` | （省略。リポジトリ全体） | （省略。リポジトリ全体） |
 | `Guard`（共通に足すもの） | `CheckExpectationChange.ps1`・`CompareResult.ps1`（・`CompareGolden.ps1`） | `CheckExpectationChange.ps1`・`TestReport.cs` |
 | `FileRules` | Golden：`root/programs/*/Frameworks/Tests/Golden/**/Result*.txt`、`Comparer` で正規化して比べる | — |
 | `LineRules` テストの削除 | `Test`・`TestCase`・`TestCaseSource` | ＋ `Fact`・`Theory`・`SkippableFact`・`SkippableTheory`・`InlineData`・`MemberData`・`ClassData` |
@@ -98,7 +99,9 @@ VerifyCaTddForOT `8908524` で実測）。理由には、版の変化と中身�
 - `ReviewRules`（**要確認**。#3 の段階 5・2026-11-10）：止めない・トレーラーを求めない区分。ファイルごとに、パターンに当たる行の「足した数 − 消した数」が残れば一覧に出す
   （移しただけ・消しただけなら出ない。コメントの行は数えない）。終了コードは変えない。段 2・`-Commit`・`-Range` では一覧を表示し、GitHub Actions では足した行に注釈（`::notice`）を付ける。段 1 では見ない。
   `-PassThru` の結果の `Review`（`Kind`・`Path`・`Count`・`Lines`・`Hint`）。**共通の規則に 2 つ**（作者判断）：`[Obsolete]` の追加（属性の並び・`System.`・`ObsoleteAttribute` を含む）、
-  `#pragma warning disable` の追加（`CS0618` を含むものと、番号の無いもの＝すべての警告を消すもの）。
+  `#pragma warning disable` の追加（`CS0618` を含むもの（`CS` を付けない `618` も）と、番号の無いもの＝すべての警告を消すもの）。
+  **範囲は `ReviewScope`（リポジトリごとの規則。省略時はリポジトリ全体）で、`DiffScope` は使わない**（規則の `Paths` で、さらに絞る）。`DiffScope` はテストの在りかで、要確認が見たい製品のコードはその外にある。
+  範囲は導入先が選ぶ（#13 の対話で聞く。作者判断）（MultiPurposeAuthSite の写し直しで分かった。`DiffScope` が `root/programs/Tests/` なので `a4ea8acc` の `[Obsolete]` が出ず、`399ac20b` の `disable 618` も当たらなかった。2026-11-10）。
   OpenTouryo の実際のコミット（`6e3bf4f9`・`794223a8`・`303611d5`。#653・#662）で、`[Obsolete]` と `#pragma` が行番号まで正しく出ることを確かめた。
   **CI はベース側の検出器で調べるので、要確認の注釈が PR に出るのは、この本体を写したコミットがベースに入った後の PR から。**
 
@@ -118,14 +121,14 @@ VerifyCaTddForOT `8908524` で実測）。理由には、版の変化と中身�
 ## 5. 判定の用例（`tests/cases.psd1`）
 
 一時のリポジトリで、`rules.test.psd1`（すべての種類を 1 つずつ持つ規則）を使って本体を動かす。
-**本体の判定を固定するもので、導入先の規則を確かめるものではない。** 63 件（2026-11-10、#12 の T01〜T13 を足した。Windows PowerShell 5.1・PowerShell 7 とも全件期待どおり。2026-11-06 は 40 件）。
+**本体の判定を固定するもので、導入先の規則を確かめるものではない。** 66 件（2026-11-10、#12 の T01〜T13 と、要確認の R09〜R11 を足した。Windows PowerShell 5.1・PowerShell 7 とも全件期待どおり。2026-11-06 は 40 件）。
 
 | 区分 | 用例 |
 | --- | --- |
 | 検出する | テストの削除、Ignore（属性の並び）・Skip（xUnit）の追加、根拠（`[Basis]`）の削除、検証の削除（単体の Assert・E2E の Verify）、根拠（Report）の変更（複数行）、仕組みのファイルの変更（`.githooks`・規則のファイル自身・共通の規則の削除）、Golden の変更・追加・削除、コメント アウト、`-Staged`、語彙に無い `Found-By:`・`Tested-with:`（項目ごと）・`Reviewed-with:`（役の定義に無い）、git が読まないトレーラー（最後の段落に無い・本文が混じる・全角の「：」・名前の綴り）、最後の段落に無い・値の無い `Expectation-Change:`（承認にしない）、生成物の作り直しの漏れ、`-Range`、段 1（属性が減る Edit・Golden への Write・Golden を書き換えるコマンド・生成物の手での編集） |
 | 検出しない（正しく） | 属性の引数の書き直し、テストの追加、仕組みのファイルの追加、正規化で消える Golden の差分、Report をファイルをまたいで移す、トレーラーでの承認、E2E の Assert の削除、`//` の行、語彙にある `Found-By:`・`Tested-with:`（括弧の中の「,」）・`Reviewed-with:`（役と human・同じコミット／ステージで足した役）、名前の大文字・小文字の違い、件名と本文の文章の中の `Found-By:`、生成物の作り直し・免除のトレーラー・条件式だけの変更、導入より前のコミット、段 1（テストの追加・規則の外のファイル） |
 | 警告 | `fixed #NNN` に `Found-By:` が無い |
-| 要確認（止めない） | `[Obsolete]` の追加（単独・属性の並び）、`#pragma warning disable CS0618`・番号の無い `#pragma warning disable` の追加、出さないもの（コメントの中・ほかの番号の `#pragma`・消した・同じファイルの中で移した）、期待値の変更と同じコミット（止まり、要確認も出る） |
+| 要確認（止めない） | `[Obsolete]` の追加（単独・属性の並び）、`#pragma warning disable CS0618`・`618`（`CS` なし）・番号の無い `#pragma warning disable` の追加、`DiffScope` の外のファイル、`ReviewScope` の外は出さない、出さないもの（コメントの中・ほかの番号の `#pragma`・消した・同じファイルの中で移した）、期待値の変更と同じコミット（止まり、要確認も出る） |
 | 既知の取りこぼし | アサーションの値の反転、同じファイルの中での入れ替え |
 | 過検出（既知） | テストを別のファイルへ移す |
 

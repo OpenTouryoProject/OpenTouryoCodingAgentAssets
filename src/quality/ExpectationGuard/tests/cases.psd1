@@ -622,6 +622,30 @@ public class FooTests
             } })
             Expect = @{ Exit = 1; Kinds = @('テストの削除'); Review = 1; ReviewKinds = @('[Obsolete] の追加') }
         }
+        @{
+            Id = 'R09'; Category = '要確認'; Title = 'CS を付けない番号の #pragma warning disable 618 の追加（MultiPurposeAuthSite 399ac20b）'
+            Commits = @(@{ Message = '旧版を呼ぶ'; Files = @{ 'src/A.cs' = "#pragma warning disable 618`nclass A { }`n#pragma warning restore 618`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Review = 1; ReviewKinds = @('#pragma warning disable CS0618 の追加') }
+        }
+        @{
+            Id = 'R10'; Category = '要確認'; Title = 'DiffScope の外の [Obsolete] も出す（DiffScope はテストの在りか。MultiPurposeAuthSite a4ea8acc）'
+            Commits = @(
+                @{ Message = "テストの下だけを読む`n`nExpectation-Change: DiffScope を tests/ にした"; Files = @{ 'guard/rules.psd1' = "@{`n    DiffScope = @('tests/')`n}`n" } }
+                @{ Message = '旧版を残す'; Files = @{ 'src/A.cs' = "class A`n{`n    [Obsolete]`n    public void B() { }`n}`n" } }
+            )
+            Expect = @{ Exit = 0; Kinds = @(); Review = 1; ReviewKinds = @('[Obsolete] の追加') }
+        }
+        @{
+            Id = 'R11'; Category = '要確認'; Title = 'ReviewScope の外は出さない（範囲は導入先が選ぶ）'
+            Commits = @(
+                @{ Message = "要確認は src の下だけ`n`nExpectation-Change: ReviewScope を src/ にした"; Files = @{ 'guard/rules.psd1' = "@{`n    ReviewScope = @('src/')`n}`n" } }
+                @{ Message = '旧版を残す'; Files = @{
+                    'src/A.cs' = "class A`n{`n    [Obsolete]`n    public void B() { }`n}`n"
+                    'vendor/C.cs' = "class C`n{`n    [Obsolete]`n    public void D() { }`n}`n"
+                } }
+            )
+            Expect = @{ Exit = 0; Kinds = @(); Review = 1; ReviewKinds = @('[Obsolete] の追加') }
+        }
 
         # ==============================================================
         # 既知の取りこぼし（今の判定を固定する）

@@ -13,7 +13,12 @@
     # IntroducedBy = 'tools/ExpectationGuard/CheckExpectationChange.ps1'
 
     # 行の差し引きで読む diff の範囲（git の pathspec。ルートから）。省略時はリポジトリ全体。
+    #   要確認（ReviewRules）は、これを使わない（下の ReviewScope）。
     # DiffScope = @('src/')
+
+    # 要確認（ReviewRules）で読む diff の範囲（git の pathspec。ルートから）。省略時はリポジトリ全体。
+    #   テストの在りか（DiffScope）とは別に、製品のコードを含めて決める。規則の Paths で、さらに絞られる。
+    # ReviewScope = @('src/')
 
     # 表示に添える、期待値の変更の定義の参照（例 'QUALITY.md 3 節'）。省略可。
     # Reference = 'QUALITY.md 3 節'
