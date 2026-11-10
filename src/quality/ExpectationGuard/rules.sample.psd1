@@ -20,6 +20,10 @@
     #   テストの在りか（DiffScope）とは別に、製品のコードを含めて決める。規則の Paths で、さらに絞られる。
     # ReviewScope = @('src/')
 
+    # 承認の理由の書式に足す書き方（共通の規則の ApprovalReasonPatterns に足される。どれにも当たらなければ警告）。
+    #   例：テストの ID で Issue を指すリポジトリ（RT-352.1 など）
+    # ApprovalReasonPatterns = @('\bRT-\d+')
+
     # 表示に添える、期待値の変更の定義の参照（例 'QUALITY.md 3 節'）。省略可。
     # Reference = 'QUALITY.md 3 節'
 

@@ -648,6 +648,30 @@ public class FooTests
         }
 
         # ==============================================================
+        # 承認の理由の書式（#6。止めない。Issue 番号・仕様の節が無ければ警告）
+        # ==============================================================
+        @{
+            Id = 'A01'; Category = '理由の書式'; Title = 'Issue 番号・仕様の節の無い理由は警告（承認にはなる）'
+            Commits = @(@{ Message = "B を消す`n`nExpectation-Change: 仕様の変更"; Files = @{ 'tests/FooTests.cs' = "public class FooTests`n{`n    [Test]`n    public void A() { Assert.That(1, Is.EqualTo(1)); }`n}`n" } })
+            Expect = @{ Exit = 0; Kinds = @('テストの削除'); Warnings = 1 }
+        }
+        @{
+            Id = 'A02'; Category = '理由の書式'; Title = 'Issue 番号のある理由は警告しない'
+            Commits = @(@{ Message = "B を消す`n`nExpectation-Change: 仕様の変更（#123）"; Files = @{ 'tests/FooTests.cs' = "public class FooTests`n{`n    [Test]`n    public void A() { Assert.That(1, Is.EqualTo(1)); }`n}`n" } })
+            Expect = @{ Exit = 0; Kinds = @('テストの削除'); Warnings = 0 }
+        }
+        @{
+            Id = 'A03'; Category = '理由の書式'; Title = '仕様の節のある理由は警告しない（RFC・仕様の名前と節番号）'
+            Commits = @(@{ Message = "B を消す`n`nExpectation-Change: RFC 7636 4.2 に合わせた`nExpectation-Change: JARM 2.1 の iss を必須にした"; Files = @{ 'tests/FooTests.cs' = "public class FooTests`n{`n    [Test]`n    public void A() { Assert.That(1, Is.EqualTo(1)); }`n}`n" } })
+            Expect = @{ Exit = 0; Kinds = @('テストの削除'); Warnings = 0 }
+        }
+        @{
+            Id = 'A04'; Category = '理由の書式'; Title = 'リポジトリの規則で書き方を足せる（テストの ID RT-NNN）'
+            Commits = @(@{ Message = "規則を足す`n`nExpectation-Change: RT-352.1 の Skip に合わせた"; Files = @{ 'guard/rules.psd1' = "@{`n    ApprovalReasonPatterns = @('\bRT-\d+')`n}`n" } })
+            Expect = @{ Exit = 0; Kinds = @('仕組みの変更'); Warnings = 0 }
+        }
+
+        # ==============================================================
         # 既知の取りこぼし（今の判定を固定する）
         # ==============================================================
         @{

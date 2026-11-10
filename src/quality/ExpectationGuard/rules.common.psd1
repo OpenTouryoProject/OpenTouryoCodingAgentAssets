@@ -5,6 +5,18 @@
     # 承認のトレーラー
     ApprovalTrailer = 'Expectation-Change'
 
+    # 承認の理由の書式（OpenTouryoCodingAgentAssets#6）。どれにも当たらなければ警告（止めない）。
+    #   根拠（Issue 番号・仕様の節）の無い理由は、突き合わせ役が「根拠」の観点で確かめられない。
+    #   リポジトリの規則（rules.psd1）に書くと足される（例：MultiPurposeAuthSite のテストの ID 'RT-\d+'）。
+    ApprovalReasonPatterns = @(
+        '#\d+'                                                          # Issue 番号
+        '\bRFC\s*\d+'                                                   # RFC
+        '§\s*\d'                                                        # 節（§）
+        '\d+(\.\d+)*\s*節'                                              # 節（日本語）
+        '\b(OIDC|OpenID|FAPI|JARM|OAuth|PKCE|SAML|JWT|JWS|JWE|DPoP)\b[^。]*?\d+(\.\d+)+'  # 仕様の名前と節番号
+    )
+    ApprovalReasonHint = '理由に、根拠の Issue 番号（#NNN）か仕様の節（RFC 7636 4.2 など）を書く'
+
     # 数えない行（コメント。コメント アウトは「消えた」と数える）
     CommentLine = '^\s*//'
 

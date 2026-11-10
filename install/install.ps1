@@ -49,6 +49,7 @@
       <QualityGuardPath>/rules.psd1                  リポジトリごとの規則（無いときだけ、rules.sample.psd1 から置く）
       <QualityGuardPath>/ExpectationGuard.Tests/     判定の用例（Run-Tests.ps1）
       .claude/hooks/ExpectationGuard.ps1             段 1（PreToolUse フック）
+      .claude/agents/opentouryo-expectation-reviewer.md  突き合わせ役（期待値の変更の理由と差分。-Product の有無によらない）
       .githooks/commit-msg                           段 2（commit-msg フック）
       .github/workflows/expectation-change.yml       段 3（CI の雛形。無いときだけ置く。-Force でも上書きしない＝雛形の変更は手で合わせる）
       .claude/settings.json                          段 1 の登録（無いときだけ置く。あれば登録の例を表示する）
@@ -230,7 +231,7 @@ function Test-GuardCopy {
     return [bool]($head | Where-Object { $_ -match ('^\s*#.*' + [regex]::Escape($QualityMarker)) })
 }
 
-# 原本を写す。印の行を先頭（shebang があればその次）に入れる。
+# 原本を写す。印の行を先頭（shebang・YAML の前付け「---」があればその次＝前付けの中の YAML のコメント）に入れる。
 #   -Template : 雛形。無いときだけ置き、以後は導入先が持つ（印の行は付けるが、中身の検査はしない＝sha256:-）
 #   -NoMarker : 印の行を付けない（rules.psd1。導入先が持つ）
 function Copy-GuardFile {
@@ -266,7 +267,7 @@ function Copy-GuardFile {
         $marker = "# $QualityMarker OpenTouryoCodingAgentAssets@$script:guardRevision $relSource sha256:$hash"
         $lines = New-Object System.Collections.ArrayList
         $lines.AddRange(@($text -split "`n"))
-        $at = $(if ($lines.Count -gt 0 -and $lines[0].StartsWith('#!')) { 1 } else { 0 })
+        $at = $(if ($lines.Count -gt 0 -and ($lines[0].StartsWith('#!') -or $lines[0] -eq '---')) { 1 } else { 0 })
         $lines.Insert($at, $marker)
         $text = ($lines -join "`n")
     }
@@ -307,6 +308,8 @@ function Install-QualityGuard {
 
     Copy-GuardFile -Source (Join-Path $QualitySource 'ExpectationGuard.ps1') -Destination (Join-Path $TargetRoot '.claude/hooks/ExpectationGuard.ps1') -Replace $replace -Bom
     Copy-GuardFile -Source (Join-Path $QualitySource 'commit-msg') -Destination (Join-Path $TargetRoot '.githooks/commit-msg') -Replace $replace
+    # 突き合わせ役（OpenTouryoCodingAgentAssets#6）。検出器の一部なので、-Product の有無によらず写す
+    Copy-GuardFile -Source (Join-Path $QualitySource 'opentouryo-expectation-reviewer.md') -Destination (Join-Path $TargetRoot '.claude/agents/opentouryo-expectation-reviewer.md') -Replace $replace
     Copy-GuardFile -Source (Join-Path $QualitySource 'expectation-change.yml') -Destination (Join-Path $TargetRoot '.github/workflows/expectation-change.yml') -Replace $replace -Template
 
     # 段 1 の登録。settings.json は利用者の他の設定も持つので、あれば書き換えない。

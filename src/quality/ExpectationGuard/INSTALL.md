@@ -19,7 +19,7 @@
 | 段 1 の登録 | `.claude/settings.json` の `hooks.PreToolUse` | あれば `install.ps1` は書き換えない。足す内容を人に示す |
 | テストの在りか | テストのプロジェクト（`*.Tests.csproj` など）・Golden | `rules.psd1` の `DiffScope` と各規則の `Paths` |
 | 製品のコードの在りか | ソリューション・`*.csproj` の場所 | `rules.psd1` の `ReviewScope`（要確認の範囲） |
-| 役の定義 | `.claude/agents/*.md` | `Reviewed-with:` の語彙になる |
+| 役の定義 | `.claude/agents/*.md` | `Reviewed-with:` の語彙になる。突き合わせ役（`opentouryo-expectation-reviewer.md`）は検出器と一緒に写る（同じ名前の自前の定義があれば、聞く） |
 | 文書のトレーラー・検出器の節 | 導入先の `AGENTS.md`・`QUALITY.md`（`Expectation-Change`・`Found-By`・「トレーラー」で探す） | 規則と食い違う記述（例：「付けるトレーラーは … だけ」） |
 
 ## 2. 聞く
@@ -57,7 +57,11 @@
   - 期待値の変更（テストの削除など）を含むコミット → 検出し、トレーラーで承認済みと出る
   - `[Obsolete]`・`#pragma warning disable` を足したコミット（`git log -G` で探す）→ 要確認に出る。出なければ `ReviewScope` を見直す
   - `Found-By:` などのトレーラーのあるコミット → 止まらない
-- 自前の検出器の置き換え・版を上げたときは、導入の後のコミットを前後の検出器で `-Commit` し、判定が同じことを確かめる（違えば理由を書く）
+- 自前の検出器の置き換え・版を上げたときは、導入の後のコミット（直近の数十件）を前後の検出器で `-Commit <sha> -PassThru -Quiet` し、
+  終了コード・`Findings`・`Errors` が同じことを確かめる（違えば理由を書く。`Review`・`Warnings` は足した規則の分だけ増えてよい）。
+  **前の検出器は、`git show HEAD:<置き場所>/…` で、リポジトリの中の同じ置き場所（別の作業ツリーなど）に置いて動かす。**
+  本体は自分の隣の規則のファイルを仕組みのファイルに加えるので、リポジトリの外に置くと、前の側だけそれを数えず、見かけの差が出る
+- 突き合わせ役：理由のある実際のコミットで `-Commit <sha> -Json` が `Findings`・`Approved`・`DiffCommand` を返すこと
 
 ## 6. 導入先の文書を合わせる
 
@@ -65,6 +69,8 @@
 - 語彙と意味は写さず、規則のファイルを指す（写すと、規則を変えるたびにずれる。#5）
 - 今のトレーラー：`Expectation-Change:`（承認）・`Found-By:`（バグの見つけ方）・`Tested-with:`・`Reviewed-with:`（確かめ方）。
   **最後の段落に、空行を挟まずに並べる**（git はそこしか読まない）
+- `Expectation-Change:` の理由には、Issue 番号か仕様の節を書く（無ければ警告）。リポジトリ固有の書き方（テストの ID など）は `rules.psd1` の `ApprovalReasonPatterns` に足す
+- 文面を提案したら、コミットの前に突き合わせ役（`opentouryo-expectation-reviewer`）を回す（#6）。結果は報告に、回したことは `Reviewed-with:` に
 - 直した差分を人に示す
 
 ## 7. 人に渡す

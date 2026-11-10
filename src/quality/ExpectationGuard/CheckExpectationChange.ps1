@@ -57,6 +57,9 @@
     結果をオブジェクトでも返す（判定の用例・置き換えの前後の比較に使う）。
 .PARAMETER Quiet
     表示を出さない（-PassThru と併せて使う）。
+.PARAMETER Json
+    表示を出さず、結果を JSON で標準出力に出す（-Staged・-Commit で使う）。突き合わせ役（opentouryo-expectation-reviewer）の入力。
+      Target・Commit・DiffCommand（差分を見るコマンド）・Findings（Kind・Path・Count）・Approved（承認の理由）・Review・Warnings・Errors・ExitCode
 
 .OUTPUTS
     終了コード 0 = 期待値の変更が無い、またはトレーラーがある（警告はあってもよい）
@@ -92,8 +95,10 @@ param(
     [switch]$VerifyCopy,
     [string]$RulesFile,
     [switch]$PassThru,
-    [switch]$Quiet
+    [switch]$Quiet,
+    [switch]$Json
 )
+if ($Json) { $Quiet = $true }
 
 $ErrorActionPreference = "Stop"
 
@@ -708,12 +713,18 @@ function Invoke-PreToolUse($Rules)
 # 本体
 # ------------------------------------------------------------------
 $tempFiles = @()
-$result = [pscustomobject]@{ Target = $null; Commit = $null; Findings = @(); Approved = @(); Review = @(); Warnings = @(); Errors = @(); ExitCode = 0 }
+$result = [pscustomobject]@{ Target = $null; Commit = $null; DiffCommand = $null; Findings = @(); Approved = @(); Review = @(); Warnings = @(); Errors = @(); ExitCode = 0 }
+
+function Write-Result
+{
+    if ($PassThru) { Write-Output $result }
+    if ($Json) { Write-Output ($result | ConvertTo-Json -Depth 6) }
+}
 
 function Complete([int]$Code)
 {
     $result.ExitCode = $Code
-    if ($PassThru) { Write-Output $result }
+    Write-Result
     exit $Code
 }
 
@@ -852,7 +863,8 @@ try
     # --- 範囲は、コミットごとに自分自身を -Commit で呼ぶ。最も悪い終了コードを返す ---
     if ($Range)
     {
-        $commits = @((Invoke-GitChecked @("rev-list", "--no-merges", "--reverse", $Range)).Lines)
+        if ($Json) { throw "-Json は -Staged・-Commit で使う（範囲は、コミットごとに -Commit <sha> -Json で）" }
+        $commits =@((Invoke-GitChecked @("rev-list", "--no-merges", "--reverse", $Range)).Lines)
         Write-Msg ("  {0} の {1} 件のコミットを見ます" -f $Range, $commits.Count)
         $worst = 0
         $skipped = 0
@@ -899,6 +911,7 @@ try
         $label    = "コミット " + $sha.Substring(0, 8)
     }
     $result.Target = $label
+    $result.DiffCommand = "git diff -M " + ($diffEnds -join " ")
 
     function Add-Finding([string]$Kind, [string]$Path, [int]$Count = 0)
     {
@@ -1246,6 +1259,18 @@ try
     {
         $result.Approved = $trailers
         Write-Msg ("  期待値の変更 {0} 件（{1}）。トレーラーで承認済み : {2}" -f $result.Findings.Count, $label, ($trailers -join " / "))
+        # 理由の書式（OpenTouryoCodingAgentAssets#6）。止めない。Issue 番号・仕様の節の無い理由は、突き合わせ（根拠）ができない
+        $patterns = @($rules.ApprovalReasonPatterns)
+        if ($patterns.Count -gt 0)
+        {
+            foreach ($t in $trailers)
+            {
+                if (@($patterns | Where-Object { $t -match $_ }).Count -gt 0) { continue }
+                $w = ("{0}: の理由に、Issue 番号・仕様の節がありません（{1}）。{2}" -f $rules.ApprovalTrailer, $t, $rules.ApprovalReasonHint)
+                $result.Warnings += $w
+                Write-Warn $w
+            }
+        }
         if ($exit -eq 1) { Write-FixHow }
         Complete $exit
     }
@@ -1280,7 +1305,7 @@ catch
     Write-Msg ("  期待値の変更を確かめられませんでした : {0}" -f $_.Exception.Message) -ForegroundColor Red
     $result.Errors += $_.Exception.Message
     $result.ExitCode = 2
-    if ($PassThru) { Write-Output $result }
+    Write-Result
     exit 2
 }
 finally
