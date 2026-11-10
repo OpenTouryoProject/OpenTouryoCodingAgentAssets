@@ -156,7 +156,8 @@ function Invoke-Case($Case)
         $reviewItems = @($r | Where-Object { $_.PSObject.Properties["Review"] } | ForEach-Object { $_.Review })
         $reviewKinds = @($reviewItems | ForEach-Object { $_.Kind } | Sort-Object -Unique)
         $detail = (@($r | ForEach-Object { $_.Findings } | ForEach-Object { "{0} : {1}" -f $_.Kind, $_.Path }) + @($reviewItems | ForEach-Object { "要確認 {0} : {1}" -f $_.Kind, $_.Path }) + @($r | ForEach-Object { $_.Errors })) -join " / "
-        return [pscustomobject]@{ Exit = $code; Kinds = $kinds; Warnings = $warn; Review = $reviewItems.Count; ReviewKinds = $reviewKinds; Ask = $null; Detail = $detail }
+        $errs = @($r | ForEach-Object { $_.Errors }).Count
+        return [pscustomobject]@{ Exit = $code; Kinds = $kinds; Warnings = $warn; Errors = $errs; Review = $reviewItems.Count; ReviewKinds = $reviewKinds; Ask = $null; Detail = $detail }
     }
     finally
     {
@@ -180,6 +181,7 @@ foreach ($c in $cases)
             if (($want -join "|") -cne (@($a.Kinds) -join "|")) { $why += ("検出 [{0}]（期待 [{1}]）" -f (@($a.Kinds) -join ", "), ($want -join ", ")) }
         }
         if ($null -ne $e.Warnings -and $a.Warnings -ne [int]$e.Warnings) { $why += ("警告 {0} 件（期待 {1}）" -f $a.Warnings, $e.Warnings) }
+        if ($null -ne $e.Errors -and $a.Errors -ne [int]$e.Errors) { $why += ("誤り {0} 件（期待 {1}）" -f $a.Errors, $e.Errors) }
         if ($null -ne $e.Review -and $a.Review -ne [int]$e.Review) { $why += ("要確認 {0} 件（期待 {1}）" -f $a.Review, $e.Review) }
         if ($null -ne $e.ReviewKinds)
         {

@@ -478,6 +478,90 @@ public class FooTests
         }
 
         # ==============================================================
+        # トレーラーの書き方・語彙（#12。git と同じ読み方で読む）
+        # ==============================================================
+        @{
+            Id = 'T01'; Category = '検出する'; Title = '語彙に無いテストの種類（Tested-with。List の項目ごと）'
+            Commits = @(@{ Message = "足した`n`nTested-with: unit, gut"; Files = @{ 'src/A.cs' = "class A {}`n" } })
+            Expect = @{ Exit = 1; Kinds = @(); Errors = 1 }
+        }
+        @{
+            Id = 'T02'; Category = '検出しない'; Title = '語彙にあるテストの種類（括弧の中の「,」では分けない）'
+            Commits = @(@{ Message = "足した`n`nTested-with: unit, e2e (net48, net10.0)"; Files = @{ 'src/A.cs' = "class A {}`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Errors = 0 }
+        }
+        @{
+            Id = 'T03'; Category = '検出する'; Title = '役の定義に無いレビュー役（Reviewed-with）'
+            Commits = @(@{ Message = "足した`n`nReviewed-with: quality-reviewer (claude-sonnet-5-5)"; Files = @{ 'src/A.cs' = "class A {}`n" } })
+            Expect = @{ Exit = 1; Kinds = @(); Errors = 1 }
+            Note = '用例のリポジトリの役の定義は .claude/agents/reviewer.md だけ'
+        }
+        @{
+            Id = 'T04'; Category = '検出しない'; Title = '役の定義にあるレビュー役と人（行を分ける）'
+            Commits = @(@{ Message = "足した`n`nReviewed-with: reviewer (claude-sonnet-5-5)`nReviewed-with: human"; Files = @{ 'src/A.cs' = "class A {}`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Errors = 0 }
+        }
+        @{
+            Id = 'T05'; Category = '検出しない'; Title = '同じコミットで足した役の定義（確かめるコミットの木から語彙を取る）'
+            Commits = @(@{ Message = "役を足した`n`nReviewed-with: new-reviewer"; Files = @{ '.claude/agents/new-reviewer.md' = "---`nname: new-reviewer`n---`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Errors = 0 }
+        }
+        @{
+            Id = 'T06'; Category = '検出しない'; Title = '同じ段で足した役の定義（ステージ。索引から語彙を取る）'
+            Mode = 'Staged'
+            Commits = @(@{ Message = "役を足した`n`nReviewed-with: new-reviewer"; Files = @{ '.claude/agents/new-reviewer.md' = "---`nname: new-reviewer`n---`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Errors = 0 }
+        }
+        @{
+            Id = 'T07'; Category = '検出する'; Title = '最後の段落に無いトレーラー（Co-Authored-By の前に空行）'
+            Commits = @(@{ Message = "fixed #12 直した`n`nFound-By: spec-check`n`nCo-Authored-By: A <a@example.com>"; Files = @{ 'src/A.cs' = "class A {}`n" } })
+            Expect = @{ Exit = 1; Kinds = @(); Errors = 1; Warnings = 0 }
+            Note = '書いたが読まれない行は、直す行に出す（書き忘れの警告にはしない）'
+        }
+        @{
+            Id = 'T08'; Category = '検出する'; Title = '最後の段落に本文の行が混じる'
+            Commits = @(@{ Message = "fixed #12 直した`n`n本文。`nFound-By: spec-check"; Files = @{ 'src/A.cs' = "class A {}`n" } })
+            Expect = @{ Exit = 1; Kinds = @(); Errors = 1 }
+        }
+        @{
+            Id = 'T09'; Category = '検出する'; Title = '全角の「：」・名前の綴りの違い'
+            Commits = @(@{ Message = "fixed #12 直した`n`nFound-By：spec-check`nTested-wiht: unit"; Files = @{ 'src/A.cs' = "class A {}`n" } })
+            Expect = @{ Exit = 1; Kinds = @(); Errors = 2 }
+        }
+        @{
+            Id = 'T10'; Category = '検出しない'; Title = '名前の大文字・小文字の違い（git は区別しない）'
+            Commits = @(@{ Message = "fixed #12 直した`n`nfound-by: spec-check`nTested-With: unit"; Files = @{ 'src/A.cs' = "class A {}`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Errors = 0; Warnings = 0 }
+        }
+        @{
+            Id = 'T11'; Category = '検出しない'; Title = '件名と本文の文章の中の「Found-By:」'
+            Commits = @(@{ Message = "Found-By: の語彙を足した`n`nFound-By: の語彙に 1 語を足した。`n理由は #5 を見る。"; Files = @{ 'src/A.cs' = "class A {}`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Errors = 0 }
+        }
+        @{
+            Id = 'T12'; Category = '検出する'; Title = '最後の段落に無い Expectation-Change は承認にしない'
+            Commits = @(@{ Message = "B を消す`n`nExpectation-Change: 仕様の変更（#1）`n`nCo-Authored-By: A <a@example.com>"; Files = @{ 'tests/FooTests.cs' = @'
+public class FooTests
+{
+    [Test]
+    public void A() { Assert.That(1, Is.EqualTo(1)); }
+}
+'@ } })
+            Expect = @{ Exit = 1; Kinds = @('テストの削除'); Errors = 1 }
+        }
+        @{
+            Id = 'T13'; Category = '検出する'; Title = '値の無い Expectation-Change'
+            Commits = @(@{ Message = "B を消す`n`nExpectation-Change:"; Files = @{ 'tests/FooTests.cs' = @'
+public class FooTests
+{
+    [Test]
+    public void A() { Assert.That(1, Is.EqualTo(1)); }
+}
+'@ } })
+            Expect = @{ Exit = 1; Kinds = @('テストの削除'); Errors = 1 }
+        }
+
+        # ==============================================================
         # 警告（止めない）
         # ==============================================================
         @{

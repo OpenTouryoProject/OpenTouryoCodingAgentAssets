@@ -105,13 +105,18 @@
     # ------------------------------------------------------------------
     # トレーラーの検査
     # ------------------------------------------------------------------
-    #   値の最初の語が Vocabulary に無ければ止める（終了コード 1）。
+    #   トレーラーは git と同じ読み方で読む（メッセージの最後の段落だけ）。git が読まない書き方の行は止める。
+    #   値の最初の語（List = $true なら「,」で分けた項目ごと。括弧の中の「,」では分けない）が語彙に無ければ止める（終了コード 1）。
+    #   語彙は Vocabulary と、VocabularyFiles（確かめるコミットの木の、当たるファイルの名前。意味は VocabularyFilesMeaning の {0} にパス）。
     #   RequiredWhen（メッセージに当てる正規表現）に当たるのにトレーラーが無ければ、警告に留める。
-    #   どちらのときも Vocabulary の一覧を出す。Meanings（語 → 意味）があれば、語と並べて意味も出す。
-    #   Found-By（OpenTouryoCodingAgentAssets#5）は共通の規則にある。同じ Name で書くと置き換える。
+    #   止めたとき・警告のときは、書き方（Syntax）・例（Example）・語彙と意味（Meanings）を出す。直した行で、語彙に近い語が無い所は Placeholder。
+    #   Found-By・Tested-with・Reviewed-with（OpenTouryoCodingAgentAssets#5・#12）は共通の規則にある。同じ Name で書くと置き換える。
     TrailerRules = @(
         # @{
         #     Name         = 'Spec-Id'
+        #     Syntax       = 'Spec-Id: <仕様の ID>'
+        #     Placeholder  = '<仕様の ID>'
+        #     Example      = 'Spec-Id: EV-ORD-03'
         #     RequiredWhen = '(?i)\bfixed\s+#\d+'
         #     MissingHint  = '仕様の ID（EV-*・VAL-* など）を書く。'
         # }

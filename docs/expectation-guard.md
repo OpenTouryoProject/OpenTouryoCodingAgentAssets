@@ -1,4 +1,4 @@
-# 期待値の変更の検出器：共通の本体と規則の切り分け（Issue #3）
+﻿# 期待値の変更の検出器：共通の本体と規則の切り分け（Issue #3）
 
 このリポジトリ用の記録（導入先へは配らない）。
 OpenTouryo（OpenTouryo#640）と MultiPurposeAuthSite（MultiPurposeAuthSite#315）に別々の実装で入っていた検出器を読み比べ、
@@ -53,7 +53,7 @@ VerifyCaTddForOT `8908524` で実測）。理由には、版の変化と中身�
 | 表示（パイプなら UTF-8 のバイトを直接書く。5.1 の化け対策） | `Write-Msg` | 同じ | 同じ ＋ `-Quiet` |
 | `-Staged` / `-Commit` / `-Range`、MERGE_HEAD・マージ コミットの除外、空の木 | ○ | ○（同じ） | 同じ |
 | 導入より前のコミットの除外（`-Range`） | 本体のパスが木にあるか | 同じ | 規則の `IntroducedBy`（省略時は本体の場所） |
-| トレーラーの読み取り（`#` の行・`git commit -v` の切り取り線から後は見ない） | `Get-ExpectationTrailer` | `Get-Trailer`（名前を引数） | `Get-Trailer` |
+| トレーラーの読み取り（`#` の行・`git commit -v` の切り取り線から後は見ない） | `Get-ExpectationTrailer` | `Get-Trailer`（名前を引数） | `Get-Trailer`。2026-11-10（#12）から、コミットごとの検査は git と同じ読み方の `Get-GitTrailers` |
 | 仕組みのファイルの保護（変更・削除・名前の変更。追加は数えない） | ○ | ○ | 同じ。**本体と規則のファイル自身は自動で加える** |
 | ファイルごとの差し引き（`diff -U0` を `diff --git` で分ける・`+++`/`---` を除く・`//` の行を数えない） | ○（NUnit） | ○（テスト） | 規則の `LineRules` |
 | 呼び出しの引数の読み取り（文字列・文字リテラル・コメント・括弧の深さ） | — | `Get-CallArguments` | そのまま |
@@ -83,6 +83,18 @@ VerifyCaTddForOT `8908524` で実測）。理由には、版の変化と中身�
   どちらのときも語彙の一覧を出し、`Meanings`（語 → 意味）があれば意味も並べる（2026-11-09。止まった人が規則のファイルを開かずに選べるように）。
   **`Found-By` は共通の規則（`rules.common.psd1`）に入れた**（#5・2026-11-06。語彙は Issue の 10 語のまま）。
   同じ `Name` の規則を `rules.psd1` に書くと置き換わる（二重に数えない）。集計は `git log --format='%h %(trailers:key=Found-By,valueonly,separator=|)' <範囲>`。
+- **トレーラーは git と同じ読み方で読む**（#12・2026-11-10。`git interpret-trailers --parse`）。git はメッセージの最後の段落だけをトレーラーとして読み、
+  集計（`%(trailers)`）もそれに従う。行のどこでも拾う読み方では、`Co-Authored-By` の前に空行で分けたトレーラーや全角の「：」が、検査は通るのに集計からだまって漏れる。
+  規則のトレーラーと承認のトレーラー（`Expectation-Change`）について、git が読まない書き方（最後の段落に無い・最後の段落に本文が混じる・全角の「：」・
+  名前の綴りの違い〔大文字・小文字・「-」・空白を除いて 1〜2 文字〕・値が空）を止める。名前の大文字・小文字の違いは止めない（git も区別しない）。
+  件名と本文の文章の中の行は見ない（トレーラーらしい行だけの段落と、最後の段落の末尾に続く行だけを見る）。
+  **最後の段落に無い `Expectation-Change:` は承認にしない**（以前は承認にしていた。OpenTouryo の 10 月以降の 192 件・MultiPurposeAuthSite の 336 件に該当は無い）。
+- **止めたときの表示は、人がそのまま写して直せる形にする**（作者の要望。#12）：誤りごとに理由・書いた行・直した行（大文字・小文字や綴りの近い語は語彙の語に直し、
+  無ければ `<手段>` のような Placeholder）、直した最後の段落（貼る形。git が読んでいた `Co-Authored-By` なども含む）、規則ごとの書き方（`Syntax`）・例（`Example`）・語彙と意味、
+  コミットの直し方（段 2：`git commit -e -F "$(git rev-parse --git-path COMMIT_EDITMSG)"`。bash・PowerShell のどちらでも動く。`-Commit`：`git commit --amend`・`git rebase -i`・`--force-with-lease`）。
+  GitHub Actions では、誤りごとに `::error` の注釈も付ける。`Expectation-Change:` を書いたが誤っているときは、「トレーラーの無い期待値の変更」と見本ではなく「承認になっていない（直した行のとおりに直せば承認になる）」と出す（SANDBOX で「書いたのに無いと言われる」と読めたため）。段 2 で止まった後にこのコマンドで直してコミットでき、`%(trailers)` で読めることを、5.1 の commit-msg フックで確かめた。
+- `Tested-with:`（`List`。`unit`・`e2e`・`golden`・`manual`・`none`）と `Reviewed-with:`（`VocabularyFiles` で `.claude/agents/*.md` の名前 ＋ `human`）を共通の規則に入れた（#12）。
+  名前の `with` は小文字（作者判断）。役の語彙は**確かめるコミットの木（段 2 は索引）から取る**ので、役の定義を足したコミットでもその役を書ける。書き忘れの警告（`RequiredWhen`）はまだ付けない。
 - `ReviewRules`（**要確認**。#3 の段階 5・2026-11-10）：止めない・トレーラーを求めない区分。ファイルごとに、パターンに当たる行の「足した数 − 消した数」が残れば一覧に出す
   （移しただけ・消しただけなら出ない。コメントの行は数えない）。終了コードは変えない。段 2・`-Commit`・`-Range` では一覧を表示し、GitHub Actions では足した行に注釈（`::notice`）を付ける。段 1 では見ない。
   `-PassThru` の結果の `Review`（`Kind`・`Path`・`Count`・`Lines`・`Hint`）。**共通の規則に 2 つ**（作者判断）：`[Obsolete]` の追加（属性の並び・`System.`・`ObsoleteAttribute` を含む）、
@@ -106,12 +118,12 @@ VerifyCaTddForOT `8908524` で実測）。理由には、版の変化と中身�
 ## 5. 判定の用例（`tests/cases.psd1`）
 
 一時のリポジトリで、`rules.test.psd1`（すべての種類を 1 つずつ持つ規則）を使って本体を動かす。
-**本体の判定を固定するもので、導入先の規則を確かめるものではない。** 50 件（2026-11-10、Windows PowerShell 5.1・PowerShell 7 とも全件期待どおり。2026-11-06 は 40 件）。
+**本体の判定を固定するもので、導入先の規則を確かめるものではない。** 63 件（2026-11-10、#12 の T01〜T13 を足した。Windows PowerShell 5.1・PowerShell 7 とも全件期待どおり。2026-11-06 は 40 件）。
 
 | 区分 | 用例 |
 | --- | --- |
-| 検出する | テストの削除、Ignore（属性の並び）・Skip（xUnit）の追加、根拠（`[Basis]`）の削除、検証の削除（単体の Assert・E2E の Verify）、根拠（Report）の変更（複数行）、仕組みのファイルの変更（`.githooks`・規則のファイル自身・共通の規則の削除）、Golden の変更・追加・削除、コメント アウト、`-Staged`、語彙に無い `Found-By:`、生成物の作り直しの漏れ、`-Range`、段 1（属性が減る Edit・Golden への Write・Golden を書き換えるコマンド・生成物の手での編集） |
-| 検出しない（正しく） | 属性の引数の書き直し、テストの追加、仕組みのファイルの追加、正規化で消える Golden の差分、Report をファイルをまたいで移す、トレーラーでの承認、E2E の Assert の削除、`//` の行、語彙にある `Found-By:`、生成物の作り直し・免除のトレーラー・条件式だけの変更、導入より前のコミット、段 1（テストの追加・規則の外のファイル） |
+| 検出する | テストの削除、Ignore（属性の並び）・Skip（xUnit）の追加、根拠（`[Basis]`）の削除、検証の削除（単体の Assert・E2E の Verify）、根拠（Report）の変更（複数行）、仕組みのファイルの変更（`.githooks`・規則のファイル自身・共通の規則の削除）、Golden の変更・追加・削除、コメント アウト、`-Staged`、語彙に無い `Found-By:`・`Tested-with:`（項目ごと）・`Reviewed-with:`（役の定義に無い）、git が読まないトレーラー（最後の段落に無い・本文が混じる・全角の「：」・名前の綴り）、最後の段落に無い・値の無い `Expectation-Change:`（承認にしない）、生成物の作り直しの漏れ、`-Range`、段 1（属性が減る Edit・Golden への Write・Golden を書き換えるコマンド・生成物の手での編集） |
+| 検出しない（正しく） | 属性の引数の書き直し、テストの追加、仕組みのファイルの追加、正規化で消える Golden の差分、Report をファイルをまたいで移す、トレーラーでの承認、E2E の Assert の削除、`//` の行、語彙にある `Found-By:`・`Tested-with:`（括弧の中の「,」）・`Reviewed-with:`（役と human・同じコミット／ステージで足した役）、名前の大文字・小文字の違い、件名と本文の文章の中の `Found-By:`、生成物の作り直し・免除のトレーラー・条件式だけの変更、導入より前のコミット、段 1（テストの追加・規則の外のファイル） |
 | 警告 | `fixed #NNN` に `Found-By:` が無い |
 | 要確認（止めない） | `[Obsolete]` の追加（単独・属性の並び）、`#pragma warning disable CS0618`・番号の無い `#pragma warning disable` の追加、出さないもの（コメントの中・ほかの番号の `#pragma`・消した・同じファイルの中で移した）、期待値の変更と同じコミット（止まり、要確認も出る） |
 | 既知の取りこぼし | アサーションの値の反転、同じファイルの中での入れ替え |
@@ -150,6 +162,8 @@ SANDBOX（NetDevInfraWGinOSSConsortium/Sandbox）に `install.ps1 -TargetRoot . 
 | --- | --- | --- |
 | #5 | 写し直して `Found-By` の検査を入れる PR | 成功。**CI はベース側（検査の無い版）で見るので、検査が効くのはマージの後の PR から**（設計どおり） |
 | #6 | `fixed #2` に `Found-By:` が無い／語彙にある値／語彙に無い値（`gut-feeling`） | 無いと警告の注釈でジョブは成功、語彙に無い値を足すと失敗。手元の commit-msg でも同じ（無い＝警告、誤り＝拒否） |
+| #7・#8 | #12 の検出器に写し直す（#7）→ マージの後、誤ったトレーラー（最後の段落に無い・語彙の大文字・綴り）を `--no-verify` で入れる（#8） | #7 は成功（ベース側の旧版で見る）。#8 は `expectation-change` が失敗し、誤りごとに `::error` の注釈（書いた行 → 直した行）。表示どおり `git commit --amend` で直して force push すると成功（2026-11-10） |
+| #8（続き） | 既存のトレーラー：テストの削除に、`Co-Authored-By` の前に空行で分けた／全角の「：」の／値の無い `Expectation-Change:`、`fixed #1` に `Found-By:` 無し | 手元の commit-msg は 3 件を拒否（4 件目は警告だけで通る）。CI は 3 件に `::error`、承認にしない、4 件目は `::warning`。表示どおり `git rebase -i` の reword で直して force push すると、3 件とも承認済みで成功（2026-11-10） |
 
 ## 7. 実測した落とし穴
 
