@@ -1205,7 +1205,8 @@ try
         if ($q.Value) { $vals = @($vals | Where-Object { $_ -match $q.Value }) }
         if ($vals.Count -gt 0) { continue }
         if (@($fixes | Where-Object { $_.Name -eq $q.Name }).Count -gt 0) { continue }   # 書いたが読まれない行は、直す行に出ている
-        $what = $(if ($q.Value) { "{0}: {1}" -f $q.Name, $q.Value } else { "{0}:" -f $q.Name })
+        # Value は正規表現なので、表示では記号を除く（'^(quality-reviewer|human)\b' → 'quality-reviewer・human'）
+        $what = $(if ($q.Value) { "{0}: {1}" -f $q.Name, ($q.Value -replace '\\b|\^|\$|[()]', '' -replace '\|', '・') } else { "{0}:" -f $q.Name })
         $result.Warnings += ("{0}（{1}）に {2} がありません。{3}" -f $label, ($why -join "・"), $what, $q.Hint)
         if (@($rules.TrailerRules | Where-Object { $_.Name -eq $q.Name }).Count -gt 0) { $helpNames += $q.Name }
     }
