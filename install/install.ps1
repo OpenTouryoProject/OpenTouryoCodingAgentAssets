@@ -47,7 +47,7 @@
       <QualityGuardPath>/CheckExpectationChange.ps1   本体
       <QualityGuardPath>/rules.common.psd1           共通の規則
       <QualityGuardPath>/rules.psd1                  リポジトリごとの規則（無いときだけ、rules.sample.psd1 から置く）
-      <QualityGuardPath>/ExpectationGuard.Tests/     判定の用例（Run-Tests.ps1）
+      <QualityGuardTestsPath>/                       判定の用例（Run-Tests.ps1。既定は <QualityGuardPath>/ExpectationGuard.Tests）
       .claude/hooks/ExpectationGuard.ps1             段 1（PreToolUse フック）
       .claude/agents/opentouryo-expectation-reviewer.md  突き合わせ役（期待値の変更の理由と差分。-Product の有無によらない）
       .githooks/commit-msg                           段 2（commit-msg フック）
@@ -60,6 +60,11 @@
 
 .PARAMETER QualityGuardPath
     -IncludeQualityGuard の本体を置くフォルダ（導入先のルートから）。既定は tools/ExpectationGuard。
+
+.PARAMETER QualityGuardTestsPath
+    -IncludeQualityGuard の判定の用例を置くフォルダ（導入先のルートから）。既定は <QualityGuardPath>/ExpectationGuard.Tests。
+    製品のソースの隣を避け、道具の置き場所に分けるときに使う（例 root/files/tools/ExpectationGuard.Tests。OpenTouryoCodingAgentAssets#13）。
+    置き場所を変えても、古い場所の写しは消さない（導入先で消す。INSTALL.md）。CI の雛形は無いときだけ置くので、既存の workflow のパスは手で直す。
 
     -IncludeQualityGuard だけで -Product を省くと、検出器だけを写す（AGENTS.md・CLAUDE.md・スキルには触れない）。
     既に自前の検出器を持つリポジトリ（印の行の無いフック・検出器がある）を置き換えるときは、これに -Force を付ける
@@ -104,7 +109,9 @@ param(
 
     [switch]$IncludeQualityGuard,
 
-    [string]$QualityGuardPath = 'tools/ExpectationGuard'
+    [string]$QualityGuardPath = 'tools/ExpectationGuard',
+
+    [string]$QualityGuardTestsPath
 )
 
 Set-StrictMode -Version Latest
@@ -291,9 +298,11 @@ function Install-QualityGuard {
     $rel = ($QualityGuardPath -replace '\\', '/').Trim('/')
     if (-not $rel -or $rel -eq '.') { $checker = 'CheckExpectationChange.ps1' } else { $checker = "$rel/CheckExpectationChange.ps1" }
     $checkerWin = $checker -replace '/', '\'
-    $testsWin = (Split-Path -Parent $checkerWin) + '\ExpectationGuard.Tests\Run-Tests.ps1'
-    $testsWin = $testsWin.TrimStart('\')
-    $replace = @{ '@@CHECKER@@' = $checker; '@@CHECKER_WIN@@' = $checkerWin; '@@TESTS_WIN@@' = $testsWin }
+    $testsRel = $(if ($QualityGuardTestsPath) { ($QualityGuardTestsPath -replace '\\', '/').Trim('/') } elseif (-not $rel -or $rel -eq '.') { 'ExpectationGuard.Tests' } else { "$rel/ExpectationGuard.Tests" })
+    $testsWin = ($testsRel -replace '/', '\') + '\Run-Tests.ps1'
+    # Run-Tests.ps1 が本体を探す場所（ルートから。本体が導入先のルートなら '.'）
+    $checkerDir = $(if (-not $rel -or $rel -eq '.') { '.' } else { $rel })
+    $replace = @{ '@@CHECKER@@' = $checker; '@@CHECKER_WIN@@' = $checkerWin; '@@TESTS_WIN@@' = $testsWin; '@@CHECKER_DIR@@' = $checkerDir }
 
     $dest = Join-Path $TargetRoot $rel
     Write-Host "  原本の版: OpenTouryoCodingAgentAssets@$script:guardRevision"
@@ -303,7 +312,7 @@ function Install-QualityGuard {
 
     $testsSource = Join-Path $QualitySource 'tests'
     foreach ($f in Get-ChildItem -Path $testsSource -File) {
-        Copy-GuardFile -Source $f.FullName -Destination (Join-Path (Join-Path $dest 'ExpectationGuard.Tests') $f.Name) -Bom
+        Copy-GuardFile -Source $f.FullName -Destination (Join-Path (Join-Path $TargetRoot $testsRel) $f.Name) -Replace $replace -Bom
     }
 
     Copy-GuardFile -Source (Join-Path $QualitySource 'ExpectationGuard.ps1') -Destination (Join-Path $TargetRoot '.claude/hooks/ExpectationGuard.ps1') -Replace $replace -Bom

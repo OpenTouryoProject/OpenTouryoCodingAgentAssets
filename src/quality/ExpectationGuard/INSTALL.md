@@ -28,7 +28,8 @@
 2. **配布物の範囲**：検出器だけ（`-Product` なし。`AGENTS.md`・スキルに触れない）か、スキルと併せる（`-Product`）か。
    **`-Product` と `-Force` を併せると、導入先の `AGENTS.md` なども上書きされる。** 導入先が自分で書いた `AGENTS.md` があれば、`-Product` なしを勧める
 3. **本体の置き場所**（`-QualityGuardPath`。既定 `tools/ExpectationGuard`。写し直しなら今の場所）。
-   判定の用例は `<置き場所>/ExpectationGuard.Tests/` に固定である（選べるようにするのは #13 の残り）
+   **判定の用例の置き場所**（`-QualityGuardTestsPath`。既定 `<置き場所>/ExpectationGuard.Tests`）。製品のソースの隣を避け、道具の置き場所（例 `root/files/tools/ExpectationGuard.Tests`）に分けるかを聞く。
+   動かすなら、(1) 古い場所の写し（印の行のあるファイルだけ）を作業ツリーから消す（人に確かめてから）、(2) 導入先の CI（`expectation-change.yml`。導入先が持つので上書きされない）の判定の用例のパスを直す、(3) 文書（`QUALITY.md`・手元の回し方）のパスを直す
 4. **テストの範囲**（`DiffScope`）：期待値の変更を読む範囲。テストのプロジェクト・Golden を含める
 5. **書き忘れの組**（`TrailerRequirements`）：リスク「高」の名前空間（導入先の `QUALITY.md` の品質マップ）のパスを聞き、`fixed #NNN` で変えたら `Reviewed-with:` を求める組を足すか（警告。`fixing` は数えない）
 6. **要確認の範囲**（`ReviewScope`）：`[Obsolete]`・`#pragma warning disable` を探す範囲。**製品のコードを含める。** 省略するとリポジトリ全体。
@@ -52,7 +53,7 @@
 
 ## 5. 確かめる
 
-- 判定の用例：`<置き場所>/ExpectationGuard.Tests/Run-Tests.ps1` を **Windows PowerShell 5.1 と PowerShell 7** で。すべて期待どおりであること
+- 判定の用例：`<判定の用例の置き場所>/Run-Tests.ps1` を **Windows PowerShell 5.1 と PowerShell 7** で。すべて期待どおりであること
 - 写しの検査：`CheckExpectationChange.ps1 -VerifyCopy` で、違いが 0 件であること
 - 導入先の実際のコミットで `-Commit <sha>`：
   - 期待値の変更（テストの削除など）を含むコミット → 検出し、トレーラーで承認済みと出る

@@ -27,7 +27,19 @@ param(
 $ErrorActionPreference = "Stop"
 
 $here    = $PSScriptRoot
-$guard   = Split-Path -Parent $here
+# 本体の場所。install.ps1 が写すときに、導入先のルートからのフォルダで埋める（判定の用例を本体と別の場所に置けるように。#13）。
+#   埋まっていなければ（原本のまま）、1 つ上のフォルダ。
+$checkerDir = '@@CHECKER_DIR@@'
+if ($checkerDir.StartsWith('@@'))
+{
+    $guard = Split-Path -Parent $here
+}
+else
+{
+    $top = (& git -C $here rev-parse --show-toplevel 2>$null)
+    if ($LASTEXITCODE -ne 0 -or -not $top) { Write-Host ("  リポジトリの中で実行してください : {0}" -f $here) -ForegroundColor Red; exit 2 }
+    $guard = [IO.Path]::GetFullPath((Join-Path $top $checkerDir))
+}
 $checker = Join-Path $guard "CheckExpectationChange.ps1"
 $common  = Join-Path $guard "rules.common.psd1"
 foreach ($f in @($checker, $common, (Join-Path $here "cases.psd1"), (Join-Path $here "rules.test.psd1"), (Join-Path $here "TestComparer.ps1")))

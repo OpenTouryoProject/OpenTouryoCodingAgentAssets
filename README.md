@@ -209,7 +209,7 @@ Claude Code は `AGENTS.md` を読まないため、それを `@` import する 
 <summary>コマンドで導入するとき（AI が中で使うもの）</summary>
 
 ```powershell
-# スキルと併せて（本体は tools/ExpectationGuard/。-QualityGuardPath で変えられる）
+# スキルと併せて（本体は tools/ExpectationGuard/。-QualityGuardPath で、判定の用例の場所は -QualityGuardTestsPath で変えられる）
 ./install/install.ps1 -Product claude -TargetRoot C:\git\MyApp -IncludeQualityGuard
 
 # 検出器だけ（AGENTS.md・スキルには触れない。既に自前の検出器があるリポジトリの置き換えには -Force）

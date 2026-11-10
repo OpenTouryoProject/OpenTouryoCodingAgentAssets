@@ -96,6 +96,8 @@ VerifyCaTddForOT `8908524` で実測）。理由には、版の変化と中身�
   GitHub Actions では、誤りごとに `::error` の注釈も付ける。`Expectation-Change:` を書いたが誤っているときは、「トレーラーの無い期待値の変更」と見本ではなく「承認になっていない（直した行のとおりに直せば承認になる）」と出す（SANDBOX で「書いたのに無いと言われる」と読めたため）。段 2 で止まった後にこのコマンドで直してコミットでき、`%(trailers)` で読めることを、5.1 の commit-msg フックで確かめた。
 - `Tested-with:`（`List`。`unit`・`e2e`・`golden`・`manual`・`none`）と `Reviewed-with:`（`VocabularyFiles` で `.claude/agents/*.md` の名前 ＋ `human`）を共通の規則に入れた（#12）。
   名前の `with` は小文字（作者判断）。役の語彙は**確かめるコミットの木（段 2 は索引）から取る**ので、役の定義を足したコミットでもその役を書ける。書き忘れの警告は #6 で付けた（下の `TrailerRequirements`）。
+- **判定の用例の置き場所を選べる**（#13・2026-11-10。`install.ps1 -QualityGuardTestsPath`。既定は `<QualityGuardPath>/ExpectationGuard.Tests` のまま）：写した `Run-Tests.ps1` には、本体の場所（ルートから）を埋める（原本のままなら 1 つ上のフォルダを探す）。
+  作者判断：OpenTouryo（`root/programs/ExpectationGuard.Tests`）・MultiPurposeAuthSite（`root/ExpectationGuard.Tests`）は、製品のソースの隣を避けて `root/files/tools/ExpectationGuard.Tests` へ動かす。本体は動かさない（フック・CI・`IntroducedBy` に響くため）
 - **トレーラーの書き忘れ**（#6・2026-11-10。`TrailerRequirements`。止めない）：条件の組（`Message`・`Trailer`・`Paths`。すべて当たれば）なのに `Name` のトレーラー（`Value` があればそれに当たる値）が無ければ警告。`IgnoreLine` に当たる行（コメント・空行）だけの変更は数えない。
   共通の規則に 2 組：コード（`\.(cs|vb)$`）を変えたのに `Tested-with:` が無い（`none` で満たせる）、`Expectation-Change:` があるのに `Reviewed-with: opentouryo-expectation-reviewer` が無い。
   リポジトリの規則で組を足す（配列なのでつながる）。作者の提案：リスク「高」の場所の `fixed #NNN` に `Reviewed-with:`（`fixing` は数えない。レビュー役を回すのは `fixed` の前のため）。
