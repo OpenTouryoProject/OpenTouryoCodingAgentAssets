@@ -115,6 +115,7 @@ net48（sln に加えないので）：テストのプロジェクトを `MSBuil
 `dotnet test <Web>.Tests\bin\Debug\net48\<Web>.Tests.dll <Web>.E2ETests\bin\Debug\net48\<Web>.E2ETests.dll -s <runsettings>`。
 runsettings は `<RunSettings><RunConfiguration><MaxCpuCount>0</MaxCpuCount></RunConfiguration></RunSettings>`。
 **`-- RunConfiguration.MaxCpuCount=0` では並行しなかった**（実測。並行したかは各テストの開始時刻で確かめる）。
+2 つの DLL を渡すと `--filter` は効かない（一部だけ流すなら DLL を 1 つにする）。
 
 ## やってはいけないこと
 
