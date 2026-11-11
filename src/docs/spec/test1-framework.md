@@ -26,6 +26,7 @@
     送信させたい submit ボタンには `form="<フォームID>"` を付けてフォームへ明示的に紐付ける（付けないと押しても無反応）。
 
 - ダイアログ表示には、基本的にJavaScript機能を使用する（OK、Yes/No）。
+- 共通メッセージ領域のメッセージは、種類を class で区別する：エラーは `text-danger`、情報は `text-info`。
 - 一覧表示は tableタグを自前で生成し、trタグをループで実装する。
 
 ## WindowsForms（2CSClientWin_sample / WSClientWin_sample）
