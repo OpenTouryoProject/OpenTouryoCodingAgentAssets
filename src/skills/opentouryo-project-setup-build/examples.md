@@ -88,7 +88,7 @@ $overlay = Join-Path $repo 'base2-overlay'   # present only when customizing 親
 #   by several repos and "was it overlaid?" cannot be judged (Copy-Item keeps the
 #   timestamps), so ALWAYS re-extract. The overlay (if any) is re-applied in 1b.
 #   ★ 作り直す前に、展開ツリーで直接直した親クラス2 を base2-overlay\ に写してあること（写していない改変は消える）。
-$Fresh      = $true    # 毎回作り直す（既定。SKILL §1）
+$Fresh      = $true    # 毎回作り直す（既定。SKILL §1）。リポに前の回のスクリプトがあり -Fresh がスイッチ（既定 off）なら、-Fresh を付けて呼ぶ（実測）
 $Redownload = $false   # ★ moving ref (develop) 用：set $true で <ref>.zip を消してから取得（展開ツリーも道連れ）。
                        #   計画が「既存」の ZIP を使うと言うときは $false のまま（ハッシュは build-ref.txt に残る）
 New-Item -ItemType Directory -Force -Path $work | Out-Null

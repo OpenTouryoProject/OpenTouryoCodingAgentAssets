@@ -47,8 +47,9 @@ B層の書き方そのものは `opentouryo-layer-b`、呼び出し方は `opent
    Web の `appsettings.json` は、参照しただけでテストの出力へ写る（実測）。
 4. `[Basis]`・`[Observation]` の定義（`QualityAttributes.cs`）を写す。
 5. ソリューションへの追加：**net10.0** は `dotnet sln <sln> add <Tests の csproj>`。
-   **net48 は `dotnet sln add` が使えない**（Web のプロジェクトを評価できずに失敗する。実測）。sln へは Visual Studio で追加する。
-   どちらも、テストのビルドと実行は **csproj を直接指定**すれば sln に無くてもできる。
+   **net48 は `dotnet sln add` が使えない**（Web のプロジェクトを評価できずに失敗する。実測）。**net48 は sln に加えない**
+   （加えるには Visual Studio での人の操作が要る）。テストのビルドと実行は **csproj を直接指定**すれば sln に無くてもできる
+   （`MSBuild.exe <csproj> -restore` → `dotnet test <csproj> --no-build`。E2E と並行で全件を流すのは `opentouryo-test-e2e-web` の「実行」）。
 
 ## 実行する
 

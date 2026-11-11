@@ -36,7 +36,9 @@ metadata:
   `ConnectionString_SQL` と一致）。
 - **core は `GetConfigParameter.InitConfiguration()` が必須**（`opentouryo-config`）
 - **net48（`packages.config`）は msbuild の前に `nuget restore <sln>` が必須**（`/t:restore` では不可。
-  `nuget.exe` は ZIP の `root\programs\nuget.exe` を流用）。core は `dotnet restore`（`dotnet build` に含む）。
+  `nuget.exe` は ZIP の `root\programs\nuget.exe` を流用）。**`-MSBuildPath <ビルドに使う MSBuild の Bin>` を必ず付ける**
+  （無いと nuget.exe は版のいちばん高い「VS」の MSBuild を拾い、SSMS 21 以降が入った機では SSMS のものを選んで `MSB4226`・
+  PackageReference の restore の破損になる。実測）。core は `dotnet restore`（`dotnet build` に含む）。
 - **セッション状態は `StateServer` のまま残す**（`InProc` に変えない）。StateServer は**セッションを
   シリアライズ可能に保ち、後の変更（out-of-proc 化・スケールアウト）が効く**（InProc にすると失う）。net48 は
   **ASP.NET State Service を起動**して使う（`root\files\bat\aspnet_state-stat.bat` で起動。未起動だと実行できない
@@ -50,7 +52,8 @@ metadata:
 - **★ WebForms は `.aspx`/`.master` を msbuild が検証しない**（`.cs` のみコンパイル）。マークアップのエラー
   （`Inherits` 綴り・`ContentPlaceHolderID` 不一致・`TagPrefix` 未登録・designer 宣言漏れ）は実行時まで出るので、
   **`aspnet_compiler.exe -v / -p <プロジェクトディレクトリ> -f <出力先>` で事前コンパイル検証する**
-  （エージェント/CI では必須。`opentouryo-layer-p-webforms-screen`）
+  （エージェント/CI では必須。`opentouryo-layer-p-webforms-screen`）。**net48 MVC の `.cshtml` も同じ**（`aspnet_compiler -v / -p <Web のフォルダ>`）。
+  net48 で出る **`CS1685`（`System.ObsoleteAttribute` の重複定義）の警告は無視してよい**（netstandard のファサードによる。エラーではない。実測）
 
 ### `.gitignore` を置く
 

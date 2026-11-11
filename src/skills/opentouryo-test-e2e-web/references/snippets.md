@@ -1,6 +1,6 @@
 # opentouryo-test-e2e-web：コードの見本
 
-MVC_Sample（net10.0）で実測した形。`<Web>` は Web のプロジェクト名（例 `MVC_Sample`）。
+MVC_Sample（net10.0）で実測した形。net48（IIS Express）は末尾の節。`<Web>` は Web のプロジェクト名（例 `MVC_Sample`）。
 
 ## csproj（`<Web>.E2ETests/<Web>.E2ETests.csproj`）
 
@@ -263,4 +263,112 @@ Microsoft.Playwright.PlaywrightException : Locator expected to be enabled
 Call log:
   - Expect "ToBeEnabledAsync" Locator("#pageNext") with timeout 5000ms
   - waiting for Locator("#pageNext")
+```
+
+## net48（IIS Express。MVC_Sample net48 で実測）
+
+csproj は上と同じ形で、`<TargetFramework>net48</TargetFramework>`（`Nullable` は書かない）、`Microsoft.Data.SqlClient` は Web の `packages.config` と同じ版。
+`AppHost` は、上の骨格のうち起動・停止だけを次に替える（ブラウザ・`TestContext.Progress` は同じ）。
+
+```csharp
+/// <summary>IIS Express のポート（固定。使われていたらテストを失敗にする）</summary>
+private const int Port = 8090;
+
+/// <summary>テストの出力（bin\Debug\net48）から Web のプロジェクトのフォルダ（Web.config のある所）へ</summary>
+public static string WebDir => Path.GetFullPath(Path.Combine(
+    TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "<Web>"));
+
+[OneTimeSetUp]
+public async Task StartAsync()
+{
+    // 前の回の IIS Express が残っていると、古いビルドに当たったまま 200 で通ってしまう
+    if (IsPortInUse(Port))
+        throw new InvalidOperationException("ポート " + Port + " は使用中（前の回の iisexpress が残っていないか確認する）");
+    BaseUrl = "http://localhost:" + Port;
+
+    string iis = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "IIS Express", "iisexpress.exe");
+    var psi = new ProcessStartInfo(iis, "/path:\"" + WebDir + "\" /port:" + Port + " /clr:v4.0")
+    {
+        UseShellExecute = false,
+        CreateNoWindow = true,
+    };
+    // Web.config が参照する変数を、テストを実行するシェルから明示で渡す
+    psi.EnvironmentVariables["OT_RESOURCE_ROOT"] = Environment.GetEnvironmentVariable("OT_RESOURCE_ROOT");
+    app = Process.Start(psi);
+
+    // ログインの要らない URL（MVC_Sample は /Home/Login。/Ping は Forms 認証で 302）が 200 を返すまで待つ
+    using (var http = new HttpClient())
+    {
+        var deadline = DateTime.Now.AddMinutes(3);
+        while (true)
+        {
+            if (app.HasExited) throw new InvalidOperationException("IIS Express が起動しなかった（exit " + app.ExitCode + "）");
+            try
+            {
+                var response = await http.GetAsync(BaseUrl + "/Home/Login");
+                if (response.StatusCode == HttpStatusCode.OK) break;
+            }
+            catch (HttpRequestException) { }
+            catch (TaskCanceledException) { }
+            if (DateTime.Now > deadline) throw new TimeoutException("アプリが応答しない: " + BaseUrl);
+            await Task.Delay(500);   // 起動の待ち合わせだけ。テストの中では固定の時間を待たない
+        }
+    }
+    // （ブラウザの用意は上と同じ）
+}
+
+[OneTimeTearDown]
+public async Task StopAsync()
+{
+    if (Browser != null) await Browser.DisposeAsync();
+    playwright?.Dispose();
+    if (app != null && !app.HasExited)
+    {
+        app.Kill();   // net48 の Process に entireProcessTree は無い（IIS Express は子のプロセスを持たない）
+        app.WaitForExit(10000);
+    }
+}
+
+/// <summary>ポートが使われているか（接続できる、または待ち受けを開始できない）</summary>
+private static bool IsPortInUse(int port)
+{
+    try
+    {
+        using (var c = new TcpClient())
+        {
+            var t = c.ConnectAsync(IPAddress.Loopback, port);
+            if (t.Wait(1000) && c.Connected) return true;
+        }
+    }
+    catch (Exception) { }
+    try
+    {
+        var l = new TcpListener(IPAddress.Loopback, port);
+        l.Start();
+        l.Stop();
+        return false;
+    }
+    catch (SocketException) { return true; }
+}
+```
+
+`TestDb` の接続文字列は `Web.config` から読む（`using System.Linq; using System.Xml.Linq;`）。
+
+```csharp
+string path = Path.Combine(AppHost.WebDir, "Web.config");
+connectionString = XDocument.Load(path).Root
+    .Element("connectionStrings").Elements("add")
+    .First(e => (string)e.Attribute("name") == "ConnectionString_SQL")
+    .Attribute("connectionString").Value;
+```
+
+並行で全件を流す runsettings（例 `scripts\parallel.runsettings`。`dotnet test <B層 dll> <E2E dll> -s <これ>`）：
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <RunConfiguration>
+    <MaxCpuCount>0</MaxCpuCount>
+  </RunConfiguration>
+</RunSettings>
 ```
