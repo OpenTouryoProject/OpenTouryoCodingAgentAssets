@@ -76,6 +76,45 @@ WS/3層依存サンプルは、別サンプル **`WS_sample` の `WSIFType_sampl
 WS 依存が不要なら、後工程 **`opentouryo-project-transform`** で WS 参照を外し `CS0246` を潰す。
 画面が WS 側の型を `using` しているケースの差し替え等は**サンプル固有**（`<サンプル>.md`（同 `samples/` 配下） / transform）。
 
+## (C) B層を WS_sample に置いて共用する（①′ で選んだとき）
+
+B層・D層・引数と戻り値のクラスを `WSServer_sample`・`WSIFType_sample` に置き、選んだ Web（MVC net48・MVC core・Web Forms）から
+ProjectReference する。**P層が何であっても、B層は 1 つ書けば共用できる。** 呼び方は ProjectReference したクラスを直接呼ぶ
+（`new <B層のクラス>().DoBusinessLogic(…)`。`CallController` は使わない）。
+
+1. **net48 の 2 つを取り出す**（(A) の 1〜3 と同じ。`<repo>\WS_sample\{WSIFType_sample,WSServer_sample}`）。net10.0 の Web だけでも取り出す
+   （**ソースの正は net48 側**。net10.0 側はそれをリンクで使う）。
+2. **net48 の Web から ProjectReference する**：WebForms は (A) のまま。MVC net48 は、未使用の WS 参照を消さずに ProjectReference にし、sln にも足す（`mvc.md`）。
+3. **net10.0 の Web があれば `WS_sample_Core` を作る**：`Samples4NetCore\Legacy\WS_sample` の 2 つの csproj だけを
+   `<repo>\WS_sample_Core\{WSIFType_sample,WSServer_sample}` に置き、ソース（`.cs`）は写さずに net48 側をリンクする
+   （OpenTouryo の net48 版と net10.0 版の `.cs` は `AssemblyInfo.cs` を除いて同じ＝同じソースが両方でコンパイルできる。実測）。
+
+   ```xml
+   <!-- WS_sample_Core\WSServer_sample\WSServer_sample.csproj（WSIFType_sample も同じ形。ProjectReference は WSServer だけ） -->
+   <Project Sdk="Microsoft.NET.Sdk">
+     <PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup>
+     <!-- ソースは net48 側が正。ここはリンクで取り込むだけ（このフォルダに .cs を置かない） -->
+     <ItemGroup>
+       <Compile Include="..\..\WS_sample\WSServer_sample\**\*.cs"
+                Exclude="..\..\WS_sample\WSServer_sample\Properties\**;..\..\WS_sample\WSServer_sample\obj\**;..\..\WS_sample\WSServer_sample\bin\**"
+                Link="%(RecursiveDir)%(Filename)%(Extension)" />
+     </ItemGroup>
+     <ItemGroup><ProjectReference Include="..\WSIFType_sample\WSIFType_sample.csproj" /></ItemGroup>
+     <ItemGroup>
+       <Reference Include="OpenTouryo.Business"><HintPath>..\..\OpenTouryoAssemblies\Build_netcore100\net10.0\OpenTouryo.Business.dll</HintPath></Reference>
+       <!-- OpenTouryo.Framework・OpenTouryo.Public も同じ形 -->
+     </ItemGroup>
+   </Project>
+   ```
+
+   `Properties\**` を外すのは、net48 側の `AssemblyInfo.cs` と SDK 形式が作る `AssemblyInfo` の属性が重なり、ビルドが落ちるため（実測）。
+4. **net10.0 の Web から ProjectReference する**：`dotnet add <Web>.csproj reference ..\..\WS_sample_Core\WSServer_sample\WSServer_sample.csproj ..\..\WS_sample_Core\WSIFType_sample\WSIFType_sample.csproj`
+   と `dotnet sln add`（SDK 形式なので使える）。
+
+確かめた（2026-11-12）：net48 側に足した B層のクラスは、net10.0 側に何もしなくてもリンクで取り込まれ、MVC core が参照してビルドできた（警告 0・エラー 0）。
+**net48 の古い形式の csproj は、足した `.cs` を `<Compile Include>` に書かないとコンパイルしない**（書いて初めて DLL に入った。実測）。
+B層を書くときの置き場所の決まりは `opentouryo-layer-b`。
+
 ## ランタイム注意：core のリモート WS は実用不可
 
 .NET Core では **`BinaryFormatter` が廃止**され、リモート WS 呼び出し（`protocol="2"`〜`"5"`）は実質動かない
