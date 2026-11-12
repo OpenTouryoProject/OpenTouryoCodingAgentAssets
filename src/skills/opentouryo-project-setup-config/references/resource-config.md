@@ -13,7 +13,8 @@
    （例：ログ出力先が旧パスのままでも起動する＝下記）。
 
 `OT_RESOURCE_ROOT`（またはその番号付き）＝リポジトリ直下の `resource\`。**ユーザ環境変数はマシン/ユーザ全体に残る＝`SETUP-CHANGES.md` に記録。**
-**検証だけなら User 変数を変えず、プロセス限定上書き**（`$env:OT_RESOURCE_ROOT="<repo>\resource"` を起動コマンドで＝`run-verify.md`）で足り、記録も不要。
+**セットアップの終わりには User 変数に登録する**（SKILL ⑥ の 4。人が VS・IIS Express から起動するため）。
+登録の前に一時的に起動して確かめるだけなら、プロセス限定上書き（`$env:OT_RESOURCE_ROOT="<repo>\resource"` を起動コマンドで＝`run-verify.md`）で足りる。
 
 ## パス系キー（張り替える対象）
 
