@@ -31,6 +31,10 @@
 
 - `Aspx/Framework/Ping.aspx` … 未認証で **302**（→ login へ）。正常。
 - `Aspx/start/login.aspx` … **200** でログインフォームが描画されれば OK。
+- **ログイン**（WebForms_Sample。実測）：GET した hidden 全件に、`ctl00$ContentPlaceHolder_A$txtUserID`・`txtPassword`・`btnButton1` を載せて POST。
+  利用者 ID が空でなければ認証され、**302 → `menu.aspx`** なら OK（name は接頭辞が変わりうるので、末尾一致で拾う）。
+- **DB 到達**：`Aspx/sample/crud/sampleScreen.aspx`（2 層）と `sampleScreen_cc.aspx`（`ddlCmctCtrl=testInProcess`。WS を (A) にした成否）で、
+  マスタ上の `ctl00$btnMButton1`＝`SelectCount` を押し、応答に「N件のデータがあります」が出れば OK（下の「hidden を全件返す」と併用）。
 - **★ 初回リクエストは待つ**：ビルド直後の**初回リクエストは初回コンパイル**（WebForms＝`.aspx` コンパイル／core＝JIT・起動）で
   **30 秒を超える**ことがある（実測：`/Ping/Index` が 30s タイムアウト→ウォーム後は正常）。**タイムアウト＝失敗と誤判定しない**
   ＝初回は **120s 程度のタイムアウト**にするか、**1発ウォームアップしてから判定**する。

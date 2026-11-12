@@ -1,6 +1,6 @@
 ---
 name: opentouryo-test-e2e-web
-description: "OpenTouryo の Web アプリ（ASP.NET Core MVC・net10.0、ASP.NET MVC 5・net48）の画面の E2E テストを、NUnit と Playwright（.NET）で書く。テストのプロジェクト（<Webプロジェクト名>.E2ETests）の作り方、テストからのアプリの起動と停止（net10.0 は dotnet run・空いたポート、net48 は IIS Express・使用中のポートの確認。起動の待ち合わせ）、ブラウザ（Edge のチャネル）、ログイン、画面の操作と確かめ方（Expect）、テストのデータの準備と後始末（SqlClient で直接）、根拠の ID を書く [Basis] 属性、Red の落ち方の見分けを扱う。テスト先行（TESTING.md）で、画面の振る舞い（トリガー → 画面の状態・メッセージ・遷移・ボタンの活性）を確かめるテストを先に書くときに使う。E2E / 画面のテスト / Playwright / ブラウザのテスト / E2ETests を伴う作業のときに使う。"
+description: "OpenTouryo の Web アプリ（ASP.NET Core MVC・net10.0、ASP.NET MVC 5・net48、ASP.NET Web Forms・net48）の画面の E2E テストを、NUnit と Playwright（.NET）で書く。テストのプロジェクト（<Webプロジェクト名>.E2ETests）の作り方、テストからのアプリの起動と停止（net10.0 は dotnet run・空いたポート、net48 は IIS Express・使用中のポートの確認。起動の待ち合わせ）、ブラウザ（Edge のチャネル）、ログイン、画面の操作と確かめ方（Expect）、テストのデータの準備と後始末（SqlClient で直接）、根拠の ID を書く [Basis] 属性、Red の落ち方の見分けを扱う。テスト先行（TESTING.md）で、画面の振る舞い（トリガー → 画面の状態・メッセージ・遷移・ボタンの活性）を確かめるテストを先に書くときに使う。E2E / 画面のテスト / Playwright / ブラウザのテスト / E2ETests を伴う作業のときに使う。"
 ---
 
 # 画面の E2E テスト（Web・Playwright）
@@ -8,8 +8,7 @@ description: "OpenTouryo の Web アプリ（ASP.NET Core MVC・net10.0、ASP.NE
 画面の振る舞い（トリガー → 画面の状態・メッセージ・遷移・ボタンの活性）を、**実際のブラウザでアプリを操作して**確かめる。
 B層の振る舞い（抽出条件・計算・業務エラー）は B層のテスト（`opentouryo-test-layer-b`）で確かめ、E2E では繰り返さない。
 
-**実測の範囲：ASP.NET Core MVC（net10.0）と ASP.NET MVC 5（net48・IIS Express）。** Web Forms は実測していない。
-Web Forms で E2E を書くときは、アプリの起動の仕方を推測で書かず、作者に聞く。
+**実測の範囲：ASP.NET Core MVC（net10.0）、ASP.NET MVC 5（net48・IIS Express）、ASP.NET Web Forms（net48・IIS Express）。**
 
 ## 構成（固定）
 
@@ -58,6 +57,9 @@ Edge の無い環境（Linux の CI など）だけ、`Channel` を外し、ビ�
 
 **`.cshtml` の構文の誤りは msbuild を通る**（実行して初めて落ちる）。段 4 では `aspnet_compiler -v / -p <Web のフォルダ>` でビューを事前に確かめる。
 
+**Web Forms**（実測 WebForms_Sample）も同じ起動の仕方。違いは、待ち合わせの URL が **`/Aspx/start/login.aspx`**（`/Aspx/Framework/Ping.aspx` は Forms 認証で 302）、
+`.aspx`・`.master` も `aspnet_compiler` で確かめること。固定のポートは、同じリポジトリのほかの Web の E2E と分ける（実測 8090 と 8091）。
+
 ## テストを書く
 
 骨格は `references/snippets.md` の「テストの骨格」。要点だけ。
@@ -71,6 +73,13 @@ Edge の無い環境（Linux の CI など）だけ、`Channel` を外し、ビ�
   `ToHaveTextAsync`・`ToBeVisibleAsync`・`ToBeEnabledAsync`・`ToBeDisabledAsync`・`ToHaveURLAsync`・`ToHaveValueAsync`。
   **Expect は条件が満たされるまで待つ**（既定 5 秒）。読み込み・送信の後に固定の時間を待たない。
 - 送信は、画面のボタンを押す（`ClickAsync("#btnMain1")`）。URL へ直接 POST しない（画面の振る舞いを確かめていない）。
+
+**Web Forms の画面**（実測。テスト仕様で id を決めるときから守る）：
+- コンテンツページのコントロールの id には、既定で `ctl00_ContentPlaceHolder_A_` のような接頭辞が付く。決めた id は、**`<%@ Page %>` に `ClientIDMode="Static"`** を付けてそのまま描画させる
+  （マスタページ上のコントロールも引き継ぐ）。既存の画面（ログインなど）は末尾一致で指す（`input[id$="txtUserID"]`）。
+- **ボタンの id は `btn` で始める。** Open棟梁は id の接頭辞でイベントを結線する（`opentouryo-layer-p-webforms-event`）。`btn` で始まらないボタンは押しても動かない。
+- `asp:Button`（`<input type="submit">`）のキャプションは `ToHaveValueAsync` で確かめる（`ToHaveTextAsync` ではない）。
+- `GridView` の行は `#<id> tbody tr` で数え、見出し行は `<thead>` に出させる（`UseAccessibleHeader="true"` と `HeaderRow.TableSection = TableRowSection.TableHeader`。出さないと見出しが行数に入る）。
 
 | 仕様に書かれていること | E2E で確かめること |
 | --- | --- |

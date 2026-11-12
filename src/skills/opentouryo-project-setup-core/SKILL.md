@@ -64,7 +64,7 @@ HintPath は2階層＝`..\..\`。`samples/daogentool.md` / `samples/dpquerytool.
   1ソリューションでビルド**（旧「`WS_sample\Build\` へ DLL 配置」は不要）。**セットアップで完結**。詳細＝`samples/webservices.md`。
 - **(B) WS 依存を切り離す** — WS 参照を外す（**後工程 `opentouryo-project-transform`**）。
 
-**(A)/(B) の選択・層の削減・画面改変は、セットアップ中に判断を求めない**（開ける状態の後に利用者が決める）。
+**(A)/(B) の選択・層の削減・画面改変は、セットアップ中に判断を求めない**（開ける状態の後に利用者が決める）。**セットアップは (A) で進める**（(B) は後工程）。
 **WS/3層の共通手順は `samples/webservices.md`、サンプル固有は `samples/<サンプル>.md`**（Web Forms は `samples/webforms.md`、MVC は `samples/mvc.md`）。
 
 <!-- 執筆者メモ（Claude Code は読み込み時に除去）：samples/<サンプル>.md は検証したサンプルから順に整備する残件。

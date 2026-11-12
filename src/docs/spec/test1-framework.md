@@ -16,6 +16,7 @@
   - 確認ダイアログ：ShowYesNoMessageDialog
   - 子画面表示：ShowModalScreen
 
+- 共通メッセージ領域のメッセージは、種類を class で区別する：エラーは `text-danger`、情報は `text-info`。
 - 一覧表示は `GridView`（`DataSource` にバインド）を使用する。
 
 ## MVC
