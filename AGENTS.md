@@ -48,7 +48,7 @@ Git 操作は人が手動で行う。
 があれば突き合わせる。裏が取れないことは書かず、確認するか作者に聞く。
 
 リポジトリの場所は、リポジトリごとの環境変数で引く（OpenTouryoProject/OpenTouryo#652。一覧と既定の場所は
-`%OT_OTR_PATH%\root\files\tools\PowerShell\_RepoPaths.csv`、登録は同じフォルダの `Register-RepoPaths.ps1`）。
+`%OT_OTR_PATH%\root\files\tools\PowerShell\RepoPaths\_RepoPaths.csv`、登録は同じフォルダの `Register-RepoPaths.ps1`）。
 環境変数が無いときは、作者に場所を聞く（推測で探さない）。
 
 ### トークン規律（SKILL.md は目安 ~5000 以内）
