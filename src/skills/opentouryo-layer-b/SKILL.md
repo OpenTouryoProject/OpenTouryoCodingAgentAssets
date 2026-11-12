@@ -40,10 +40,10 @@ UOC のシグネチャ・自動振り分け・`this.ReturnValue`・直呼びガ�
 
 `MyBaseLogic` は非推奨。`MyFcBaseLogic` を継承する。
 
-**置くプロジェクトは csproj で決める**：Web の csproj が `WSServer_sample` を ProjectReference していれば（B層を WS_sample で共用する構成。
-`opentouryo-project-setup-core` の `samples/webservices.md` (C)）、業務コードクラスは `WS_sample\WSServer_sample\Business`、D層は `Dao`、
-引数・戻り値のクラスは `WS_sample\WSIFType_sample` に置く（名前空間はそのプロジェクトのもの）。**net48 の csproj に `<Compile Include>` を足す**
-（足さないとコンパイルされない）。`WS_sample_Core`（net10.0）はリンクで取り込むので、そこには置かない。P層からは直接呼ぶ。参照していなければ Web のプロジェクトに置く。
+**置く場所は csproj で決める**：Web の csproj が `WSServer_sample` を ProjectReference していれば（B層を WS_sample で共用する構成。
+`opentouryo-project-setup-core` の `samples/webservices.md` (C)）、業務コードクラスはリポジトリ直下の `Shared\Business`、D層は `Shared\Dao`、
+引数・戻り値のクラスは `Shared\IfType` に置く（名前空間は `WSServer_sample.Business`・`WSIFType_sample` など、移す前のもの）。**ファイルを置くだけ**でよい
+（csproj はフォルダごとのリンクなので書き換えない。net48 と net10.0 の両方に入る・実測）。P層からは直接呼ぶ。参照していなければ Web のプロジェクトに置く。
 
 ## 業務コードクラスの書き方
 

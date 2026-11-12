@@ -84,7 +84,7 @@ Web 系を選んだら、**B層・D層・引数と戻り値のクラスをどこ
 | 選択 | 置き場所 | 向いている場合 |
 | --- | --- | --- |
 | 1. Web のプロジェクトに置く | 各 Web のプロジェクトの中 | P層が 1 つだけ。これまでの構成 |
-| 2. WS_sample に置いて共用する | `WS_sample\WSServer_sample`（B・D層）・`WS_sample\WSIFType_sample`（型）。net10.0 は `WS_sample_Core` が同じソースをリンクで使う | 同じ B層を、複数の P層（MVC・MVC core・Web Forms）から使う |
+| 2. WS_sample に置いて共用する | ソースはリポジトリ直下の `Shared\`（B・D層・型）。net48 の `WS_sample` と net10.0 の `WS_sample_Core` の `WSServer_sample`・`WSIFType_sample` がリンクで使う | 同じ B層を、複数の P層（MVC・MVC core・Web Forms）から使う |
 
 2 を選んだら、④⑤ `opentouryo-project-setup-core` の `samples/webservices.md`「(C) B層を WS_sample に置いて共用する」で取り出す。
 既存 repo に Web 系を足すときは、既に `WS_sample\WSServer_sample` を ProjectReference している Web があるかを見て、あれば 2 を勧める。
