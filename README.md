@@ -236,11 +236,12 @@ Claude Code は `AGENTS.md` を読まないため、それを `@` import する 
 規模のある変更は **spec → テスト → plan → 実装** で進めるのを推奨する（仕様を `docs/spec/`、計画を `docs/plan/` に置いてから実装）。
 `-IncludeTutorial` を付けると、この流れを通しで試す見本（`src/docs/` の全ファイル）を、相対パスを保ったまま導入先の `docs/` へ配置する。
 `docs/spec`・`docs/plan` は利用者の作業ディレクトリなので、**再実行しても既存ファイルは上書きしない**（`-Force` でのみ上書き）。
+見本のファイル名は 2026-11 に変えた（#15。例 `test6-testfirst.md` → `cmn-testfirst.md`）。前の版の名前のファイルは消さず、残っていればインストーラが警告する。
 
 | 見本 | 中身 |
 | --- | --- |
-| `spec/`・`plan/` の `test1`〜`test5` | セットアップ・構成の変更、マスタ・トランザクションの画面の実装（仕様は [NorthwindDbSampleSpec](https://github.com/OpenTouryoProject/NorthwindDbSampleSpec)） |
-| `spec/test6-testfirst*.md`・`plan/test6-testfirst*.md` | **テスト先行**：共通の決まりと対象（受注一覧 OrdTf）、**司令役の手順**（実装役・レビュー役をサブ エージェントで回す。人には仕様の決定だけを選択肢で聞き、決定記録の案も書く）、レビュー役の観点 |
+| `plan/cmn-setup.md`・`cmn-transform.md`、`spec/cmn-framework.md`、`spec/`・`plan/` の `test1`・`test2` | セットアップ・構成の変更、フレームワーク毎の共通仕様（規約）、マスタ・トランザクションの画面の実装（仕様は [NorthwindDbSampleSpec](https://github.com/OpenTouryoProject/NorthwindDbSampleSpec)） |
+| `spec/cmn-testfirst.md`・`spec/test3-testfirst-*.md`、`plan/cmn-testfirst*.md`・`plan/test3-testfirst-*-review.md` | **テスト先行**：共通の決まりと対象（受注一覧 OrdTf）、**司令役の手順**（実装役・レビュー役をサブ エージェントで回す。人には仕様の決定だけを選択肢で聞き、決定記録の案も書く）、レビュー役の観点 |
 | `prompt/検証プロンプト.md` | 上の見本を回すための短い指示（例：司令役への 1 文） |
 
 - 見本の仕様（NorthwindDbSampleSpec）の本文は**意図的に不完全**にしてあり、テストを起こすエージェントが仕様の漏れを見つけられるかを試す教材になる。

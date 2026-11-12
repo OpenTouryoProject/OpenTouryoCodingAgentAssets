@@ -461,6 +461,32 @@ if ($IncludeTutorial) {
             $destPath = Join-Path (Join-Path $TargetRoot 'docs') $relative
             Write-AssetFile -Path $destPath -Content $tutorialBody
         }
+
+        # 前の版の名前のファイル（OpenTouryoCodingAgentAssets#15 で名前を変えた）は消さない（利用者が直しているかもしれない）。
+        # 残っていたら知らせる（同じ見本が古い名前と新しい名前の 2 つになり、どちらを読むか迷うため）。
+        $renamed = [ordered]@{
+            'plan/test1-setup.md'               = 'plan/cmn-setup.md'
+            'plan/test1-transform.md'           = 'plan/cmn-transform.md'
+            'plan/test2-mastertable.md'         = 'plan/test1-mastertable.md'
+            'plan/test3-transactiontable1.md'   = 'plan/test2-transactiontable1.md'
+            'plan/test4-transactiontable2.md'   = 'plan/test2-transactiontable2.md'
+            'plan/test5-transactiontable3.md'   = 'plan/test2-transactiontable3.md'
+            'plan/test6-testfirst.md'           = 'plan/cmn-testfirst.md'
+            'plan/test6-testfirst-review.md'    = 'plan/cmn-testfirst-review.md・plan/test3-testfirst-OrdTf-review.md'
+            'spec/test1-framework.md'           = 'spec/cmn-framework.md'
+            'spec/test2-mastertable.md'         = 'spec/test1-mastertable.md'
+            'spec/test3-transactiontable1.md'   = 'spec/test2-transactiontable1.md'
+            'spec/test4-transactiontable2.md'   = 'spec/test2-transactiontable2.md'
+            'spec/test5-transactiontable3.md'   = 'spec/test2-transactiontable3.md'
+            'spec/test6-testfirst.md'           = 'spec/cmn-testfirst.md'
+            'spec/test6-testfirst-OrdTf.md'     = 'spec/test3-testfirst-OrdTf.md'
+        }
+        foreach ($k in $renamed.Keys) {
+            $oldPath = Join-Path (Join-Path $TargetRoot 'docs') $k
+            if (Test-Path $oldPath) {
+                Write-Warning "前の版の名前の見本が残っています: docs/$k（今の名前は docs/$($renamed[$k])）。直していなければ消してください。"
+            }
+        }
     }
 }
 

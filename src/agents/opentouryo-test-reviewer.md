@@ -16,7 +16,7 @@ model: opus
 ケース：<フレームワーク>
 成果物：<パス>（段 4 は Red のコミットも）
 仕様：<仕様のリポジトリの場所と版>
-観点：<レビューの観点のファイル（例 docs/plan/*-review.md）>
+観点：<レビューの観点のファイル（共通と対象の 2 つ。例 docs/plan/cmn-testfirst-review.md・docs/plan/test3-testfirst-OrdTf-review.md）>
 実装役の報告：<報告の本文>
 前の指摘：<差し戻しの後に新しく呼ばれたときだけ。前の回の自分の指摘（直し方の文）をそのまま>
 ```
