@@ -18,7 +18,7 @@ src/
   instructions/AGENTS.md        1. 概要・規約（常時コンテキストに載る / これが原本）
   instructions/TESTING.md       1. テスト先行の進め方と、承認の 2 段（AGENTS.md から参照。AGENTS.md と同じくルートへ）
   skills/                       1. 全スキル（下の「スキル一覧」）
-  agents/                       1. 役の定義：テスト先行の実装役・レビュー役（Claude Code 向け。.claude/agents へ）
+  agents/                       1. 役の定義：テスト先行の実装役・レビュー役（Claude Code は .claude/agents、Copilot は .github/agents へ変換）
   quality/ExpectationGuard/     2. 期待値の変更の検出器の原本（導入先へ写す。INSTALL.md は導入する AI が読む手順で、写さない）
   docs/                         3. spec・plan・prompt の見本（導入先の docs/ へ）
 install/
@@ -70,7 +70,7 @@ cd OpenTouryoCodingAgentAssets
 - `TESTING.md`：テスト先行の進め方（テスト仕様 → Red → Green、根拠の ID、期待値の変更とトレーラー）と、**承認の 2 段**
   （テストの質は実装役と別のレビュー役が確かめ、人は**仕様の決定だけ**を GO/NOGO で判断する）。
 - 役の定義（`src/agents/`）：テスト先行の**実装役**（`opentouryo-test-implementer`）と**レビュー役**（`opentouryo-test-reviewer`。編集できず、テストを自分で実行する）。
-  司令役（指示を受けたセッション）がサブ エージェントとして回す。**Claude Code 向けのみ**（Copilot 向けは未対応）。
+  司令役（指示を受けたセッション）がサブ エージェントとして回す。Claude Code と GitHub Copilot 向け（Copilot はサブ エージェントを続けて呼べないので、手順に書き分けがある）。
 
 ### スキル一覧
 
@@ -152,14 +152,14 @@ cd OpenTouryoCodingAgentAssets
 Claude Code / GitHub Copilot / Cursor / Codex CLI / Gemini CLI など、標準に対応した
 30以上のツールが同一のスキルを読める。**1回書けば全プロダクトで使える。**
 
-プロダクト差分はインストラクション側（と、Claude Code 向けの役の定義）にのみ存在し、インストーラが吸収する。
+プロダクト差分はインストラクション側と役の定義にのみ存在し、インストーラが吸収する。
 
 ### 配置先
 
 | プロダクト | インストラクション | スキル | 役の定義 |
 | --- | --- | --- | --- |
 | `claude` | `CLAUDE.md`（`AGENTS.md` を `@` import） | `.claude/skills/` | `.claude/agents/` |
-| `copilot` | `.github/copilot-instructions.md`（複製） | `.github/skills/` | （未対応） |
+| `copilot` | `.github/copilot-instructions.md`（複製） | `.github/skills/` | `.github/agents/*.agent.md`（原本から変換。`model` は書かない） |
 | `agents` | `AGENTS.md` | `.agents/skills/` | （未対応） |
 
 `AGENTS.md`・`TESTING.md` はどのプロダクトでも対象リポジトリのルートへ配置される（`AGENTS.md` が原本）。

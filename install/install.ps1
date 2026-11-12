@@ -19,6 +19,8 @@
     AGENTS.md はどのプロダクトでも対象リポジトリのルートに配置される（これが原本）。
     Claude Code は AGENTS.md を読まないため、@ import する CLAUDE.md を別途生成する。
     claude では、役の定義（src/agents：テスト先行の実装役・レビュー役）を .claude/agents へ置く。
+    copilot では、同じ役の定義を Copilot の形（.github/agents/<名前>.agent.md）に変換して置く
+    （model は書かない＝Copilot のモデルの書き方が原本と違うため。tools は Copilot の別名 read・search・edit・execute に直す）。
 
     既存ファイルは、このスクリプトが生成したもの（生成マーカー付き）でない限り上書きしない。
     上書きするには -Force を指定する。
@@ -156,6 +158,32 @@ function Resolve-Skills {
     }
 
     return $available | Where-Object { $_.Name -in $Requested }
+}
+
+# 役の定義（Claude Code の形）を Copilot の形（.github/agents/*.agent.md）へ変換する。
+#   frontmatter の model は外す（Copilot の model は実行時の ID で、原本の sonnet・opus とは書き方が違う。推測の値を配らない）。
+#   tools は Copilot の別名へ直す（Read→read、Grep・Glob→search、Edit・Write・MultiEdit→edit、Bash・PowerShell→execute）。
+#   tools が無ければ書かない（すべてのツール）。本文はそのまま。
+function Convert-AgentToCopilot {
+    param([string]$Text)
+    $m = [regex]::Match($Text, '\A---\r?\n(?<fm>.*?)\r?\n---\r?\n(?<body>.*)\z', [System.Text.RegularExpressions.RegexOptions]::Singleline)
+    if (-not $m.Success) { throw '役の定義に frontmatter がありません' }
+    $map = @{ read = 'read'; grep = 'search'; glob = 'search'; edit = 'edit'; write = 'edit'; multiedit = 'edit'; bash = 'execute'; powershell = 'execute' }
+    $lines = @()
+    foreach ($line in ($m.Groups['fm'].Value -split '\r?\n')) {
+        if ($line -match '^model\s*:') { continue }
+        if ($line -match '^tools\s*:\s*(?<v>.+)$') {
+            $names = @()
+            foreach ($t in ($Matches['v'] -split ',')) {
+                $k = $t.Trim().ToLowerInvariant()
+                if (-not $map.ContainsKey($k)) { throw "Copilot の別名に直せないツール: $k" }
+                if ($names -notcontains $map[$k]) { $names += $map[$k] }
+            }
+            $line = 'tools: [' + (($names | ForEach-Object { "'$_'" }) -join ', ') + ']'
+        }
+        $lines += $line
+    }
+    "---`n" + ($lines -join "`n") + "`n---`n" + $m.Groups['body'].Value
 }
 
 function Write-AssetFile {
@@ -482,6 +510,15 @@ $GeneratedMarker
 $instructionsBody
 "@
             Write-AssetFile -Path (Join-Path $TargetRoot '.github/copilot-instructions.md') -Content $copilotMd
+
+            # 役の定義（.github/agents/<名前>.agent.md）。原本（Claude Code の形）から変換する。
+            Write-Host '  役の定義:'
+            if (Test-Path $AgentsSource) {
+                foreach ($a in Get-ChildItem -Path $AgentsSource -Filter '*.md' -File) {
+                    $agentBody = Convert-AgentToCopilot ([System.IO.File]::ReadAllText($a.FullName))
+                    Write-AssetFile -Path (Join-Path $TargetRoot ".github/agents/$($a.BaseName).agent.md") -Content $agentBody
+                }
+            }
         }
 
         'agents' {
