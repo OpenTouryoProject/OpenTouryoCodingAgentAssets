@@ -84,8 +84,10 @@ IIS Express / w3wp の CWD はアプリ フォルダでないため 500 にな�
   <nlog ... internalLogFile="%OT_RESOURCE_ROOT%\Log\NLogInternalLog.log">
     <target xsi:type="File" name="ACCESS" fileName="${environment:OT_RESOURCE_ROOT}\Log\ACCESS..." ... />
   ```
-  実物のテンプレート `NLogConfigTemplate.xml` は `internalLogFile` が絶対パス `C:\root\...`、`fileName` が `（★ファイルパス）`（環境変数は使っていない）。
-  **未実測**（NLog を使うサンプルで実行して確かめていない）＝NLog を使うなら、張り替えた後にログが `resource\Log` に出ることを確かめる。
+  実物のテンプレート `NLogConfigTemplate.xml` は `internalLogFile` が絶対パス `C:\root\...`、`fileName` が `（★ファイルパス）`（`fileName` はそのまま残す）。
+  **実測（2026-11-13）**：`SampleLogConf_N.xml` を上の 2 つの書式に張り替え、NLog 5.5.0（OpenTouryo の版）を `XmlLoggingConfiguration` で読んで
+  `ACCESS`・`SQLTRACE`・`OPERATION` に書くと、3 つのログと `NLogInternalLog.log` が `%OT_RESOURCE_ROOT%\Log` に出た（net10.0 のコンソールで。net48 は未実測）。
+- `resource\Sql\ole_odbc\Configuration steps ODBC.txt` の `C:\root` は説明文なので触らない。
 
 ## ★ キー集合・綴り・区切りはサンプル/ランタイムで割れる（決め打ち禁止）
 
