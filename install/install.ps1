@@ -18,7 +18,7 @@
 
     AGENTS.md はどのプロダクトでも対象リポジトリのルートに配置される（これが原本）。
     Claude Code は AGENTS.md を読まないため、@ import する CLAUDE.md を別途生成する。
-    claude では、役の定義（src/agents：テスト先行の実装役・レビュー役）を .claude/agents へ置く。
+    claude では、役の定義（src/agents：テスト先行の実装役・レビュー役と、変更のレビュー役）を .claude/agents へ置く。
     copilot では、同じ役の定義を Copilot の形（.github/agents/<名前>.agent.md）に変換して置く
     （model は書かない＝Copilot のモデルの書き方が原本と違うため。tools は Copilot の別名 read・search・edit・execute に直す）。
 
@@ -127,7 +127,7 @@ $InstructionsSource = Join-Path $SourceRoot 'src/instructions/AGENTS.md'
 # AGENTS.md から参照される本文（AGENTS.md と同じく、導入先のルートへ置く）
 $InstructionsExtraSources = @('src/instructions/TESTING.md') | ForEach-Object { Join-Path $SourceRoot $_ }
 $SkillsSource = Join-Path $SourceRoot 'src/skills'
-# 役の定義（Claude Code のサブ エージェント。TESTING.md 5 の実装役・レビュー役）
+# 役の定義（Claude Code のサブ エージェント。TESTING.md 5 の実装役・レビュー役と、AGENTS.md の変更のレビュー役）
 $AgentsSource = Join-Path $SourceRoot 'src/agents'
 $DocsSource = Join-Path $SourceRoot 'src/docs'
 

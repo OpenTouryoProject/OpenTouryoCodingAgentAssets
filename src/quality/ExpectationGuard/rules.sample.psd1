@@ -122,9 +122,9 @@
     #   Found-By・Tested-with・Reviewed-with（OpenTouryoCodingAgentAssets#5・#12）は共通の規則にある。同じ Name で書くと置き換える。
     # 書き忘れの組（共通の規則の TrailerRequirements に足される。OpenTouryoCodingAgentAssets#6）。止めない（警告）。
     #   組の中の条件（Message・Trailer・Paths）がすべて当たるのに、Name のトレーラー（Value があれば、それに当たる値）が無ければ警告する。
-    #   例：リスク「高」の名前空間（QUALITY.md の品質マップ）を fixed で変えたら、別モデルのレビュー
+    #   例：リスク「高」の場所を fixed で変えたら、変更のレビュー役（opentouryo-change-reviewer。-Product で入る役の定義）
     # TrailerRequirements = @(
-    #     @{ Name = 'Reviewed-with'; Message = '(?i)\bfixed\s+#\d+'; Paths = @('^src/Auth/'); Hint = 'リスク「高」の名前空間なので、fixed の前に別モデルのレビューを回し、Reviewed-with: を書く' }
+    #     @{ Name = 'Reviewed-with'; Message = '(?i)\bfixed\s+#\d+'; Paths = @('^src/Auth/'); Value = '^(opentouryo-change-reviewer|human)\b'; Hint = 'リスク「高」の場所なので、fixed の前に変更のレビュー役（opentouryo-change-reviewer）を回し、Reviewed-with: opentouryo-change-reviewer (<モデル ID>) を書く' }
     # )
 
     TrailerRules = @(

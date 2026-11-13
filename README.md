@@ -9,7 +9,7 @@ Assets used by coding agents utilizing OpenTouryo
 
 | 部 | 何のためか | 中身（原本） | 導入（`install/install.ps1`） |
 | --- | --- | --- | --- |
-| [1. 書き方](#1-書き方--インストラクションスキル役の定義) | OpenTouryo でどう書くか | `src/instructions/`（`AGENTS.md`・`TESTING.md`）・`src/skills/`（46 本）・`src/agents/`（テスト先行の実装役・レビュー役） | `-Product` |
+| [1. 書き方](#1-書き方--インストラクションスキル役の定義) | OpenTouryo でどう書くか | `src/instructions/`（`AGENTS.md`・`TESTING.md`）・`src/skills/`（46 本）・`src/agents/`（テスト先行の実装役・レビュー役、変更のレビュー役） | `-Product` |
 | [2. 守り方](#2-守り方--品質の仕組み) | 承認したテストを、後から黙って弱めさせない | `src/quality/ExpectationGuard/`（期待値の変更の検出器・トレーラーの検査・要確認） | **AI に頼む**（[手順](src/quality/ExpectationGuard/INSTALL.md)。中で `-IncludeQualityGuard` を使う。opt-in） |
 | [3. 進め方](#3-進め方--見本検証教材) | spec → テスト → plan → 実装を通しで回す | `src/docs/`（spec・plan・prompt の見本。テスト先行は司令役の手順） | `-IncludeTutorial`（opt-in） |
 
@@ -18,7 +18,7 @@ src/
   instructions/AGENTS.md        1. 概要・規約（常時コンテキストに載る / これが原本）
   instructions/TESTING.md       1. テスト先行の進め方と、承認の 2 段（AGENTS.md から参照。AGENTS.md と同じくルートへ）
   skills/                       1. 全スキル（下の「スキル一覧」）
-  agents/                       1. 役の定義：テスト先行の実装役・レビュー役（Claude Code は .claude/agents、Copilot は .github/agents へ変換）
+  agents/                       1. 役の定義：テスト先行の実装役・レビュー役、変更のレビュー役（Claude Code は .claude/agents、Copilot は .github/agents へ変換）
   quality/ExpectationGuard/     2. 期待値の変更の検出器の原本（導入先へ写す。INSTALL.md は導入する AI が読む手順で、写さない）
   docs/                         3. spec・plan・prompt の見本（導入先の docs/ へ）
 install/
@@ -69,7 +69,8 @@ cd OpenTouryoCodingAgentAssets
 - `AGENTS.md`：OpenTouryo を使うプロジェクトの概要・規約（層・例外・Git の扱い・コミット メッセージのトレーラーなど）。
 - `TESTING.md`：テスト先行の進め方（テスト仕様 → Red → Green、根拠の ID、期待値の変更とトレーラー）と、**承認の 2 段**
   （テストの質は実装役と別のレビュー役が確かめ、人は**仕様の決定だけ**を GO/NOGO で判断する）。
-- 役の定義（`src/agents/`）：テスト先行の**実装役**（`opentouryo-test-implementer`）と**レビュー役**（`opentouryo-test-reviewer`。編集できず、テストを自分で実行する）。
+- 役の定義（`src/agents/`）：テスト先行の**実装役**（`opentouryo-test-implementer`）と**レビュー役**（`opentouryo-test-reviewer`。編集できず、テストを自分で実行する）と、
+  **変更のレビュー役**（`opentouryo-change-reviewer`。テスト先行に限らない変更を、`fixed` のコミットの前に別モデルでレビューする。編集できず、ビルド・テストも流さない）。
   司令役（指示を受けたセッション）がサブ エージェントとして回す。Claude Code と GitHub Copilot 向け（Copilot はサブ エージェントを続けて呼べないので、手順に書き分けがある）。
 
 ### スキル一覧
