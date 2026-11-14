@@ -24,8 +24,16 @@
     copilot では、同じ役の定義を Copilot の形（.github/agents/<名前>.agent.md）に変換して置く
     （model は書かない＝Copilot のモデルの書き方が原本と違うため。tools は Copilot の別名 read・search・edit・execute に直す）。
 
-    既存ファイルは、このスクリプトが生成したもの（生成マーカー付き）でない限り上書きしない。
-    上書きするには -Force を指定する。
+    **入れ直しで、導入先で手を入れたファイルを上書きしない**（OpenTouryoCodingAgentAssets#20）。
+    書いたファイル（AGENTS.md・TESTING.md・CLAUDE.md など・役の定義・スキルの各ファイル）は、導入先のルートの目録
+    .opentouryo-agent-assets.json に、原本の版・原本のパス・中身の sha256（改行と BOM の違いを除く）を記録する（コミットして残す）。
+    入れ直すときは、ファイルごとに次のどれかにする。
+      今回の中身と同じ           … 書かない（目録だけ更新）
+      目録の sha256 と同じ       … 導入先で手を入れていないので、上書きする
+      それ以外                   … 手を入れた（または記録が無い）ので、**飛ばして警告する**。-Force のときだけ上書きする
+    スキルも 1 ファイルずつ判定する。原本で消えたファイルは、目録と同じなら消し、違えば残して警告する。目録に無いファイル（導入先で足した）には触れない。
+    飛ばしたファイルに原本の変更を取り込むのは、エージェントが install/INSTALL.md の手順で行う（3 つの版を比べる）。
+    チュートリアル（-IncludeTutorial。既存は上書きしない）と検出器の写し（-IncludeQualityGuard。自分の印を持つ）は、目録の対象外。
 
 .PARAMETER Product
     インストール先プロダクト。claude / copilot / agents から複数指定可。
@@ -130,6 +138,8 @@ $InstructionsSource = Join-Path $SourceRoot 'src/instructions/AGENTS.md'
 $InstructionsExtraSources = @('src/instructions/TESTING.md', 'src/instructions/AGENT-DASHBOARD.sample.md') | ForEach-Object { Join-Path $SourceRoot $_ }
 # 作業の見える化のダッシュボード（主のセッションが書き続ける。git の管理外。#19）
 $DashboardFile = 'AGENT-DASHBOARD.md'
+# 書いたファイルの目録（導入先のルート。#20）
+$ManifestFile = '.opentouryo-agent-assets.json'
 $SkillsSource = Join-Path $SourceRoot 'src/skills'
 # 役の定義（Claude Code のサブ エージェント。TESTING.md 5 の実装役・レビュー役と、AGENTS.md の変更のレビュー役）
 $AgentsSource = Join-Path $SourceRoot 'src/agents'
@@ -236,6 +246,7 @@ function Add-GitIgnoreLine {
     $lines = @($text -split "`r?`n" | ForEach-Object { $_.Trim() })
     if ($lines -contains $Line -or $lines -contains "/$Line") {
         Write-Host "  そのまま（すでにある）: .gitignore の $Line"
+        $script:manifest.gitignore = @($script:manifest.gitignore) + $Line
         return
     }
     if ($PSCmdlet.ShouldProcess($path, ".gitignore に $Line を足す")) {
@@ -244,24 +255,163 @@ function Add-GitIgnoreLine {
         [System.IO.File]::WriteAllText($path, $text + $add, (New-Object System.Text.UTF8Encoding($hasBom)))
         Write-Host "  足した: .gitignore に $Line"
     }
+    $script:manifest.gitignore = @($script:manifest.gitignore) + $Line
 }
 
+# ---- 目録（.opentouryo-agent-assets.json。#20） ----
+#   files：導入先のルートからのパス → @{ revision = 書いたときの原本の版; source = 原本のパス; sha256 = 書いた中身 }
+#     版はファイルごとに持つ（飛ばしたファイルは前の版のまま残る。install/INSTALL.md が「前に配った版」を作るのに使う）
+#   gitignore：.gitignore に足した行
+
+# 中身の sha256。改行（CRLF/LF）と先頭の BOM の違いは除く（導入先の checkout の改行で「手を入れた」と見ないため）。
+#   NUL を含むもの（バイナリ）は、そのままのバイトで計算する。
+function Get-AssetHash {
+    param([byte[]]$Bytes)
+    $b = $Bytes
+    if ($b.Length -ge 3 -and $b[0] -eq 0xEF -and $b[1] -eq 0xBB -and $b[2] -eq 0xBF) {
+        $t = New-Object byte[] ($b.Length - 3)
+        [Array]::Copy($b, 3, $t, 0, $t.Length)
+        $b = $t
+    }
+    if ([Array]::IndexOf($b, [byte]0) -lt 0) {
+        $enc = New-Object System.Text.UTF8Encoding($false)
+        $b = $enc.GetBytes(($enc.GetString($b) -replace "`r`n", "`n"))
+    }
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    return ([BitConverter]::ToString($sha.ComputeHash($b)) -replace '-', '').ToLowerInvariant()
+}
+
+# 原本の版（HEAD。原本に未コミットの変更があれば +dirty）
+function Get-AssetRevision {
+    $rev = & git -C $SourceRoot rev-parse --short=12 HEAD 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $rev) { return 'unknown' }
+    $dirty = & git -C $SourceRoot status --porcelain -- 'src' 'install' 2>$null
+    if ($dirty) { $rev += '+dirty' }
+    return $rev
+}
+
+function Read-Manifest {
+    $path = Join-Path $TargetRoot $ManifestFile
+    $m = @{ revision = $null; files = @{}; gitignore = @() }
+    if (Test-Path -LiteralPath $path) {
+        $j = [System.IO.File]::ReadAllText($path) | ConvertFrom-Json
+        $m.revision = $j.revision
+        if ($j.files) {
+            foreach ($pr in $j.files.PSObject.Properties) {
+                $rev = $(if ($pr.Value.PSObject.Properties['revision']) { $pr.Value.revision } else { $j.revision })
+                $m.files[$pr.Name] = @{ revision = $rev; source = $pr.Value.source; sha256 = $pr.Value.sha256 }
+            }
+        }
+        if ($j.PSObject.Properties['gitignore'] -and $j.gitignore) { $m.gitignore = @($j.gitignore) }
+    }
+    return $m
+}
+
+# JSON の文字列（PS 5.1 と 7 で ConvertTo-Json の書き方が違うので、手で書く）
+function ConvertTo-JsonString {
+    param([string]$Text)
+    return '"' + ($Text -replace '\\', '\\' -replace '"', '\"') + '"'
+}
+
+function Save-Manifest {
+    $path = Join-Path $TargetRoot $ManifestFile
+    $lines = New-Object System.Collections.Generic.List[string]
+    $lines.Add('{')
+    $lines.Add('  "note": "install.ps1 が書いたファイルの目録（OpenTouryoCodingAgentAssets#20）。入れ直しで、導入先で手を入れたファイルを見分けるのに使う。install.ps1 と install/INSTALL.md の手順のほかで直さない",')
+    $lines.Add('  "source": "OpenTouryoCodingAgentAssets",')
+    $lines.Add('  "revision": ' + (ConvertTo-JsonString $script:assetRevision) + ',')
+    $lines.Add('  "files": {')
+    $keys = @([string[]]$script:manifest.files.Keys | Sort-Object -CaseSensitive)
+    for ($i = 0; $i -lt $keys.Count; $i++) {
+        $e = $script:manifest.files[$keys[$i]]
+        $comma = $(if ($i -lt $keys.Count - 1) { ',' } else { '' })
+        $lines.Add(('    {0}: {{ "revision": {1}, "source": {2}, "sha256": "{3}" }}{4}' -f (ConvertTo-JsonString $keys[$i]), (ConvertTo-JsonString $e.revision), (ConvertTo-JsonString $e.source), $e.sha256, $comma))
+    }
+    $lines.Add('  },')
+    $lines.Add('  "gitignore": [' + ((@($script:manifest.gitignore | Sort-Object -Unique) | ForEach-Object { ConvertTo-JsonString $_ }) -join ', ') + ']')
+    $lines.Add('}')
+    if ($PSCmdlet.ShouldProcess($path, '目録を書く')) {
+        [System.IO.File]::WriteAllText($path, (($lines -join "`n") + "`n"), (New-Object System.Text.UTF8Encoding($false)))
+        Write-Host "  目録: $ManifestFile（$($keys.Count) ファイル）"
+    }
+}
+
+# 目録で管理するファイルを書く（#20）。$Rel は導入先のルートからのパス（/ 区切り）、$Source は原本のパス（目録に記録）。
+function Write-ManagedFile {
+    param(
+        [string]$Rel,
+        [byte[]]$Bytes,
+        [string]$Source
+    )
+    $path = Join-Path $TargetRoot $Rel
+    $newHash = Get-AssetHash $Bytes
+    $entry = $null
+    if ($script:manifest.files.ContainsKey($Rel)) { $entry = $script:manifest.files[$Rel] }
+    if (Test-Path -LiteralPath $path) {
+        $curHash = Get-AssetHash ([System.IO.File]::ReadAllBytes($path))
+        if ($curHash -eq $newHash) {
+            $script:manifest.files[$Rel] = @{ revision = $script:assetRevision; source = $Source; sha256 = $newHash }
+            $script:assetCount.same++
+            return
+        }
+        if (-not ($entry -and $entry.sha256 -eq $curHash)) {
+            if (-not $Force) {
+                $why = $(if ($entry) { '目録の中身と違う＝導入先で手を入れた' } else { '目録に記録が無い＝手を入れたか分からない' })
+                Write-Warning "スキップ（$why）: $Rel`n  原本の変更を取り込むには install/INSTALL.md の手順（エージェント）、上書きするには -Force。"
+                $script:assetSkipped += $Rel
+                return
+            }
+            Write-Warning "上書き（-Force。導入先の手入れは消える）: $Rel"
+        }
+    }
+    if ($PSCmdlet.ShouldProcess($path, '書き込み')) {
+        $dir = Split-Path -Parent $path
+        if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Path $dir -Force | Out-Null }
+        [System.IO.File]::WriteAllBytes($path, $Bytes)
+        Write-Host "  書き込み: $Rel"
+        $script:manifest.files[$Rel] = @{ revision = $script:assetRevision; source = $Source; sha256 = $newHash }
+        $script:assetCount.written++
+    }
+}
+
+function Write-ManagedText {
+    param([string]$Rel, [string]$Content, [string]$Source)
+    Write-ManagedFile -Rel $Rel -Bytes ((New-Object System.Text.UTF8Encoding($false)).GetBytes($Content)) -Source $Source
+}
+
+# スキルを 1 ファイルずつ書く。原本で消えたファイルは、目録と同じなら消し、手を入れていれば残す。目録に無いファイルには触れない。
 function Install-Skills {
     param(
-        [string]$Destination,
+        [string]$DestinationRel,
         [System.IO.DirectoryInfo[]]$Skills
     )
 
     foreach ($s in $Skills) {
-        $dest = Join-Path $Destination $s.Name
-        if ($PSCmdlet.ShouldProcess($dest, 'スキルを配置')) {
-            if (Test-Path $dest) {
-                Remove-Item -Path $dest -Recurse -Force
-            }
-            New-Item -ItemType Directory -Path $dest -Force | Out-Null
-            Copy-Item -Path (Join-Path $s.FullName '*') -Destination $dest -Recurse -Force
-            Write-Host "  配置: $dest"
+        $skillRel = "$DestinationRel/$($s.Name)"
+        $srcRoot = $s.FullName
+        $written = @{}
+        foreach ($f in Get-ChildItem -Path $srcRoot -Recurse -File) {
+            $sub = ($f.FullName.Substring($srcRoot.Length).TrimStart('\', '/') -replace '\\', '/')
+            $rel = "$skillRel/$sub"
+            $written[$rel] = $true
+            Write-ManagedFile -Rel $rel -Bytes ([System.IO.File]::ReadAllBytes($f.FullName)) -Source "src/skills/$($s.Name)/$sub"
         }
+        foreach ($old in @([string[]]$script:manifest.files.Keys | Where-Object { $_.StartsWith("$skillRel/") -and -not $written.ContainsKey($_) })) {
+            $path = Join-Path $TargetRoot $old
+            if (-not (Test-Path -LiteralPath $path)) { $script:manifest.files.Remove($old); continue }
+            if ($Force -or (Get-AssetHash ([System.IO.File]::ReadAllBytes($path))) -eq $script:manifest.files[$old].sha256) {
+                if ($PSCmdlet.ShouldProcess($path, '原本で消えたファイルを消す')) {
+                    Remove-Item -LiteralPath $path -Force
+                    $script:manifest.files.Remove($old)
+                    Write-Host "  消す（原本で消えた）: $old"
+                }
+            }
+            else {
+                Write-Warning "残す（原本で消えたが、導入先で手を入れた）: $old"
+                $script:assetSkipped += $old
+            }
+        }
+        Write-Host "  配置: $skillRel"
     }
 }
 
@@ -452,6 +602,10 @@ if (-not $Product) {
 }
 
 $skills = Resolve-Skills -Requested $Skill
+$script:manifest = Read-Manifest
+$script:assetRevision = Get-AssetRevision
+$script:assetSkipped = @()
+$script:assetCount = @{ written = 0; same = 0 }
 # UTF-8 で読む（PS 5.1 の Get-Content 既定 ANSI だと AGENTS.md の日本語が文字化けする）。
 $instructionsBody = [System.IO.File]::ReadAllText($InstructionsSource)
 
@@ -463,10 +617,11 @@ Write-Host ''
 # AGENTS.md は全プロダクト共通の原本としてルートに配置する。
 Write-Host 'インストラクション (共通):'
 $agentsMd = "$GeneratedMarker`n$instructionsBody"
-Write-AssetFile -Path (Join-Path $TargetRoot 'AGENTS.md') -Content $agentsMd
+Write-ManagedText -Rel 'AGENTS.md' -Content $agentsMd -Source 'src/instructions/AGENTS.md'
 foreach ($extra in $InstructionsExtraSources) {
     $extraBody = [System.IO.File]::ReadAllText($extra)
-    Write-AssetFile -Path (Join-Path $TargetRoot (Split-Path -Leaf $extra)) -Content "$GeneratedMarker`n$extraBody"
+    $leaf = Split-Path -Leaf $extra
+    Write-ManagedText -Rel $leaf -Content "$GeneratedMarker`n$extraBody" -Source "src/instructions/$leaf"
 }
 Add-GitIgnoreLine -Line $DashboardFile -Comment '作業の見える化のダッシュボード（主のセッションが書き続ける。OpenTouryoCodingAgentAssets#19）'
 
@@ -545,14 +700,14 @@ $GeneratedMarker
 
 <!-- TODO: Claude Code でのみ有効にしたい指示があればここに追記する。不要なら節ごと削除してよい。 -->
 "@
-            Write-AssetFile -Path (Join-Path $TargetRoot 'CLAUDE.md') -Content $claudeMd
+            Write-ManagedText -Rel 'CLAUDE.md' -Content $claudeMd -Source '(install.ps1 が生成)'
 
             # 役の定義（.claude/agents）。原本に生成マーカーを入れてあるので、再実行で上書きされる。
             Write-Host '  役の定義:'
             if (Test-Path $AgentsSource) {
                 foreach ($a in Get-ChildItem -Path $AgentsSource -Filter '*.md' -File) {
                     $agentBody = [System.IO.File]::ReadAllText($a.FullName)
-                    Write-AssetFile -Path (Join-Path $TargetRoot ".claude/agents/$($a.Name)") -Content $agentBody
+                    Write-ManagedText -Rel ".claude/agents/$($a.Name)" -Content $agentBody -Source "src/agents/$($a.Name)"
                 }
             }
         }
@@ -567,14 +722,14 @@ $GeneratedMarker
 
 $instructionsBody
 "@
-            Write-AssetFile -Path (Join-Path $TargetRoot '.github/copilot-instructions.md') -Content $copilotMd
+            Write-ManagedText -Rel '.github/copilot-instructions.md' -Content $copilotMd -Source 'src/instructions/AGENTS.md'
 
             # 役の定義（.github/agents/<名前>.agent.md）。原本（Claude Code の形）から変換する。
             Write-Host '  役の定義:'
             if (Test-Path $AgentsSource) {
                 foreach ($a in Get-ChildItem -Path $AgentsSource -Filter '*.md' -File) {
                     $agentBody = Convert-AgentToCopilot ([System.IO.File]::ReadAllText($a.FullName))
-                    Write-AssetFile -Path (Join-Path $TargetRoot ".github/agents/$($a.BaseName).agent.md") -Content $agentBody
+                    Write-ManagedText -Rel ".github/agents/$($a.BaseName).agent.md" -Content $agentBody -Source "src/agents/$($a.Name)（Copilot の形に変換）"
                 }
             }
         }
@@ -586,7 +741,15 @@ $instructionsBody
     }
 
     Write-Host '  スキル:'
-    Install-Skills -Destination (Join-Path $TargetRoot $SkillDestinations[$p]) -Skills $skills
+    Install-Skills -DestinationRel $SkillDestinations[$p] -Skills $skills
+}
+
+Write-Host ''
+Write-Host '目録:'
+Save-Manifest
+Write-Host ("  書いた {0}・同じ {1}・飛ばした {2}" -f $script:assetCount.written, $script:assetCount.same, @($script:assetSkipped).Count)
+if (@($script:assetSkipped).Count -gt 0) {
+    Write-Warning ("飛ばしたファイル（導入先で手を入れた、または記録が無い）が {0} 件あります。原本の変更を取り込むには、エージェントに install/INSTALL.md の手順を頼む（上書きしてよければ -Force）。" -f @($script:assetSkipped).Count)
 }
 
 Write-Host ''
