@@ -819,5 +819,91 @@ public class BazTests
             Input = @{ tool_name = 'Edit'; tool_input = @{ file_path = '@ROOT@/tests/TESTCASES.md'; old_string = "#"; new_string = "##" } }
             Expect = @{ Ask = $true }
         }
+
+        # ==============================================================
+        # 後のコミットでの承認（#14。Expectation-Change-For: <sha> <理由>。-Range でだけ効く）
+        #   メッセージの「@SHA<番目>@」は、Commits のその番目のコミットの sha の先頭 8 文字
+        # ==============================================================
+        @{
+            Id = 'L01'; Category = '検出しない'; Title = '後のコミットで承認（範囲）'
+            Mode = 'Range'
+            Commits = @(
+                @{ Message = 'B を消す'; Files = @{ 'tests/FooTests.cs' = @'
+public class FooTests
+{
+    [Test]
+    public void A() { Assert.That(1, Is.EqualTo(1)); }
+}
+'@ } }
+                @{ Message = "承認する`n`nExpectation-Change-For: @SHA1@ B は仕様から消えた（#14）" }
+            )
+            Expect = @{ Exit = 0; Kinds = @('テストの削除'); Approved = 1; Errors = 0 }
+        }
+        @{
+            Id = 'L02'; Category = '検出する'; Title = '範囲に無い sha の承認は効かない'
+            Mode = 'Range'
+            Commits = @(
+                @{ Message = 'B を消す'; Files = @{ 'tests/FooTests.cs' = @'
+public class FooTests
+{
+    [Test]
+    public void A() { Assert.That(1, Is.EqualTo(1)); }
+}
+'@ } }
+                @{ Message = "承認する`n`nExpectation-Change-For: 0123456789 B は仕様から消えた（#14）" }
+            )
+            Expect = @{ Exit = 1; Kinds = @('テストの削除'); Approved = 0 }
+        }
+        @{
+            Id = 'L03'; Category = '検出する'; Title = '理由の無い後の承認は止め、承認にしない'
+            Mode = 'Range'
+            Commits = @(
+                @{ Message = 'B を消す'; Files = @{ 'tests/FooTests.cs' = @'
+public class FooTests
+{
+    [Test]
+    public void A() { Assert.That(1, Is.EqualTo(1)); }
+}
+'@ } }
+                @{ Message = "承認する`n`nExpectation-Change-For: @SHA1@" }
+            )
+            Expect = @{ Exit = 1; Kinds = @('テストの削除'); Approved = 0; Errors = 1 }
+        }
+        @{
+            Id = 'L04'; Category = '検出する'; Title = '1 行に 2 つの sha は止める'
+            Commits = @(
+                @{ Message = 'A を足す'; Files = @{ 'src/A.cs' = "class A {}`n" } }
+                @{ Message = "承認する`n`nExpectation-Change-For: @SHA1@ @SHA1@ 二つ（#14）" }
+            )
+            Expect = @{ Exit = 1; Kinds = @(); Errors = 1 }
+        }
+        @{
+            Id = 'L05'; Category = '検出する'; Title = '1 つのコミットだけを見る（-Commit）ときは、後の承認を見ない'
+            Commits = @(
+                @{ Message = "承認する`n`nExpectation-Change-For: 0123456789 自分自身は承認できない（#14）"; Files = @{ 'tests/FooTests.cs' = @'
+public class FooTests
+{
+    [Test]
+    public void A() { Assert.That(1, Is.EqualTo(1)); }
+}
+'@ } }
+            )
+            Expect = @{ Exit = 1; Kinds = @('テストの削除'); Approved = 0; Errors = 0 }
+        }
+        @{
+            Id = 'L06'; Category = '検出する'; Title = '前のコミットから後のコミットは承認できない（範囲）'
+            Mode = 'Range'
+            Commits = @(
+                @{ Message = 'A を足す'; Files = @{ 'src/A.cs' = "class A {}`n" } }
+                @{ Message = "B を消す`n`nExpectation-Change-For: @SHA1@ 前のコミットへの承認で、このコミットの承認ではない（#14）"; Files = @{ 'tests/FooTests.cs' = @'
+public class FooTests
+{
+    [Test]
+    public void A() { Assert.That(1, Is.EqualTo(1)); }
+}
+'@ } }
+            )
+            Expect = @{ Exit = 1; Kinds = @('テストの削除'); Approved = 1 }
+        }
     )
 }

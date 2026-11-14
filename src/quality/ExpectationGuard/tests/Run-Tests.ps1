@@ -108,6 +108,7 @@ function Invoke-Case($Case)
         $mode = $(if ($Case.Mode) { $Case.Mode } else { "Commit" })
         $commits = @($Case.Commits | Where-Object { $_ })
         $msgFile = Join-Path $repo ".git\CASE_MSG"
+        $shas = @()   # Commits の番目（1 から）のコミットの sha。メッセージの「@SHA<番目>@」を、その先頭 8 文字に置き換える（#14）
         for ($i = 0; $i -lt $commits.Count; $i++)
         {
             $c = $commits[$i]
@@ -115,9 +116,11 @@ function Invoke-Case($Case)
             if ($c.Files) { foreach ($k in $c.Files.Keys) { Write-RepoFile $repo $k $c.Files[$k] } }
             foreach ($d in @($c.Delete)) { if ($d) { Remove-Item -LiteralPath (Join-Path $repo $d) -Force } }
             Invoke-GitQuiet $repo @("add", "-A")
-            [IO.File]::WriteAllText($msgFile, (Get-Content2 $c.Message), $utf8)
+            $text = [regex]::Replace((Get-Content2 $c.Message), '@SHA(\d+)@', { param($m) $shas[[int]$m.Groups[1].Value - 1].Substring(0, 8) })
+            [IO.File]::WriteAllText($msgFile, $text, $utf8)
             if ($mode -eq "Staged" -and $i -eq $commits.Count - 1) { break }
             Invoke-GitQuiet $repo @("commit", "-q", "--allow-empty", "-F", $msgFile)
+            $shas += (& git -C $repo rev-parse HEAD)
         }
 
         $body = Join-Path $repo "guard\CheckExpectationChange.ps1"

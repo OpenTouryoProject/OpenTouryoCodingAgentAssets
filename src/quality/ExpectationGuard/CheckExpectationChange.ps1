@@ -34,6 +34,10 @@
     # で始まる行と、git commit -v の切り取り線から後は見ない。
     **トレーラーは git と同じ読み方で読む**（git interpret-trailers。メッセージの最後の段落だけ）。集計（git log の %(trailers)）に
     載らない書き方（最後の段落に無い・全角の「：」・名前の綴りの違い・値が空）は、規則のトレーラーと承認のトレーラーとも止める。
+    **後のコミットでの承認**（OpenTouryoCodingAgentAssets#14）：-Range では、範囲の中の後のコミットの
+    「Expectation-Change-For: <sha> <理由>」（承認のトレーラーの名前＋「-For」）を、前のコミットの承認として扱う。
+    <sha> は 7 文字以上の前方一致で、範囲の中のそのコミットより前の 1 件に当たること（当たらなければ警告し、承認にしない）。
+    1 行に sha は 1 つ、理由は必須（書式の誤りは、どの動かし方でも止める）。-Staged・-Commit では、後の承認を見ない。
 
 .PARAMETER Staged
     ステージした差分（HEAD との差）を見る。commit-msg フックが使う。
@@ -45,6 +49,8 @@
 .PARAMETER Range
     <base>..<head> の範囲の、マージでないコミットを 1 つずつ -Commit で見る。PR の CI が使う。
     **導入より前のコミット（規則の IntroducedBy が木に無いコミット）は見ない。**
+.PARAMETER LaterApproval
+    -Range が -Commit を呼ぶときに渡す、後のコミットでの承認の理由（内部用。人は指定しない）。
 .PARAMETER CheckGenerated
     -Range と併せて、GeneratedRules（生成物の作り直しの漏れ）を見る。
 .PARAMETER PreToolUse
@@ -92,6 +98,7 @@ param(
     [string]$MessageFile,
     [string]$Commit,
     [string]$Range,
+    [string[]]$LaterApproval,
     [switch]$CheckGenerated,
     [switch]$PreToolUse,
     [switch]$VerifyCopy,
@@ -303,6 +310,19 @@ function Get-GitTrailers([string[]]$Lines)
 function Select-Trailer($Parsed, [string]$Name)
 {
     @($Parsed) | Where-Object { $_ -and $_.Key -ieq $Name } | ForEach-Object { $_.Value }
+}
+
+# 後のコミットでの承認の値（#14）：「<sha 7〜40 文字> <理由>」。1 行に sha は 1 つ、理由は必須
+function Test-LaterApproval([string]$Value)
+{
+    if ($Value -notmatch '^(?<sha>[0-9A-Fa-f]{7,40})(?:\s+(?<why>.*))?$')
+    {
+        return [pscustomobject]@{ Ok = $false; Problem = "先頭に、承認するコミットの sha（7 文字以上の 16 進）を書く" }
+    }
+    $sha = $Matches['sha'].ToLowerInvariant(); $why = ("" + $Matches['why']).Trim()
+    if ($why -eq "") { return [pscustomobject]@{ Ok = $false; Problem = "sha の後に、理由（何が・なぜ変わったか）を書く" } }
+    if ($why -match '^[0-9A-Fa-f]{7,40}(\s|$)') { return [pscustomobject]@{ Ok = $false; Problem = "1 行に sha は 1 つ（コミットごとに行を分ける）" } }
+    return [pscustomobject]@{ Ok = $true; Sha = $sha; Reason = $why }
 }
 
 function Get-EditDistance([string]$A, [string]$B)
@@ -868,6 +888,29 @@ try
         if ($Json) { throw "-Json は -Staged・-Commit で使う（範囲は、コミットごとに -Commit <sha> -Json で）" }
         $commits =@((Invoke-GitChecked @("rev-list", "--no-merges", "--reverse", $Range)).Lines)
         Write-Msg ("  {0} の {1} 件のコミットを見ます" -f $Range, $commits.Count)
+        # 後のコミットでの承認（#14）。範囲の中の後のコミットだけが、前のコミットを承認できる。
+        #   書式の誤りは、そのコミット自身の -Commit が止める（ここでは承認に数えないだけ）。
+        $laterName = $rules.ApprovalTrailer + "-For"
+        $later = @{}
+        for ($i = 0; $i -lt $commits.Count; $i++)
+        {
+            $msg = @((Invoke-GitChecked @("log", "-1", "--format=%B", $commits[$i])).Lines)
+            foreach ($v in @(Select-Trailer (Get-GitTrailers $msg) $laterName))
+            {
+                $t = Test-LaterApproval $v
+                if (-not $t.Ok) { continue }
+                $by = $commits[$i].Substring(0, 8)
+                $hit = @(); for ($j = 0; $j -lt $i; $j++) { if ($commits[$j].StartsWith($t.Sha)) { $hit += $commits[$j] } }
+                if ($hit.Count -ne 1)
+                {
+                    $why = $(if ($hit.Count -eq 0) { "範囲の中の、このコミットより前のコミットに当たりません（rebase・amend で sha が変わったなら、今の sha に書き直す）" } else { "複数のコミットに当たります（sha を長く書く）" })
+                    Write-Warn ("{0}: {1}（コミット {2}）は承認になりません。{3}" -f $laterName, $v, $by, $why)
+                    continue
+                }
+                if (-not $later.ContainsKey($hit[0])) { $later[$hit[0]] = @() }
+                $later[$hit[0]] += ("{0}（後のコミット {1} で承認）" -f $t.Reason, $by)
+            }
+        }
         $worst = 0
         $skipped = 0
         foreach ($c in $commits)
@@ -875,7 +918,8 @@ try
             # **導入より前のコミットは見ない。** 規約が無かった時点のコミットに、トレーラーは求められない。
             #   IntroducedBy がそのコミットの木に在るかで判定する（-Commit で個別に見れば、導入前でも見る）。
             if ($introducedBy -and (Invoke-Git @("cat-file", "-e", "${c}:$introducedBy")).ExitCode -ne 0) { $skipped++; continue }
-            & $PSCommandPath -Commit $c -RulesFile $RulesFile -PassThru:$PassThru -Quiet:$Quiet
+            $la = $(if ($later.ContainsKey($c)) { [string[]]$later[$c] } else { [string[]]@() })
+            & $PSCommandPath -Commit $c -RulesFile $RulesFile -LaterApproval $la -PassThru:$PassThru -Quiet:$Quiet
             if ($LASTEXITCODE -gt $worst) { $worst = $LASTEXITCODE }
         }
         if ($skipped -gt 0) { Write-Msg ("  導入より前のコミット {0} 件は見ていません" -f $skipped) }
@@ -1127,13 +1171,15 @@ try
     $body = (Get-MessageLines $message) -join "`n"
     $parsed = Get-GitTrailers $message
     $approvalSyntax = "{0}: <何が・なぜ変わったか（仕様の該当箇所・Issue 番号）>" -f $rules.ApprovalTrailer
+    $laterName = $rules.ApprovalTrailer + "-For"
+    $laterSyntax = "{0}: <承認するコミットの sha（7 文字以上）> <何が・なぜ変わったか（仕様の該当箇所・Issue 番号）>" -f $laterName
     $vocabOf = @{}
     foreach ($t in @($rules.TrailerRules)) { $vocabOf[$t.Name] = Get-RuleVocabulary $t $(if ($Staged) { $null } else { $sha }) }
     $fixes = @()       # 直す行：Name・Written（書いた行）・Fixed（直した行）・Reasons
     $helpNames = @()   # 書き方と語彙の一覧を出す規則の名前
 
     # 書き方・置き場所（git に読まれない行）
-    $trailerNames = @(@($rules.TrailerRules) | ForEach-Object { $_.Name }) + @($rules.ApprovalTrailer)
+    $trailerNames = @(@($rules.TrailerRules) | ForEach-Object { $_.Name }) + @($rules.ApprovalTrailer, $laterName)
     foreach ($p in (Find-TrailerProblems $message $trailerNames $parsed))
     {
         $rule = @($rules.TrailerRules) | Where-Object { $_.Name -eq $p.Name } | Select-Object -First 1
@@ -1146,7 +1192,7 @@ try
             $value = $v.Fixed
             $helpNames += $rule.Name
         }
-        elseif ($value -eq "") { $reasons += "値（理由）がありません"; $value = ($approvalSyntax -replace '^[^:]+:\s*', '') }
+        elseif ($value -eq "") { $reasons += "値（理由）がありません"; $value = ($(if ($p.Name -eq $laterName) { $laterSyntax } else { $approvalSyntax }) -replace '^[^:]+:\s*', '') }
         $fixes += [pscustomobject]@{ Name = $p.Name; Written = $p.Written; Fixed = ("{0}: {1}" -f $p.Name, $value); Reasons = $reasons; Key = $(if ($p.Read) { $p.Written.Trim() } else { $null }) }
     }
 
@@ -1215,6 +1261,13 @@ try
     {
         $fixes += [pscustomobject]@{ Name = $rules.ApprovalTrailer; Written = ("{0}:" -f $tr.Key); Fixed = $approvalSyntax; Reasons = @("値（理由）がありません"); Key = ("{0}: " -f $tr.Key) }
     }
+    # 後のコミットでの承認の書式（#14）：1 行に sha は 1 つ・理由は必須
+    foreach ($tr in @(@($parsed) | Where-Object { $_ -and $_.Key -ieq $laterName }))
+    {
+        $t = Test-LaterApproval $tr.Value
+        if ($t.Ok) { continue }
+        $fixes += [pscustomobject]@{ Name = $laterName; Written = ("{0}: {1}" -f $tr.Key, $tr.Value); Fixed = $laterSyntax; Reasons = @($t.Problem); Key = ("{0}: {1}" -f $tr.Key, $tr.Value) }
+    }
     foreach ($f in $fixes) { $result.Errors += ("{0}（{1}）" -f $f.Written.Trim(), ($f.Reasons -join "。")) }
     foreach ($w in $result.Warnings) { Write-Warn $w }
 
@@ -1236,6 +1289,11 @@ try
             Write-Msg "      最新のコミットなら    : git commit --amend"
             Write-Msg ("      それより前のコミットなら : git rebase -i {0}（このコミットの pick を reword にする）" -f $rebaseBase)
             Write-Msg "    push 済みなら git push --force-with-lease が要る（PR の履歴が書き換わるので、人が判断する）。"
+            Write-Msg "    または、履歴を書き換えずに、後のコミットで承認する（PR の CI〔-Range〕でだけ効く。手元のフックの判定は変わらない）："
+            Write-Msg ('      git commit --allow-empty -m "期待値の変更を承認する" -m "{0}: {1} <何が・なぜ変わったか（Issue 番号）>"' -f $laterName, $sha.Substring(0, 8))
+            Write-Msg "    どちらもできないとき：管理者が、その PR だけ保護を迂回してマージし、期待値を変えた理由を PR のコメントに残す。"
+            Write-Msg "      必須のチェックを外す・ワークフローを止めるは使わない（ほかの PR の保護も外れる・チェックが結果を返さず PR が止まる）。"
+            Write-Msg ("    手順の全体：{0}原本 OpenTouryoCodingAgentAssets の docs/expectation-guard.md「CI で止まったとき」" -f $(if ($rules.Reference) { $rules.Reference + "・" } else { "" }))
         }
         Write-Msg ""
     }
@@ -1297,6 +1355,8 @@ try
     #   検出器はアサーションの値の反転・緩和を見ないので、人が自分から付けた理由こそ、突き合わせ役（-Json の入力）が見る対象になる
     #   （OpenTouryo 3bd7586d：既存のアサーションの入力を書き換えて期待値を反転。検出は 0 件、理由はあった）。
     $trailers = @(Select-Trailer $parsed $rules.ApprovalTrailer | Where-Object { $_ -ne "" })
+    # 後のコミットでの承認（-Range が渡す。#14）も、承認の理由に加える
+    $trailers += @($LaterApproval | Where-Object { $_ })
     if ($trailers.Count -gt 0)
     {
         $result.Approved = $trailers
