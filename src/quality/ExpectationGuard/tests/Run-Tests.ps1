@@ -115,10 +115,16 @@ function Invoke-Case($Case)
             if ($guardAt -eq $i + 1) { Add-Guard $repo }
             if ($c.Files) { foreach ($k in $c.Files.Keys) { Write-RepoFile $repo $k $c.Files[$k] } }
             foreach ($d in @($c.Delete)) { if ($d) { Remove-Item -LiteralPath (Join-Path $repo $d) -Force } }
-            Invoke-GitQuiet $repo @("add", "-A")
+            if ($mode -eq "Proposed" -and $i -eq $commits.Count - 1)
+            {
+                # 提案の検査：最後の 1 つはステージしない（Stage に書いたものだけステージする）
+                foreach ($s in @($c.Stage)) { if ($s) { Invoke-GitQuiet $repo @("add", "--", $s) } }
+            }
+            else { Invoke-GitQuiet $repo @("add", "-A") }
             $text = [regex]::Replace((Get-Content2 $c.Message), '@SHA(\d+)@', { param($m) $shas[[int]$m.Groups[1].Value - 1].Substring(0, 8) })
             [IO.File]::WriteAllText($msgFile, $text, $utf8)
             if ($mode -eq "Staged" -and $i -eq $commits.Count - 1) { break }
+            if ($mode -eq "Proposed" -and $i -eq $commits.Count - 1) { break }
             Invoke-GitQuiet $repo @("commit", "-q", "--allow-empty", "-F", $msgFile)
             $shas += (& git -C $repo rev-parse HEAD)
         }
@@ -156,11 +162,17 @@ function Invoke-Case($Case)
             {
                 "Commit"    { $r = @(& $body -Commit HEAD -PassThru -Quiet) }
                 "Staged"    { $r = @(& $body -Staged -MessageFile $msgFile -PassThru -Quiet) }
+                "Proposed"  {
+                    $before = (& git diff --cached --name-status) -join "`n"
+                    $r = @(& $body -Proposed -MessageFile $msgFile -PassThru -Quiet)
+                    $proposedCode = $LASTEXITCODE   # 後の git が $LASTEXITCODE を上書きする
+                    $indexChanged = ((& git diff --cached --name-status) -join "`n") -cne $before
+                }
                 "Range"     { $r = @(& $body -Range "$root..HEAD" -PassThru -Quiet) }
                 "Generated" { $r = @(& $body -Range "$root..HEAD" -CheckGenerated -PassThru -Quiet) }
                 default     { throw "不明な Mode : $mode" }
             }
-            $code = $LASTEXITCODE
+            $code = $(if ($mode -eq "Proposed") { $proposedCode } else { $LASTEXITCODE })
         }
         finally { Pop-Location }
 
@@ -173,7 +185,8 @@ function Invoke-Case($Case)
         $detail = (@($r | ForEach-Object { $_.Findings } | ForEach-Object { "{0} : {1}" -f $_.Kind, $_.Path }) + @($reviewItems | ForEach-Object { "要確認 {0} : {1}" -f $_.Kind, $_.Path }) + @($r | ForEach-Object { $_.Errors })) -join " / "
         $errs = @($r | ForEach-Object { $_.Errors }).Count
         $appr = @($r | ForEach-Object { $_.Approved }).Count
-        return [pscustomobject]@{ Exit = $code; Kinds = $kinds; Warnings = $warn; Errors = $errs; Approved = $appr; Review = $reviewItems.Count; ReviewKinds = $reviewKinds; Ask = $null; Detail = $detail }
+        if ($indexChanged) { $detail = "本物の索引が変わった / " + $detail }
+        return [pscustomobject]@{ IndexChanged = [bool]$indexChanged; Exit = $code; Kinds = $kinds; Warnings = $warn; Errors = $errs; Approved = $appr; Review = $reviewItems.Count; ReviewKinds = $reviewKinds; Ask = $null; Detail = $detail }
     }
     finally
     {
@@ -205,6 +218,7 @@ foreach ($c in $cases)
             $want = @($e.ReviewKinds | Sort-Object -Unique)
             if (($want -join "|") -cne (@($a.ReviewKinds) -join "|")) { $why += ("要確認 [{0}]（期待 [{1}]）" -f (@($a.ReviewKinds) -join ", "), ($want -join ", ")) }
         }
+        if ($a.PSObject.Properties["IndexChanged"] -and $a.IndexChanged) { $why += "本物の索引が変わった（提案の検査は索引を変えない）" }
         if ($null -ne $e.Ask -and $a.Ask -ne [bool]$e.Ask) { $why += ("ask {0}（期待 {1}）" -f $a.Ask, $e.Ask) }
     }
     catch

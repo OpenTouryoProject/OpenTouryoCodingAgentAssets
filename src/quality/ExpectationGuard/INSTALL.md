@@ -73,6 +73,8 @@
   **最後の段落に、空行を挟まずに並べる**（git はそこしか読まない）
 - `Expectation-Change:` の理由には、Issue 番号か仕様の節を書く（無ければ警告）。リポジトリ固有の書き方（テストの ID など）は `rules.psd1` の `ApprovalReasonPatterns` に足す
 - 文面を提案したら、コミットの前に突き合わせ役（`opentouryo-expectation-reviewer`）を回す（#6）。結果は報告に、回したことは `Reviewed-with:` に
+- **コミット メッセージの文案は、人に出す前に提案の検査で確かめる**（`CheckExpectationChange.ps1 -Proposed -MessageFile <文案のファイル>`。#18）。
+  作業ツリーの変更をすべてステージしたとして判定し、索引は変えない。導入先の `AGENTS.md` に、この決まりを足すかを人に聞く
 - 直した差分を人に示す
 
 ## 7. 人に渡す

@@ -5,7 +5,7 @@
 #        （GuardAt を書くと、検出器は Commits のその番目〔1 から〕で足す。導入より前のコミットの用例）
 #     2. Commits を順にコミットする（Mode = Staged なら、最後の 1 つはステージだけ）
 #     3. Mode で検出器を動かし、Expect と比べる
-#   Mode : Commit（既定。-Commit HEAD）・Staged・Range（最初のコミット..HEAD）・Generated（Range ＋ -CheckGenerated）・PreToolUse
+#   Mode : Commit（既定。-Commit HEAD）・Staged・Proposed（最後の 1 つをステージせず -Proposed。Stage に書いたものだけステージ）・Range（最初のコミット..HEAD）・Generated（Range ＋ -CheckGenerated）・PreToolUse
 #   Expect : Exit（終了コード）・Kinds（検出の種類。順は問わない）・Warnings（警告の件数）・Ask（PreToolUse で ask を返すか）
 #   ファイルの中身の「@fixture:名前」は Fixtures のその中身。
 #
@@ -904,6 +904,64 @@ public class FooTests
 '@ } }
             )
             Expect = @{ Exit = 1; Kinds = @('テストの削除'); Approved = 1 }
+        }
+        # ==============================================================
+        # 提案の検査（#18。-Proposed：作業ツリーの変更をすべてステージしたとしたら。本物の索引は変えない）
+        #   最後の 1 つはコミットもステージもしない（Stage に書いたものだけステージする）。索引が変わったら失敗にする
+        # ==============================================================
+        @{
+            Id = 'Q01'; Category = '検出する'; Title = '提案の検査：ステージしていないテストの削除'
+            Mode = 'Proposed'
+            Commits = @(@{ Message = 'B を消す'; Files = @{ 'tests/FooTests.cs' = @'
+public class FooTests
+{
+    [Test]
+    public void A() { Assert.That(1, Is.EqualTo(1)); }
+}
+'@ } })
+            Expect = @{ Exit = 1; Kinds = @('テストの削除') }
+        }
+        @{
+            Id = 'Q02'; Category = '検出しない'; Title = '提案の検査：理由のある案は通る'
+            Mode = 'Proposed'
+            Commits = @(@{ Message = "B を消す`n`nExpectation-Change: B は仕様から消えた（#18）"; Files = @{ 'tests/FooTests.cs' = @'
+public class FooTests
+{
+    [Test]
+    public void A() { Assert.That(1, Is.EqualTo(1)); }
+}
+'@ } })
+            Expect = @{ Exit = 0; Kinds = @('テストの削除'); Approved = 1; Errors = 0 }
+        }
+        @{
+            Id = 'Q03'; Category = '検出する'; Title = '提案の検査：追跡していない新しいファイル（Golden の追加）'
+            Mode = 'Proposed'
+            Commits = @(@{ Message = '期待値のファイルを足す'; Files = @{ 'golden/Result2.txt' = "OK 1`n" } })
+            Expect = @{ Exit = 1; Kinds = @('Golden の追加') }
+        }
+        @{
+            Id = 'Q04'; Category = '検出する'; Title = '提案の検査：語彙に無いトレーラー'
+            Mode = 'Proposed'
+            Commits = @(@{ Message = "足した`n`nTested-with: gut"; Files = @{ 'src/A.cs' = "class A {}`n" } })
+            Expect = @{ Exit = 1; Kinds = @(); Errors = 1 }
+        }
+        @{
+            Id = 'Q05'; Category = '検出する'; Title = '提案の検査：ステージ済みとまだの変更の両方を見る（ステージは変えない）'
+            Mode = 'Proposed'
+            Commits = @(@{ Message = '足して消す'; Files = @{ 'src/A.cs' = "class A {}`n"; 'tests/FooTests.cs' = @'
+public class FooTests
+{
+    [Test]
+    public void A() { Assert.That(1, Is.EqualTo(1)); }
+}
+'@ }; Stage = @('src/A.cs') })
+            Expect = @{ Exit = 1; Kinds = @('テストの削除') }
+        }
+        @{
+            Id = 'Q06'; Category = '検出しない'; Title = '提案の検査：同じ案で足した役の定義（一時的な索引から語彙を取る）'
+            Mode = 'Proposed'
+            Commits = @(@{ Message = "役を足した`n`nReviewed-with: new-reviewer"; Files = @{ '.claude/agents/new-reviewer.md' = "---`nname: new-reviewer`n---`n" } })
+            Expect = @{ Exit = 0; Kinds = @(); Errors = 0 }
         }
     )
 }

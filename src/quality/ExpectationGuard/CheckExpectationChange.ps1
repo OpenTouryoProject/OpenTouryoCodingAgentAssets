@@ -43,7 +43,13 @@
     ステージした差分（HEAD との差）を見る。commit-msg フックが使う。
     **マージの途中（MERGE_HEAD がある）なら見ない。** 取り込む側のコミットで確かめ済みのため。
 .PARAMETER MessageFile
-    -Staged のときの、コミット メッセージのファイル（commit-msg フックの第 1 引数）。
+    -Staged・-Proposed のときの、コミット メッセージのファイル（commit-msg フックの第 1 引数）。
+.PARAMETER Proposed
+    **提案の検査**（OpenTouryoCodingAgentAssets#18）。今の作業ツリーの変更をすべてステージしたとしたら（git add -A）を、
+    -Staged と同じ規則で、-MessageFile のメッセージで判定する。コーディング エージェントが、コミット メッセージの案を人に出す前に使う。
+    一時的な索引（今の索引の写し）に git add -A するので、**本物の索引・作業ツリー・履歴は変えない**
+    （書くのは .git/objects の blob だけ。参照されないので gc で消える）。人が変更の一部だけをコミットすると判定は変わるが、
+    そのときは commit-msg フック（-Staged）が改めて判定する。
 .PARAMETER Commit
     コミットと、その最初の親との差を見る。メッセージはそのコミットのもの。**マージ コミットは見ない。**
 .PARAMETER Range
@@ -80,6 +86,9 @@
 .EXAMPLE
     .\CheckExpectationChange.ps1 -Staged -MessageFile .git\COMMIT_EDITMSG
 .EXAMPLE
+    .\CheckExpectationChange.ps1 -Proposed -MessageFile <コミット メッセージの案のファイル>
+    コミット メッセージの案を、人に出す前に確かめる（索引を変えない。#18）。
+.EXAMPLE
     .\CheckExpectationChange.ps1 -Range origin/develop..HEAD
     PR の前に手元で、PR の CI と同じ範囲を見る（git fetch の後に）。手元の develop は古いことがあり、
     取り込み済みのコミットまで範囲に入る（OpenTouryo で、手元の develop..HEAD が 320 件・origin/develop..HEAD が 5 件だった）。
@@ -95,6 +104,7 @@
 [CmdletBinding()]
 param(
     [switch]$Staged,
+    [switch]$Proposed,
     [string]$MessageFile,
     [string]$Commit,
     [string]$Range,
@@ -138,6 +148,8 @@ function Invoke-Git([string[]]$Arguments, [string]$OutFile, [string]$WorkingDire
     $psi.RedirectStandardOutput = $true
     $psi.RedirectStandardError = $true
     $psi.StandardOutputEncoding = New-Object Text.UTF8Encoding $false
+    # 提案の検査（-Proposed）の一時的な索引。プロセスの環境は変えず、呼ぶ git にだけ渡す
+    if ($script:indexFile) { $psi.EnvironmentVariables["GIT_INDEX_FILE"] = $script:indexFile }
 
     $p = [Diagnostics.Process]::Start($psi)
     # 標準エラーは別に読む（両方を順に読むと、バッファが詰まって止まることがある）
@@ -815,9 +827,9 @@ try
     $introducedBy = $rules.IntroducedBy
     if (-not $introducedBy -and $self) { $introducedBy = $self.Prefix + [IO.Path]::GetFileName($PSCommandPath) }
 
-    if (@(@($Staged.IsPresent, [bool]$Commit, [bool]$Range) | Where-Object { $_ }).Count -ne 1)
+    if (@(@($Staged.IsPresent, $Proposed.IsPresent, [bool]$Commit, [bool]$Range) | Where-Object { $_ }).Count -ne 1)
     {
-        Write-Msg "  -Staged・-Commit・-Range のどれか 1 つを指定してください。" -ForegroundColor Red
+        Write-Msg "  -Staged・-Proposed・-Commit・-Range のどれか 1 つを指定してください。" -ForegroundColor Red
         Complete 2
     }
     if ($CheckGenerated -and -not $Range)
@@ -926,6 +938,25 @@ try
         exit $worst
     }
 
+    # --- 提案の検査：一時的な索引に、作業ツリーの変更をすべてステージする（#18） ---
+    if ($Proposed)
+    {
+        if (-not $MessageFile -or -not (Test-Path $MessageFile))
+        {
+            Write-Msg ("  -MessageFile が見つかりません : {0}" -f $MessageFile) -ForegroundColor Red
+            Complete 2
+        }
+        $realIndex = (Invoke-GitChecked @("rev-parse", "--git-path", "index")).Lines[0]
+        if (-not [IO.Path]::IsPathRooted($realIndex)) { $realIndex = Join-Path (Get-Location).ProviderPath $realIndex }
+        $tmpIndex = [IO.Path]::GetTempFileName()
+        $tempFiles += $tmpIndex
+        # 索引が無い（コミットの無いリポジトリ）なら、空のファイルを置かない（git が壊れた索引と読む）
+        if (Test-Path -LiteralPath $realIndex) { Copy-Item -LiteralPath $realIndex -Destination $tmpIndex -Force } else { Remove-Item -LiteralPath $tmpIndex -Force }
+        $script:indexFile = $tmpIndex
+        [void](Invoke-GitChecked @("add", "-A", "--", ":(top)"))
+        $Staged = [switch]$true
+    }
+
     # --- 比較の両端と、メッセージ ---------------------------------------
     if ($Staged)
     {
@@ -941,7 +972,7 @@ try
         $diffEnds = @("--cached", $base)
         $newSpec  = { param($path) ":$path" }
         $message  = @(Get-Content -LiteralPath $MessageFile -Encoding UTF8)
-        $label    = "ステージした変更"
+        $label    = $(if ($Proposed) { "作業ツリーの変更（提案の検査）" } else { "ステージした変更" })
     }
     else
     {
@@ -1276,7 +1307,12 @@ try
     {
         Write-Msg ""
         Write-Msg "  直し方："
-        if ($Staged)
+        if ($Proposed)
+        {
+            Write-Msg "    コミット メッセージの案を直し、もう一度 -Proposed -MessageFile で確かめてから、人に出す。"
+            Write-Msg "    （索引・作業ツリーは変えていない。期待値を変えたなら、理由を Expectation-Change: に書く）"
+        }
+        elseif ($Staged)
         {
             Write-Msg "    コミットは作られていません。書いたメッセージは残っているので、開き直して直し、もう一度コミットする。"
             Write-Msg '      git commit -e -F "$(git rev-parse --git-path COMMIT_EDITMSG)"'
@@ -1423,5 +1459,6 @@ catch
 }
 finally
 {
+    $script:indexFile = $null
     foreach ($t in $tempFiles) { Remove-Item -LiteralPath $t -Force -ErrorAction SilentlyContinue }
 }
