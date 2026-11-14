@@ -5,7 +5,9 @@
 
 .DESCRIPTION
     src/instructions/AGENTS.md（概要）と src/skills/*（コードの書き方）を、
-    プロダクトごとの規定の場所へ配置する。AGENTS.md から参照される本文（TESTING.md）も、AGENTS.md と同じくルートへ置く。
+    プロダクトごとの規定の場所へ配置する。AGENTS.md から参照される本文（TESTING.md）と、
+    作業の見える化のダッシュボードの見本（AGENT-DASHBOARD.sample.md）も、AGENTS.md と同じくルートへ置く。
+    ダッシュボードの本体（AGENT-DASHBOARD.md）は git の管理外なので、導入先の .gitignore に 1 行足す（すでにあれば足さない。#19）。
 
     スキルは Agent Skills のオープン標準（SKILL.md）に準拠しているため全プロダクト共通で、
     配置先が異なるだけ。インストラクションのみプロダクト差分を吸収する。
@@ -125,7 +127,9 @@ $GeneratedMarker = '<!-- opentouryo-agent-assets:generated -->'
 $SourceRoot = Split-Path -Parent $PSScriptRoot
 $InstructionsSource = Join-Path $SourceRoot 'src/instructions/AGENTS.md'
 # AGENTS.md から参照される本文（AGENTS.md と同じく、導入先のルートへ置く）
-$InstructionsExtraSources = @('src/instructions/TESTING.md') | ForEach-Object { Join-Path $SourceRoot $_ }
+$InstructionsExtraSources = @('src/instructions/TESTING.md', 'src/instructions/AGENT-DASHBOARD.sample.md') | ForEach-Object { Join-Path $SourceRoot $_ }
+# 作業の見える化のダッシュボード（主のセッションが書き続ける。git の管理外。#19）
+$DashboardFile = 'AGENT-DASHBOARD.md'
 $SkillsSource = Join-Path $SourceRoot 'src/skills'
 # 役の定義（Claude Code のサブ エージェント。TESTING.md 5 の実装役・レビュー役と、AGENTS.md の変更のレビュー役）
 $AgentsSource = Join-Path $SourceRoot 'src/agents'
@@ -212,6 +216,33 @@ function Write-AssetFile {
         # （utf8NoBOM は PowerShell 6+ 専用。5.1 でも動くようにこの方式を採る）。
         [System.IO.File]::WriteAllText($Path, $Content, (New-Object System.Text.UTF8Encoding($false)))
         Write-Host "  書き込み: $Path"
+    }
+}
+
+# 導入先の .gitignore に、行が無ければ足す（ファイルが無ければ作る）。今の改行と文字コード（BOM の有無）を保つ。
+function Add-GitIgnoreLine {
+    param(
+        [string]$Line,
+        [string]$Comment
+    )
+    $path = Join-Path $TargetRoot '.gitignore'
+    $text = ''
+    $hasBom = $false
+    if (Test-Path -LiteralPath $path) {
+        $bytes = [System.IO.File]::ReadAllBytes($path)
+        $hasBom = ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $bytes[2] -eq 0xBF)
+        $text = [System.IO.File]::ReadAllText($path)
+    }
+    $lines = @($text -split "`r?`n" | ForEach-Object { $_.Trim() })
+    if ($lines -contains $Line -or $lines -contains "/$Line") {
+        Write-Host "  そのまま（すでにある）: .gitignore の $Line"
+        return
+    }
+    if ($PSCmdlet.ShouldProcess($path, ".gitignore に $Line を足す")) {
+        $nl = $(if ($text -match "`r`n") { "`r`n" } else { "`n" })
+        $add = $(if ($text -ne '' -and -not $text.EndsWith("`n")) { $nl } else { '' }) + "# $Comment$nl$Line$nl"
+        [System.IO.File]::WriteAllText($path, $text + $add, (New-Object System.Text.UTF8Encoding($hasBom)))
+        Write-Host "  足した: .gitignore に $Line"
     }
 }
 
@@ -437,6 +468,7 @@ foreach ($extra in $InstructionsExtraSources) {
     $extraBody = [System.IO.File]::ReadAllText($extra)
     Write-AssetFile -Path (Join-Path $TargetRoot (Split-Path -Leaf $extra)) -Content "$GeneratedMarker`n$extraBody"
 }
+Add-GitIgnoreLine -Line $DashboardFile -Comment '作業の見える化のダッシュボード（主のセッションが書き続ける。OpenTouryoCodingAgentAssets#19）'
 
 # チュートリアル一式（opt-in・プロダクト非依存）。src/docs 配下の全ファイルを、
 # 相対パスを保ったまま導入先の docs/ 配下へ配置する。

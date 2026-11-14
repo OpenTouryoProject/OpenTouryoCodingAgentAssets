@@ -17,6 +17,7 @@ Assets used by coding agents utilizing OpenTouryo
 src/
   instructions/AGENTS.md        1. 概要・規約（常時コンテキストに載る / これが原本）
   instructions/TESTING.md       1. テスト先行の進め方と、承認の 2 段（AGENTS.md から参照。AGENTS.md と同じくルートへ）
+  instructions/AGENT-DASHBOARD.sample.md  1. 作業の見える化のダッシュボードの見本（ルートへ。本体の AGENT-DASHBOARD.md は .gitignore に足す）
   skills/                       1. 全スキル（下の「スキル一覧」）
   agents/                       1. 役の定義：テスト先行の実装役・レビュー役、変更のレビュー役（Claude Code は .claude/agents、Copilot は .github/agents へ変換）
   quality/ExpectationGuard/     2. 期待値の変更の検出器の原本（導入先へ写す。INSTALL.md は導入する AI が読む手順で、写さない）
@@ -69,6 +70,8 @@ cd OpenTouryoCodingAgentAssets
 - `AGENTS.md`：OpenTouryo を使うプロジェクトの概要・規約（層・例外・Git の扱い・コミット メッセージのトレーラーなど）。
 - `TESTING.md`：テスト先行の進め方（テスト仕様 → Red → Green、根拠の ID、期待値の変更とトレーラー）と、**承認の 2 段**
   （テストの質は実装役と別のレビュー役が確かめ、人は**仕様の決定だけ**を GO/NOGO で判断する）。
+- `AGENT-DASHBOARD.sample.md`：作業の見える化のダッシュボードの見本。サブ エージェントを呼ぶか人に依頼・判断を仰ぐ作業で、主のセッションが
+  ルートの `AGENT-DASHBOARD.md`（git の管理外。インストーラが `.gitignore` に足す）に、処理状況・人への依頼・今の判断の材料を書き続ける（#19）。
 - 役の定義（`src/agents/`）：テスト先行の**実装役**（`opentouryo-test-implementer`）と**レビュー役**（`opentouryo-test-reviewer`。編集できず、テストを自分で実行する）と、
   **変更のレビュー役**（`opentouryo-change-reviewer`。テスト先行に限らない変更を、`fixed` のコミットの前に別モデルでレビューする。編集できず、ビルド・テストも流さない）。
   司令役（指示を受けたセッション）がサブ エージェントとして回す。Claude Code と GitHub Copilot 向け（Copilot はサブ エージェントを続けて呼べないので、手順に書き分けがある）。
@@ -163,7 +166,7 @@ Claude Code / GitHub Copilot / Cursor / Codex CLI / Gemini CLI など、標準�
 | `copilot` | `.github/copilot-instructions.md`（複製） | `.github/skills/` | `.github/agents/*.agent.md`（原本から変換。`model` は書かない） |
 | `agents` | `AGENTS.md` | `.agents/skills/` | （未対応） |
 
-`AGENTS.md`・`TESTING.md` はどのプロダクトでも対象リポジトリのルートへ配置される（`AGENTS.md` が原本）。
+`AGENTS.md`・`TESTING.md`・`AGENT-DASHBOARD.sample.md` はどのプロダクトでも対象リポジトリのルートへ配置される（`AGENTS.md` が原本）。
 Claude Code は `AGENTS.md` を読まないため、それを `@` import する `CLAUDE.md` を別途生成する。
 
 ---
