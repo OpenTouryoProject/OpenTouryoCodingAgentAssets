@@ -10,6 +10,8 @@
 - 判断は人に聞く。**推奨を先頭に置き、候補は間引かない**（質問の道具が無ければ、番号付きの一覧で聞く）
 - 一時のファイル・写しは、エージェントの一時フォルダ（scratchpad など）に置く。導入先・原本のフォルダには置かない
 - 検出器（`-IncludeQualityGuard`）の導入・写し直しは、別の手順 `src/quality/ExpectationGuard/INSTALL.md`
+- 品質の羅針盤（`QUALITY.common.md`・`QUALITY.md`。検出器と一緒に入る）の埋め方・既存の `QUALITY.md` の分け方は、別の手順 `src/compass/INSTALL.md`。
+  `QUALITY.common.md` が飛ばされたときの取り込みは、この手順で行う（`QUALITY.md` は導入先が持つので、飛ばす・取り込むの対象ではない）
 
 ## 1. 調べる（読むだけ）
 

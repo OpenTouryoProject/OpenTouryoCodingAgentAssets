@@ -69,6 +69,11 @@
     原本の版は、src/quality に最後に触れたコミット（検出器と関係の無いコミットの後に写し直しても、版の行は変わらない）。
     導入先の CI は本体の -VerifyCopy で、写しが写したときのままかを確かめる（ずれは警告）。
     この行のあるファイルは再実行で上書きする（**写しは直さず、原本を直して写し直す**）。
+    品質の羅針盤（src/compass。OpenTouryoCodingAgentAssets#21）も一緒に置く。
+      QUALITY.common.md                              共通の決まり（目録で管理する。手を入れていなければ上書き）
+      QUALITY.md                                     このリポジトリの中身（無いときだけ、QUALITY.sample.md から置く。以後は導入先が持つ）
+    埋め方・既存の QUALITY.md を分ける手順は src/compass/INSTALL.md（エージェントが読む）。
+    -Product claude なら、生成する CLAUDE.md が @QUALITY.common.md・@QUALITY.md を読み込む。
 
 .PARAMETER QualityGuardPath
     -IncludeQualityGuard の本体を置くフォルダ（導入先のルートから）。既定は tools/ExpectationGuard。
@@ -78,7 +83,7 @@
     製品のソースの隣を避け、道具の置き場所に分けるときに使う（例 root/files/tools/ExpectationGuard.Tests。OpenTouryoCodingAgentAssets#13）。
     置き場所を変えても、古い場所の写しは消さない（導入先で消す。INSTALL.md）。CI の雛形は無いときだけ置くので、既存の workflow のパスは手で直す。
 
-    -IncludeQualityGuard だけで -Product を省くと、検出器だけを写す（AGENTS.md・CLAUDE.md・スキルには触れない）。
+    -IncludeQualityGuard だけで -Product を省くと、検出器と品質の羅針盤だけを写す（AGENTS.md・CLAUDE.md・スキルには触れない。目録は QUALITY.common.md の分だけ書く）。
     既に自前の検出器を持つリポジトリ（印の行の無いフック・検出器がある）を置き換えるときは、これに -Force を付ける
     （-Product と併せて -Force を付けると、導入先の AGENTS.md なども上書きされる）。
 
@@ -144,6 +149,9 @@ $SkillsSource = Join-Path $SourceRoot 'src/skills'
 # 役の定義（Claude Code のサブ エージェント。TESTING.md 5 の実装役・レビュー役と、AGENTS.md の変更のレビュー役）
 $AgentsSource = Join-Path $SourceRoot 'src/agents'
 $DocsSource = Join-Path $SourceRoot 'src/docs'
+# 品質の羅針盤（-IncludeQualityGuard と一緒に置く。#21）。src/quality の外に置く
+#   （検出器の写しの版は src/quality に最後に触れたコミットなので、羅針盤を直すたびに写しの版の行が変わらないように）
+$CompassSource = Join-Path $SourceRoot 'src/compass'
 
 # プロダクト別のスキル配置先。
 # 補足: Copilot は .github/skills / .claude/skills / .agents/skills のいずれも走査するため、
@@ -572,6 +580,32 @@ function Install-QualityGuard {
     Write-Host '       （写しの中身が同じでも、印の行の版が変わるだけで止まる。理由には版の変化と、中身が変わったかどうかを書く）'
 }
 
+# ---- 品質の羅針盤（-IncludeQualityGuard と一緒。#21） ----
+#   QUALITY.common.md は配布物（目録で管理）。QUALITY.md は導入先が持つ（無いときだけ見本を置き、目録には載せない）。
+function Install-QualityCompass {
+    $common = Join-Path $CompassSource 'QUALITY.common.md'
+    $sample = Join-Path $CompassSource 'QUALITY.sample.md'
+    if (-not (Test-Path $common) -or -not (Test-Path $sample)) {
+        throw "品質の羅針盤の原本が見つかりません: $CompassSource"
+    }
+    Write-ManagedText -Rel 'QUALITY.common.md' -Content ("$GeneratedMarker`n" + [System.IO.File]::ReadAllText($common)) -Source 'src/compass/QUALITY.common.md'
+
+    $local = Join-Path $TargetRoot 'QUALITY.md'
+    if (Test-Path -LiteralPath $local) {
+        Write-Host '  そのまま（導入先が持つ）: QUALITY.md'
+        Write-Host '    見本の変更は、エージェントが src/compass/INSTALL.md 4 の手順で取り込む'
+        if (-not (Select-String -LiteralPath $local -Pattern 'QUALITY\.common\.md' -Quiet)) {
+            Write-Warning 'QUALITY.md が QUALITY.common.md を参照していません（前から持つ QUALITY.md）。共通と固有に分けるのは、エージェントが src/compass/INSTALL.md 3 の手順で行う（1 回だけ）。'
+        }
+    }
+    elseif ($PSCmdlet.ShouldProcess($local, '見本を置く')) {
+        $text = [System.IO.File]::ReadAllText($sample) -replace "`r`n", "`n"
+        [System.IO.File]::WriteAllText($local, $text, (New-Object System.Text.UTF8Encoding($false)))
+        Write-Host '  書き込み（見本。以後は導入先が持つ）: QUALITY.md'
+        Write-Host '    TODO を埋めるのは、エージェントが src/compass/INSTALL.md 2 の手順で行う（調べて、人に聞く）'
+    }
+}
+
 # ---- 実行 ----
 
 if (-not (Test-Path $InstructionsSource)) {
@@ -590,22 +624,37 @@ if (-not $Product -and -not $IncludeQualityGuard) {
 
 $TargetRoot = (Resolve-Path $TargetRoot).Path
 
-# 検出器だけを写す（-Product を省いたとき）
+$script:manifest = Read-Manifest
+$script:assetRevision = Get-AssetRevision
+$script:assetSkipped = @()
+$script:assetCount = @{ written = 0; same = 0 }
+
+function Complete-Manifest {
+    Write-Host ''
+    Write-Host '目録:'
+    Save-Manifest
+    Write-Host ("  書いた {0}・同じ {1}・飛ばした {2}" -f $script:assetCount.written, $script:assetCount.same, @($script:assetSkipped).Count)
+    if (@($script:assetSkipped).Count -gt 0) {
+        Write-Warning ("飛ばしたファイル（導入先で手を入れた、または記録が無い）が {0} 件あります。原本の変更を取り込むには、エージェントに install/INSTALL.md の手順を頼む（上書きしてよければ -Force）。" -f @($script:assetSkipped).Count)
+    }
+}
+
+# 検出器と品質の羅針盤だけを写す（-Product を省いたとき）
 if (-not $Product) {
     Write-Host "インストール先: $TargetRoot"
     Write-Host ''
     Write-Host '期待値の変更の検出器:'
     Install-QualityGuard
     Write-Host ''
+    Write-Host '品質の羅針盤:'
+    Install-QualityCompass
+    Complete-Manifest
+    Write-Host ''
     Write-Host '完了しました。'
     return
 }
 
 $skills = Resolve-Skills -Requested $Skill
-$script:manifest = Read-Manifest
-$script:assetRevision = Get-AssetRevision
-$script:assetSkipped = @()
-$script:assetCount = @{ written = 0; same = 0 }
 # UTF-8 で読む（PS 5.1 の Get-Content 既定 ANSI だと AGENTS.md の日本語が文字化けする）。
 $instructionsBody = [System.IO.File]::ReadAllText($InstructionsSource)
 
@@ -682,6 +731,9 @@ if ($IncludeQualityGuard) {
     Write-Host ''
     Write-Host '期待値の変更の検出器 (opt-in):'
     Install-QualityGuard
+    Write-Host ''
+    Write-Host '品質の羅針盤 (-IncludeQualityGuard と一緒):'
+    Install-QualityCompass
 }
 
 foreach ($p in $Product) {
@@ -692,9 +744,11 @@ foreach ($p in $Product) {
         'claude' {
             # Claude Code は AGENTS.md を読まないため、@ import する CLAUDE.md を生成する。
             # Windows では symlink に管理者権限が必要なので import 方式を採る。
+            # 品質の羅針盤（-IncludeQualityGuard。#21）は、どの作業にも掛かる前提なので常に読み込む。
+            $compassImport = $(if ($IncludeQualityGuard) { "`n@QUALITY.common.md`n@QUALITY.md" } else { '' })
             $claudeMd = @"
 $GeneratedMarker
-@AGENTS.md
+@AGENTS.md$compassImport
 
 ## Claude Code 固有の指示
 
@@ -744,13 +798,7 @@ $instructionsBody
     Install-Skills -DestinationRel $SkillDestinations[$p] -Skills $skills
 }
 
-Write-Host ''
-Write-Host '目録:'
-Save-Manifest
-Write-Host ("  書いた {0}・同じ {1}・飛ばした {2}" -f $script:assetCount.written, $script:assetCount.same, @($script:assetSkipped).Count)
-if (@($script:assetSkipped).Count -gt 0) {
-    Write-Warning ("飛ばしたファイル（導入先で手を入れた、または記録が無い）が {0} 件あります。原本の変更を取り込むには、エージェントに install/INSTALL.md の手順を頼む（上書きしてよければ -Force）。" -f @($script:assetSkipped).Count)
-}
+Complete-Manifest
 
 Write-Host ''
 Write-Host '完了しました。'
