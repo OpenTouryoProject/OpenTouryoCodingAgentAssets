@@ -82,7 +82,8 @@
 - 変えたファイルの一覧と、確かめた結果（5 の数）
 - 人が行うこと：`git config core.hooksPath .githooks`（人ごと）、`git add --chmod=+x .githooks/commit-msg`、
   `.claude/settings.json` への段 1 の登録（既存の設定があったとき）
-- **CI で止まったときの直し方**：止めたときの表示に、書き直し・後のコミットでの承認（`Expectation-Change-For: <sha> <理由>`。CI でだけ効く）・管理者がその PR だけ保護を迂回してマージする、の順で出る。
+- **CI で止まったときの直し方**：止めたときの表示に、後のコミットでの承認（`Expectation-Change-For: <sha> <理由>`。CI でだけ効く。トレーラーの書き方の誤りもこれで直す）・管理者がその PR だけ保護を迂回してマージする、の順で出る。
+  **push したコミットのメッセージは書き直さない**（force push は、共有のブランチでほかの手元を壊す）。
   手順の全体は OpenTouryoCodingAgentAssets の `docs/expectation-guard.md` 10 節。導入先の文書（`QUALITY.md` など）に書くかは人に聞く（6 と同じく、上書きしない）
 - **コミット メッセージの案。** 写し直し・置き換えは仕組みの変更なので `Expectation-Change:` を付ける（印の行の版が変わるだけでも止まる）。
   理由には、版の変化（`<前の版> → <今の版>`）と、判定が変わったか（足した規則・変えた規則）を書く。

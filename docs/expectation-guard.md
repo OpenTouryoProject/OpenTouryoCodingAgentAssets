@@ -92,7 +92,7 @@ VerifyCaTddForOT `8908524` で実測）。理由には、版の変化と中身�
   **最後の段落に無い `Expectation-Change:` は承認にしない**（以前は承認にしていた。OpenTouryo の 10 月以降の 192 件・MultiPurposeAuthSite の 336 件に該当は無い）。
 - **止めたときの表示は、人がそのまま写して直せる形にする**（作者の要望。#12）：誤りごとに理由・書いた行・直した行（大文字・小文字や綴りの近い語は語彙の語に直し、
   無ければ `<手段>` のような Placeholder）、直した最後の段落（貼る形。git が読んでいた `Co-Authored-By` なども含む）、規則ごとの書き方（`Syntax`）・例（`Example`）・語彙と意味、
-  コミットの直し方（段 2：`git commit -e -F "$(git rev-parse --git-path COMMIT_EDITMSG)"`。bash・PowerShell のどちらでも動く。`-Commit`：`git commit --amend`・`git rebase -i`・`--force-with-lease`）。
+  コミットの直し方（段 2：`git commit -e -F "$(git rev-parse --git-path COMMIT_EDITMSG)"`。bash・PowerShell のどちらでも動く。`-Commit`・`-Range`：後のコミットでの承認と、管理者の迂回。書き直し〔`--amend`・`rebase -i`・force push〕は 2026-11-15 に外した。下の 10）。
   GitHub Actions では、誤りごとに `::error` の注釈も付ける。`Expectation-Change:` を書いたが誤っているときは、「トレーラーの無い期待値の変更」と見本ではなく「承認になっていない（直した行のとおりに直せば承認になる）」と出す（SANDBOX で「書いたのに無いと言われる」と読めたため）。段 2 で止まった後にこのコマンドで直してコミットでき、`%(trailers)` で読めることを、5.1 の commit-msg フックで確かめた。
 - `Tested-with:`（`List`。`unit`・`e2e`・`golden`・`manual`・`none`）と `Reviewed-with:`（`VocabularyFiles` で `.claude/agents/*.md` の名前 ＋ `human`）を共通の規則に入れた（#12）。
   名前の `with` は小文字（作者判断）。役の語彙は**確かめるコミットの木（段 2 は索引）から取る**ので、役の定義を足したコミットでもその役を書ける。書き忘れの警告は #6 で付けた（下の `TrailerRequirements`）。
@@ -122,6 +122,8 @@ VerifyCaTddForOT `8908524` で実測）。理由には、版の変化と中身�
   `-Staged`・`-Commit` は後のコミットを見ない（同じコミットでも、調べる時点の HEAD で結果が変わらないように）。結果の `Approved` には「<理由>（後のコミット <sha> で承認）」と入る。
   **CI はベース側の検出器で調べるので、この書き方が効くのは、この本体を写したコミットがベースに入った後の PR から。**
   両リポジトリの `develop` はマージ コミットで取り込む（squash しない）ので、承認したコミットと承認の両方が履歴に残る。集計は `git log --format='%h %(trailers:key=Expectation-Change-For,valueonly,separator=|)' <範囲>`。
+  **後のコミットで承認されたコミットは、トレーラーの書き方の誤りも止めずに警告にする**（2026-11-15。作者判断）：push したメッセージを書き直さない（下の 10）と決めたので、
+  書き方の誤りにも、後のコミットのほかに直し方が要るため。誤った行は履歴に残り、集計に載らない（正しい行は承認の理由に書く）。判定の用例 L07〜L09。
 
 - **提案の検査**（#18・2026-11-15。作者判断）：`-Proposed -MessageFile <文案>` は、今の作業ツリーの変更をすべてステージしたとして（`git add -A`）、`-Staged` と同じ規則で判定する。
   コーディング エージェントが、コミット メッセージの文案を人に出す前に使う（このリポジトリ・OpenTouryo・MultiPurposeAuthSite では、エージェントは `git add` しないので、commit-msg フックを直接動かしてもステージが空で、期待値の変更を見られない）。
@@ -145,7 +147,7 @@ VerifyCaTddForOT `8908524` で実測）。理由には、版の変化と中身�
 ## 5. 判定の用例（`tests/cases.psd1`）
 
 一時のリポジトリで、`rules.test.psd1`（すべての種類を 1 つずつ持つ規則）を使って本体を動かす。
-**本体の判定を固定するもので、導入先の規則を確かめるものではない。** 90 件（2026-11-15、提案の検査の Q01〜Q06 と、後のコミットでの承認の L01〜L06 を足した。Windows PowerShell 5.1・PowerShell 7 とも全件期待どおり。2026-11-11 は 78 件、2026-11-06 は 40 件）。
+**本体の判定を固定するもので、導入先の規則を確かめるものではない。** 93 件（2026-11-15、提案の検査の Q01〜Q06 と、後のコミットでの承認の L01〜L09 を足した。Windows PowerShell 5.1・PowerShell 7 とも全件期待どおり。2026-11-11 は 78 件、2026-11-06 は 40 件）。
 メッセージの `@SHA<番目>@` は、`Commits` のその番目のコミットの sha の先頭 8 文字に置き換わる（後のコミットでの承認の用例のため）。
 
 | 区分 | 用例 |
@@ -234,13 +236,16 @@ SANDBOX（NetDevInfraWGinOSSConsortium/Sandbox）に `install.ps1 -TargetRoot . 
 
 PR の CI（段 3・`-Range`）は、範囲の中のマージでないコミットを 1 つずつ、そのコミットのメッセージで判定する（#14）。止まったら、上から順に選ぶ。止めたときの表示にも、同じ順で出る。
 
-1. **メッセージを書き直す**：最後のコミットなら `git commit --amend`、途中なら `git rebase -i <sha>^` で reword。どちらも `git push --force-with-lease` が要る。
-   長く使う共有のブランチ（`5th_agent` など）では、ほかの人・セッションの手元とずれるので、先に関係者に知らせる。
-2. **後のコミットで承認する**（履歴を書き換えない）：
+**push したコミットのメッセージは書き直さない**（`--amend`・`rebase` と force push。作者判断・2026-11-15）。
+長く使う共有のブランチ（`5th_agent` など）では、ほかの人・セッションの手元が壊れ、ほかの人のコミットを消すおそれがある。止めたときの表示にも出さない。
+
+1. **後のコミットで承認する**（履歴を書き換えない）：
    `git commit --allow-empty -m "期待値の変更を承認する" -m "Expectation-Change-For: <止まったコミットの sha> <何が・なぜ変わったか（Issue 番号）>"` を push する。
    1 行に 1 コミット。複数のコミットが止まったら、行を分ける（同じ最後の段落に並べる）。効くのは CI だけで、手元のフックの判定は変わらない。
-   ベース側の検出器がこの書き方を知らない（写し直しの前）なら効かない。そのときは 1 か 3。
-3. **どうしても書き直せないとき**：**管理者が、その PR だけ保護を迂回してマージする**（マージの画面の「Merge without waiting for requirements to be met」）。
+   **トレーラーの書き方の誤り**（最後の段落に無い・全角の「：」・綴り・語彙に無い値など）で止まったときも、これで直す。理由に、直した行を書く
+   （例：`Expectation-Change-For: 1a2b3c4d トレーラーの書き方の誤り（#NNN。直した行 Found-By: review）`）。誤った行は履歴に残り、集計には載らない。
+   ベース側の検出器がこの書き方を知らない（写し直しの前）なら効かない。そのときは 2。
+2. **後のコミットで直せないとき**：**管理者が、その PR だけ保護を迂回してマージする**（マージの画面の「Merge without waiting for requirements to be met」）。
    設定を変えず、ほかの PR に影響しない。GitHub の監査ログに残る。期待値を変えた理由を、PR のコメントに残す。
    - **使わない**：必須のチェックを外す（すべての PR で保護が効かなくなり、戻し忘れの危険がある）、ワークフローを止める（`gh workflow disable`。必須のチェックが結果を返さず、PR がかえって止まる）。
    - 両リポジトリの `develop`（2026-11-10）：必須のチェックは OpenTouryo が `expectation-change`、MultiPurposeAuthSite が `expectation-change`・`testcases-regenerated`。`enforce_admins` は無効（管理者は迂回できる）。
