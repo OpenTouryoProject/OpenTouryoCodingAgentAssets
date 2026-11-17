@@ -322,8 +322,8 @@ MS ツールチェーン起因で**「ビルドは通るのに壊れる／静か
 
 **利用可能なスキルは各 `SKILL.md` の `description` から自動的に認識される**ので、この文書に一覧は持たない
 （配置先：`.claude/skills/`〔Claude Code〕/ `.github/skills/`〔Copilot〕/ `.agents/skills/`〔agents〕）。
-**全スキルの一覧と「使いどころ」**（用途別に分類）は README を参照：
-<https://github.com/OpenTouryoProject/OpenTouryoCodingAgentAssets/blob/main/README.md>（「スキル一覧」節）。
+**全スキルの一覧と「使いどころ」**（用途別に分類）は次を参照：
+<https://github.com/OpenTouryoProject/OpenTouryoCodingAgentAssets/blob/main/docs/skills.md>。
 
 ## 参考資料
 

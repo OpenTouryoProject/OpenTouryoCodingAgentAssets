@@ -1,4 +1,74 @@
-# 配布物を入れ直す（AI が読む手順）
+# 導入する（コマンドと、エージェンティック・インストール）
+
+導入のしかたは 2 つ。**上書きだけで済むものはコマンドで入れる。上書きだけで済まないもの（導入先ごとの判断・導入先の手入れとの取り込みが要るもの）は、
+エージェントに頼む（エージェンティック・インストール）。**
+
+| 何を | 方式 | 手順 |
+| --- | --- | --- |
+| 1. 書き方（インストラクション・スキル・役の定義）の初回の導入、手を入れていない導入先の入れ直し | コマンド | [コマンドで入れる](#コマンドで入れる人が実行する) |
+| 3. 進め方（見本・プロンプト。`-IncludeTutorial`） | コマンド | 同上（既存のファイルは上書きしない） |
+| 入れ直しで飛ばされたファイル（導入先で手を入れた・記録が無い）への、原本の変更の取り込み | エージェンティック | [入れ直しの取り込み](#入れ直しの取り込みai-が読む手順)（このファイルの後半） |
+| 2. 確かめ方・残し方（検出器と品質の羅針盤。`-IncludeQualityGuard`） | エージェンティック | [`src/quality/ExpectationGuard/INSTALL.md`](../src/quality/ExpectationGuard/INSTALL.md)（羅針盤の埋め方・既存の `QUALITY.md` の分け方は [`src/compass/INSTALL.md`](../src/compass/INSTALL.md)） |
+
+エージェンティック・インストールでは、エージェントが導入先を調べ、判断を人に聞き、`install.ps1` を中で動かす。導入先の変更はワーキング ツリーまでで、コミットは人が行う。
+
+## コマンドで入れる（人が実行する）
+
+このリポジトリを **git clone** し、**clone した場所からインストーラを実行する**。
+`install.ps1` は隣接する `src/` を読むため、**単体でコピーしても動かない**。
+導入先のアプリ リポジトリは `-TargetRoot` で指定する（既定はカレント ディレクトリ）。
+**Windows PowerShell 5.1 / PowerShell 7 のどちらでも動く。**
+
+```powershell
+# ① このリポジトリを取得
+git clone https://github.com/OpenTouryoProject/OpenTouryoCodingAgentAssets.git
+cd OpenTouryoCodingAgentAssets
+
+# ② 1. 書き方（Claude Code 向けに全スキル・役の定義）
+./install/install.ps1 -Product claude -TargetRoot C:\git\MyApp
+
+# 複数プロダクト・スキルを絞って
+./install/install.ps1 -Product claude,copilot -Skill opentouryo-layer-d -TargetRoot C:\git\MyApp
+
+# 実際には書き込まず、何が行われるか確認
+./install/install.ps1 -Product agents -WhatIf -TargetRoot C:\git\MyApp
+
+# 3. 進め方も併せて（opt-in）
+./install/install.ps1 -Product claude -TargetRoot C:\git\MyApp -IncludeTutorial
+```
+
+### 配置先
+
+| プロダクト | インストラクション | スキル | 役の定義 |
+| --- | --- | --- | --- |
+| `claude` | `CLAUDE.md`（`AGENTS.md` を `@` import） | `.claude/skills/` | `.claude/agents/` |
+| `copilot` | `.github/copilot-instructions.md`（複製） | `.github/skills/` | `.github/agents/*.agent.md`（原本から変換。`model` は書かない） |
+| `agents` | `AGENTS.md` | `.agents/skills/` | （未対応） |
+
+`AGENTS.md`・`TESTING.md`・`AGENT-DASHBOARD.sample.md` はどのプロダクトでも対象リポジトリのルートへ配置される（`AGENTS.md` が原本）。
+Claude Code は `AGENTS.md` を読まないため、それを `@` import する `CLAUDE.md` を別途生成する。
+
+### 入れ直し
+
+**入れ直しで、導入先で手を入れたファイルは上書きされない**（#20）。インストーラは書いたファイルを、導入先のルートの目録 `.opentouryo-agent-assets.json`
+（ファイルごとの原本の版・原本のパス・中身の sha256。コミットして残す）に記録し、入れ直しでは次のどれかにする。
+
+| 導入先のファイル | 動き |
+| --- | --- |
+| 今回の中身と同じ | 書かない（改行と BOM の違いは同じとみなす） |
+| 目録の中身と同じ（手を入れていない） | 上書きする |
+| それ以外（手を入れた・記録が無い） | **飛ばして警告する**（`-Force` のときだけ上書き） |
+
+スキルも 1 ファイルずつ判定する（原本で消えたファイルは、手を入れていなければ消し、手を入れていれば残す。導入先で足したファイルには触れない）。
+飛ばしたファイルに原本の変更を取り込むのは、エージェントに次の「入れ直しの取り込み」を頼む。
+
+- 3. 進め方の見本：`docs/spec`・`docs/plan` は利用者の作業ディレクトリなので、**再実行しても既存ファイルは上書きしない**（`-Force` でのみ上書き）。
+  見本のファイル名は 2026-11 に変えた（#15。例 `test6-testfirst.md` → `cmn-testfirst.md`）。前の版の名前のファイルは消さず、残っていればインストーラが警告する。
+- 2. 検出器の写し・規則・CI の雛形・`QUALITY.md` の扱いは、[`src/quality/ExpectationGuard/INSTALL.md`](../src/quality/ExpectationGuard/INSTALL.md) と README の「2. 確かめ方・残し方」。
+
+---
+
+## 入れ直しの取り込み（AI が読む手順）
 
 この手順は、**配布物（`AGENTS.md`・`TESTING.md`・スキル・役の定義など）の導入・入れ直しを頼まれたコーディング エージェント**が読む
 （OpenTouryoCodingAgentAssets#20）。`install/install.ps1` は、導入先で手を入れたファイルを上書きせずに飛ばす。
